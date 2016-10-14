@@ -179,15 +179,15 @@ public class Server extends Utils
 	
 	private static ComboPooledDataSource sql_pool;
 
-    public static void kill_session(String session_token) 
-    	{
-    	session_map.remove(session_token);
-    	}
-    
-    static Connection sql_connection() throws SQLException 
-    	{
-    	return sql_pool.getConnection();
-    	}
+	public static void kill_session(String session_token) 
+		{
+		session_map.remove(session_token);
+		}
+	
+	static Connection sql_connection() throws SQLException 
+		{
+		return sql_pool.getConnection();
+		}
 
 	public static void main (String[] args) throws Exception
 		{
@@ -226,20 +226,20 @@ public class Server extends Utils
 				read_path = Paths.get(java_path + jar_filename),
 				write_path = Paths.get(java_path + "cache." + jar_filename);
 				
-	    		Files.copy(read_path, write_path, StandardCopyOption.REPLACE_EXISTING);
-	    		
-	    		Runtime.getRuntime().addShutdownHook(new Thread()
-    				{
-	    			public void run()
-	    				{
-	    				try {
+				Files.copy(read_path, write_path, StandardCopyOption.REPLACE_EXISTING);
+				
+				Runtime.getRuntime().addShutdownHook(new Thread()
+					{
+					public void run()
+						{
+						try {
 							run_jar("cache." + jar_filename);
 							} 
-	    				catch (Exception e) {}
-	    				}
-	    			});
+						catch (Exception e) {}
+						}
+					});
 
-	            System.exit(0);
+				System.exit(0);
 				}
 			else 
 				{
@@ -313,13 +313,13 @@ public class Server extends Utils
 		
 		if (!java_object_directory.exists()) 
 			{
-		    try	{
-		    	java_object_directory.mkdir();
-		    	} 
-		    catch (Exception e)
-		    	{
-		    	exception(e);
-		    	}        
+			try	{
+				java_object_directory.mkdir();
+				} 
+			catch (Exception e)
+				{
+				exception(e);
+				}		
 			}
 	
 		try {
@@ -338,19 +338,19 @@ public class Server extends Utils
 		try {
 			Connection sql_connection = DriverManager.getConnection(sql_database, sql_username, sql_password);
 			PreparedStatement prepared_statement = sql_connection.prepareStatement("select * from control");
-        	ResultSet result_set = prepared_statement.executeQuery();
-        	
-            while (result_set.next())
-            	{
-            	String 
-            	
-            	name = result_set.getString(1),
-            	value = result_set.getString(2);
-            	
-            	control.put(name, value);
-            	}
-            
-            sql_connection.close();
+			ResultSet result_set = prepared_statement.executeQuery();
+			
+			while (result_set.next())
+				{
+				String 
+				
+				name = result_set.getString(1),
+				value = result_set.getString(2);
+				
+				control.put(name, value);
+				}
+			
+			sql_connection.close();
 			} 
 		catch (Exception e) 
 			{
@@ -410,13 +410,13 @@ public class Server extends Utils
 			sql_pool.setMinPoolSize(3);
 			sql_pool.setMaxPoolSize(pool_size + 2);
 			sql_pool.setAcquireIncrement(2);
-            sql_pool.setMaxIdleTime(21600);
-            sql_pool.setDriverClass("com.mysql.jdbc.Driver");
-            sql_pool.setJdbcUrl(sql_database);
-            sql_pool.setUser(sql_username);
-            sql_pool.setPassword(sql_password);
+			sql_pool.setMaxIdleTime(21600);
+			sql_pool.setDriverClass("com.mysql.jdbc.Driver");
+			sql_pool.setJdbcUrl(sql_database);
+			sql_pool.setUser(sql_username);
+			sql_pool.setPassword(sql_password);
 			} 
-        catch (PropertyVetoException e) 
+		catch (PropertyVetoException e) 
 			{
 			exception(e);
 			Server.exit(false);
@@ -441,8 +441,8 @@ public class Server extends Utils
 	
 	static void open_proxy_gateway()
 		{
-    	try {
-    		proxy_gateway = new ServerSocket(proxy_port);
+		try {
+			proxy_gateway = new ServerSocket(proxy_port);
 			
 			log("Proxy Gateway Online!");
 			
@@ -456,12 +456,12 @@ public class Server extends Utils
 				catch (SocketException e) 
 					{
 					if (listening) exception(e);
-		            }
+					}
 				catch (Exception e) 
 					{
 					exception(e);
-		            }
-		        }
+					}
+				}
 			}
 		catch (BindException b)
 			{
@@ -491,7 +491,7 @@ public class Server extends Utils
 			
 			log("---");
 
-	        save_to_disk(session_map, "session_map", true);
+			save_to_disk(session_map, "session_map", true);
 
 			listening = false;
 
@@ -573,22 +573,22 @@ public class Server extends Utils
 
 	public static byte[] encrypt(byte[] plain_text, String _key) throws Exception 
 		{
-	    SecretKeySpec key = new SecretKeySpec(SHA256(_key), "AES");
-	    
-	    Cipher cipher = Cipher.getInstance(cipher_name);
-	    cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(init_vector.getBytes("UTF-8")));
-	    
-	    return cipher.doFinal(plain_text);
+		SecretKeySpec key = new SecretKeySpec(SHA256(_key), "AES");
+		
+		Cipher cipher = Cipher.getInstance(cipher_name);
+		cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(init_vector.getBytes("UTF-8")));
+		
+		return cipher.doFinal(plain_text);
 		}
 
 	public static byte[] decrypt(byte[] cipher_text, String _key) throws Exception
 	  	{
-	    SecretKeySpec key = new SecretKeySpec(SHA256(_key), "AES");
-	    
-	    Cipher cipher = Cipher.getInstance(cipher_name);
-	    cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(init_vector.getBytes("UTF-8")));
-	    
-	    return cipher.doFinal(cipher_text);
+		SecretKeySpec key = new SecretKeySpec(SHA256(_key), "AES");
+		
+		Cipher cipher = Cipher.getInstance(cipher_name);
+		cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(init_vector.getBytes("UTF-8")));
+		
+		return cipher.doFinal(cipher_text);
 	  	}
 
 //------------------------------------------------------------------------------------
@@ -605,8 +605,8 @@ public class Server extends Utils
 		
 		new Thread() 
 			{
-	        public void run() 
-	        	{
+			public void run() 
+				{
 				Properties props = new Properties();
 				
 				props.put("mail.smtp.auth", "true");
@@ -623,16 +623,16 @@ public class Server extends Utils
 					});
 		
 				try {
-				    Message msg = new MimeMessage(session);
-				    msg.setFrom(new InternetAddress(relay_email_address, relay_email_from));
-				    msg.addRecipient(Message.RecipientType.TO, new InternetAddress(final_to_address, to_user));
-				    msg.setSubject(subject);
-				    msg.setContent(message_body, "text/html");
-				    Transport.send(msg);
+					Message msg = new MimeMessage(session);
+					msg.setFrom(new InternetAddress(relay_email_address, relay_email_from));
+					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(final_to_address, to_user));
+					msg.setSubject(subject);
+					msg.setContent(message_body, "text/html");
+					Transport.send(msg);
 					} 
 				catch (AddressException e) 
 					{
-				    exception(e);
+					exception(e);
 					} 
 				catch (MessagingException e) 
 					{
@@ -652,7 +652,7 @@ public class Server extends Utils
 	
 	static void run_jar(String jar_filename) throws Exception
 		{
-        Runtime.getRuntime().exec("java -jar " + java_path + jar_filename);
+		Runtime.getRuntime().exec("java -jar " + java_path + jar_filename);
 		}
 
 	static boolean save_to_disk(Object object, String filename, boolean encrypt)
@@ -660,20 +660,20 @@ public class Server extends Utils
 		try {
 			ByteArrayOutputStream byte_array_output_stream = new ByteArrayOutputStream();
 			
-	        ObjectOutputStream o_out = new ObjectOutputStream(byte_array_output_stream);
-	        o_out.writeObject(object);
-	        o_out.close();
-	        
-	        byte[] byte_array = null;
-	        
-	        if (encrypt) byte_array = encrypt(byte_array_output_stream.toByteArray(), sql_password);
-	        else byte_array = byte_array_output_stream.toByteArray();
+			ObjectOutputStream o_out = new ObjectOutputStream(byte_array_output_stream);
+			o_out.writeObject(object);
+			o_out.close();
+			
+			byte[] byte_array = null;
+			
+			if (encrypt) byte_array = encrypt(byte_array_output_stream.toByteArray(), sql_password);
+			else byte_array = byte_array_output_stream.toByteArray();
 	
-	        FileOutputStream f_stream = new FileOutputStream(java_object_path + filename);
-	        f_stream.write(byte_array);
-	        f_stream.close();
-	        
-	        return true;
+			FileOutputStream f_stream = new FileOutputStream(java_object_path + filename);
+			f_stream.write(byte_array);
+			f_stream.close();
+			
+			return true;
 			}
 		catch (Exception e)
 			{
