@@ -44,23 +44,23 @@ public class ChangePasswordKey extends Utils
 			
 			PreparedStatement get_passwords = sql_connection.prepareStatement("select * from passwords where key_hash = ?");
 			get_passwords.setString(1, old_key_hash);
-	    	ResultSet result_set = get_passwords.executeQuery();
-	    	
-	    	if (result_set.next())
-		    	{
-		    	byte[] 
+			ResultSet result_set = get_passwords.executeQuery();
+			
+			if (result_set.next())
+				{
+				byte[] 
 
-		    	old_encrypted_blob = Server.inputstream_to_bytearray(result_set.getBinaryStream(2)),
-	    		new_encrypted_blob = Server.encrypt(Server.decrypt(old_encrypted_blob, old_key), new_key);
+				old_encrypted_blob = Server.inputstream_to_bytearray(result_set.getBinaryStream(2)),
+				new_encrypted_blob = Server.encrypt(Server.decrypt(old_encrypted_blob, old_key), new_key);
 				
 				PreparedStatement update_passwords = sql_connection.prepareStatement("update passwords set key_hash = ?, data = ?");
 				update_passwords.setString(1, new_key_hash);
 				update_passwords.setBinaryStream(2, new ByteArrayInputStream(new_encrypted_blob), new_encrypted_blob.length);
 				update_passwords.executeUpdate();
 				
-		        output.put("status", "1");
-		    	}
-	    	else output.put("error", "Wrong key");
+				output.put("status", "1");
+				}
+			else output.put("error", "Wrong key");
 			
 //------------------------------------------------------------------------------------
 

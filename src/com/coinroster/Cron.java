@@ -39,19 +39,19 @@ public class Cron
 
 		for (String key : Server.session_map.keySet()) 
 			{
-		    String[] session_vars = Server.session_map.get(key);
-		    
-		    String
-		    
-		    /*username = session_vars[0],
-		    user_id = session_vars[1],*/
-		    user_level = session_vars[2];
-		    
-		    if (user_level.equals("1"))
-		    	{
-		    	Long last_active = Long.parseLong(session_vars[3]);
-		    	if (System.currentTimeMillis() - last_active >= Server.admin_timeout) Server.session_map.remove(key);
-		    	}
+			String[] session_vars = Server.session_map.get(key);
+			
+			String
+			
+			/*username = session_vars[0],
+			user_id = session_vars[1],*/
+			user_level = session_vars[2];
+			
+			if (user_level.equals("1"))
+				{
+				Long last_active = Long.parseLong(session_vars[3]);
+				if (System.currentTimeMillis() - last_active >= Server.admin_timeout) Server.session_map.remove(key);
+				}
 			}
 		}
 	
@@ -77,6 +77,6 @@ public class Cron
 		delete_password_reset.setLong(1, expiry_cutoff);
 		delete_password_reset.executeUpdate();
 		
-        sql_connection.close();
+		sql_connection.close();
 		}
 	}

@@ -33,8 +33,8 @@ public class HttpResponse
 		out.write(new String("Accept-Ranges: bytes\r\n").getBytes());
 		out.flush();
 
-		/*out.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
-		out.flush();*/
+		out.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
+		out.flush();
 		
 		out.write(new String("Content-Length: " + String.valueOf(response_text.length()) + "\r\n").getBytes());
 		out.flush();

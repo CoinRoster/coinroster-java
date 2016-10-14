@@ -45,7 +45,7 @@ public class MethodCall extends Utils
 				method.sql_connection = sql_connection;
 
 				Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
-		        c.newInstance(method);
+				c.newInstance(method);
 				}
 			}
 		catch (Exception e) 

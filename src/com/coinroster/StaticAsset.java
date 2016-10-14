@@ -84,8 +84,11 @@ public class StaticAsset extends Utils
 			response.write(new String("Accept-Ranges: bytes\r\n").getBytes());
 			response.flush();
 
-			response.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
-			response.flush();
+			if (session.user_level().equals("1"))
+				{
+				response.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
+				response.flush();
+				}
 			
 			response.write(new String("Content-Length: "+String.valueOf(response_length)+"\r\n").getBytes());
 			response.flush();
