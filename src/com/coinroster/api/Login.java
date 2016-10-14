@@ -64,10 +64,16 @@ public class Login extends Utils
 				stored_password_hash = user[2],
 				user_level = user[3];
 				
+				// if internal account, break method:
+				
 				if (user_level.equals("2")) break method;
+				
+				// check password:
 				
 				if (SHA1(password + user_id).equals(stored_password_hash)) 
 					{
+					// create session:
+					
 					String new_session_token = db.create_session(username, user_id, user_level);
 					
 					// update browser cookie:

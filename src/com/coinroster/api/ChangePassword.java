@@ -45,6 +45,8 @@ public class ChangePassword extends Utils
 				{
 				String stored_password_hash = user[2];
 				
+				// authenticate old password:
+				
 				if (Server.SHA1(old_password + user_id).equals(stored_password_hash))
 					{
 					String new_password_hash = Server.SHA1(new_password + user_id);

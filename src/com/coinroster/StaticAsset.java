@@ -49,7 +49,7 @@ public class StaticAsset extends Utils
 
 		if (authenticated) 
 			{
-			response_path = root + target_url;
+			response_path = no_whitespace(root + target_url);
 			
 			log("File: " + response_path);
 

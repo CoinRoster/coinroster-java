@@ -50,6 +50,7 @@ Phase 2
 06/10/2016	4		Incorporated latest developments from other Java projects (cache and rerun, command handler upgrades, crons, saving and loading of assets); started converting API into package with classes rather than a single class with methods - for scalability; misc refactoring;
 09/10/2016	6		Finished converting API, created DB class with generic DB access methods (like select_user), created new template, created new process for controlling method level, simplified MethodCall;
 13/10/2016	2		Added HttpsOnly and Secure flags to session_token, verified that these settings have taken effect; re-enabled account creation, improved messaging on sign-up page; cleaned up guest pages and authentication Javascript (root.html, signup.html, verify.html, forgot.html, reset.html)
+14/10/2016	4		Got Java, HTML, NGINX conf uploaded to Github; misc housekeeping
 
 */
 
