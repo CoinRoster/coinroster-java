@@ -52,6 +52,11 @@ Phase 2
 13/10/2016	2		Added HttpsOnly and Secure flags to session_token, verified that these settings have taken effect; re-enabled account creation, improved messaging on sign-up page; cleaned up guest pages and authentication Javascript (root.html, signup.html, verify.html, forgot.html, reset.html)
 14/10/2016	4		Got Java, HTML, NGINX conf uploaded to Github; misc housekeeping
 
+To-do:
+
+SQL - build indexes on IDs
+Java - more granular locking on SQL calls
+
 */
 
 import java.net.ServerSocket;
