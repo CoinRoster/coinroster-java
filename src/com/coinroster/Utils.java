@@ -60,11 +60,11 @@ public class Utils
 		{
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		
-    	byte[] data = new byte[1024];
+		byte[] data = new byte[1024];
 
-    	for (int n; (n = in.read(data, 0, data.length)) != -1;) buffer.write(data, 0, n);
+		for (int n; (n = in.read(data, 0, data.length)) != -1;) buffer.write(data, 0, n);
 
-    	buffer.flush();
+		buffer.flush();
 
 		return buffer.toByteArray();
 		}

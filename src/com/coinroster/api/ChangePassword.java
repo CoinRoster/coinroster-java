@@ -43,19 +43,19 @@ public class ChangePassword extends Utils
 			
 			if (user != null)
 				{
-		        String stored_password_hash = user[2];
-	            
-	            if (Server.SHA1(old_password + user_id).equals(stored_password_hash))
-	            	{
-		            String new_password_hash = Server.SHA1(new_password + user_id);
-		            
-		            PreparedStatement change_password = sql_connection.prepareStatement("update user set password = ? where id = ?");
-		            change_password.setString(1, new_password_hash);
-		            change_password.setString(2, user_id);
-		            change_password.executeUpdate();
-		            
-		            output.put("status", "1");
-	            	}
+				String stored_password_hash = user[2];
+				
+				if (Server.SHA1(old_password + user_id).equals(stored_password_hash))
+					{
+					String new_password_hash = Server.SHA1(new_password + user_id);
+					
+					PreparedStatement change_password = sql_connection.prepareStatement("update user set password = ? where id = ?");
+					change_password.setString(1, new_password_hash);
+					change_password.setString(2, user_id);
+					change_password.executeUpdate();
+					
+					output.put("status", "1");
+					}
 				}
 			
 //------------------------------------------------------------------------------------

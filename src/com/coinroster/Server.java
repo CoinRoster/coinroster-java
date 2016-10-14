@@ -116,6 +116,9 @@ public class Server extends Utils
 	java_out_path,
 	java_object_path,
 	jar_filename = "coinroster.jar",
+	
+	version = "1.2 - api break-out",
+	start_time = new SimpleDateFormat("MMM d h:mm:ss a").format(new Date()),
 
 	sql_database = "jdbc:mysql://localhost:3306/coinroster",
 	sql_username = "coinrostersql",
@@ -135,10 +138,6 @@ public class Server extends Utils
 	init_vector = "AAAAAAAAAAAAAAAA";
 
 	public static String host;
-
-	protected static String version = "1.2 - api break-out";
-
-	protected static String start_time = new SimpleDateFormat("MMM d h:mm:ss a").format(new Date());
 
 	static int
 	
@@ -167,7 +166,6 @@ public class Server extends Utils
 	guest_user_methods = new HashSet<String>(),
 	standard_user_methods = new HashSet<String>(),
 	admin_user_methods = new HashSet<String>();
-	
 	
 	private static ServerSocket proxy_gateway;
 

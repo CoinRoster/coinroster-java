@@ -41,21 +41,21 @@ public class UpdatePasswords extends Utils
 			
 			PreparedStatement get_passwords = sql_connection.prepareStatement("select * from passwords where key_hash = ?");
 			get_passwords.setString(1, key_hash);
-	    	ResultSet result_set = get_passwords.executeQuery();
-	    	
-	    	if (result_set.next())
-		    	{
-	    		String decrypted_blob = input.getString("blob");
-	    				
-	    		byte[] encrypted_blob = Server.encrypt(decrypted_blob.getBytes("UTF-8"), key);
+			ResultSet result_set = get_passwords.executeQuery();
+			
+			if (result_set.next())
+				{
+				String decrypted_blob = input.getString("blob");
+						
+				byte[] encrypted_blob = Server.encrypt(decrypted_blob.getBytes("UTF-8"), key);
 				
 				PreparedStatement update_passwords = sql_connection.prepareStatement("update passwords set data = ?");
 				update_passwords.setBinaryStream(1, new ByteArrayInputStream(encrypted_blob), encrypted_blob.length);
 				update_passwords.executeUpdate();
 				
-		        output.put("status", "1");
-		    	}
-	    	else output.put("error", "Wrong key");
+				output.put("status", "1");
+				}
+			else output.put("error", "Wrong key");
 			
 //------------------------------------------------------------------------------------
 

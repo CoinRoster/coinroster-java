@@ -45,10 +45,10 @@ public class ChangeEmailAddress extends Utils
 				change_email.setString(2, new_email_ver_key);
 				change_email.setString(3, user_id);
 				change_email.executeUpdate();
-	            
-	            new SendEmailVerification(method);
-	            
-	            output.put("status", "1");
+				
+				new SendEmailVerification(method);
+				
+				output.put("status", "1");
 				}
 			
 //------------------------------------------------------------------------------------

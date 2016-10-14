@@ -60,22 +60,22 @@ public class Login extends Utils
 				{
 				String
 				
-		        user_id = user[0],
-		        stored_password_hash = user[2],
+				user_id = user[0],
+				stored_password_hash = user[2],
 				user_level = user[3];
 				
 				if (user_level.equals("2")) break method;
-	            
-	            if (SHA1(password + user_id).equals(stored_password_hash)) 
-	            	{
-		            String new_session_token = db.create_session(username, user_id, user_level);
-		            
-		            // update browser cookie:
+				
+				if (SHA1(password + user_id).equals(stored_password_hash)) 
+					{
+					String new_session_token = db.create_session(username, user_id, user_level);
+					
+					// update browser cookie:
 	
-		    		method.response.new_session_token = new_session_token;
-		    		
+					method.response.new_session_token = new_session_token;
+					
 					output.put("status", "1");
-	            	}
+					}
 				}
 			
 //------------------------------------------------------------------------------------

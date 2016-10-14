@@ -46,14 +46,14 @@ public class SendReferral extends Utils
 			email_contact_name = "Referral",
 			email_address = no_whitespace(input.getString("email_address"));
 			
-			PreparedStatement create_user = sql_connection.prepareStatement("insert into referral(referral_key, referrer_id, referrer_username, email_address, referral_program, created) values(?, ?, ?, ?, ?, ?)");	            
-	        create_user.setString(1, referral_key);
-	        create_user.setString(2, referrer_id);
-	        create_user.setString(3, referrer_username);
-	        create_user.setString(4, email_address);
-	        create_user.setInt(5, Integer.parseInt(referral_program));
-	        create_user.setLong(6, System.currentTimeMillis());
-	        create_user.executeUpdate();
+			PreparedStatement create_user = sql_connection.prepareStatement("insert into referral(referral_key, referrer_id, referrer_username, email_address, referral_program, created) values(?, ?, ?, ?, ?, ?)");				
+			create_user.setString(1, referral_key);
+			create_user.setString(2, referrer_id);
+			create_user.setString(3, referrer_username);
+			create_user.setString(4, email_address);
+			create_user.setInt(5, Integer.parseInt(referral_program));
+			create_user.setLong(6, System.currentTimeMillis());
+			create_user.executeUpdate();
 			
 			String
 
@@ -62,7 +62,7 @@ public class SendReferral extends Utils
 
 			Server.send_mail(email_address, email_contact_name, subject, message_body);
 
-	        output.put("status", "1");
+			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------
 

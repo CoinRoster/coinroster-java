@@ -36,7 +36,7 @@ public class TransactionReport extends Utils
 			Long
 			
 			start_date_ms = input.getLong("start_date_ms"),
-		    end_date_ms = input.getLong("end_date_ms");
+			end_date_ms = input.getLong("end_date_ms");
 			
 			String request_source = input.getString("request_source");
 			
@@ -65,53 +65,53 @@ public class TransactionReport extends Utils
 
 			ResultSet result_set = select_transaction.executeQuery();
 			
-	    	JSONArray transaction_report = new JSONArray();
+			JSONArray transaction_report = new JSONArray();
 	   
-	        while (result_set.next())
-	        	{
-	        	String 
-	        	
-	        	transaction_id = result_set.getString(1),
-	        	created = result_set.getString(2),
-	        	created_by = result_set.getString(3),
-	            trans_type = result_set.getString(4),
-	            from_account = result_set.getString(5),
-	        	to_account = result_set.getString(6),
-	        	amount = result_set.getString(7),
-	        	from_currency = result_set.getString(8),
-	        	to_currency = result_set.getString(9),
-	        	memo = result_set.getString(10);
+			while (result_set.next())
+				{
+				String 
+				
+				transaction_id = result_set.getString(1),
+				created = result_set.getString(2),
+				created_by = result_set.getString(3),
+				trans_type = result_set.getString(4),
+				from_account = result_set.getString(5),
+				to_account = result_set.getString(6),
+				amount = result_set.getString(7),
+				from_currency = result_set.getString(8),
+				to_currency = result_set.getString(9),
+				memo = result_set.getString(10);
 
-	        	JSONObject transaction = new JSONObject();
-	        	
-	        	if (is_admin) 
+				JSONObject transaction = new JSONObject();
+				
+				if (is_admin) 
 					{
-	        		transaction.put("transaction_id", transaction_id);
-	        		transaction.put("created", created);
-	        		transaction.put("created_by", created_by);
-	        		transaction.put("trans_type", trans_type);
-	        		transaction.put("from_account", from_account);
-	        		transaction.put("to_account", to_account);
-	        		transaction.put("amount", amount);
-	        		transaction.put("from_currency", from_currency);
-	        		transaction.put("to_currency", to_currency);
-	        		transaction.put("memo", memo);
+					transaction.put("transaction_id", transaction_id);
+					transaction.put("created", created);
+					transaction.put("created_by", created_by);
+					transaction.put("trans_type", trans_type);
+					transaction.put("from_account", from_account);
+					transaction.put("to_account", to_account);
+					transaction.put("amount", amount);
+					transaction.put("from_currency", from_currency);
+					transaction.put("to_currency", to_currency);
+					transaction.put("memo", memo);
 					}
-	        	else
-	        		{
-	        		transaction.put("created", created);
-	        		transaction.put("trans_type", trans_type);
-	        		if (session.user_id().equals(to_account)) transaction.put("amount", "+" + amount);
-	        		else transaction.put("amount", "-" + amount);
-	        		transaction.put("from_currency", from_currency);
-	        		transaction.put("memo", memo);
-	        		}
-	        	
-	        	transaction_report.put(transaction);
-	        	}
-	        
-	        output.put("transaction_report", transaction_report);
-	        output.put("status", "1");
+				else
+					{
+					transaction.put("created", created);
+					transaction.put("trans_type", trans_type);
+					if (session.user_id().equals(to_account)) transaction.put("amount", "+" + amount);
+					else transaction.put("amount", "-" + amount);
+					transaction.put("from_currency", from_currency);
+					transaction.put("memo", memo);
+					}
+				
+				transaction_report.put(transaction);
+				}
+			
+			output.put("transaction_report", transaction_report);
+			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------
 

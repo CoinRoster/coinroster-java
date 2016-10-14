@@ -38,21 +38,21 @@ public class SendPasswordReset extends Utils
 			PreparedStatement select_user_xref = sql_connection.prepareStatement("select * from user_xref where email_address = ? and email_ver_flag = ?");
 			select_user_xref.setString(1, email_address);
 			select_user_xref.setInt(2, 1);
-	    	ResultSet result_set = select_user_xref.executeQuery();
+			ResultSet result_set = select_user_xref.executeQuery();
 
-	        while (result_set.next())
-	        	{
-	        	String 
-	        	
-	        	user_id = result_set.getString(1),
-	        	reset_key = Server.generate_key(user_id);
-	        	
-	        	PreparedStatement create_password_reset = sql_connection.prepareStatement("insert into password_reset(reset_key, user_id, created) values(?, ?, ?)");
-	        	create_password_reset.setString(1, reset_key);
-	        	create_password_reset.setString(2, user_id);
-	        	create_password_reset.setLong(3, System.currentTimeMillis());
-		        create_password_reset.executeUpdate();
-		        
+			while (result_set.next())
+				{
+				String 
+				
+				user_id = result_set.getString(1),
+				reset_key = Server.generate_key(user_id);
+				
+				PreparedStatement create_password_reset = sql_connection.prepareStatement("insert into password_reset(reset_key, user_id, created) values(?, ?, ?)");
+				create_password_reset.setString(1, reset_key);
+				create_password_reset.setString(2, user_id);
+				create_password_reset.setLong(3, System.currentTimeMillis());
+				create_password_reset.executeUpdate();
+				
 				String
 				
 				to_address = email_address, 
@@ -61,8 +61,8 @@ public class SendPasswordReset extends Utils
 				message_body = "Please <a href='" + Server.host + "/reset.html?" + reset_key + "'>click here</a> to reset the password for <b>" + to_user + "</b>.";
 
 				Server.send_mail(to_address, to_user, subject, message_body);
-	        	}
-	        
+				}
+			
 			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------

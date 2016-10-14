@@ -52,7 +52,7 @@ public class UpdatePassword extends Utils
 				PreparedStatement delete_password_reset = sql_connection.prepareStatement("delete from password_reset where reset_key = ?");
 				delete_password_reset.setString(1, reset_key);
 				delete_password_reset.executeUpdate();
-		        
+				
 				String
 				
 				user_id = password_reset[1],
@@ -63,26 +63,26 @@ public class UpdatePassword extends Utils
 				if (key_age < 60 * Server.minute)
 					{
 					String new_password_hash = Server.SHA1(password + user_id);
-		            
-		            PreparedStatement reset_password = sql_connection.prepareStatement("update user set password = ? where id = ?");
-		            reset_password.setString(1, new_password_hash);
-		            reset_password.setString(2, user_id);
-		            reset_password.executeUpdate();
-		            
-		            // log the user in:
-		            
-		            String[] user = db.select_user("id", user_id);
-		            
-		            String
+					
+					PreparedStatement reset_password = sql_connection.prepareStatement("update user set password = ? where id = ?");
+					reset_password.setString(1, new_password_hash);
+					reset_password.setString(2, user_id);
+					reset_password.executeUpdate();
+					
+					// log the user in:
+					
+					String[] user = db.select_user("id", user_id);
+					
+					String
 
-	        		username = user[1],
-	        		user_level = user[3];
+					username = user[1],
+					user_level = user[3];
 
-		            String new_session_token = db.create_session(username, user_id, user_level);
-		            
-		            method.response.new_session_token = new_session_token;
+					String new_session_token = db.create_session(username, user_id, user_level);
+					
+					method.response.new_session_token = new_session_token;
 
-		            output.put("status", "1");
+					output.put("status", "1");
 					}
 				else output.put("error", "Expired reset key");
 				}

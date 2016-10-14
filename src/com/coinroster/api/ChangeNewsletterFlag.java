@@ -45,10 +45,10 @@ public class ChangeNewsletterFlag extends Utils
 			set_newsletter_flag.setInt(1, Integer.parseInt(new_flag_state));
 			set_newsletter_flag.setString(2, user_id);
 			set_newsletter_flag.executeUpdate();
-	        
-	        output.put("newsletter_flag", new_flag_state);
+			
+			output.put("newsletter_flag", new_flag_state);
 
-	        output.put("status", "1");
+			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------
 

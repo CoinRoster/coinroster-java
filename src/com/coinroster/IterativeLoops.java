@@ -9,7 +9,7 @@ public class IterativeLoops
 		new Thread() 
 			{
 			public void run() 
-	        	{
+				{
 				while (Server.listening)
 					{
 					try {
@@ -19,8 +19,8 @@ public class IterativeLoops
 					catch (Exception e) 
 						{
 						Server.exception(e);
-			            }
-			        }
+						}
+					}
 				}
 			}.start();	
 
@@ -29,7 +29,7 @@ public class IterativeLoops
 		new Thread() 
 			{
 			public void run() 
-	        	{
+				{
 				while (Server.listening)
 					{
 					try {
@@ -39,8 +39,8 @@ public class IterativeLoops
 					catch (Exception e) 
 						{
 						Server.exception(e);
-			            }
-			        }
+						}
+					}
 				}
 			}.start();	
 		
@@ -49,7 +49,7 @@ public class IterativeLoops
 		new Thread() 
 			{
 			public void run() 
-	        	{
+				{
 				while (Server.listening)
 					{
 					try {
@@ -59,8 +59,8 @@ public class IterativeLoops
 					catch (Exception e) 
 						{
 						Server.exception(e);
-			            }
-			        }
+						}
+					}
 				}
 			}.start();
 		}

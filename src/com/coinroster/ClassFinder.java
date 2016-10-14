@@ -9,16 +9,16 @@ import java.util.jar.JarFile;
 
 public class ClassFinder 
 	{
-    public static List<Class<?>> find(String package_name) throws Exception
-    	{
-    	List<Class<?>> classes = new ArrayList<Class<?>>();
+	public static List<Class<?>> find(String package_name) throws Exception
+		{
+		List<Class<?>> classes = new ArrayList<Class<?>>();
 
 		String fs = File.separator;
 
-	    char 
-	    
-	    PKG_SEPARATOR = '.',
-	    DIR_SEPARATOR = fs.charAt(0);
+		char 
+		
+		PKG_SEPARATOR = '.',
+		DIR_SEPARATOR = fs.charAt(0);
 
 		String package_directory = package_name.replace(PKG_SEPARATOR, DIR_SEPARATOR);
 
@@ -26,18 +26,18 @@ public class ClassFinder
 
 		if (jar_file.isFile()) // running as Jar
 			{
-		    JarFile jar = new JarFile(jar_file);
-		    Enumeration<JarEntry> entries = jar.entries();
-		    while (entries.hasMoreElements()) 
-		    	{
-		        String name = entries.nextElement().getName();
-		        if (name.startsWith(package_directory) && name.endsWith(".class")) 
+			JarFile jar = new JarFile(jar_file);
+			Enumeration<JarEntry> entries = jar.entries();
+			while (entries.hasMoreElements()) 
+				{
+				String name = entries.nextElement().getName();
+				if (name.startsWith(package_directory) && name.endsWith(".class")) 
 					{
 					name = name.substring(name.lastIndexOf(fs) + 1, name.indexOf(".class"));
 					classes.add(Class.forName(package_name + "." + name));
 					}
-		    	}
-		    jar.close();
+				}
+			jar.close();
 			}
 		else // running in IDE
 			{
@@ -57,5 +57,5 @@ public class ClassFinder
 			}
 		
 		return classes;
-    	}
-    }
+		}
+	}
