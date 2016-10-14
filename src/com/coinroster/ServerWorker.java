@@ -20,7 +20,7 @@ public class ServerWorker extends Utils implements Runnable
 
 			log("---");
 
-			if (request.status() == 200)
+			if (request.status() == 200) // well-formed HTTP request
 				{
 				switch (request.header("handler"))
 					{
@@ -38,7 +38,24 @@ public class ServerWorker extends Utils implements Runnable
 						}
 					}
 				}
-			else new CommandHandler(request.first_line(), socket);
+			else // not well-formed, open command handler if localhost
+				{
+				String client_ip = socket.getInetAddress().toString();
+
+				boolean authorized = false;
+				
+				switch (client_ip)
+					{
+					case "/0:0:0:0:0:0:0:1":
+					case "/127.0.0.1":
+					case "/localhost":
+						authorized = true;
+						break;						
+					}
+				
+				if (authorized) new CommandHandler(request.first_line(), socket);
+				else log("Unauthorized connection: " + client_ip);
+				}
 			}
 		catch (Exception e)
 			{
