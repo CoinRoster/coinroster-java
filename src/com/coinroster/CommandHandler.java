@@ -19,14 +19,16 @@ public class CommandHandler extends Utils
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
 //------------------------------------------------------------------------------------
-			
+		
+		int tail_log_lines = 40;
+		
 		if (command.equals(""))
 			{
 			console.printf("%-20.20s  %-30.70s%n", "version", "Prints out version info");
 			console.printf("%-20.20s  %-30.70s%n", "restart", "Halts and re-starts the server; calls shutdown_hook");
 			console.printf("%-20.20s  %-30.70s%n", "halt", "Halts the server, calls shutdown_hook");
 			console.printf("%-20.20s  %-30.70s%n", "test mail", "Sends test email to developer email address");
-			console.printf("%-20.20s  %-30.70s%n", "tail log {n}", "Prints out last {n} lines of log file; default is 20 lines");
+			console.printf("%-20.20s  %-30.70s%n", "tail log {n}", "Prints out last {n} lines of log file; default is " + tail_log_lines + " lines");
 			console.printf("%-20.20s  %-30.70s%n", "clear log", "Clears the log file");
 			console.println("");
 			console.println("enter command:");
@@ -42,12 +44,10 @@ public class CommandHandler extends Utils
 			
 		// special handling for "tail log"
 		
-		int number_of_lines = 20;
-		
 		if (command.contains("tail log "))
 			{
 			try {
-				number_of_lines = Integer.parseInt(command.split(" ")[2]);
+				tail_log_lines = Integer.parseInt(command.split(" ")[2]);
 				}
 			catch (Exception ignore) {}
 			command = "tail log";
@@ -94,7 +94,7 @@ public class CommandHandler extends Utils
 					int
 					
 					end_line = log_file.size(),
-					start_line = end_line - number_of_lines;
+					start_line = end_line - tail_log_lines;
 					
 					if (start_line < 0) start_line = 0;
 					

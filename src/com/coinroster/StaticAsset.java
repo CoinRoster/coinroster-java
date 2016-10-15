@@ -25,9 +25,12 @@ public class StaticAsset extends Utils
 		String 
 		
 		root = request.header("root"),
+		admin = request.header("admin"),
 		target_url = request.target_url();
 		target_object = request.target_object();
 		subfolder = target_url.split("/")[1];
+		
+		log("admin flag: " + admin);
 
 		if (target_object.equals("")) 
 			{
@@ -40,7 +43,7 @@ public class StaticAsset extends Utils
 
 		if (session.active())
 			{
-			if (subfolder.equals("admin"))
+			if (admin.equals("true"))
 				{
 				if (session.user_level().equals("1")) authenticated = true;
 				}
@@ -51,7 +54,7 @@ public class StaticAsset extends Utils
 			{
 			response_path = no_whitespace(root + target_url);
 			
-			log("File: " + response_path);
+			log("Authorized file request: " + response_path);
 
 			File file = new File(response_path);
 
@@ -62,18 +65,7 @@ public class StaticAsset extends Utils
 				}
 			}
 
-		if (!authenticated) 
-			{
-			response.write(new String("HTTP/1.1 302 Found\r\n").getBytes());
-			response.flush();
-			
-			response.write(new String("Location: /\r\n").getBytes());
-			response.flush();
-			
-			response.write(new String("\r\n").getBytes());
-			response.flush();
-			}
-		else if (file_exists)
+		if (file_exists && authenticated)
 			{
 			response.write(new String("HTTP/1.1 200 OK\r\n").getBytes());
 			response.flush();
@@ -84,12 +76,9 @@ public class StaticAsset extends Utils
 			response.write(new String("Accept-Ranges: bytes\r\n").getBytes());
 			response.flush();
 
-			if (session.user_level().equals("1"))
-				{
-				response.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
-				response.flush();
-				}
-			
+			response.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
+			response.flush();
+
 			response.write(new String("Content-Length: "+String.valueOf(response_length)+"\r\n").getBytes());
 			response.flush();
 			
@@ -113,9 +102,13 @@ public class StaticAsset extends Utils
 			}
 		else
 			{
-			response.write(new String("HTTP/1.1 404 Not Found\r\n").getBytes());
+			log("!!!!! Unauthorized file request: " + response_path);
+			response.write(new String("HTTP/1.1 302 Found\r\n").getBytes());
 			response.flush();
-
+			
+			response.write(new String("Location: /\r\n").getBytes());
+			response.flush();
+			
 			response.write(new String("\r\n").getBytes());
 			response.flush();
 			}

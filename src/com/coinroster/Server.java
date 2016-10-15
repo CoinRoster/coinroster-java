@@ -51,6 +51,7 @@ Phase 2
 09/10/2016	6		Finished converting API, created DB class with generic DB access methods (like select_user), created new template, created new process for controlling method level, simplified MethodCall;
 13/10/2016	2		Added HttpsOnly and Secure flags to session_token, verified that these settings have taken effect; re-enabled account creation, improved messaging on sign-up page; cleaned up guest pages and authentication Javascript (root.html, signup.html, verify.html, forgot.html, reset.html)
 14/10/2016	4		Got Java, HTML, NGINX conf uploaded to Github; misc housekeeping
+15/10/2016	7		Added FAQ to website; improved messaging on account page; re-activated deposit / withdrawal buttons; split admin interface into "Accounting" and "Game" and cleaned up JavaScript; switched admin StaticAsset to header check, verified that header cannot be spoofed; added cash register address to DB, Java, Accounting panel;
 
 To-do:
 

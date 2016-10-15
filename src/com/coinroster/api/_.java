@@ -11,7 +11,7 @@ import com.coinroster.Utils;
 
 public class _ extends Utils
 	{
-	//public static String method_level = "uncomment and set!";
+	//public static String method_level = guest/standard/admin;
 	@SuppressWarnings("unused")
 	public _(MethodInstance method) throws Exception 
 		{
