@@ -31,7 +31,7 @@ public class UpdateExtAddress extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			// !! SECURITY !! this method can be called by an admin OR normal user
+			// !! SECURITY !! this method can be called by an admin OR standard user
 			
 			// an admin can use this method to update the cash register external address
 			// a normal user can only change their external address if their BTC balance is 0.0
@@ -76,6 +76,7 @@ public class UpdateExtAddress extends Utils
 				}
 			
 			output.put("status", "1");
+			
 //------------------------------------------------------------------------------------
 
 			} method.response.send(output);

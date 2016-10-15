@@ -38,7 +38,7 @@ public class TransactionReport extends Utils
 			start_date_ms = input.getLong("start_date_ms"),
 			end_date_ms = input.getLong("end_date_ms");
 
-			// !! SECURITY !! this method can be called by an admin OR normal user
+			// !! SECURITY !! this method can be called by an admin OR standard user
 			
 			// admin_panel is also a criterion for admin report so that admin users can experience the normal report from their account panes
 			
