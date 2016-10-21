@@ -80,7 +80,8 @@ public class TransactionReport extends Utils
 				amount = result_set.getString(7),
 				from_currency = result_set.getString(8),
 				to_currency = result_set.getString(9),
-				memo = result_set.getString(10);
+				memo = result_set.getString(10),
+				pending_flag = result_set.getString(11);
 
 				JSONObject transaction = new JSONObject();
 				
@@ -96,6 +97,7 @@ public class TransactionReport extends Utils
 					transaction.put("from_currency", from_currency);
 					transaction.put("to_currency", to_currency);
 					transaction.put("memo", memo);
+					transaction.put("pending_flag", pending_flag);
 					}
 				else
 					{
@@ -105,6 +107,7 @@ public class TransactionReport extends Utils
 					else transaction.put("amount", "-" + amount);
 					transaction.put("from_currency", from_currency);
 					transaction.put("memo", memo);
+					transaction.put("pending_flag", pending_flag);
 					}
 				
 				transaction_report.put(transaction);
