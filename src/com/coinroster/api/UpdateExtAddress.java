@@ -30,60 +30,54 @@ public class UpdateExtAddress extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			// !! SECURITY !! this method can be called by an admin OR standard user
+			/* !! SECURITY !! this method can be called by an admin OR standard user
 			
-			// an admin can use this method to update the cash register external address
+			an admin can use this method to update the cash register external address
 			
-			// a normal user can only change their external address if their BTC balance is 0.0
-			// or if they disabled ext_address_secure_flag when they added their wallet
+			a standard user can only change their external address if their BTC balance is 0.0
+			or if they disabled ext_address_secure_flag when they added their wallet
 
-			// we could consider locking the user_xref record for the balance check and update
-			// however, since withdrawals and deposits are manual, there's no real way to exploit
+			we could consider locking the user_xref record for the balance check and update
+			however, since withdrawals and deposits are manual, there's no real way to exploit
 
+			*/
+			
 			String user_id = null;
-	
-			int ext_address_secure_flag = 1;
-			
+
 			boolean 
 			
 			update_for_active_user = input.getBoolean("update_for_active_user"),
 			do_update = false;
 			
-			if (update_for_active_user)
-				{
-				user_id = session.user_id();
-				
-				String[] user_xref = db.select_user_xref("id", user_id);
-				
-				String current_ext_address = user_xref[3];
-								
-				// if the user has never connected a Bitcoin wallet...
-				
-				if (current_ext_address == null)
-					{
-					do_update = true;
-					
-					// this is the one occaision where we allow user to override ext_address_secure_flag
-					// it is defaulted to 1 when user_xref record is created, but here they can set to 0
-					
-					ext_address_secure_flag = input.getInt("ext_address_secure_flag");
-					}
-				else // user has added a wallet before, ext_address_secure_flag comes from record
-					{
-					ext_address_secure_flag = Integer.parseInt(user_xref[10]);
-					
-					double user_btc_balance = Double.parseDouble(user_xref[1]);
-				
-					if (ext_address_secure_flag == 0 || user_btc_balance == 0.0) do_update = true;
-					}
-				}
-			else // try to set ext_address for cash register
+			if (!update_for_active_user) // update for cash register
 				{
 				if (session.user_level().equals("1")) // must be admin
 					{
 					user_id = db.get_id_for_username("internal_cash_register");
 					do_update = true;
 					}
+				else break method;
+				}
+			
+			else // update for active user
+				{
+				user_id = session.user_id();
+				
+				String[] user_xref = db.select_user_xref("id", user_id);
+				
+				String current_ext_address = user_xref[3];
+
+				int ext_address_secure_flag = Integer.parseInt(user_xref[10]);
+				
+				double user_btc_balance = Double.parseDouble(user_xref[1]);
+				
+				// a user can change their ext_address ...
+				
+				// 1) if current_ext_address has never been set before
+				// 2) if security has been disabled
+				// 3) if btc balance is 0.0
+			
+				if (current_ext_address == null || ext_address_secure_flag == 0 || user_btc_balance == 0.0) do_update = true;
 				}
 				
 			if (do_update)
@@ -92,10 +86,9 @@ public class UpdateExtAddress extends Utils
 				
 				if (ext_address.length() == 0) break method;
 				
-				PreparedStatement update_ext_address = sql_connection.prepareStatement("update user_xref set ext_address = ?, ext_address_secure_flag = ? where id = ?");
+				PreparedStatement update_ext_address = sql_connection.prepareStatement("update user_xref set ext_address = ? where id = ?");
 				update_ext_address.setString(1, ext_address);
-				update_ext_address.setInt(2, ext_address_secure_flag);
-				update_ext_address.setString(3, user_id);
+				update_ext_address.setString(2, user_id);
 				update_ext_address.executeUpdate();
 				}
 			

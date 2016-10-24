@@ -53,12 +53,16 @@ Phase 2
 14/10/2016	4		Got Java, HTML, NGINX conf uploaded to Github; misc housekeeping
 15/10/2016	7		Added FAQ to website; improved messaging on account page; re-activated deposit / withdrawal buttons; split admin interface into "Accounting" and "Game" and cleaned up JavaScript; switched admin StaticAsset to header check, verified that header cannot be spoofed; added cash register address to DB, Java, Accounting panel;
 21/10/2016	4		Started working on withdrawal pathway; created simple_modal include for front-end messaging
-22/10/2016	9		Finished withdrawal front-end; added functionality to add and change ext_address; started working on deposit front-end
+22/10/2016	7		Finished withdrawal front-end; added functionality to add and change ext_address; started working on deposit front-end
+23/10/2016	9		Continued working on deposit pathway; had to think through the process for connecting a bitcoin wallet; almost done with connecting a bitcoin wallet and enabling/disabling wallet changes
+24/10/2016	4		Finished connected wallet interface, methods, and related security; added messaging related to connected wallet security;
 
 To-do:
 
 SQL - build indexes on IDs
 Java - more granular locking on SQL calls
+Prevent login brute forcing with incrementing delay
+Add audit logs for login, transaction, ext_address change, etc.
 
 Update live database:
 
