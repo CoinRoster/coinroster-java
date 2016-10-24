@@ -53,6 +53,7 @@ Phase 2
 14/10/2016	4		Got Java, HTML, NGINX conf uploaded to Github; misc housekeeping
 15/10/2016	7		Added FAQ to website; improved messaging on account page; re-activated deposit / withdrawal buttons; split admin interface into "Accounting" and "Game" and cleaned up JavaScript; switched admin StaticAsset to header check, verified that header cannot be spoofed; added cash register address to DB, Java, Accounting panel;
 21/10/2016	4		Started working on withdrawal pathway; created simple_modal include for front-end messaging
+22/10/2016	9		Finished withdrawal front-end; added functionality to add and change ext_address; started working on deposit front-end
 
 To-do:
 
@@ -63,6 +64,7 @@ Update live database:
 
 Create internal_cash_register, set level to 2
 alter table transaction add pending_flag int default 0;
+alter table user_xref add ext_address_secure_flag int default 1;
 
 */
 

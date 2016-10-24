@@ -29,8 +29,6 @@ public class StaticAsset extends Utils
 		target_url = request.target_url();
 		target_object = request.target_object();
 		subfolder = target_url.split("/")[1];
-		
-		log("admin flag: " + admin);
 
 		if (target_object.equals("")) 
 			{

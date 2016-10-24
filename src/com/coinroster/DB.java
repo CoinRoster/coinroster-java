@@ -112,21 +112,23 @@ public class DB
 			email_ver_flag = result_set.getString(7),
 			newsletter_flag = result_set.getString(8),
 			referral_program = result_set.getString(9),
-			referrer = result_set.getString(10);
+			referrer = result_set.getString(10),
+			ext_address_secure_flag = result_set.getString(11);
 
 			user_xref = new String[]
 				{
-				user_id,
-				btc_balance,
-				rc_balance,
-				ext_address,
-				email_address,
-				email_ver_key,
-				email_ver_flag,
-				newsletter_flag,
-				referral_program,
-				referrer
-				};
+				user_id, // 0
+				btc_balance, // 1
+				rc_balance, // 2
+				ext_address, // 3
+				email_address, // 4
+				email_ver_key, // 5
+				email_ver_flag, // 6
+				newsletter_flag, // 7
+				referral_program, // 8
+				referrer, // 9
+				ext_address_secure_flag // 10
+			 	};
 			}
 
 		return user_xref;
