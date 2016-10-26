@@ -56,6 +56,7 @@ Phase 2
 22/10/2016	7		Finished withdrawal front-end; added functionality to add and change ext_address; started working on deposit front-end
 23/10/2016	9		Continued working on deposit pathway; had to think through the process for connecting a bitcoin wallet; almost done with connecting a bitcoin wallet and enabling/disabling wallet changes
 24/10/2016	4		Finished connected wallet interface, methods, and related security; added messaging related to connected wallet security;
+25/10/2016	2		Completed deposit front-end; created working API placeholders for UserDeposit and UserWithdrawal that receive deposit and withdrawal requests; created function that applies bitcoin conversion to any input with btc-input="true"
 
 To-do:
 
