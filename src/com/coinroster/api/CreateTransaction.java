@@ -300,7 +300,7 @@ public class CreateTransaction extends Utils
 				message_body += "<br/>";
 				message_body += "Date and time: <span style='font-weight:bold'>" + formatter.format(calendar.getTime()) + "</span>";
 				message_body += "<br/>";
-				message_body += "Amount: <span style='font-weight:bold'>" + transaction_amount + "</span>";
+				message_body += "Amount: <span style='font-weight:bold'>" + format_btc(transaction_amount) + "</span>";
 				message_body += "<br/>";
 				message_body += "Currency: <span style='font-weight:bold'>" + from_currency + "</span>";
 				message_body += "<br/>";

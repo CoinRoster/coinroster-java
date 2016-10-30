@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -17,7 +18,18 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 public class Utils 
 	{
-
+	public static boolean is_valid_btc(double amount)
+		{
+		if (amount == Double.parseDouble(format_btc(amount))) return true;
+		return false;
+		}
+	
+	public static String format_btc(double amount)
+		{
+		DecimalFormat btc_formatter = new DecimalFormat("#######0.00000000");
+		return btc_formatter.format(amount);
+		}
+	
 	public static String SHA1(String data) 
 		{
 		String digest = DigestUtils.sha1Hex(data);

@@ -57,19 +57,19 @@ Phase 2
 23/10/2016	9		Continued working on deposit pathway; had to think through the process for connecting a bitcoin wallet; almost done with connecting a bitcoin wallet and enabling/disabling wallet changes
 24/10/2016	4		Finished connected wallet interface, methods, and related security; added messaging related to connected wallet security;
 25/10/2016	2		Completed deposit front-end; created working API placeholders for UserDeposit and UserWithdrawal that receive deposit and withdrawal requests; created function that applies bitcoin conversion to any input with btc-input="true"
+29/10/2016	1		Started working on withdrawal backend;
+30/10/2016	5		Completed cash register; pushed everything to live site;
 
 To-do:
 
 SQL - build indexes on IDs
 Java - more granular locking on SQL calls
 Prevent login brute forcing with incrementing delay
-Add audit logs for login, transaction, ext_address change, etc.
-
-Update live database:
-
-Create internal_cash_register, set level to 2
-alter table transaction add pending_flag int default 0;
-alter table user_xref add ext_address_secure_flag int default 1;
+Add more verbose audit logs (user id, ip address, etc)
+Create Class for transaction confirmation emails
+In deposit/withdrawal confirmation html, separate messages if no email added prompting user to add email
+Ability to load account.html with a subwindow opened
+Ability to load amin panel on a specific tab / reload and stay in same tab
 
 */
 

@@ -136,6 +136,56 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
+	// SELECT USER XREF
+
+	public String[] select_transaction(int transaction_id) throws Exception
+		{
+		String[] transaction = null;
+
+		PreparedStatement select_transaction  = sql_connection.prepareStatement("select * from transaction where id = ?");
+		select_transaction.setInt(1, transaction_id);
+
+		ResultSet result_set = select_transaction.executeQuery();
+
+		if (result_set.next())
+			{
+			String 
+			
+			id = result_set.getString(1),
+			created = result_set.getString(2),
+			created_by = result_set.getString(3),
+			trans_type = result_set.getString(4),
+			from_account = result_set.getString(5),
+			to_account = result_set.getString(6),
+			amount = result_set.getString(7),
+			from_currency = result_set.getString(8),
+			to_currency = result_set.getString(9),
+			memo = result_set.getString(10),
+			pending_flag = result_set.getString(11),
+			ext_address = result_set.getString(12);
+
+			transaction = new String[]
+				{
+				id, // 0
+				created, // 1
+				created_by, // 2
+				trans_type, // 3
+				from_account, // 4
+				to_account, // 5
+				amount, // 6
+				from_currency, // 7
+				to_currency, // 8
+				memo, // 9
+				pending_flag, // 10
+				ext_address // 11
+			 	};
+			}
+
+		return transaction;
+		}
+
+//------------------------------------------------------------------------------------
+	
 	// SELECT REFERRAL
 
 	public String[] select_referral(String referral_key) throws Exception
