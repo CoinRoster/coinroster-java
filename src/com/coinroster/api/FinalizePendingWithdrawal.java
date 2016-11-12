@@ -50,7 +50,7 @@ public class FinalizePendingWithdrawal extends Utils
 				
 				PreparedStatement update_transaction = sql_connection.prepareStatement("update transaction set pending_flag = 0, created_by = ? where id = ?");
 				update_transaction.setString(1, session.user_id());
-				update_transaction.setDouble(2, transaction_id);
+				update_transaction.setInt(2, transaction_id);
 				update_transaction.executeUpdate();
 				
 				String[] user_xref = db.select_user_xref("id", user_account);

@@ -47,6 +47,7 @@ Total:		136
 
 Phase 2
 
+Oct
 06/10/2016	4		Incorporated latest developments from other Java projects (cache and rerun, command handler upgrades, crons, saving and loading of assets); started converting API into package with classes rather than a single class with methods - for scalability; misc refactoring;
 09/10/2016	6		Finished converting API, created DB class with generic DB access methods (like select_user), created new template, created new process for controlling method level, simplified MethodCall;
 13/10/2016	2		Added HttpsOnly and Secure flags to session_token, verified that these settings have taken effect; re-enabled account creation, improved messaging on sign-up page; cleaned up guest pages and authentication Javascript (root.html, signup.html, verify.html, forgot.html, reset.html)
@@ -59,17 +60,23 @@ Phase 2
 25/10/2016	2		Completed deposit front-end; created working API placeholders for UserDeposit and UserWithdrawal that receive deposit and withdrawal requests; created function that applies bitcoin conversion to any input with btc-input="true"
 29/10/2016	1		Started working on withdrawal backend;
 30/10/2016	5		Completed cash register; pushed everything to live site;
+Total		55
+
+Nov
+12/11/2016	2		Changed deposit pathway so that real pending transaction is created and visible in user account; mapped out and created pool table; started work on admin/game/create_contest
 
 To-do:
+
+drop table pending_deposit;
 
 SQL - build indexes on IDs
 Java - more granular locking on SQL calls
 Prevent login brute forcing with incrementing delay
 Add more verbose audit logs (user id, ip address, etc)
 Create Class for transaction confirmation emails
-In deposit/withdrawal confirmation html, separate messages if no email added prompting user to add email
 Ability to load account.html with a subwindow opened
 Ability to load amin panel on a specific tab / reload and stay in same tab
+Generalized methods for sending emails
 
 */
 
@@ -137,7 +144,7 @@ public class Server extends Utils
 	java_object_path,
 	jar_filename = "coinroster.jar",
 	
-	version = "1.2 - api break-out",
+	version = "1.3 - finished cash register",
 	start_time = new SimpleDateFormat("MMM d h:mm:ss a").format(new Date()),
 
 	sql_database = "jdbc:mysql://localhost:3306/coinroster",

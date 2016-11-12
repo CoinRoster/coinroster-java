@@ -2,6 +2,8 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 import org.json.JSONObject;
 
@@ -31,7 +33,9 @@ public class UserDeposit extends Utils
 		method : {
 			
 //------------------------------------------------------------------------------------
-		
+
+			long transaction_timestamp = System.currentTimeMillis();
+			
 			double amount_to_deposit = input.getDouble("amount_to_deposit");
 			
 			String 
@@ -40,7 +44,14 @@ public class UserDeposit extends Utils
 			username = session.username(),
 			ext_address = input.getString("user_ext_address"),
 			internal_cash_register_id = db.get_id_for_username("internal_cash_register"),
-			cash_register_address = input.getString("cash_register_address");
+			cash_register_address = input.getString("cash_register_address"),					
+			created_by = user_id,
+			transaction_type = "BTC-DEPOSIT",
+			from_account = db.get_id_for_username("internal_btc_liability"),
+			to_account = user_id,
+			from_currency = "BTC",
+			to_currency = "BTC",
+			memo = "Method: UserDeposit";
 			
 			String[] user_xref = db.select_user_xref("id", user_id);
 			
@@ -49,14 +60,26 @@ public class UserDeposit extends Utils
 			to_address = user_xref[4],
 			email_ver_flag = user_xref[6];
 			
-			PreparedStatement new_transaction = sql_connection.prepareStatement("insert into pending_deposit(created, created_by, ext_address, cash_register_address, amount) values(?, ?, ?, ?, ?)");				
-			new_transaction.setLong(1, System.currentTimeMillis());
-			new_transaction.setString(2, user_id);
-			new_transaction.setString(3, ext_address);
-			new_transaction.setString(4, cash_register_address);
-			new_transaction.setDouble(5, amount_to_deposit);
-			new_transaction.executeUpdate();
-
+			int pending_flag = 1;
+			
+			PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+			new_transaction.setLong(1, transaction_timestamp);
+			new_transaction.setString(2, created_by);
+			new_transaction.setString(3, transaction_type);
+			new_transaction.setString(4, from_account);
+			new_transaction.setString(5, to_account);
+			new_transaction.setDouble(6, amount_to_deposit);
+			new_transaction.setString(7, from_currency);
+			new_transaction.setString(8, to_currency);
+			new_transaction.setString(9, memo);
+			new_transaction.setInt(10, pending_flag);
+			new_transaction.setString(11, ext_address);
+			new_transaction.execute();
+			
+			ResultSet rs = new_transaction.getGeneratedKeys();
+		    rs.next();
+		    int transaction_id = rs.getInt(1);
+		    
 			if (to_address != null && email_ver_flag.equals("1"))
 				{
 				String
@@ -69,6 +92,8 @@ public class UserDeposit extends Utils
 				message_body += "<br/>";
 				message_body += "We have received your request to deposit Bitcoins into your CoinRoster account. Please follow the transfer instructions below. We will credit your account as soon as we receive your deposit.";
 				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Transaction ID: <span style='font-weight:bold'>" + transaction_id + "</span>";
 				message_body += "<br/>";
 				message_body += "Send from: <span style='font-weight:bold'>" + ext_address + "</span>";
 				message_body += "<br/>";

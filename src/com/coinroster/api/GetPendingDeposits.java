@@ -33,7 +33,7 @@ public class GetPendingDeposits extends Utils
 			
 //------------------------------------------------------------------------------------
 
-			PreparedStatement select_transaction  = sql_connection.prepareStatement("select * from pending_deposit where completed = 0");
+			PreparedStatement select_transaction  = sql_connection.prepareStatement("select * from transaction where trans_type = 'BTC-DEPOSIT' and pending_flag = 1");
 
 			ResultSet result_set = select_transaction.executeQuery();
 			
@@ -42,22 +42,25 @@ public class GetPendingDeposits extends Utils
 			while (result_set.next())
 				{
 				String 
-				
+		
 				transaction_id = result_set.getString(1),
 				created = result_set.getString(2),
 				created_by = result_set.getString(3),
-				ext_address = result_set.getString(4),
-				cash_register_address = result_set.getString(5),
-				amount = result_set.getString(6);
-
+				trans_type = result_set.getString(4),
+				to_account = result_set.getString(6),
+				amount = result_set.getString(7),
+				to_currency = result_set.getString(9),
+				ext_address = result_set.getString(12);
+		
 				JSONObject transaction = new JSONObject();
 
 				transaction.put("transaction_id", transaction_id);
 				transaction.put("created", created);
-				transaction.put("created_by", created_by);
-				transaction.put("ext_address", ext_address);
-				transaction.put("cash_register_address", cash_register_address);
+				transaction.put("trans_type", trans_type);
+				transaction.put("to_account", to_account);
 				transaction.put("amount", amount);
+				transaction.put("to_currency", to_currency);
+				transaction.put("ext_address", ext_address);
 				
 				pending_deposits.put(transaction);
 				}
