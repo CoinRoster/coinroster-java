@@ -39,7 +39,7 @@ public class ScrapePlayerOdds extends Utils
 			
 			output.put("url_ok", "1");
 			
-			JSONArray player_odds_list = new JSONArray();
+			JSONArray player_odds_array = new JSONArray();
 			   
 			int number_of_players = 30;
 			
@@ -55,10 +55,10 @@ public class ScrapePlayerOdds extends Utils
 				player.put("name", player_name);
 				player.put("odds", player_odds);
 				
-				player_odds_list.put(player);
+				player_odds_array.put(player);
 				}
 			
-			output.put("player_odds_list", player_odds_list);
+			output.put("player_odds_array", player_odds_array);
 			
 			output.put("status", "1");
 			

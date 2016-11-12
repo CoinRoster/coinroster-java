@@ -63,14 +63,16 @@ Oct
 Total		55
 
 Nov
-12/11/2016	2		Changed deposit pathway so that real pending transaction is created and visible in user account; mapped out and created pool table; started work on admin/game/create_contest
+12/11/2016	7		Changed deposit pathway so that real pending transaction is created and visible in user account; mapped out and created pool table; created placeholder method for player odds scraper; completed "Create Pool" form in admin/game;
 
 To-do:
 
 drop table pending_deposit;
+create table if not exists pool ...;
 
 SQL - build indexes on IDs
 Java - more granular locking on SQL calls
+Java - review validation of things like BTC values (not negative, etc)
 Prevent login brute forcing with incrementing delay
 Add more verbose audit logs (user id, ip address, etc)
 Create Class for transaction confirmation emails
