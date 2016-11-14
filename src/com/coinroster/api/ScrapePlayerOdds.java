@@ -1,6 +1,7 @@
 package com.coinroster.api;
 
 import java.sql.Connection;
+import java.text.DecimalFormat;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -45,15 +46,16 @@ public class ScrapePlayerOdds extends Utils
 			
 			for (int i=0; i<number_of_players; i++)
 				{
-				String 
+				String player_name = "Player " + i;
 				
-				player_name = "Player " + i,
-				player_odds = (i+5) + "/1";
+				double player_odds = 1 + 1 / (double)(i+5);
+				
+				DecimalFormat F = new DecimalFormat("#####.###");
 
 				JSONObject player = new JSONObject();
 				
 				player.put("name", player_name);
-				player.put("odds", player_odds);
+				player.put("odds", F.format(player_odds));
 				
 				player_odds_array.put(player);
 				}
