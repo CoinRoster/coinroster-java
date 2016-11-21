@@ -65,11 +65,9 @@ Total		55
 Nov
 12/11/2016	7		Changed deposit pathway so that real pending transaction is created and visible in user account; mapped out and created pool table; created placeholder method for player odds scraper; completed "Create Pool" form in admin/game;
 13/11/2016	3		Created CreatePool method; Pool Creation pathway - everything is working; created Contest Report front-end and back-end;
+19/11/2016	3		Fractional odds scraper - works on vegasinsider.com and skybet.com
 
 To-do:
-
-drop table pending_deposit;
-create table if not exists pool ...;
 
 SQL - build indexes on IDs
 Java - more granular locking on SQL calls
