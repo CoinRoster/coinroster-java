@@ -74,7 +74,6 @@ Java - more granular locking on SQL calls
 Java - review validation of things like BTC values (not negative, etc)
 Prevent login brute forcing with incrementing delay
 Add more verbose audit logs (user id, ip address, etc)
-Create Class for transaction confirmation emails
 Ability to load account.html with a subwindow opened
 Ability to load amin panel on a specific tab / reload and stay in same tab
 Generalized methods for sending emails

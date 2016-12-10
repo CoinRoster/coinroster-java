@@ -81,7 +81,8 @@ public class CreatePool extends Utils
             
             min_users = input.getInt("min_users"),
             max_users = input.getInt("max_users"), // 0 = unlimited
-            entries_per_user = 0;
+            entries_per_user = 0,
+            roster_size = input.getInt("roster_size");
             
             if (min_users < 2)
             	{
@@ -105,6 +106,12 @@ public class CreatePool extends Utils
             	default:
             		output.put("error", "Invalid value for [entries per user]");
             		break method;
+            	}
+            
+            if (roster_size < 0)
+            	{
+            	output.put("error", "Roster size cannobe be negative");
+        		break method;
             	}
 
             JSONArray
@@ -240,11 +247,12 @@ public class CreatePool extends Utils
             log("min_users: " + min_users);
             log("max_users: " + max_users);
             log("entries_per_user: " + entries_per_user);
+            log("roster_size: " + roster_size);
             log("pay_table: " + pay_table);
             log("salary_cap: " + salary_cap);
             log("odds_table: " + odds_table);
             
-			PreparedStatement create_pool = sql_connection.prepareStatement("insert into pool(category, sub_category, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, odds_table, created, created_by) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+			PreparedStatement create_pool = sql_connection.prepareStatement("insert into pool(category, sub_category, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, odds_table, created, created_by, roster_size) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 			create_pool.setString(1, category);
 			create_pool.setString(2, sub_category);
 			create_pool.setString(3, title);
@@ -261,6 +269,7 @@ public class CreatePool extends Utils
 			create_pool.setString(14, odds_table.toString());
 			create_pool.setLong(15, System.currentTimeMillis());
 			create_pool.setString(16, session.user_id());
+			create_pool.setInt(17, roster_size);
 			create_pool.executeUpdate();
             
             output.put("status", "1");

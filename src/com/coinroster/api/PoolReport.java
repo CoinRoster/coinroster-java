@@ -58,6 +58,7 @@ public class PoolReport extends Utils
 				int entries_per_user = result_set.getInt(16);
 				Long registration_deadline = result_set.getLong(17);
 				int status = result_set.getInt(18);
+				int roster_size = result_set.getInt(19);
 				
 				created_by = db.get_username_for_id(created_by);
 				
@@ -80,6 +81,7 @@ public class PoolReport extends Utils
 				pool.put("max_users", max_users);
 				pool.put("entries_per_user", entries_per_user);
 				pool.put("registration_deadline", registration_deadline);
+				pool.put("roster_size", roster_size);
 				pool.put("status", status);
 				
 				pool_report.put(pool);
