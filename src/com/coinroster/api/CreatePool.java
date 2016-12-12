@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
@@ -14,7 +13,6 @@ import com.coinroster.Utils;
 public class CreatePool extends Utils
 	{
 	public static String method_level = "admin";
-	@SuppressWarnings("unused")
 	public CreatePool(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -25,8 +23,6 @@ public class CreatePool extends Utils
 		Session session = method.session;
 		
 		Connection sql_connection = method.sql_connection;
-
-		DB db = new DB(method);
 
 		method : {
 			

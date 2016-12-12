@@ -26,7 +26,7 @@ public class SendReferral extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -58,7 +58,11 @@ public class SendReferral extends Utils
 			String
 
 			subject = "CoinRoster invitation from " + referrer_provided_name,
-			message_body = "You have been invited by <span style='font-weight:bold'>" + referrer_provided_name + "</span> to join CoinRoster.<br></br><br></br>Please <a href='" + Server.host + "/signup.html?" + referral_key + "'>click here</a> to create an account.";
+			
+			message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster.";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "Please <a href='" + Server.host + "/signup.html?" + referral_key + "'>click here</a> to create an account.";
 
 			Server.send_mail(email_address, email_contact_name, subject, message_body);
 

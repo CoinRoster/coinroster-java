@@ -1,5 +1,7 @@
 package com.coinroster.api;
 
+import java.sql.Connection;
+
 import org.json.JSONObject;
 
 import com.coinroster.DB;
@@ -19,8 +21,10 @@ public class CheckUsername extends Utils
 		output = method.output;
 		
 		Session session = method.session;
+		
+		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			

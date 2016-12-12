@@ -3,19 +3,16 @@ package com.coinroster;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Connection;
-import java.sql.SQLException;
 
 import org.json.JSONObject;
 
 public class DB 
 	{
-	static Connection sql_connection;
-	static Session session;
+	Connection sql_connection;
 	
-	public DB (MethodInstance method)
+	public DB (Connection sql_connection)
 		{
-		sql_connection = method.sql_connection;
-		session = method.session;
+		this.sql_connection = sql_connection;
 		}
 
 //------------------------------------------------------------------------------------
@@ -161,6 +158,68 @@ public class DB
 		}
 
 //------------------------------------------------------------------------------------
+
+	// SELECT POOL
+	
+	public JSONObject select_pool(int pool_id) throws Exception
+		{
+		JSONObject pool = null;
+
+		PreparedStatement select_user = sql_connection.prepareStatement("select * from pool where id = ?");
+		select_user.setInt(1, pool_id);
+		ResultSet result_set = select_user.executeQuery();
+
+		if (result_set.next())
+			{
+			pool = new JSONObject();
+			
+			//int pool_id = result_set.getInt(1);
+			Long created = result_set.getLong(2);
+			String created_by = result_set.getString(3);
+			String category = result_set.getString(4);
+			String sub_category = result_set.getString(5);
+			String title = result_set.getString(6);
+			String description = result_set.getString(7);
+			String settlement_type = result_set.getString(8);
+			String pay_table = result_set.getString(9);
+			String odds_table = result_set.getString(10);
+			double rake = result_set.getDouble(11);
+			double salary_cap = result_set.getDouble(12);
+			double cost_per_entry = result_set.getDouble(13);
+			int min_users = result_set.getInt(14);
+			int max_users = result_set.getInt(15);
+			int entries_per_user = result_set.getInt(16);
+			Long registration_deadline = result_set.getLong(17);
+			int status = result_set.getInt(18);
+			int roster_size = result_set.getInt(19);
+			String odds_source = result_set.getString(20);
+			
+			pool.put("pool_id", pool_id);
+			pool.put("created", created);
+			pool.put("created_by", created_by);
+			pool.put("category", category);
+			pool.put("sub_category", sub_category);
+			pool.put("title", title);
+			pool.put("description", description);
+			pool.put("settlement_type", settlement_type);
+			pool.put("pay_table", pay_table);
+			pool.put("odds_table", odds_table);
+			pool.put("rake", rake);
+			pool.put("salary_cap", salary_cap);
+			pool.put("cost_per_entry", cost_per_entry);
+			pool.put("min_users", min_users);
+			pool.put("max_users", max_users);
+			pool.put("entries_per_user", entries_per_user);
+			pool.put("registration_deadline", registration_deadline);
+			pool.put("status", status);
+			pool.put("roster_size", roster_size);
+			pool.put("odds_source", odds_source);
+			}
+
+		return pool;
+		}
+
+//------------------------------------------------------------------------------------
 	
 	// SELECT REFERRAL
 
@@ -223,49 +282,6 @@ public class DB
 			}
 
 		return password_reset;
-		}
-
-//------------------------------------------------------------------------------------
-
-	// CREATE SESSION
-
-	public String create_session(String username, String user_id, int user_level) throws Exception
-		{
-		if (session.active()) Server.kill_session(session.token());
-
-		String new_session_token = Server.generate_key(user_id);
-		
-		Long now = System.currentTimeMillis();
-
-		Server.session_map.put
-			(
-			new_session_token, 
-			new String[]
-				{
-				username,
-				user_id,
-				Integer.toString(user_level),
-				Long.toString(now)
-				}
-			);
-
-		// update last login:
-		
-		update_last_login(now, user_id);
-		
-		return new_session_token;
-		}
-	
-//------------------------------------------------------------------------------------
-
-	// UPDATE LAST LOGIN
-	
-	public void update_last_login(Long now, String user_id) throws SQLException
-		{
-		PreparedStatement update_last_login = sql_connection.prepareStatement("update user set last_login = ? where id = ?");
-		update_last_login.setLong(1, now);
-		update_last_login.setString(2, user_id);
-		update_last_login.executeUpdate();
 		}
 
 //------------------------------------------------------------------------------------

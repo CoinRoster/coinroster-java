@@ -24,7 +24,7 @@ public class GetAccountDetails extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -36,13 +36,13 @@ public class GetAccountDetails extends Utils
 			
 			if (user != null)
 				{
-				output.put("btc_balance", user.getDouble("btc_balance"));
-				output.put("rc_balance", user.getDouble("rc_balance"));
-				output.put("ext_address", user.getString("ext_address"));
-				output.put("email_address", user.getString("email_address"));
-				output.put("email_ver_flag", user.getInt("email_ver_flag"));
-				output.put("newsletter_flag", user.getInt("newsletter_flag"));
-				output.put("ext_address_secure_flag", user.getInt("ext_address_secure_flag"));
+				output.put("btc_balance", user.get("btc_balance"));
+				output.put("rc_balance", user.get("rc_balance"));
+				output.put("ext_address", user.get("ext_address"));
+				output.put("email_address", user.get("email_address"));
+				output.put("email_ver_flag", user.get("email_ver_flag"));
+				output.put("newsletter_flag", user.get("newsletter_flag"));
+				output.put("ext_address_secure_flag", user.get("ext_address_secure_flag"));
 				
 				output.put("status", "1");
 				}

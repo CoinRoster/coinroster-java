@@ -1,17 +1,20 @@
 package com.coinroster.api;
 
+import java.sql.Connection;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
-public class Logout extends Utils
+public class CreateEntry extends Utils
 	{
-	public static String method_level = "guest";
+	public static String method_level = "standard";
 	@SuppressWarnings("unused")
-	public Logout(MethodInstance method) throws Exception 
+	public CreateEntry(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -19,13 +22,20 @@ public class Logout extends Utils
 		output = method.output;
 		
 		Session session = method.session;
+		
+		Connection sql_connection = method.sql_connection;
+
+		DB db = new DB(sql_connection);
 
 		method : {
 			
 //------------------------------------------------------------------------------------
 		
-			if (session.active()) Server.kill_session(session.token());
-			output.put("status", "1");
+			int pool_id = input.getInt("pool_id");
+			JSONArray roster = input.getJSONArray("roster");
+			
+			log("Pool id: " + pool_id);
+			log("Roster: " + roster);
 			
 //------------------------------------------------------------------------------------
 

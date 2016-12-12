@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,9 +19,7 @@ import java.util.regex.Pattern;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-import com.coinroster.Session;
 import com.coinroster.Utils;
 
 public class ScrapePlayerOdds extends Utils
@@ -35,12 +32,6 @@ public class ScrapePlayerOdds extends Utils
 		
 		input = method.input,
 		output = method.output;
-		
-		Session session = method.session;
-		
-		Connection sql_connection = method.sql_connection;
-
-		DB db = new DB(method);
 
 		method : {
 			

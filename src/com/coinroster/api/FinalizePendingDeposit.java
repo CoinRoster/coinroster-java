@@ -11,6 +11,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UserMail;
 
 public class FinalizePendingDeposit extends Utils
 	{
@@ -26,7 +27,7 @@ public class FinalizePendingDeposit extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -103,37 +104,26 @@ public class FinalizePendingDeposit extends Utils
 
 			String
 			
-			email_address = user.getString("email_address"),
-			username = session.username();
+			subject = "Deposit confirmation", 
 			
-			int email_ver_flag = user.getInt("email_ver_flag");
+			message_body = "Hi <b><!--USERNAME--></b>,";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "We have received your deposit and have credited your account!";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+			message_body += "<br/>";
+			message_body += "Amount received: <b>" + format_btc(received_amount) + " BTC</b>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "Please do not reply to this email.";
 			
-			if (email_address != null && email_ver_flag == 1)
-				{
-				String
-				
-				subject = "Deposit confirmation", 
-				message_body = "";
-				
-				message_body += "Hi <span style='font-weight:bold'>" + username + "</span>,";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "We have received your deposit and have credited your account!";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Transaction ID: <span style='font-weight:bold'>" + transaction_id + "</span>";
-				message_body += "<br/>";
-				message_body += "Amount received: <span style='font-weight:bold'>" + format_btc(received_amount) + " BTC</span>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
-				
-				Server.send_mail(email_address, username, subject, message_body);
-				}
+			new UserMail(user, subject, message_body);
 			
 			output.put("status", "1");
 			

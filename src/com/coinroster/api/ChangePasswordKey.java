@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 
 import org.json.JSONObject;
 
-import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
@@ -27,8 +26,6 @@ public class ChangePasswordKey extends Utils
 		Session session = method.session;
 		
 		Connection sql_connection = method.sql_connection;
-
-		DB db = new DB(method);
 
 		method : {
 			

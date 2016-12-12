@@ -13,6 +13,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UserMail;
 
 public class FinalizePendingWithdrawal extends Utils
 	{
@@ -29,7 +30,7 @@ public class FinalizePendingWithdrawal extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -55,49 +56,38 @@ public class FinalizePendingWithdrawal extends Utils
 				
 				JSONObject user = db.select_user("id", user_id);
 		
+				DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+				Calendar calendar = Calendar.getInstance();
+				
 				String
 				
-				email_address = user.getString("email_address"),
-				username = session.username();
+				subject = "Your withdrawal has been processed", 
 				
-				int email_ver_flag = user.getInt("email_ver_flag");
-				
-				if (email_address != null && email_ver_flag == 1)
-					{
-					DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+				message_body = "Hi <b><!--USERNAME--></b>,";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "One of our administrators has processed your withdrawal. The funds should arrive in your Bitcoin wallet soon.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+				message_body += "<br/>";
+				message_body += "Type: <b>" + transaction_type + "</b>";
+				message_body += "<br/>";
+				message_body += "Date and time: <b>" + formatter.format(calendar.getTime()) + "</b>";
+				message_body += "<br/>";
+				message_body += "Amount: <b>" + format_btc(Double.parseDouble(amount)) + "</b>";
+				message_body += "<br/>";
+				message_body += "To (wallet on file): <b>" + ext_address + "</b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Please do not reply to this email.";
 
-					Calendar calendar = Calendar.getInstance();
-					
-					String
-					
-					subject = "Your withdrawal has been processed", 
-					message_body = "";
-					
-					message_body += "Hi <span style='font-weight:bold'>" + username + "</span>,";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "One of our administrators has processed your withdrawal. The funds should arrive in your Bitcoin wallet soon.";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "Transaction ID: <span style='font-weight:bold'>" + transaction_id + "</span>";
-					message_body += "<br/>";
-					message_body += "Type: <span style='font-weight:bold'>" + transaction_type + "</span>";
-					message_body += "<br/>";
-					message_body += "Date and time: <span style='font-weight:bold'>" + formatter.format(calendar.getTime()) + "</span>";
-					message_body += "<br/>";
-					message_body += "Amount: <span style='font-weight:bold'>" + format_btc(Double.parseDouble(amount)) + "</span>";
-					message_body += "<br/>";
-					message_body += "To (wallet on file): <span style='font-weight:bold'>" + ext_address + "</span>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "Please do not reply to this email.";
-					
-					Server.send_mail(email_address, username, subject, message_body);
-					}
+				new UserMail(user, subject, message_body);
 				}
 			else output.put("error", "Transaction not found");
 			

@@ -14,7 +14,6 @@ import com.coinroster.Utils;
 public class UpdatePassword extends Utils
 	{
 	public static String method_level = "guest";
-	@SuppressWarnings("unused")
 	public UpdatePassword(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -26,7 +25,7 @@ public class UpdatePassword extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -77,7 +76,7 @@ public class UpdatePassword extends Utils
 					
 					int user_level = user.getInt("user_level");
 					
-					String new_session_token = db.create_session(username, user_id, user_level);
+					String new_session_token = session.create_session(sql_connection, session, username, user_id, user_level);
 					
 					method.response.new_session_token = new_session_token;
 

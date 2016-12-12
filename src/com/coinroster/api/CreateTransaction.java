@@ -14,6 +14,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UserMail;
 
 public class CreateTransaction extends Utils
 	{
@@ -29,7 +30,7 @@ public class CreateTransaction extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -279,47 +280,37 @@ public class CreateTransaction extends Utils
 				new_transaction.executeUpdate();
 			   
 				// if user has verified their email, send them a transaction notification:
+
+				DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTimeInMillis(transaction_timestamp);
 				
 				String
-				
-				email_address = user.getString("email_address"),
-				username = user.getString("username");
-				
-				int email_ver_flag = user.getInt("email_ver_flag");
-				
-				if (email_ver_flag == 1)
-					{
-					DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
-					Calendar calendar = Calendar.getInstance();
-					calendar.setTimeInMillis(transaction_timestamp);
-					
-					String
-					
-					subject = "Transaction Notification", 
-					message_body = "";
-					
-					message_body += "Transaction notification for <span style='font-weight:bold'>" + username + "</span>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "Type: <span style='font-weight:bold'>" + transaction_type + "</span>";
-					message_body += "<br/>";
-					message_body += "Date and time: <span style='font-weight:bold'>" + formatter.format(calendar.getTime()) + "</span>";
-					message_body += "<br/>";
-					message_body += "Amount: <span style='font-weight:bold'>" + format_btc(transaction_amount) + "</span>";
-					message_body += "<br/>";
-					message_body += "Currency: <span style='font-weight:bold'>" + from_currency + "</span>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "Please do not reply to this email.";
-					
-					Server.send_mail(email_address, username, subject, message_body);
-					}
+				subject = "Transaction Notification", 
+				message_body = "";
 				
+				message_body += "Transaction notification for <b><!--USERNAME--></b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Type: <b>" + transaction_type + "</b>";
+				message_body += "<br/>";
+				message_body += "Date and time: <b>" + formatter.format(calendar.getTime()) + "</b>";
+				message_body += "<br/>";
+				message_body += "Amount: <b>" + format_btc(transaction_amount) + "</b>";
+				message_body += "<br/>";
+				message_body += "Currency: <b>" + from_currency + "</b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Please do not reply to this email.";
+				
+				new UserMail(user, subject, message_body);
+					
 				output.put("status", "1");
 				}
 			

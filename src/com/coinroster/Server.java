@@ -40,8 +40,7 @@ Java - review validation of things like BTC values (not negative, etc)
 Prevent login brute forcing with incrementing delay
 Add more verbose audit logs (user id, ip address, etc)
 Ability to load account.html with a subwindow opened
-Ability to load amin panel on a specific tab / reload and stay in same tab
-Generalized methods for sending emails
+Ability to load admin panel on a specific tab / reload and stay in same tab
 
 */
 
@@ -161,7 +160,7 @@ public class Server extends Utils
 	
 	private static ServerSocket proxy_gateway;
 
-	static ConcurrentHashMap<String, String[]> session_map = new ConcurrentHashMap<String, String[]>();
+	public static ConcurrentHashMap<String, String[]> session_map = new ConcurrentHashMap<String, String[]>();
 	
 	static HashMap<String, String> control = new HashMap<String, String>();
 

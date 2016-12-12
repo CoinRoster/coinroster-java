@@ -1,5 +1,7 @@
 package com.coinroster.api;
 
+import java.sql.Connection;
+
 import org.json.JSONObject;
 
 import com.coinroster.DB;
@@ -19,8 +21,10 @@ public class Login extends Utils
 		output = method.output;
 		
 		Session session = method.session;
+		
+		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -71,7 +75,7 @@ public class Login extends Utils
 				
 				if (SHA1(password + user_id).equals(stored_password_hash)) 
 					{
-					String new_session_token = db.create_session(username, user_id, user_level);
+					String new_session_token = session.create_session(sql_connection, session, username, user_id, user_level);
 					
 					method.response.new_session_token = new_session_token;
 					

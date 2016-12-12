@@ -15,6 +15,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UserMail;
 
 public class UserWithdrawal extends Utils
 	{
@@ -30,7 +31,7 @@ public class UserWithdrawal extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -41,6 +42,8 @@ public class UserWithdrawal extends Utils
 			String
 			 
 			user_id = session.user_id(),
+			username = session.username(),
+			
 			btc_liability_id = db.get_id_for_username("internal_btc_liability"),
 			
 			created_by = user_id,
@@ -56,7 +59,7 @@ public class UserWithdrawal extends Utils
 			// start using SQL | lock user_xref table so that balance lookups and adjustments are contiguous:
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user_xref write");
+			statement.execute("lock tables user write");
 
 			// get user_xref records for internal accounts and user account:
 
@@ -137,64 +140,54 @@ public class UserWithdrawal extends Utils
 		    output.put("transaction_id", transaction_id);
 		    output.put("status", "1");
 			
-			// communications
-			
+		    // send withdrawal confirmation
+		  			
 			DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTimeInMillis(transaction_timestamp);
 			
-			String
+			String 
+
+			subject = "Withdrawal request confirmation", 
 			
-			email_address = user.getString("email_address"),
-			username = user.getString("username");
-			
-			int email_ver_flag = user.getInt("email_ver_flag");
-			
-			if (email_ver_flag == 1)
-				{
-				String
+			message_body = "Hi <b>" + username + "</b>,";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "We have received your request to withdraw funds. One of our administrators will process your request shortly. You will receive another confirmation email when the funds have been sent";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+			message_body += "<br/>";
+			message_body += "Type: <b>" + transaction_type + "</b>";
+			message_body += "<br/>";
+			message_body += "Date and time: <b>" + formatter.format(calendar.getTime()) + "</b>";
+			message_body += "<br/>";
+			message_body += "Amount: <b>" + format_btc(amount_to_withdraw) + " BTC</b>";
+			message_body += "<br/>";
+			message_body += "To (wallet on file): <b>" + ext_address + "</b>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "Please do not reply to this email.";
 				
-				subject = "Withdrawal request confirmation", 
-				message_body = "";
-				
-				message_body += "Hi <span style='font-weight:bold'>" + username + "</span>,";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "We have received your request to withdraw funds. One of our administrators will process your request shortly. You will receive another confirmation email when the funds have been sent";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Transaction ID: <span style='font-weight:bold'>" + transaction_id + "</span>";
-				message_body += "<br/>";
-				message_body += "Type: <span style='font-weight:bold'>" + transaction_type + "</span>";
-				message_body += "<br/>";
-				message_body += "Date and time: <span style='font-weight:bold'>" + formatter.format(calendar.getTime()) + "</span>";
-				message_body += "<br/>";
-				message_body += "Amount: <span style='font-weight:bold'>" + format_btc(amount_to_withdraw) + " BTC</span>";
-				message_body += "<br/>";
-				message_body += "To (wallet on file): <span style='font-weight:bold'>" + ext_address + "</span>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
-				
-				Server.send_mail(email_address, username, subject, message_body);
-				}
+			new UserMail(user, subject, message_body);
+
+			// send notification to cash register admin
 			
 			JSONObject cash_register = db.select_user("username", "internal_cash_register");
 			
-			String cash_register_email_address = cash_register.getString("email_address");
+			String 
 			
-			String
+			cash_register_email_address = cash_register.getString("email_address"),
+			cash_register_admin = "Cash Register Admin";
 			
-			cash_register_admin = "Cash Register Admin",
-			subject = "New withdrawal request", 
-			message_body = "";
+			subject = "New withdrawal request";
 			
-			message_body += "A withdrawal request has been submitted by <span style='font-weight:bold'>" + username + "</span>";
+			message_body = "A withdrawal request has been submitted by <b>" + username + "</b>";
 			message_body += "<br/>";
 			message_body += "<br/>";
 			message_body += "Please see admin panel.";

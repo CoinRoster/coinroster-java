@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
@@ -26,8 +25,6 @@ public class TransactionReport extends Utils
 		Session session = method.session;
 		
 		Connection sql_connection = method.sql_connection;
-
-		DB db = new DB(method);
 
 		method : {
 			

@@ -12,6 +12,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UserMail;
 
 public class UserDeposit extends Utils
 	{
@@ -28,7 +29,7 @@ public class UserDeposit extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -53,12 +54,9 @@ public class UserDeposit extends Utils
 			memo = "Method: UserDeposit";
 			
 			JSONObject user = db.select_user("id", user_id);
-			
-			String email_address = user.getString("email_address");
-			
+	
 			int 
 			
-			email_ver_flag = user.getInt("email_ver_flag"),
 			pending_flag = 1;
 			
 			PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
@@ -79,54 +77,53 @@ public class UserDeposit extends Utils
 		    rs.next();
 		    int transaction_id = rs.getInt(1);
 		    
-			if (email_address != "" && email_ver_flag == 1)
-				{
-				String
-				
-				subject = "Deposit instructions", 
-				message_body = "";
-				
-				message_body += "Hi <span style='font-weight:bold'>" + username + "</span>,";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "We have received your request to deposit Bitcoins into your CoinRoster account. Please follow the transfer instructions below. We will credit your account as soon as we receive your deposit.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Transaction ID: <span style='font-weight:bold'>" + transaction_id + "</span>";
-				message_body += "<br/>";
-				message_body += "Send from: <span style='font-weight:bold'>" + ext_address + "</span>";
-				message_body += "<br/>";
-				message_body += "Send to: <span style='font-weight:bold'>" + cash_register_address + "</span>";
-				message_body += "<br/>";
-				message_body += "Amount: <span style='font-weight:bold'>" + format_btc(amount_to_deposit) + " BTC</span>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
-				
-				Server.send_mail(email_address, username, subject, message_body);
-				}
+		    // send deposit instructions to user
+		  
+			String
+			
+			subject = "Deposit instructions",
+			
+			message_body = "Hi <b>" + username + "</b>,";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "We have received your request to deposit Bitcoins into your CoinRoster account. Please follow the transfer instructions below. We will credit your account as soon as we receive your deposit.";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+			message_body += "<br/>";
+			message_body += "Send from: <b>" + ext_address + "</b>";
+			message_body += "<br/>";
+			message_body += "Send to: <b>" + cash_register_address + "</b>";
+			message_body += "<br/>";
+			message_body += "Amount: <b>" + format_btc(amount_to_deposit) + " BTC</b>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "Please do not reply to this email.";
+			
+			new UserMail(user, subject, message_body);
+			
+			// send notification to cash register admin
 			
 			JSONObject cash_register = db.select_user("username", "internal_cash_register");
 			
-			String cash_register_email_address = cash_register.getString("email_address");
+			String 
 			
-			String
+			cash_register_email_address = cash_register.getString("email_address"),
+			cash_register_admin = "Cash Register Admin";
 			
-			cash_register_admin = "Cash Register Admin",
-			subject = "New pending deposit", 
-			message_body = "";
+			subject = "New pending deposit";
 			
-			message_body += "A pending deposit has been created by <span style='font-weight:bold'>" + username + "</span>";
+			message_body = "A pending deposit has been created by <b>" + username + "</b>";
 			message_body += "<br/>";
 			message_body += "<br/>";
 			message_body += "Please see admin panel.";
 			
 			Server.send_mail(cash_register_email_address, cash_register_admin, subject, message_body);
-			
+
 			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------

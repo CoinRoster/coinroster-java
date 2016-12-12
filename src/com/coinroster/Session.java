@@ -1,5 +1,8 @@
 package com.coinroster;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
 public class Session 
 	{
 	private String 
@@ -8,10 +11,40 @@ public class Session
 	username = null,
 	user_id = null,
 	user_level = null;
-
-	protected Session(String token)
+	
+	public String create_session(Connection sql_connection, Session session, String username, String user_id, int user_level) throws Exception
 		{
-		session_token = token;
+		if (session.active()) Server.kill_session(session.token());
+		
+		String new_session_token = Server.generate_key(user_id);
+		
+		Long now = System.currentTimeMillis();
+	
+		Server.session_map.put
+			(
+			new_session_token, 
+			new String[]
+				{
+				username,
+				user_id,
+				Integer.toString(user_level),
+				Long.toString(now)
+				}
+			);
+	
+		// update last login:
+		
+		PreparedStatement update_last_login = sql_connection.prepareStatement("update user set last_login = ? where id = ?");
+		update_last_login.setLong(1, now);
+		update_last_login.setString(2, user_id);
+		update_last_login.executeUpdate();
+		
+		return new_session_token;
+		}
+
+	protected Session(String session_token)
+		{
+		this.session_token = session_token;
 		}
 
 	public boolean active()

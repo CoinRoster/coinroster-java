@@ -11,11 +11,11 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UserMail;
 
 public class CreateUser extends Utils
 	{
 	public static String method_level = "guest";
-	@SuppressWarnings("unused")
 	public CreateUser(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -27,7 +27,7 @@ public class CreateUser extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
-		DB db = new DB(method);
+		DB db = new DB(sql_connection);
 
 		method : {
 			
@@ -38,7 +38,13 @@ public class CreateUser extends Utils
 			
 			// first try to process referral:
 			
-			String referral_key = no_whitespace(input.getString("referral_key"));
+			String 
+			
+			referral_key = no_whitespace(input.getString("referral_key")),
+			referrer_id = null,
+			new_user_email_address = null,
+			referral_program = null;
+					
 			String[] referral = null;
 			
 			if (referral_key.length() == 40)
@@ -50,14 +56,16 @@ public class CreateUser extends Utils
 					output.put("invalid_referrer", "1");
 					break method;
 					}
+				else
+					{
+					referrer_id = referral[0];
+					new_user_email_address = referral[2];
+					referral_program = referral[3];
+					}
 				}
 
 			String 
-			
-			referrer_id = referral[0],
-			new_user_email_address = referral[2],
-			referral_program = referral[3],
-			
+
 			username = no_whitespace(input.getString("username")),
 			password = no_whitespace(input.getString("password")),
 			
@@ -65,7 +73,6 @@ public class CreateUser extends Utils
 			
 			int user_level_default = 0;
 
-			
 			// break method if bad credentials:
 
 			if (username.length() < 4 || username.length() > 40 || password.length() < 8)
@@ -78,8 +85,6 @@ public class CreateUser extends Utils
 			
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write");
-			
-			boolean referral_ok = false;
 
 			// if username exists, unlock
 			
@@ -106,8 +111,6 @@ public class CreateUser extends Utils
 				create_user.setInt(7, email_ver_flag);
 				create_user.setInt(8, Integer.parseInt(referral_program));
 				create_user.setString(9, referrer_id);
-				
-				referral_ok = true;
 				}
 			
 			create_user.setString(1, new_user_id);
@@ -120,7 +123,7 @@ public class CreateUser extends Utils
 			
 			statement.execute("unlock tables");
 			
-			if (referral_ok)
+			if (referral != null)
 				{
 				// delete all referral records associated with the referred email address:
 	
@@ -134,24 +137,17 @@ public class CreateUser extends Utils
 				
 				JSONObject referrer = db.select_user("id", referrer_id);
 				
-				int referrer_email_ver_flag = referrer.getInt("email_ver_flag");
+				String
 				
-				if (referrer_email_ver_flag == 1)
-					{
-					String
-					
-					referrer_email_address = referrer.getString("email_address"),
-					referrer_username = referrer.getString("username"),
-					subject = "Successful referral",
-					message_body = "<b>" + new_user_email_address + "</b> has signed up to CoinRoster!";
-		
-					Server.send_mail(referrer_email_address, referrer_username, subject, message_body);
-					}
+				subject = "Successful referral",
+				message_body = "<b>" + new_user_email_address + "</b> has signed up to CoinRoster!";
+				
+				new UserMail(referrer, subject, message_body);
 				}
 
 			// log the new user in:
 
-			String new_session_token = db.create_session(username, new_user_id, user_level_default);
+			String new_session_token = session.create_session(sql_connection, session, username, new_user_id, user_level_default);
 
 			method.response.new_session_token = new_session_token;
 			

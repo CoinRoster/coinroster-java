@@ -2,7 +2,6 @@ package com.coinroster.api;
 
 import org.json.JSONObject;
 
-import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
@@ -19,8 +18,6 @@ public class GetSessionDetails extends Utils
 		output = method.output;
 		
 		Session session = method.session;
-
-		DB db = new DB(method);
 
 		method : {
 			
