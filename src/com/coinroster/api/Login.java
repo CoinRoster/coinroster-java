@@ -54,30 +54,25 @@ public class Login extends Utils
 	
 			// log in:
 			
-			String[] user = db.select_user("username", username);
+			JSONObject user = db.select_user("username", username);
 			
 			if (user != null)
 				{
 				String
 				
-				user_id = user[0],
-				stored_password_hash = user[2],
-				user_level = user[3];
+				user_id = user.getString("user_id"),
+				stored_password_hash = user.getString("stored_password_hash");
+				
+				int user_level = user.getInt("user_level");
 				
 				// if internal account, break method:
 				
-				if (user_level.equals("2")) break method;
-				
-				// check password:
+				if (user_level == 2) break method;
 				
 				if (SHA1(password + user_id).equals(stored_password_hash)) 
 					{
-					// create session:
-					
 					String new_session_token = db.create_session(username, user_id, user_level);
 					
-					// update browser cookie:
-	
 					method.response.new_session_token = new_session_token;
 					
 					output.put("status", "1");

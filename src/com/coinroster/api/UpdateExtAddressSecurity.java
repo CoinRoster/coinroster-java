@@ -33,12 +33,12 @@ public class UpdateExtAddressSecurity extends Utils
 		
 			String user_id = session.user_id();
 				
-			String[] user_xref = db.select_user_xref("id", user_id);
+			JSONObject user = db.select_user("id", user_id);
 
 			int 
 			
 			user_supplied_secure_flag = input.getInt("ext_address_secure_flag"),
-			current_secure_flag = Integer.parseInt(user_xref[10]);
+			current_secure_flag = user.getInt("ext_address_secure_flag");
 			
 			if (user_supplied_secure_flag != current_secure_flag)
 				{
@@ -47,11 +47,11 @@ public class UpdateExtAddressSecurity extends Utils
 				// 1) if their BTC balance is 0.0
 				// 2) if ext_address_secure_flag is being changed to 1 (enabled)
 
-				double btc_balance = Double.parseDouble(user_xref[1]);
+				double btc_balance = user.getDouble("btc_balance");
 
 				if (user_supplied_secure_flag == 1 || btc_balance == 0.0)
 					{
-					PreparedStatement update_ext_address = sql_connection.prepareStatement("update user_xref set ext_address_secure_flag = ? where id = ?");
+					PreparedStatement update_ext_address = sql_connection.prepareStatement("update user set ext_address_secure_flag = ? where id = ?");
 					update_ext_address.setInt(1, user_supplied_secure_flag);
 					update_ext_address.setString(2, user_id);
 					update_ext_address.executeUpdate();

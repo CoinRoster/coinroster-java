@@ -42,7 +42,7 @@ public class AddEmailAddress extends Utils
 			
 			if (email_address.length() <= 60)
 				{
-				PreparedStatement add_email = sql_connection.prepareStatement("update user_xref set email_address = ?, email_ver_key = ?, email_ver_flag = 0, newsletter_flag = ? where id = ?");
+				PreparedStatement add_email = sql_connection.prepareStatement("update user set email_address = ?, email_ver_key = ?, email_ver_flag = 0, newsletter_flag = ? where id = ?");
 				add_email.setString(1, email_address);
 				add_email.setString(2, new_email_ver_key);
 				add_email.setInt(3, newsletter_flag);

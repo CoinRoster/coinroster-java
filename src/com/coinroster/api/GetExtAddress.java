@@ -37,11 +37,11 @@ public class GetExtAddress extends Utils
 			if (get_for_active_user) user_id = session.user_id();
 			else user_id = db.get_id_for_username("internal_cash_register");
 			
-			String[] user_xref = db.select_user_xref("id", user_id);
+			JSONObject user = db.select_user("id", user_id);
 			
-			if (user_xref != null)
+			if (user != null)
 				{
-				String ext_address = user_xref[3];
+				String ext_address = user.getString("ext_address");
 				
 				if (ext_address == null) 
 					{

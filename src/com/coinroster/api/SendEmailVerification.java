@@ -32,20 +32,20 @@ public class SendEmailVerification extends Utils
 //------------------------------------------------------------------------------------
 		
 			String user_id = session.user_id();
+			
+			JSONObject user = db.select_user("id", user_id);
 
-			String[] user_xref = db.select_user_xref("id", user_id);
-
-			if (user_xref != null)
+			if (user != null)
 				{
 				String
 				
-				to_address = user_xref[4], 
-				to_user = db.get_username_for_id(user_id), 
-				email_ver_key = user_xref[5],
+				email_address = user.getString("email_address"), 
+				username = user.getString("username"), 
+				email_ver_key = user.getString("email_ver_key"),
 				subject = "Verify your e-mail address",
 				message_body = "Please <a href='" + Server.host + "/verify.html?" + email_ver_key + "'>click here</a> to verify your e-mail address.";
 
-				Server.send_mail(to_address, to_user, subject, message_body);
+				Server.send_mail(email_address, username, subject, message_body);
 				
 				output.put("status", "1");
 				}

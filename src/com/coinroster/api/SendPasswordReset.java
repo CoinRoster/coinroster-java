@@ -35,16 +35,17 @@ public class SendPasswordReset extends Utils
 		
 			String email_address = no_whitespace(input.getString("email_address"));
 			
-			PreparedStatement select_user_xref = sql_connection.prepareStatement("select * from user_xref where email_address = ? and email_ver_flag = ?");
-			select_user_xref.setString(1, email_address);
-			select_user_xref.setInt(2, 1);
-			ResultSet result_set = select_user_xref.executeQuery();
+			PreparedStatement select_user = sql_connection.prepareStatement("select * from user where email_address = ? and email_ver_flag = ?");
+			select_user.setString(1, email_address);
+			select_user.setInt(2, 1);
+			ResultSet result_set = select_user.executeQuery();
 
 			while (result_set.next())
 				{
 				String 
 				
 				user_id = result_set.getString(1),
+				username = result_set.getString(2),
 				reset_key = Server.generate_key(user_id);
 				
 				PreparedStatement create_password_reset = sql_connection.prepareStatement("insert into password_reset(reset_key, user_id, created) values(?, ?, ?)");
@@ -55,12 +56,14 @@ public class SendPasswordReset extends Utils
 				
 				String
 				
-				to_address = email_address, 
-				to_user = db.get_username_for_id(user_id),
 				subject = "Password reset",
-				message_body = "Please <a href='" + Server.host + "/reset.html?" + reset_key + "'>click here</a> to reset the password for <b>" + to_user + "</b>.";
-
-				Server.send_mail(to_address, to_user, subject, message_body);
+				message_body = "Please <a href='" + Server.host + "/reset.html?" + reset_key + "'>click here</a> to reset the password for <b>" + username + "</b>.";
+				message_body += "<br/>";
+				message_body += "This reset link can only be used once and will expire in 1 hour if not used.";
+				message_body += "<br/>";
+				message_body += "If you did not request a password reset, someone may be trying to access your account. We would advise that you reset your password with this link.";
+				
+				Server.send_mail(email_address, username, subject, message_body);
 				}
 			
 			output.put("status", "1");

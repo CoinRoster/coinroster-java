@@ -35,7 +35,6 @@ public class FinalizePendingDeposit extends Utils
 			String 
 			
 			user_id = session.user_id(),
-			internal_btc_liability_id = db.get_id_for_username("internal_btc_liability"),
 			memo = input.getString("memo");
 
 			int transaction_id = input.getInt("transaction_id");
@@ -45,18 +44,20 @@ public class FinalizePendingDeposit extends Utils
 			// start using SQL | lock user_xref table so that balance lookups and adjustments are contiguous:
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user_xref write");
+			statement.execute("lock tables user write");
 
 			// get user_xref records for internal accounts and user account:
 
-			String[] 
-					
-			internal_btc_liability_xref = db.select_user_xref("id", internal_btc_liability_id),
-			user_xref = db.select_user_xref("id", user_id);
+			JSONObject 
+			
+			btc_liability = db.select_user("username", "internal_btc_liability"),
+			user = db.select_user("id", user_id);
+
+			String btc_liability_id = btc_liability.getString("user_id");
 			
 			// unlock and break method if user key is invalid:
 			
-			if (user_xref == null) 
+			if (user == null) 
 				{
 				statement.execute("unlock tables");
 				output.put("error", "Invalid user account");
@@ -67,25 +68,25 @@ public class FinalizePendingDeposit extends Utils
 		  
 			double
 			
-			internal_btc_liability_balance = Double.parseDouble(internal_btc_liability_xref[1]),
-			user_btc_balance = Double.parseDouble(user_xref[1]);
+			btc_liability_balance = btc_liability.getDouble("btc_balance"),
+			user_btc_balance = user.getDouble("btc_balance");
 
 			// add received amount to user balance:
 			
 			Double new_user_btc_balance = user_btc_balance + received_amount;
 	
-			PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user_xref set btc_balance = ? where id = ?");
+			PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
 			update_btc_liability_balance.setDouble(1, new_user_btc_balance);
 			update_btc_liability_balance.setString(2, user_id);
 			update_btc_liability_balance.executeUpdate();
 
 			// subtract received amount from internal_btc_liability:
 			
-			Double new_btc_liability_balance = internal_btc_liability_balance - received_amount;
+			Double new_btc_liability_balance = btc_liability_balance - received_amount;
 			
-			PreparedStatement update_user_balance = sql_connection.prepareStatement("update user_xref set btc_balance = ? where id = ?");
+			PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
 			update_user_balance.setDouble(1, new_btc_liability_balance);
-			update_user_balance.setString(2, internal_btc_liability_id);
+			update_user_balance.setString(2, btc_liability_id);
 			update_user_balance.executeUpdate();
 
 			statement.execute("unlock tables");
@@ -102,21 +103,19 @@ public class FinalizePendingDeposit extends Utils
 
 			String
 			
-			to_address = user_xref[4],
-			email_ver_flag = user_xref[6],
-			to_user = session.username();
+			email_address = user.getString("email_address"),
+			username = session.username();
 			
-			// if user has verified their email, send them a transaction notification:
+			int email_ver_flag = user.getInt("email_ver_flag");
 			
-			if (to_address != null && email_ver_flag.equals("1"))
+			if (email_address != null && email_ver_flag == 1)
 				{
-				
 				String
 				
 				subject = "Deposit confirmation", 
 				message_body = "";
 				
-				message_body += "Hi <span style='font-weight:bold'>" + to_user + "</span>,";
+				message_body += "Hi <span style='font-weight:bold'>" + username + "</span>,";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "We have received your deposit and have credited your account!";
@@ -133,7 +132,7 @@ public class FinalizePendingDeposit extends Utils
 				message_body += "<br/>";
 				message_body += "Please do not reply to this email.";
 				
-				Server.send_mail(to_address, to_user, subject, message_body);
+				Server.send_mail(email_address, username, subject, message_body);
 				}
 			
 			output.put("status", "1");

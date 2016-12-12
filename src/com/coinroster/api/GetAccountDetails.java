@@ -32,17 +32,17 @@ public class GetAccountDetails extends Utils
 		
 			String user_id = session.user_id();
 			
-			String[] user_xref = db.select_user_xref("id", user_id);
+			JSONObject user = db.select_user("id", user_id);
 			
-			if (user_xref != null)
+			if (user != null)
 				{
-				output.put("btc_balance", user_xref[1]);
-				output.put("rc_balance", user_xref[2]);
-				output.put("ext_address", user_xref[3]);
-				output.put("email_address", user_xref[4]);
-				output.put("email_ver_flag", user_xref[6]);
-				output.put("newsletter_flag", user_xref[7]);
-				output.put("ext_address_secure_flag", user_xref[10]);
+				output.put("btc_balance", user.getDouble("btc_balance"));
+				output.put("rc_balance", user.getDouble("rc_balance"));
+				output.put("ext_address", user.getString("ext_address"));
+				output.put("email_address", user.getString("email_address"));
+				output.put("email_ver_flag", user.getInt("email_ver_flag"));
+				output.put("newsletter_flag", user.getInt("newsletter_flag"));
+				output.put("ext_address_secure_flag", user.getInt("ext_address_secure_flag"));
 				
 				output.put("status", "1");
 				}

@@ -41,33 +41,29 @@ public class UserReport extends Utils
 			while (result_set.next())
 				{
 				String user_id = result_set.getString(1);
-				
-				String[] user_xref = db.select_user_xref("id", user_id);
-
-				String
-				
-				username = result_set.getString(2),
-				user_level = result_set.getString(4),
-				user_created = result_set.getString(5),
-				last_login = result_set.getString(6),
-
-				btc_balance = user_xref[1],
-				rc_balance = user_xref[2],
-				ext_address = user_xref[3],
-				email_address = user_xref[4],
-				email_ver_key = user_xref[5],
-				email_ver_flag = user_xref[6],
-				newsletter_flag = user_xref[7],
-				referral_program = user_xref[8],
-				referrer_id = user_xref[9],
-				referrer_username = "";
+				String username = result_set.getString(2);
+				String stored_password_hash = result_set.getString(3);
+				int user_level = result_set.getInt(4);
+				Long created = result_set.getLong(5);
+				Long last_login = result_set.getLong(6);
+				double btc_balance = result_set.getDouble(7);
+				double rc_balance = result_set.getDouble(8);
+				String ext_address = result_set.getString(9);
+				String email_address = result_set.getString(10);
+				String email_ver_key = result_set.getString(11);
+				int email_ver_flag = result_set.getInt(12);
+				int newsletter_flag = result_set.getInt(13);
+				int referral_program = result_set.getInt(14);
+				String referrer = result_set.getString(15);
+				String referrer_username = "";
+				int ext_address_secure_flag = result_set.getInt(16);
 		 
-				if (referrer_id != null) referrer_username = db.get_username_for_id(referrer_id);
+				if (referrer != null) referrer_username = db.get_username_for_id(referrer);
 				if (email_address == null) email_address = "";
 				
 				JSONObject user = new JSONObject();
 				
-				user.put("created", user_created);
+				user.put("created", created);
 				user.put("last_login", last_login);
 				user.put("user_id", user_id);
 				user.put("username", username);

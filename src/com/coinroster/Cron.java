@@ -3,6 +3,7 @@ package com.coinroster;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Calendar;
+import com.coinroster.internal.*;
 
 public class Cron 
 	{
@@ -17,10 +18,8 @@ public class Cron
 	minute,
 	second;
 	
-	protected Cron(String freq) throws Exception
+	protected Cron(String freq, Calendar cal) throws Exception
 		{
-		Calendar cal = Calendar.getInstance();
-   
 		year = cal.get(Calendar.YEAR);
 		month = cal.get(Calendar.MONTH);
 		day_of_month = cal.get(Calendar.DAY_OF_MONTH);
@@ -29,54 +28,87 @@ public class Cron
 		minute = cal.get(Calendar.MINUTE);
 		second = cal.get(Calendar.SECOND);
 		
-		this.getClass().getDeclaredMethod("_" + freq).invoke(this);
+		this.getClass().getDeclaredMethod(freq).invoke(this);
+		}
+
+	@SuppressWarnings("unused")
+	private void second() throws Exception
+		{ 
+		
 		}
 	
 	@SuppressWarnings("unused")
-	private void _minute() throws Exception
+	private void minute() throws Exception
 		{ 
-		// automatic session expiry:
+		SessionExpiry();
+		}
+	
+	@SuppressWarnings("unused")
+	private void hour() throws Exception
+		{
+		new ClosePoolRegistration();
+		}
+	
+	@SuppressWarnings("unused")
+	private void day() throws Exception
+		{
+		PurgePasswordResetTable();
+		}
 
-		for (String key : Server.session_map.keySet()) 
-			{
-			String[] session_vars = Server.session_map.get(key);
-			
-			String
-			
-			/*username = session_vars[0],
-			user_id = session_vars[1],*/
-			user_level = session_vars[2];
-			
-			if (user_level.equals("1"))
+//------------------------------------------------------------------------------------
+
+	// kick off stale sessions
+	
+	private void SessionExpiry()
+		{
+		try {
+			for (String key : Server.session_map.keySet()) 
 				{
-				Long last_active = Long.parseLong(session_vars[3]);
-				if (System.currentTimeMillis() - last_active >= Server.admin_timeout) Server.session_map.remove(key);
+				String[] session_vars = Server.session_map.get(key);
+				
+				String
+				
+				/*username = session_vars[0],
+				user_id = session_vars[1],*/
+				user_level = session_vars[2];
+				
+				if (user_level.equals("1"))
+					{
+					Long last_active = Long.parseLong(session_vars[3]);
+					if (System.currentTimeMillis() - last_active >= Server.admin_timeout) Server.session_map.remove(key);
+					}
 				}
 			}
-		}
-	
-	@SuppressWarnings("unused")
-	private void _hour() throws Exception
-		{
-		if (hour == 3)
+		catch (Exception e)
 			{
-			// do backup
+			Server.exception(e);
 			}
-		}
+		
+		}	
 	
-	@SuppressWarnings("unused")
-	private void _day() throws Exception
+//------------------------------------------------------------------------------------
+
+	// purge any password reset keys that have not been used
+	
+	private void PurgePasswordResetTable()
 		{
-		// purge password_reset table:
-		
-		Long expiry_cutoff = System.currentTimeMillis() - Server.hour;
-		
-		Connection sql_connection = Server.sql_connection();
-		
-		PreparedStatement delete_password_reset = sql_connection.prepareStatement("delete from password_reset where created < ?");
-		delete_password_reset.setLong(1, expiry_cutoff);
-		delete_password_reset.executeUpdate();
-		
-		sql_connection.close();
-		}
+		try {
+			Long expiry_cutoff = System.currentTimeMillis() - Server.hour;
+			
+			Connection sql_connection = Server.sql_connection();
+			
+			PreparedStatement delete_password_reset = sql_connection.prepareStatement("delete from password_reset where created < ?");
+			delete_password_reset.setLong(1, expiry_cutoff);
+			delete_password_reset.executeUpdate();
+			
+			sql_connection.close();
+			}
+		catch (Exception e)
+			{
+			Server.exception(e);
+			}
+		}	
+	
+//------------------------------------------------------------------------------------
+
 	}

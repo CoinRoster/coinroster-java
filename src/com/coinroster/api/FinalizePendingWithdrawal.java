@@ -44,7 +44,7 @@ public class FinalizePendingWithdrawal extends Utils
 				String 
 
 				transaction_type = transaction[3],
-				user_account = transaction[4],
+				user_id = transaction[4],
 				amount = transaction[6],
 				ext_address = transaction[11];
 				
@@ -53,15 +53,16 @@ public class FinalizePendingWithdrawal extends Utils
 				update_transaction.setInt(2, transaction_id);
 				update_transaction.executeUpdate();
 				
-				String[] user_xref = db.select_user_xref("id", user_account);
-				
+				JSONObject user = db.select_user("id", user_id);
+		
 				String
 				
-				to_address = user_xref[4],
-				email_ver_flag = user_xref[6],
-				to_user = db.get_username_for_id(user_account);
+				email_address = user.getString("email_address"),
+				username = session.username();
 				
-				if (to_address != null && email_ver_flag.equals("1"))
+				int email_ver_flag = user.getInt("email_ver_flag");
+				
+				if (email_address != null && email_ver_flag == 1)
 					{
 					DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
@@ -72,7 +73,7 @@ public class FinalizePendingWithdrawal extends Utils
 					subject = "Your withdrawal has been processed", 
 					message_body = "";
 					
-					message_body += "Hi <span style='font-weight:bold'>" + to_user + "</span>,";
+					message_body += "Hi <span style='font-weight:bold'>" + username + "</span>,";
 					message_body += "<br/>";
 					message_body += "<br/>";
 					message_body += "One of our administrators has processed your withdrawal. The funds should arrive in your Bitcoin wallet soon.";
@@ -95,7 +96,7 @@ public class FinalizePendingWithdrawal extends Utils
 					message_body += "<br/>";
 					message_body += "Please do not reply to this email.";
 					
-					Server.send_mail(to_address, to_user, subject, message_body);
+					Server.send_mail(email_address, username, subject, message_body);
 					}
 				}
 			else output.put("error", "Transaction not found");

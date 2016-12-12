@@ -43,7 +43,6 @@ public class UserDeposit extends Utils
 			user_id = session.user_id(),
 			username = session.username(),
 			ext_address = input.getString("user_ext_address"),
-			internal_cash_register_id = db.get_id_for_username("internal_cash_register"),
 			cash_register_address = input.getString("cash_register_address"),					
 			created_by = user_id,
 			transaction_type = "BTC-DEPOSIT",
@@ -53,14 +52,14 @@ public class UserDeposit extends Utils
 			to_currency = "BTC",
 			memo = "Method: UserDeposit";
 			
-			String[] user_xref = db.select_user_xref("id", user_id);
+			JSONObject user = db.select_user("id", user_id);
 			
-			String 
+			String email_address = user.getString("email_address");
 			
-			to_address = user_xref[4],
-			email_ver_flag = user_xref[6];
+			int 
 			
-			int pending_flag = 1;
+			email_ver_flag = user.getInt("email_ver_flag"),
+			pending_flag = 1;
 			
 			PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 			new_transaction.setLong(1, transaction_timestamp);
@@ -80,7 +79,7 @@ public class UserDeposit extends Utils
 		    rs.next();
 		    int transaction_id = rs.getInt(1);
 		    
-			if (to_address != null && email_ver_flag.equals("1"))
+			if (email_address != "" && email_ver_flag == 1)
 				{
 				String
 				
@@ -108,12 +107,12 @@ public class UserDeposit extends Utils
 				message_body += "<br/>";
 				message_body += "Please do not reply to this email.";
 				
-				Server.send_mail(to_address, username, subject, message_body);
+				Server.send_mail(email_address, username, subject, message_body);
 				}
 			
-			String[] cash_register_xref = db.select_user_xref("id", internal_cash_register_id);
+			JSONObject cash_register = db.select_user("username", "internal_cash_register");
 			
-			String cash_register_admin_email = cash_register_xref[4];
+			String cash_register_email_address = cash_register.getString("email_address");
 			
 			String
 			
@@ -126,7 +125,7 @@ public class UserDeposit extends Utils
 			message_body += "<br/>";
 			message_body += "Please see admin panel.";
 			
-			Server.send_mail(cash_register_admin_email, cash_register_admin, subject, message_body);
+			Server.send_mail(cash_register_email_address, cash_register_admin, subject, message_body);
 			
 			output.put("status", "1");
 			

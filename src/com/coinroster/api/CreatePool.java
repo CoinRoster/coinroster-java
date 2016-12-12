@@ -39,7 +39,8 @@ public class CreatePool extends Utils
             title = input.getString("title"),
             description = input.getString("description"),
             settlement_type = input.getString("settlement_type"),
-            entries_per_user_STRING = input.getString("entries_per_user");
+            entries_per_user_STRING = input.getString("entries_per_user"),
+            odds_source = input.getString("odds_source");
             
             if (title.length() > 255)
             	{
@@ -252,7 +253,7 @@ public class CreatePool extends Utils
             log("salary_cap: " + salary_cap);
             log("odds_table: " + odds_table);
             
-			PreparedStatement create_pool = sql_connection.prepareStatement("insert into pool(category, sub_category, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, odds_table, created, created_by, roster_size) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+			PreparedStatement create_pool = sql_connection.prepareStatement("insert into pool(category, sub_category, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, odds_table, created, created_by, roster_size, odds_source) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 			create_pool.setString(1, category);
 			create_pool.setString(2, sub_category);
 			create_pool.setString(3, title);
@@ -270,6 +271,7 @@ public class CreatePool extends Utils
 			create_pool.setLong(15, System.currentTimeMillis());
 			create_pool.setString(16, session.user_id());
 			create_pool.setInt(17, roster_size);
+			create_pool.setString(18, odds_source);
 			create_pool.executeUpdate();
             
             output.put("status", "1");

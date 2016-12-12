@@ -71,13 +71,12 @@ public class UpdatePassword extends Utils
 					
 					// log the user in:
 					
-					String[] user = db.select_user("id", user_id);
+					JSONObject user = db.select_user("id", user_id);
 					
-					String
-
-					username = user[1],
-					user_level = user[3];
-
+					String username = user.getString("username");
+					
+					int user_level = user.getInt("user_level");
+					
 					String new_session_token = db.create_session(username, user_id, user_level);
 					
 					method.response.new_session_token = new_session_token;

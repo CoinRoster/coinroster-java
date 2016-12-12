@@ -14,7 +14,7 @@ import com.coinroster.Utils;
 
 public class PoolReport extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "guest";
 	@SuppressWarnings("unused")
 	public PoolReport(MethodInstance method) throws Exception 
 		{
@@ -59,14 +59,24 @@ public class PoolReport extends Utils
 				Long registration_deadline = result_set.getLong(17);
 				int status = result_set.getInt(18);
 				int roster_size = result_set.getInt(19);
+				String odds_source = result_set.getString(20);
 				
 				created_by = db.get_username_for_id(created_by);
 				
 				JSONObject pool = new JSONObject();
-
+				
+				if (session.active())
+					{
+					if (session.user_level().equals("1")) // only admins can see the following:
+						{
+						pool.put("rake", rake);
+						pool.put("odds_source", odds_source);
+						pool.put("created_by", created_by);
+						}
+					}
+					
 				pool.put("id", id);
 				pool.put("created", created);
-				pool.put("created_by", created_by);
 				pool.put("category", category);
 				pool.put("sub_category", sub_category);
 				pool.put("title", title);
@@ -74,15 +84,14 @@ public class PoolReport extends Utils
 				pool.put("settlement_type", settlement_type);
 				pool.put("pay_table", pay_table);
 				pool.put("odds_table", odds_table);
-				pool.put("rake", rake);
 				pool.put("salary_cap", salary_cap);
 				pool.put("cost_per_entry", cost_per_entry);
 				pool.put("min_users", min_users);
 				pool.put("max_users", max_users);
 				pool.put("entries_per_user", entries_per_user);
 				pool.put("registration_deadline", registration_deadline);
-				pool.put("roster_size", roster_size);
 				pool.put("status", status);
+				pool.put("roster_size", roster_size);
 				
 				pool_report.put(pool);
 				}

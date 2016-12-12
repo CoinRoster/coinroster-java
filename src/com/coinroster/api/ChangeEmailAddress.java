@@ -40,7 +40,7 @@ public class ChangeEmailAddress extends Utils
 			
 			if (email_address.length() <= 60)
 				{
-				PreparedStatement change_email = sql_connection.prepareStatement("update user_xref set email_address = ?, email_ver_key = ?, email_ver_flag = 0 where id = ?");
+				PreparedStatement change_email = sql_connection.prepareStatement("update user set email_address = ?, email_ver_key = ?, email_ver_flag = 0 where id = ?");
 				change_email.setString(1, email_address);
 				change_email.setString(2, new_email_ver_key);
 				change_email.setString(3, user_id);

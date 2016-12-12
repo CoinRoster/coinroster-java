@@ -41,13 +41,12 @@ public class UserWithdrawal extends Utils
 			String
 			 
 			user_id = session.user_id(),
-			internal_btc_liability_id = db.get_id_for_username("internal_btc_liability"),
-			internal_cash_register_id = db.get_id_for_username("internal_cash_register"),
+			btc_liability_id = db.get_id_for_username("internal_btc_liability"),
 			
 			created_by = user_id,
 			transaction_type = "BTC-WITHDRAWAL",
 			from_account = user_id,
-			to_account = internal_btc_liability_id,
+			to_account = btc_liability_id,
 			from_currency = "BTC",
 			to_currency = "BTC",
 			memo = "Method: UserWithdrawal";
@@ -61,14 +60,14 @@ public class UserWithdrawal extends Utils
 
 			// get user_xref records for internal accounts and user account:
 
-			String[] 
-					
-			internal_btc_liability_xref = db.select_user_xref("id", internal_btc_liability_id),
-			user_xref = db.select_user_xref("id", user_id);
+			JSONObject
+			
+			btc_liability = db.select_user("id", btc_liability_id),
+			user = db.select_user("id", user_id);
 			
 			// unlock and break method if user key is invalid:
 			
-			if (user_xref == null) 
+			if (user == null) 
 				{
 				statement.execute("unlock tables");
 				output.put("error", "Invalid user account");
@@ -79,8 +78,8 @@ public class UserWithdrawal extends Utils
 		  
 			double
 			
-			internal_btc_liability_balance = Double.parseDouble(internal_btc_liability_xref[1]),
-			user_btc_balance = Double.parseDouble(user_xref[1]);
+			btc_liability_balance = btc_liability.getDouble("btc_balance"),
+			user_btc_balance = user.getDouble("btc_balance");
 			
 			// withdrawal-specific logic:
 			
@@ -95,18 +94,18 @@ public class UserWithdrawal extends Utils
 			
 			Double new_user_btc_balance = user_btc_balance - amount_to_withdraw;
 	
-			PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user_xref set btc_balance = ? where id = ?");
+			PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
 			update_btc_liability_balance.setDouble(1, new_user_btc_balance);
 			update_btc_liability_balance.setString(2, user_id);
 			update_btc_liability_balance.executeUpdate();
 
 			// add withdrawal amount to internal_btc_liability:
 			
-			Double new_btc_liability_balance = internal_btc_liability_balance + amount_to_withdraw;
+			Double new_btc_liability_balance = btc_liability_balance + amount_to_withdraw;
 			
-			PreparedStatement update_user_balance = sql_connection.prepareStatement("update user_xref set btc_balance = ? where id = ?");
+			PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
 			update_user_balance.setDouble(1, new_btc_liability_balance);
-			update_user_balance.setString(2, internal_btc_liability_id);
+			update_user_balance.setString(2, btc_liability_id);
 			update_user_balance.executeUpdate();
 
 			statement.execute("unlock tables");
@@ -115,7 +114,7 @@ public class UserWithdrawal extends Utils
 			
 			Long transaction_timestamp = System.currentTimeMillis();
 			
-			String ext_address = user_xref[3];
+			String ext_address = user.getString("ext_address");
 			
 			PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 			new_transaction.setLong(1, transaction_timestamp);
@@ -147,21 +146,19 @@ public class UserWithdrawal extends Utils
 			
 			String
 			
-			to_address = user_xref[4],
-			email_ver_flag = user_xref[6],
-			to_user = session.username();
+			email_address = user.getString("email_address"),
+			username = user.getString("username");
 			
-			// if user has verified their email, send them a transaction notification:
+			int email_ver_flag = user.getInt("email_ver_flag");
 			
-			if (to_address != null && email_ver_flag.equals("1"))
+			if (email_ver_flag == 1)
 				{
-				
 				String
 				
 				subject = "Withdrawal request confirmation", 
 				message_body = "";
 				
-				message_body += "Hi <span style='font-weight:bold'>" + to_user + "</span>,";
+				message_body += "Hi <span style='font-weight:bold'>" + username + "</span>,";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "We have received your request to withdraw funds. One of our administrators will process your request shortly. You will receive another confirmation email when the funds have been sent";
@@ -184,12 +181,12 @@ public class UserWithdrawal extends Utils
 				message_body += "<br/>";
 				message_body += "Please do not reply to this email.";
 				
-				Server.send_mail(to_address, to_user, subject, message_body);
+				Server.send_mail(email_address, username, subject, message_body);
 				}
 			
-			String[] cash_register_xref = db.select_user_xref("id", internal_cash_register_id);
+			JSONObject cash_register = db.select_user("username", "internal_cash_register");
 			
-			String cash_register_admin_email = cash_register_xref[4];
+			String cash_register_email_address = cash_register.getString("email_address");
 			
 			String
 			
@@ -197,12 +194,12 @@ public class UserWithdrawal extends Utils
 			subject = "New withdrawal request", 
 			message_body = "";
 			
-			message_body += "A withdrawal request has been submitted by <span style='font-weight:bold'>" + to_user + "</span>";
+			message_body += "A withdrawal request has been submitted by <span style='font-weight:bold'>" + username + "</span>";
 			message_body += "<br/>";
 			message_body += "<br/>";
 			message_body += "Please see admin panel.";
 			
-			Server.send_mail(cash_register_admin_email, cash_register_admin, subject, message_body);
+			Server.send_mail(cash_register_email_address, cash_register_admin, subject, message_body);
 						
 //------------------------------------------------------------------------------------
 

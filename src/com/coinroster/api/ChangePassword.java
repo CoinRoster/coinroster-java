@@ -39,11 +39,11 @@ public class ChangePassword extends Utils
 			
 			if (new_password.length() < 8) break method;
 			
-			String[] user = db.select_user("id", user_id);
+			JSONObject user = db.select_user("id", user_id);
 			
 			if (user != null)
 				{
-				String stored_password_hash = user[2];
+				String stored_password_hash = user.getString("stored_password_hash");
 				
 				// authenticate old password:
 				

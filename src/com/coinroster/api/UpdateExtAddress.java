@@ -63,13 +63,13 @@ public class UpdateExtAddress extends Utils
 				{
 				user_id = session.user_id();
 				
-				String[] user_xref = db.select_user_xref("id", user_id);
+				JSONObject user = db.select_user("id", user_id);
 				
-				String current_ext_address = user_xref[3];
+				String current_ext_address = user.getString("ext_address");
 
-				int ext_address_secure_flag = Integer.parseInt(user_xref[10]);
+				int ext_address_secure_flag = user.getInt("ext_address_secure_flag");
 				
-				double user_btc_balance = Double.parseDouble(user_xref[1]);
+				double user_btc_balance = user.getDouble("btc_balance");
 				
 				// a user can change their ext_address ...
 				
@@ -86,7 +86,7 @@ public class UpdateExtAddress extends Utils
 				
 				if (ext_address.length() == 0) break method;
 				
-				PreparedStatement update_ext_address = sql_connection.prepareStatement("update user_xref set ext_address = ? where id = ?");
+				PreparedStatement update_ext_address = sql_connection.prepareStatement("update user set ext_address = ? where id = ?");
 				update_ext_address.setString(1, ext_address);
 				update_ext_address.setString(2, user_id);
 				update_ext_address.executeUpdate();
