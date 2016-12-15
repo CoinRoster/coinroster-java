@@ -74,6 +74,10 @@ public class ContestReport extends Utils
 						contest.put("created_by", created_by);
 						}
 					}
+				
+				JSONArray entries = db.select_contest_entries(id);
+				
+				int number_of_entries = entries.length();
 					
 				contest.put("id", id);
 				contest.put("created", created);
@@ -92,6 +96,7 @@ public class ContestReport extends Utils
 				contest.put("registration_deadline", registration_deadline);
 				contest.put("status", status);
 				contest.put("roster_size", roster_size);
+				contest.put("number_of_entries", number_of_entries);
 				
 				contest_report.put(contest);
 				}

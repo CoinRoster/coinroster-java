@@ -12,8 +12,10 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UserMail;
 
 public class CreateEntryDFS extends Utils
 	{
@@ -36,17 +38,26 @@ public class CreateEntryDFS extends Utils
 			
 //------------------------------------------------------------------------------------
 		
+			int 
+			
+			contest_id = input.getInt("contest_id"),
+			number_of_entries = input.getInt("number_of_entries");
+			
+			String contest_title = null;
+			
+			boolean success = false;
+			
+			JSONObject user = null;
+			
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write");
+			statement.execute("lock tables user write, contest write, entry write, transaction write");
 			
 			lock : {
 			
 				// make sure contest id is valid
 				
-				int contest_id = input.getInt("contest_id");
-	
 				JSONObject contest = db.select_contest(contest_id);
 				
 				if (contest == null)
@@ -54,6 +65,8 @@ public class CreateEntryDFS extends Utils
 					output.put("error", "Invalid contest ID: " + contest_id);
 					break lock;
 					}
+				
+				contest_title = contest.getString("title");
 				
 				// make sure contest is open for registration
 				
@@ -64,9 +77,7 @@ public class CreateEntryDFS extends Utils
 					}
 				
 				// validate number of entries
-				
-				int number_of_entries = input.getInt("number_of_entries");
-				
+			
 				if (number_of_entries <= 0)
 					{
 					output.put("error", "Number of entries cannot be " + number_of_entries);
@@ -77,7 +88,7 @@ public class CreateEntryDFS extends Utils
 
 				String user_id = session.user_id();
 
-				JSONObject user = db.select_user("id", user_id);
+				user = db.select_user("id", user_id);
 				
 				double 
 				
@@ -262,35 +273,35 @@ public class CreateEntryDFS extends Utils
 				update_user_balances.setDouble(2, rc_balance);
 				update_user_balances.setString(3, user_id);
 				update_user_balances.executeUpdate();
-				
-				// update BTC contest asset account
 
-				JSONObject btc_contest_asset = db.select_user("username", "internal_btc_contest_asset");
-				
-				String btc_contest_asset_id = btc_contest_asset.getString("user_id");
-
-				double btc_contest_asset_balance = btc_contest_asset.getDouble("btc_balance");
-				
-				btc_contest_asset_balance += total_entry_fees;
-				
-				PreparedStatement update_contest_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-				update_contest_balance.setDouble(1, btc_contest_asset_balance);
-				update_contest_balance.setString(2, btc_contest_asset_id);
-				update_contest_balance.executeUpdate();
-				
 				// create RC transactions (if applicable)
 				
 				String created_by = user_id;
 				
 				if (rc_transaction_amount > 0)
 					{
-					// move RC from user to BTC in contest_btc_asset
+					// get RC contest asset account:
+					
+					JSONObject 	rc_contest_account = db.select_user("username", "internal_rc_contest_asset");
+					String 		rc_contest_account_id = rc_contest_account.getString("user_id");
+					double 		rc_contest_account_balance = rc_contest_account.getDouble("rc_balance");
+					
+					// update RC contest account balance:
+					
+					rc_contest_account_balance += rc_transaction_amount;
+					
+					PreparedStatement update_rc_contest_account = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
+					update_rc_contest_account.setDouble(1, rc_contest_account_balance);
+					update_rc_contest_account.setString(2, rc_contest_account_id);
+					update_rc_contest_account.executeUpdate();
+					
+					// create transaction for RC transfer:
 					
 					String 
 					
 					transaction_type = "RC-CONTEST-ENTRY",
 					from_account = user_id,
-					to_account = btc_contest_asset_id,
+					to_account = rc_contest_account_id,
 					from_currency = "RC",
 					to_currency = "RC",
 					memo = "Entry fees for Contest " + contest_id;
@@ -318,16 +329,33 @@ public class CreateEntryDFS extends Utils
 				
 				if (btc_transaction_amount > 0)
 					{
+					// get BTC contest asset account:
+					
+					JSONObject 	btc_contest_account = db.select_user("username", "internal_btc_contest_asset");
+					String 		btc_contest_account_id = btc_contest_account.getString("user_id");
+					double 		btc_contest_account_balance = btc_contest_account.getDouble("btc_balance");
+					
+					// update BTC contest account balance:
+					
+					btc_contest_account_balance += btc_transaction_amount;
+					
+					PreparedStatement update_btc_contest_account = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
+					update_btc_contest_account.setDouble(1, btc_contest_account_balance);
+					update_btc_contest_account.setString(2, btc_contest_account_id);
+					update_btc_contest_account.executeUpdate();
+					
+					// create transaction for BTC transfer:
+					
 					String 
 					
 					transaction_type = "BTC-CONTEST-ENTRY",
 					from_account = user_id,
-					to_account = btc_contest_asset_id,
+					to_account = btc_contest_account_id,
 					from_currency = "BTC",
 					to_currency = "BTC",
 					memo = "Entry fees for Contest " + contest_id;
 					
-					PreparedStatement btc_contest_entry = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+					PreparedStatement btc_contest_entry = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo) values(?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 					btc_contest_entry.setLong(1, System.currentTimeMillis());
 					btc_contest_entry.setString(2, created_by);
 					btc_contest_entry.setString(3, transaction_type);
@@ -338,21 +366,51 @@ public class CreateEntryDFS extends Utils
 					btc_contest_entry.setString(8, to_currency);
 					btc_contest_entry.setString(9, memo);
 					btc_contest_entry.executeUpdate();
+					
+					// get BTC contest entry transaction ID to xref in swap
+					
+					ResultSet rs = btc_contest_entry.getGeneratedKeys();
+				    rs.next();
+				    int btc_transaction_id = rs.getInt(1);
 					}
 
 				// create entr(ies)
 				
 				for (int i=0; i<number_of_entries; i++)
 					{
-					
+					PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
+					create_entry.setInt(1, contest_id);
+					create_entry.setString(2, created_by);			
+					create_entry.setLong(3, System.currentTimeMillis());
+					create_entry.setDouble(4, cost_per_entry);
+					create_entry.setString(5, roster.toString());
+					create_entry.executeUpdate();
 					}
 
-				// send email
-				
-				output.put("status", "1");
+				success = true;
 				}
 			
 			statement.execute("unlock tables");
+			
+			if (success)
+				{
+				String
+				
+				subject = "Entry confirmation for " + contest_title, 
+				message_body = "";
+				
+				message_body += "You have successfully entered " + number_of_entries + " roster" + (number_of_entries > 1 ? "s" : "") + " for Contest " + contest_id + ": " + contest_title;
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "You may view your rosters <a href='" + Server.host + "/contests/'>here</a>.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Please do not reply to this email.";
+				
+				new UserMail(user, subject, message_body);
+				
+				output.put("status", "1");
+				}
 			
 //------------------------------------------------------------------------------------
 

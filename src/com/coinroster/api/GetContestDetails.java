@@ -2,6 +2,7 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
@@ -38,6 +39,10 @@ public class GetContestDetails extends Utils
 			
 			if (contest != null)
 				{
+				JSONArray entries = db.select_contest_entries(contest_id);
+				
+				int number_of_entries = entries.length();
+				
 				output.put("category", contest.get("category"));
 				output.put("sub_category", contest.get("sub_category"));
 				output.put("title", contest.get("title"));
@@ -52,6 +57,7 @@ public class GetContestDetails extends Utils
 				output.put("entries_per_user", contest.get("entries_per_user"));
 				output.put("contest_status", contest.get("status"));
 				output.put("roster_size", contest.get("roster_size"));
+				output.put("number_of_entries", number_of_entries);
 				
 				output.put("status", "1");
 				}
