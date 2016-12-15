@@ -46,7 +46,7 @@ public class Cron
 	@SuppressWarnings("unused")
 	private void hour() throws Exception
 		{
-		new ClosePoolRegistration();
+		new CloseContestRegistration();
 		}
 	
 	@SuppressWarnings("unused")

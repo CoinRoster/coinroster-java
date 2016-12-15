@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Connection;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class DB 
@@ -159,21 +160,21 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// SELECT POOL
+	// SELECT CONTEST
 	
-	public JSONObject select_pool(int pool_id) throws Exception
+	public JSONObject select_contest(int contest_id) throws Exception
 		{
-		JSONObject pool = null;
+		JSONObject contest = null;
 
-		PreparedStatement select_user = sql_connection.prepareStatement("select * from pool where id = ?");
-		select_user.setInt(1, pool_id);
+		PreparedStatement select_user = sql_connection.prepareStatement("select * from contest where id = ?");
+		select_user.setInt(1, contest_id);
 		ResultSet result_set = select_user.executeQuery();
 
 		if (result_set.next())
 			{
-			pool = new JSONObject();
+			contest = new JSONObject();
 			
-			//int pool_id = result_set.getInt(1);
+			//int contest_id = result_set.getInt(1);
 			Long created = result_set.getLong(2);
 			String created_by = result_set.getString(3);
 			String category = result_set.getString(4);
@@ -194,29 +195,95 @@ public class DB
 			int roster_size = result_set.getInt(19);
 			String odds_source = result_set.getString(20);
 			
-			pool.put("pool_id", pool_id);
-			pool.put("created", created);
-			pool.put("created_by", created_by);
-			pool.put("category", category);
-			pool.put("sub_category", sub_category);
-			pool.put("title", title);
-			pool.put("description", description);
-			pool.put("settlement_type", settlement_type);
-			pool.put("pay_table", pay_table);
-			pool.put("odds_table", odds_table);
-			pool.put("rake", rake);
-			pool.put("salary_cap", salary_cap);
-			pool.put("cost_per_entry", cost_per_entry);
-			pool.put("min_users", min_users);
-			pool.put("max_users", max_users);
-			pool.put("entries_per_user", entries_per_user);
-			pool.put("registration_deadline", registration_deadline);
-			pool.put("status", status);
-			pool.put("roster_size", roster_size);
-			pool.put("odds_source", odds_source);
+			contest.put("contest_id", contest_id);
+			contest.put("created", created);
+			contest.put("created_by", created_by);
+			contest.put("category", category);
+			contest.put("sub_category", sub_category);
+			contest.put("title", title);
+			contest.put("description", description);
+			contest.put("settlement_type", settlement_type);
+			contest.put("pay_table", pay_table);
+			contest.put("odds_table", odds_table);
+			contest.put("rake", rake);
+			contest.put("salary_cap", salary_cap);
+			contest.put("cost_per_entry", cost_per_entry);
+			contest.put("min_users", min_users);
+			contest.put("max_users", max_users);
+			contest.put("entries_per_user", entries_per_user);
+			contest.put("registration_deadline", registration_deadline);
+			contest.put("status", status);
+			contest.put("roster_size", roster_size);
+			contest.put("odds_source", odds_source);
 			}
 
-		return pool;
+		return contest;
+		}
+
+//------------------------------------------------------------------------------------
+
+	// SELECT CONTEST ENTRIES (WITH/WITHOUT USER ID)
+
+	public JSONArray select_contest_entries(int contest_id) throws Exception
+		{
+		JSONArray entries = new JSONArray();
+		
+		PreparedStatement select_user = sql_connection.prepareStatement("select * from entry where contest_id = ?");
+		select_user.setInt(1, contest_id);
+		ResultSet result_set = select_user.executeQuery();
+
+		while (result_set.next())
+			{
+			JSONObject entry = new JSONObject();
+			
+			int entry_id = result_set.getInt(1);
+			String user_id = result_set.getString(3);
+			Long created = result_set.getLong(4);
+			double amount = result_set.getDouble(5);
+			String entry_data = result_set.getString(6);
+
+			entry.put("entry_id", entry_id);
+			entry.put("contest_id", contest_id);
+			entry.put("user_id", user_id);
+			entry.put("created", created);
+			entry.put("amount", amount);
+			entry.put("entry_data", entry_data);
+			
+			entries.put(entry);
+			}
+
+		return entries;
+		}
+
+	public JSONArray select_contest_entries(int contest_id, String user_id) throws Exception
+		{
+		JSONArray entries = new JSONArray();
+		
+		PreparedStatement select_user = sql_connection.prepareStatement("select * from entry where contest_id = ? and user_id = ?");
+		select_user.setInt(1, contest_id);
+		select_user.setString(2, user_id);
+		ResultSet result_set = select_user.executeQuery();
+
+		while (result_set.next())
+			{
+			JSONObject entry = new JSONObject();
+			
+			int entry_id = result_set.getInt(1);
+			Long created = result_set.getLong(4);
+			double amount = result_set.getDouble(5);
+			String entry_data = result_set.getString(6);
+
+			entry.put("entry_id", entry_id);
+			entry.put("contest_id", contest_id);
+			entry.put("user_id", user_id);
+			entry.put("created", created);
+			entry.put("amount", amount);
+			entry.put("entry_data", entry_data);
+			
+			entries.put(entry);
+			}
+
+		return entries;
 		}
 
 //------------------------------------------------------------------------------------

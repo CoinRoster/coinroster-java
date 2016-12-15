@@ -10,10 +10,10 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
-public class CreatePool extends Utils
+public class CreateContest extends Utils
 	{
 	public static String method_level = "admin";
-	public CreatePool(MethodInstance method) throws Exception 
+	public CreateContest(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -231,7 +231,7 @@ public class CreatePool extends Utils
         		break method;
     			}
             
-            log("Pool parameters:");
+            log("Contest parameters:");
             
             log("category: " + category);
             log("sub_category: " + sub_category);
@@ -249,26 +249,26 @@ public class CreatePool extends Utils
             log("salary_cap: " + salary_cap);
             log("odds_table: " + odds_table);
             
-			PreparedStatement create_pool = sql_connection.prepareStatement("insert into pool(category, sub_category, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, odds_table, created, created_by, roster_size, odds_source) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-			create_pool.setString(1, category);
-			create_pool.setString(2, sub_category);
-			create_pool.setString(3, title);
-			create_pool.setString(4, description);
-			create_pool.setLong(5, registration_deadline);
-			create_pool.setDouble(6, rake);
-			create_pool.setDouble(7, cost_per_entry);
-			create_pool.setString(8, settlement_type);
-			create_pool.setInt(9, min_users);
-			create_pool.setInt(10, max_users);
-			create_pool.setInt(11, entries_per_user);
-			create_pool.setString(12, pay_table_final.toString());
-			create_pool.setDouble(13, salary_cap);
-			create_pool.setString(14, odds_table.toString());
-			create_pool.setLong(15, System.currentTimeMillis());
-			create_pool.setString(16, session.user_id());
-			create_pool.setInt(17, roster_size);
-			create_pool.setString(18, odds_source);
-			create_pool.executeUpdate();
+			PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, odds_table, created, created_by, roster_size, odds_source) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+			create_contest.setString(1, category);
+			create_contest.setString(2, sub_category);
+			create_contest.setString(3, title);
+			create_contest.setString(4, description);
+			create_contest.setLong(5, registration_deadline);
+			create_contest.setDouble(6, rake);
+			create_contest.setDouble(7, cost_per_entry);
+			create_contest.setString(8, settlement_type);
+			create_contest.setInt(9, min_users);
+			create_contest.setInt(10, max_users);
+			create_contest.setInt(11, entries_per_user);
+			create_contest.setString(12, pay_table_final.toString());
+			create_contest.setDouble(13, salary_cap);
+			create_contest.setString(14, odds_table.toString());
+			create_contest.setLong(15, System.currentTimeMillis());
+			create_contest.setString(16, session.user_id());
+			create_contest.setInt(17, roster_size);
+			create_contest.setString(18, odds_source);
+			create_contest.executeUpdate();
             
             output.put("status", "1");
 			

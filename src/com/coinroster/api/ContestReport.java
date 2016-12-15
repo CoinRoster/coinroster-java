@@ -12,11 +12,11 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
-public class PoolReport extends Utils
+public class ContestReport extends Utils
 	{
 	public static String method_level = "guest";
 	@SuppressWarnings("unused")
-	public PoolReport(MethodInstance method) throws Exception 
+	public ContestReport(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -33,9 +33,9 @@ public class PoolReport extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			JSONArray pool_report = new JSONArray();
+			JSONArray contest_report = new JSONArray();
 			
-			PreparedStatement select_all_users = sql_connection.prepareStatement("select * from pool order by id desc");
+			PreparedStatement select_all_users = sql_connection.prepareStatement("select * from contest order by id desc");
 			ResultSet result_set = select_all_users.executeQuery();
 
 			while (result_set.next())
@@ -63,40 +63,40 @@ public class PoolReport extends Utils
 				
 				created_by = db.get_username_for_id(created_by);
 				
-				JSONObject pool = new JSONObject();
+				JSONObject contest = new JSONObject();
 				
 				if (session.active())
 					{
 					if (session.user_level().equals("1")) // only admins can see the following:
 						{
-						pool.put("rake", rake);
-						pool.put("odds_source", odds_source);
-						pool.put("created_by", created_by);
+						contest.put("rake", rake);
+						contest.put("odds_source", odds_source);
+						contest.put("created_by", created_by);
 						}
 					}
 					
-				pool.put("id", id);
-				pool.put("created", created);
-				pool.put("category", category);
-				pool.put("sub_category", sub_category);
-				pool.put("title", title);
-				pool.put("description", description);
-				pool.put("settlement_type", settlement_type);
-				pool.put("pay_table", pay_table);
-				pool.put("odds_table", odds_table);
-				pool.put("salary_cap", salary_cap);
-				pool.put("cost_per_entry", cost_per_entry);
-				pool.put("min_users", min_users);
-				pool.put("max_users", max_users);
-				pool.put("entries_per_user", entries_per_user);
-				pool.put("registration_deadline", registration_deadline);
-				pool.put("status", status);
-				pool.put("roster_size", roster_size);
+				contest.put("id", id);
+				contest.put("created", created);
+				contest.put("category", category);
+				contest.put("sub_category", sub_category);
+				contest.put("title", title);
+				contest.put("description", description);
+				contest.put("settlement_type", settlement_type);
+				contest.put("pay_table", pay_table);
+				contest.put("odds_table", odds_table);
+				contest.put("salary_cap", salary_cap);
+				contest.put("cost_per_entry", cost_per_entry);
+				contest.put("min_users", min_users);
+				contest.put("max_users", max_users);
+				contest.put("entries_per_user", entries_per_user);
+				contest.put("registration_deadline", registration_deadline);
+				contest.put("status", status);
+				contest.put("roster_size", roster_size);
 				
-				pool_report.put(pool);
+				contest_report.put(contest);
 				}
 			
-			output.put("pool_report", pool_report);
+			output.put("contest_report", contest_report);
 			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------

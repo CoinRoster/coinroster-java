@@ -5,7 +5,8 @@ package com.coinroster;
 Update:
 
 NGINX config;
-alter table pool add odds_source VARCHAR(400);
+rename table pool to contest;
+alter table contest add odds_source VARCHAR(400);
 create table if not exists entry(...;
 
 alter table user add btc_balance decimal(16,8) DEFAULT '0.00000000';
@@ -32,6 +33,11 @@ UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.ext_address_secu
 
 drop table user_xref;
 
+Create users: internal_btc_contest_asset, internal_rc_contest_asset
+update user set created = 1445624341104, level = 2, last_login = 0 where username = 'internal_btc_contest_asset';
+update user set created = 1445624341105, level = 2, last_login = 0 where username = 'internal_rc_contest_asset';
+update user set created = 1445625342000 where username = 'noah';
+
 To-do:
 
 SQL - build indexes on IDs
@@ -40,7 +46,6 @@ Java - review validation of things like BTC values (not negative, etc)
 Prevent login brute forcing with incrementing delay
 Add more verbose audit logs (user id, ip address, etc)
 Ability to load account.html with a subwindow opened
-Ability to load admin panel on a specific tab / reload and stay in same tab
 
 */
 

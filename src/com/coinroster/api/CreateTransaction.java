@@ -41,8 +41,6 @@ public class CreateTransaction extends Utils
 			created_by = session.user_id(),
 			transaction_type = input.getString("transaction_type"),
 
-			btc_liability_id = db.get_id_for_username("internal_btc_liability"),
-			rc_liability_id = db.get_id_for_username("internal_rc_liability"),
 			user_id = no_whitespace(input.getString("user_account")),
 			
 			from_account = "",
@@ -77,9 +75,15 @@ public class CreateTransaction extends Utils
 			
 			JSONObject
 			
-			btc_liability = db.select_user("id", btc_liability_id),
-			rc_liability = db.select_user("id", rc_liability_id),
+			btc_liability = db.select_user("username", "internal_btc_liability"),
+			rc_liability = db.select_user("username", "internal_rc_liability"),
+			
 			user = db.select_user("id", user_id);
+			
+			String
+			
+			btc_liability_id = btc_liability.getString("user_id"),
+			rc_liability_id = rc_liability.getString("user_id");
 
 			boolean transaction_ok = false;
 		
