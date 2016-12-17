@@ -52,7 +52,7 @@ public class UserWithdrawal extends Utils
 			to_account = btc_liability_id,
 			from_currency = "BTC",
 			to_currency = "BTC",
-			memo = "Method: UserWithdrawal";
+			memo = "User request to withdraw BTC";
 			
 			int pending_flag = 1;
 			

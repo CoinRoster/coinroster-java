@@ -53,7 +53,7 @@ public class TransactionReport extends Utils
 				}
 			else 
 				{
-				select_transaction = sql_connection.prepareStatement("select * from transaction where (created > ? and created < ?) and (from_account = ? or to_account = ?)");
+				select_transaction = sql_connection.prepareStatement("select * from transaction where created > ? and created < ? and (from_account = ? or to_account = ?)");
 				select_transaction.setLong(1, start_date_ms);
 				select_transaction.setLong(2, end_date_ms);
 				select_transaction.setString(3, session.user_id());
@@ -78,33 +78,33 @@ public class TransactionReport extends Utils
 				from_currency = result_set.getString(8),
 				to_currency = result_set.getString(9),
 				memo = result_set.getString(10),
-				pending_flag = result_set.getString(11);
+				pending_flag = result_set.getString(11),
+				ext_address = result_set.getString(12);
+				
+				int contest_id = result_set.getInt(13);
 
 				JSONObject transaction = new JSONObject();
+
+				transaction.put("created", created);
+				transaction.put("trans_type", trans_type);
+				transaction.put("from_currency", from_currency);
+				transaction.put("memo", memo);
+				transaction.put("pending_flag", pending_flag);
+				transaction.put("contest_id", contest_id);
 				
 				if (is_admin) 
 					{
 					transaction.put("transaction_id", transaction_id);
-					transaction.put("created", created);
 					transaction.put("created_by", created_by);
-					transaction.put("trans_type", trans_type);
 					transaction.put("from_account", from_account);
 					transaction.put("to_account", to_account);
 					transaction.put("amount", amount);
-					transaction.put("from_currency", from_currency);
 					transaction.put("to_currency", to_currency);
-					transaction.put("memo", memo);
-					transaction.put("pending_flag", pending_flag);
 					}
 				else
 					{
-					transaction.put("created", created);
-					transaction.put("trans_type", trans_type);
 					if (session.user_id().equals(to_account)) transaction.put("amount", "+" + amount);
 					else transaction.put("amount", "-" + amount);
-					transaction.put("from_currency", from_currency);
-					transaction.put("memo", memo);
-					transaction.put("pending_flag", pending_flag);
 					}
 				
 				transaction_report.put(transaction);

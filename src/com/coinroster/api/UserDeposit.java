@@ -51,7 +51,7 @@ public class UserDeposit extends Utils
 			to_account = user_id,
 			from_currency = "BTC",
 			to_currency = "BTC",
-			memo = "Method: UserDeposit";
+			memo = "User request to deposit BTC";
 			
 			JSONObject user = db.select_user("id", user_id);
 	

@@ -4,7 +4,7 @@ package com.coinroster;
 
 Update:
 
-NGINX config;
+Update NGINX config;
 rename table pool to contest;
 alter table contest add odds_source VARCHAR(400);
 create table if not exists entry(...;
@@ -38,6 +38,9 @@ update user set created = 1445624341104, level = 2, last_login = 0 where usernam
 update user set created = 1445624341105, level = 2, last_login = 0 where username = 'internal_rc_contest_asset';
 update user set created = 1445625342000 where username = 'noah';
 
+alter table transaction add contest_id int;
+alter table transaction modify memo varchar(500);
+
 To-do:
 
 SQL - build indexes on IDs
@@ -46,6 +49,8 @@ Java - review validation of things like BTC values (not negative, etc)
 Prevent login brute forcing with incrementing delay
 Add more verbose audit logs (user id, ip address, etc)
 Ability to load account.html with a subwindow opened
+backups
+process.monitor
 
 */
 
