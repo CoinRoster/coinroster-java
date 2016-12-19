@@ -2,11 +2,11 @@ package com.coinroster;
 
 /*
 
-Update:
-
 Update NGINX config;
+
 rename table pool to contest;
 alter table contest add odds_source VARCHAR(400);
+
 create table if not exists entry(...;
 
 alter table user add btc_balance decimal(16,8) DEFAULT '0.00000000';
@@ -19,7 +19,6 @@ alter table user add newsletter_flag int(11) DEFAULT '0';
 alter table user add referral_program int(11) NOT NULL DEFAULT '0';
 alter table user add referrer varchar(40) DEFAULT NULL;
 alter table user add ext_address_secure_flag int(11) DEFAULT '1';
-
 UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.btc_balance = x.btc_balance;
 UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.rc_balance = x.rc_balance;
 UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.ext_address = x.ext_address;
@@ -30,16 +29,16 @@ UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.newsletter_flag 
 UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.referral_program = x.referral_program;
 UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.referrer = x.referrer;
 UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.ext_address_secure_flag = x.ext_address_secure_flag;
-
 drop table user_xref;
 
-Create users: internal_btc_contest_asset, internal_rc_contest_asset
-update user set created = 1445624341104, level = 2, last_login = 0 where username = 'internal_btc_contest_asset';
-update user set created = 1445624341105, level = 2, last_login = 0 where username = 'internal_rc_contest_asset';
+Create user: internal_contest_asset
+update user set created = 1445624341104, level = 2, last_login = 0 where username = 'internal_contest_asset';
 update user set created = 1445625342000 where username = 'noah';
+update user set username = 'internal_equity' where username = 'internal_btc_asset';
 
-alter table transaction add contest_id int;
 alter table transaction modify memo varchar(500);
+alter table transaction modify trans_type varchar(40);
+alter table transaction add contest_id int;
 
 To-do:
 

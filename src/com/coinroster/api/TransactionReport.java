@@ -91,10 +91,10 @@ public class TransactionReport extends Utils
 				transaction.put("memo", memo);
 				transaction.put("pending_flag", pending_flag);
 				transaction.put("contest_id", contest_id);
+				transaction.put("transaction_id", transaction_id);
 				
 				if (is_admin) 
 					{
-					transaction.put("transaction_id", transaction_id);
 					transaction.put("created_by", created_by);
 					transaction.put("from_account", from_account);
 					transaction.put("to_account", to_account);

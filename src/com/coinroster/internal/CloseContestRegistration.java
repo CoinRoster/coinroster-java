@@ -72,7 +72,7 @@ public class CloseContestRegistration
 							{
 							Server.log("Contest " + contest_id + " is in play");
 							
-							// we will notify users that contest is in play
+							// notify users that contest is in play
 							
 							subject = "Contest " + contest_id + " is in play!";
 							
@@ -83,29 +83,17 @@ public class CloseContestRegistration
 							message_body += "<br/>";
 							message_body += "<br/>";
 							message_body += "You will receive a notification when the contest has been settled.";
+							
+							for (String user_id : users) new UserMail(db.select_user("id", user_id), subject, message_body);
 							}
 						else // contest is under-subscribed
 							{
 							Server.log("Contest " + contest_id + " is under-subscribed");
 							
+							// users are notified inside ContestSettlement
+							
 							new ContestSettlement(sql_connection, contest_id, "UNDER-SUBSCRIBED");
-							
-							// we will notify users that contest has been closed
-							
-							subject = "Contest " + contest_id + " is under-subscribed";
-							
-							message_body = "Hello <b><!--USERNAME--></b>,";
-							message_body += "<br/>";
-							message_body += "<br/>";
-							message_body += "Not enough users entered contest " + contest_id + " (" + contest_title + ").";
-							message_body += "<br/>";
-							message_body += "<br/>";
-							message_body += "The contest has been cancelled and your entry fees have been credited back to your account.";
 							}
-						
-						// send status emails to users
-						
-						for (String user_id : users) new UserMail(db.select_user("id", user_id), subject, message_body);
 						}
 					}
 				catch (Exception e1)

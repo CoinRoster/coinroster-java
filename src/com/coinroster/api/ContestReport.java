@@ -35,8 +35,8 @@ public class ContestReport extends Utils
 		
 			JSONArray contest_report = new JSONArray();
 			
-			PreparedStatement select_all_users = sql_connection.prepareStatement("select * from contest order by id desc");
-			ResultSet result_set = select_all_users.executeQuery();
+			PreparedStatement select_contests = sql_connection.prepareStatement("select * from contest order by id desc");
+			ResultSet result_set = select_contests.executeQuery();
 
 			while (result_set.next())
 				{

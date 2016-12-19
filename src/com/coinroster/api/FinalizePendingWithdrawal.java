@@ -38,7 +38,7 @@ public class FinalizePendingWithdrawal extends Utils
 		
 			int transaction_id = input.getInt("transaction_id");
 
-			String[] transaction = db.select_transaction(transaction_id);
+			String[] transaction = db.select_transaction_old(transaction_id);
 	   
 			if (transaction != null)
 				{

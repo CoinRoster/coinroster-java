@@ -49,8 +49,7 @@ public class CreateEntryDFS extends Utils
 
 			user_id = session.user_id(),
 			created_by = user_id,
-			rc_contest_account_id = null,
-			btc_contest_account_id = null,
+			contest_account_id = null,
 			contest_title = null;
 			
 			boolean success = false;
@@ -274,23 +273,23 @@ public class CreateEntryDFS extends Utils
 				update_user_balances.setDouble(2, rc_balance);
 				update_user_balances.setString(3, user_id);
 				update_user_balances.executeUpdate();
+				
+				JSONObject contest_account = db.select_user("username", "internal_contest_asset");
+				
+				contest_account_id = contest_account.getString("user_id");
 
 				// update RC contest asset account (if applicable)
 				
 				if (rc_transaction_amount > 0)
 					{
-					JSONObject rc_contest_account = db.select_user("username", "internal_rc_contest_asset");
-					
-					rc_contest_account_id = rc_contest_account.getString("user_id");
-					
 					// update account balance:
 
-					double rc_contest_account_balance = rc_contest_account.getDouble("rc_balance");
+					double rc_contest_account_balance = contest_account.getDouble("rc_balance");
 					rc_contest_account_balance += rc_transaction_amount;
 					
 					PreparedStatement update_rc_contest_account = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
 					update_rc_contest_account.setDouble(1, rc_contest_account_balance);
-					update_rc_contest_account.setString(2, rc_contest_account_id);
+					update_rc_contest_account.setString(2, contest_account_id);
 					update_rc_contest_account.executeUpdate();
 					}
 				
@@ -298,18 +297,14 @@ public class CreateEntryDFS extends Utils
 				
 				if (btc_transaction_amount > 0)
 					{
-					JSONObject btc_contest_account = db.select_user("username", "internal_btc_contest_asset");	
-					
-					btc_contest_account_id = btc_contest_account.getString("user_id");
-					
 					// update account balance:
 
-					double btc_contest_account_balance = btc_contest_account.getDouble("btc_balance");
+					double btc_contest_account_balance = contest_account.getDouble("btc_balance");
 					btc_contest_account_balance += btc_transaction_amount;
 					
 					PreparedStatement update_btc_contest_account = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
 					update_btc_contest_account.setDouble(1, btc_contest_account_balance);
-					update_btc_contest_account.setString(2, btc_contest_account_id);
+					update_btc_contest_account.setString(2, contest_account_id);
 					update_btc_contest_account.executeUpdate();
 					}
 				
@@ -341,7 +336,7 @@ public class CreateEntryDFS extends Utils
 					
 					transaction_type = "RC-CONTEST-ENTRY",
 					from_account = user_id,
-					to_account = rc_contest_account_id,
+					to_account = contest_account_id,
 					from_currency = "RC",
 					to_currency = "RC",
 					memo = "Entry fees (RC) for " + contest_title;
@@ -368,7 +363,7 @@ public class CreateEntryDFS extends Utils
 					
 					transaction_type = "BTC-CONTEST-ENTRY",
 					from_account = user_id,
-					to_account = btc_contest_account_id,
+					to_account = contest_account_id,
 					from_currency = "BTC",
 					to_currency = "BTC",
 					memo = "Entry fees (BTC) for " + contest_title;

@@ -49,7 +49,7 @@ public class DB
 
 		return id;
 		}
-	
+
 //------------------------------------------------------------------------------------
 
 	// SELECT USER
@@ -112,7 +112,7 @@ public class DB
 	
 	// SELECT TRANSACTION
 
-	public String[] select_transaction(int transaction_id) throws Exception
+	public String[] select_transaction_old(int transaction_id) throws Exception
 		{
 		String[] transaction = null;
 
@@ -158,8 +158,70 @@ public class DB
 		return transaction;
 		}
 
+	public JSONObject select_transaction(int transaction_id) throws Exception
+		{
+		JSONObject transaction = null;
+
+		PreparedStatement select_transaction  = sql_connection.prepareStatement("select * from transaction where id = ?");
+		select_transaction.setInt(1, transaction_id);
+
+		ResultSet result_set = select_transaction.executeQuery();
+
+		if (result_set.next())
+			{			
+			transaction = new JSONObject();
+			
+			//int transaction_id = result_set.getInt(1);
+			long created = result_set.getLong(2);
+			String created_by = result_set.getString(3);
+			String trans_type = result_set.getString(4);
+			String from_account = result_set.getString(5);
+			String to_account = result_set.getString(6);
+			double amount = result_set.getDouble(7);
+			String from_currency = result_set.getString(8);
+			String to_currency = result_set.getString(9);
+			String memo = result_set.getString(10);
+			int pending_flag = result_set.getInt(11);
+			String ext_address = result_set.getString(12);
+			int contest_id = result_set.getInt(13);
+			
+			transaction.put("transaction_id", transaction_id);
+			transaction.put("created", created);
+			transaction.put("created_by", created_by);
+			transaction.put("trans_type", trans_type);
+			transaction.put("from_account", from_account);
+			transaction.put("to_account", to_account);
+			transaction.put("amount", amount);
+			transaction.put("from_currency", from_currency);
+			transaction.put("to_currency", to_currency);
+			transaction.put("memo", memo);
+			transaction.put("pending_flag", pending_flag);
+			transaction.put("ext_address", ext_address);
+			transaction.put("contest_id", contest_id);
+			}
+
+		return transaction;
+		}
+
 //------------------------------------------------------------------------------------
 
+	// GET CONTEST TITLE
+
+	public String get_contest_title(int contest_id) throws Exception
+		{
+		String contest_title = null;
+
+		PreparedStatement select_contest_title = sql_connection.prepareStatement("select title from contest where id = ?");
+		select_contest_title.setInt(1, contest_id);
+		ResultSet result_set = select_contest_title.executeQuery();
+
+		if (result_set.next()) contest_title = result_set.getString(1);
+
+		return contest_title;
+		}
+
+//------------------------------------------------------------------------------------
+	
 	// SELECT CONTEST
 	
 	public JSONObject select_contest(int contest_id) throws Exception
