@@ -417,11 +417,26 @@ public class DB
 	
 	// STORE VERIFIED EMAIL ADDRESS
 
-	public void store_verified_email(String email_address) throws Exception
+	public void send_verification_email(String username, String email_address, String email_ver_key) throws Exception
 		{
-		PreparedStatement store_verified_email = sql_connection.prepareStatement("insert ignore into verified_email(email_address, created) values(?, ?)");				
-		store_verified_email.setString(1, email_address);
-		store_verified_email.setLong(2, System.currentTimeMillis());
+		String
+		
+		subject = "Verify your e-mail address",
+		message_body = "Please <a href='" + Server.host + "/verify.html?" + email_ver_key + "'>click here</a> to verify your e-mail address.";
+
+		Server.send_mail(email_address, username, subject, message_body);
+		}
+
+//------------------------------------------------------------------------------------
+	
+	// STORE VERIFIED EMAIL ADDRESS
+
+	public void store_verified_email(String user_id, String email_address) throws Exception
+		{
+		PreparedStatement store_verified_email = sql_connection.prepareStatement("insert ignore into verified_email(user_id, email_address, created) values(?, ?, ?)");				
+		store_verified_email.setString(1, user_id);				
+		store_verified_email.setString(2, email_address);
+		store_verified_email.setLong(3, System.currentTimeMillis());
 		store_verified_email.executeUpdate();
 		}
 

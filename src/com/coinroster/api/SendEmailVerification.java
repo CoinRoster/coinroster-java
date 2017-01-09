@@ -6,7 +6,6 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
@@ -41,11 +40,9 @@ public class SendEmailVerification extends Utils
 				
 				email_address = user.getString("email_address"), 
 				username = user.getString("username"), 
-				email_ver_key = user.getString("email_ver_key"),
-				subject = "Verify your e-mail address",
-				message_body = "Please <a href='" + Server.host + "/verify.html?" + email_ver_key + "'>click here</a> to verify your e-mail address.";
-
-				Server.send_mail(email_address, username, subject, message_body);
+				email_ver_key = user.getString("email_ver_key");
+				
+				db.send_verification_email(username, email_address, email_ver_key);
 				
 				output.put("status", "1");
 				}

@@ -13,11 +13,21 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
 public class Utils 
 	{
+	public static boolean is_valid_email(String email_address)
+		{
+		String email_regex = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+		Pattern pattern = Pattern.compile(email_regex);
+		Matcher matcher = pattern.matcher(email_address);
+		return matcher.matches();
+		}
+	
 	public static boolean is_valid_btc(double amount)
 		{
 		if (amount == Double.parseDouble(format_btc(amount))) return true;

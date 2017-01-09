@@ -40,6 +40,14 @@ alter table transaction modify memo varchar(500);
 alter table transaction modify trans_type varchar(40);
 alter table transaction add contest_id int;
 
+drop table verified_email;
+create table if not exists verified_email ( 
+user_id VARCHAR(40) NOT NULL,
+email_address VARCHAR(60) NOT NULL, 
+created BIGINT NOT NULL,
+primary key (email_address)
+);
+
 To-do:
 
 SQL - build indexes on IDs

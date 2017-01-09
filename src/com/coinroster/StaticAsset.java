@@ -20,6 +20,7 @@ public class StaticAsset extends Utils
 		boolean 
 		
 		authenticated = false,
+		unverified_user = false,
 		file_exists = false;
 
 		String 
@@ -45,6 +46,7 @@ public class StaticAsset extends Utils
 				{
 				if (session.user_level().equals("1")) authenticated = true;
 				}
+			else if (session.user_level().equals("3")) unverified_user = true;
 			else authenticated = true;
 			}
 
@@ -97,6 +99,17 @@ public class StaticAsset extends Utils
 				}
 			
 			stream.close();
+			}
+		else if (unverified_user)
+			{
+			response.write(new String("HTTP/1.1 302 Found\r\n").getBytes());
+			response.flush();
+			
+			response.write(new String("Location: /welcome.html\r\n").getBytes());
+			response.flush();
+			
+			response.write(new String("\r\n").getBytes());
+			response.flush();
 			}
 		else
 			{
