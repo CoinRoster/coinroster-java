@@ -101,42 +101,32 @@ public class ContestSettlement
 		for (String user_id : users) new UserMail(db.select_user("id", user_id), subject, message_body);
 		
 		/*
-
+		
 		// swap RC liability to BTC liability
 		
 		String user_id = "set me";
 		
 		double rc_swap_amount = 0; // set me
 		
-		JSONObject 
+		JSONObject liability_account = db.select_user("username", "internal_liability");
 		
-		rc_liability = db.select_user("username", "internal_rc_liability"),
-		btc_liability = db.select_user("username", "internal_btc_liability");
-		
-		String
-		
-		rc_liability_id = rc_liability.getString("user_id"),
-		btc_liability_id = btc_liability.getString("user_id");
+		String liability_account_id = liability_account.getString("user_id");
 				
 		double
 		
-		rc_liability_balance = rc_liability.getDouble("rc_balance"),
-		btc_liability_balance = btc_liability.getDouble("btc_balance");
+		rc_liability_balance = liability_account.getDouble("rc_balance"),
+		btc_liability_balance = liability_account.getDouble("btc_balance");
 		
 		rc_liability_balance += rc_swap_amount; // add transaction amount (decreases liability)
 		btc_liability_balance -= rc_swap_amount; // subtract transaction amount (increases liability)
 		
 		// update liability balances
 		
-		PreparedStatement update_rc_liability = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
-		update_rc_liability.setDouble(1, rc_liability_balance);
-		update_rc_liability.setString(2, rc_liability_id);
-		update_rc_liability.executeUpdate();
-		
-		PreparedStatement update_btc_liability = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-		update_btc_liability.setDouble(1, btc_liability_balance);
-		update_btc_liability.setString(2, btc_liability_id);
-		update_btc_liability.executeUpdate();
+		PreparedStatement update_liability = sql_connection.prepareStatement("update user set rc_balance = ?, btc_balance = ? where id = ?");
+		update_liability.setDouble(1, rc_liability_balance);
+		update_liability.setDouble(2, btc_liability_balance);
+		update_liability.setString(2, liability_account_id);
+		update_liability.executeUpdate();
 		
 		// create swap transaction
 
@@ -144,8 +134,8 @@ public class ContestSettlement
 		
 		created_by = user_id,
 		transaction_type = "RC-SWAP-TO-BTC",
-		from_account = rc_liability_id,
-		to_account = btc_liability_id,
+		from_account = liability_account_id,
+		to_account = liability_account_id,
 		from_currency = "RC",
 		to_currency = "BTC",
 		memo = "SET ME";
@@ -161,7 +151,6 @@ public class ContestSettlement
 		swap.setString(8, to_currency);
 		swap.setString(9, memo);
 		swap.executeUpdate();
-		
 		*/
 		}
 	

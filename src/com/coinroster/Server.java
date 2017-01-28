@@ -2,62 +2,13 @@ package com.coinroster;
 
 /*
 
-Update NGINX config;
-
-rename table pool to contest;
-alter table contest add odds_source VARCHAR(400);
-
-create table if not exists entry(...;
-
-alter table user add btc_balance decimal(16,8) DEFAULT '0.00000000';
-alter table user add rc_balance decimal(16,8) DEFAULT '0.00000000';
-alter table user add ext_address varchar(40) DEFAULT NULL;
-alter table user add email_address varchar(60) DEFAULT NULL;
-alter table user add email_ver_key varchar(40) DEFAULT NULL;
-alter table user add email_ver_flag int(11) DEFAULT '0';
-alter table user add newsletter_flag int(11) DEFAULT '0';
-alter table user add referral_program int(11) NOT NULL DEFAULT '0';
-alter table user add referrer varchar(40) DEFAULT NULL;
-alter table user add ext_address_secure_flag int(11) DEFAULT '1';
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.btc_balance = x.btc_balance;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.rc_balance = x.rc_balance;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.ext_address = x.ext_address;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.email_address = x.email_address;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.email_ver_key = x.email_ver_key;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.email_ver_flag = x.email_ver_flag;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.newsletter_flag = x.newsletter_flag;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.referral_program = x.referral_program;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.referrer = x.referrer;
-UPDATE user AS u INNER JOIN user_xref AS x ON u.id = x.id SET u.ext_address_secure_flag = x.ext_address_secure_flag;
-drop table user_xref;
-
-Create user: internal_contest_asset
-update user set created = 1445624341104, level = 2, last_login = 0 where username = 'internal_contest_asset';
-update user set created = 1445625342000 where username = 'noah';
-update user set username = 'internal_equity' where username = 'internal_btc_asset';
-
-alter table transaction modify memo varchar(500);
-alter table transaction modify trans_type varchar(40);
-alter table transaction add contest_id int;
-
-drop table verified_email;
-create table if not exists verified_email ( 
-user_id VARCHAR(40) NOT NULL,
-email_address VARCHAR(60) NOT NULL, 
-created BIGINT NOT NULL,
-primary key (email_address)
-);
-
 To-do:
 
 SQL - build indexes on IDs
-Java - more granular locking on SQL calls
-Java - review validation of things like BTC values (not negative, etc)
+SQL - transactions
 Prevent login brute forcing with incrementing delay
 Add more verbose audit logs (user id, ip address, etc)
-Ability to load account.html with a subwindow opened
 backups
-process.monitor
 
 */
 

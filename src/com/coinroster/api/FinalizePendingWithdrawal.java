@@ -38,16 +38,17 @@ public class FinalizePendingWithdrawal extends Utils
 		
 			int transaction_id = input.getInt("transaction_id");
 
-			String[] transaction = db.select_transaction_old(transaction_id);
+			JSONObject transaction = db.select_transaction(transaction_id);
 	   
 			if (transaction != null)
 				{
 				String 
 
-				transaction_type = transaction[3],
-				user_id = transaction[4],
-				amount = transaction[6],
-				ext_address = transaction[11];
+				transaction_type = transaction.getString("trans_type"),
+				user_id = transaction.getString("from_account"),
+				ext_address = transaction.getString("ext_address");
+				
+				double amount = transaction.getDouble("amount");
 				
 				PreparedStatement update_transaction = sql_connection.prepareStatement("update transaction set pending_flag = 0, created_by = ? where id = ?");
 				update_transaction.setString(1, session.user_id());
@@ -76,7 +77,7 @@ public class FinalizePendingWithdrawal extends Utils
 				message_body += "<br/>";
 				message_body += "Date and time: <b>" + formatter.format(calendar.getTime()) + "</b>";
 				message_body += "<br/>";
-				message_body += "Amount: <b>" + format_btc(Double.parseDouble(amount)) + "</b>";
+				message_body += "Amount: <b>" + format_btc(amount) + "</b>";
 				message_body += "<br/>";
 				message_body += "To (wallet on file): <b>" + ext_address + "</b>";
 				message_body += "<br/>";

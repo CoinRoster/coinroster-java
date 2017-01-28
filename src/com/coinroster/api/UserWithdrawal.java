@@ -44,7 +44,7 @@ public class UserWithdrawal extends Utils
 			user_id = session.user_id(),
 			username = session.username(),
 			
-			btc_liability_id = db.get_id_for_username("internal_btc_liability"),
+			btc_liability_id = db.get_id_for_username("internal_liability"),
 			
 			created_by = user_id,
 			transaction_type = "BTC-WITHDRAWAL",

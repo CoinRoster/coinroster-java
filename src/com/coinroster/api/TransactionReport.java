@@ -53,7 +53,7 @@ public class TransactionReport extends Utils
 				}
 			else 
 				{
-				select_transaction = sql_connection.prepareStatement("select * from transaction where created > ? and created < ? and (from_account = ? or to_account = ?)");
+				select_transaction = sql_connection.prepareStatement("select * from transaction where cancelled_flag = 0 and created > ? and created < ? and (from_account = ? or to_account = ?)");
 				select_transaction.setLong(1, start_date_ms);
 				select_transaction.setLong(2, end_date_ms);
 				select_transaction.setString(3, session.user_id());
@@ -82,6 +82,7 @@ public class TransactionReport extends Utils
 				ext_address = result_set.getString(12);
 				
 				int contest_id = result_set.getInt(13);
+				int cancelled_flag = result_set.getInt(14);
 
 				JSONObject transaction = new JSONObject();
 
@@ -100,6 +101,7 @@ public class TransactionReport extends Utils
 					transaction.put("to_account", to_account);
 					transaction.put("amount", amount);
 					transaction.put("to_currency", to_currency);
+					transaction.put("cancelled_flag", cancelled_flag);
 					}
 				else
 					{

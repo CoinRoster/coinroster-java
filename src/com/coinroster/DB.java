@@ -112,52 +112,6 @@ public class DB
 	
 	// SELECT TRANSACTION
 
-	public String[] select_transaction_old(int transaction_id) throws Exception
-		{
-		String[] transaction = null;
-
-		PreparedStatement select_transaction  = sql_connection.prepareStatement("select * from transaction where id = ?");
-		select_transaction.setInt(1, transaction_id);
-
-		ResultSet result_set = select_transaction.executeQuery();
-
-		if (result_set.next())
-			{
-			String 
-			
-			id = result_set.getString(1),
-			created = result_set.getString(2),
-			created_by = result_set.getString(3),
-			trans_type = result_set.getString(4),
-			from_account = result_set.getString(5),
-			to_account = result_set.getString(6),
-			amount = result_set.getString(7),
-			from_currency = result_set.getString(8),
-			to_currency = result_set.getString(9),
-			memo = result_set.getString(10),
-			pending_flag = result_set.getString(11),
-			ext_address = result_set.getString(12);
-
-			transaction = new String[]
-				{
-				id, // 0
-				created, // 1
-				created_by, // 2
-				trans_type, // 3
-				from_account, // 4
-				to_account, // 5
-				amount, // 6
-				from_currency, // 7
-				to_currency, // 8
-				memo, // 9
-				pending_flag, // 10
-				ext_address // 11
-			 	};
-			}
-
-		return transaction;
-		}
-
 	public JSONObject select_transaction(int transaction_id) throws Exception
 		{
 		JSONObject transaction = null;
@@ -184,6 +138,7 @@ public class DB
 			int pending_flag = result_set.getInt(11);
 			String ext_address = result_set.getString(12);
 			int contest_id = result_set.getInt(13);
+			int cancelled_flag = result_set.getInt(14);
 			
 			transaction.put("transaction_id", transaction_id);
 			transaction.put("created", created);
@@ -198,6 +153,7 @@ public class DB
 			transaction.put("pending_flag", pending_flag);
 			transaction.put("ext_address", ext_address);
 			transaction.put("contest_id", contest_id);
+			transaction.put("cancelled_flag", cancelled_flag);
 			}
 
 		return transaction;

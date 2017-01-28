@@ -75,15 +75,10 @@ public class CreateTransaction extends Utils
 			
 			JSONObject
 			
-			btc_liability = db.select_user("username", "internal_btc_liability"),
-			rc_liability = db.select_user("username", "internal_rc_liability"),
-			
+			liability_account = db.select_user("username", "internal_liability"),
 			user = db.select_user("id", user_id);
 			
-			String
-			
-			btc_liability_id = btc_liability.getString("user_id"),
-			rc_liability_id = rc_liability.getString("user_id");
+			String liability_account_id = liability_account.getString("user_id");
 
 			boolean transaction_ok = false;
 		
@@ -99,8 +94,8 @@ public class CreateTransaction extends Utils
 			  
 				double
 				
-				btc_liability_balance = btc_liability.getDouble("btc_balance"),
-				rc_liability_balance = rc_liability.getDouble("rc_balance"),
+				btc_liability_balance = liability_account.getDouble("btc_balance"),
+				rc_liability_balance = liability_account.getDouble("rc_balance"),
 	
 				user_btc_balance = user.getDouble("btc_balance"),
 				user_rc_balance = user.getDouble("rc_balance");
@@ -113,7 +108,7 @@ public class CreateTransaction extends Utils
 						{
 						// --- FROM --- internal_btc_liability
 				
-						from_account = btc_liability_id;
+						from_account = liability_account_id;
 						from_currency = "BTC";
 						
 						// deduct transaction amount from internal_btc_liability:
@@ -122,7 +117,7 @@ public class CreateTransaction extends Utils
 	
 						PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
 						update_btc_liability_balance.setDouble(1, new_btc_liability_balance);
-						update_btc_liability_balance.setString(2, btc_liability_id);
+						update_btc_liability_balance.setString(2, liability_account_id);
 						update_btc_liability_balance.executeUpdate();
 	
 						// --- TO --- user
@@ -165,7 +160,7 @@ public class CreateTransaction extends Utils
 	
 						// --- TO --- internal_btc_liability
 	
-						to_account = btc_liability_id;
+						to_account = liability_account_id;
 						to_currency = "BTC";
 	
 						// add transaction amount to internal_btc_liability:
@@ -174,7 +169,7 @@ public class CreateTransaction extends Utils
 						
 						PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
 						update_user_balance.setDouble(1, new_btc_liability_balance);
-						update_user_balance.setString(2, btc_liability_id);
+						update_user_balance.setString(2, liability_account_id);
 						update_user_balance.executeUpdate();
 						
 						break;
@@ -183,7 +178,7 @@ public class CreateTransaction extends Utils
 						{
 						// --- FROM --- internal_rc_liability
 						
-						from_account = rc_liability_id;
+						from_account = liability_account_id;
 						from_currency = "RC";
 						
 						// deduct transaction amount from internal_rc_liability:
@@ -192,7 +187,7 @@ public class CreateTransaction extends Utils
 	
 						PreparedStatement update_rc_liability_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
 						update_rc_liability_balance.setDouble(1, new_rc_liability_balance);
-						update_rc_liability_balance.setString(2, rc_liability_id);
+						update_rc_liability_balance.setString(2, liability_account_id);
 						update_rc_liability_balance.executeUpdate();
 	
 						// --- TO --- user
@@ -235,7 +230,7 @@ public class CreateTransaction extends Utils
 	
 						// --- TO --- internal_rc_liability
 	
-						to_account = rc_liability_id;
+						to_account = liability_account_id;
 						to_currency = "RC";
 	
 						// add transaction amount to internal_rc_liability:
@@ -244,7 +239,7 @@ public class CreateTransaction extends Utils
 						
 						PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
 						update_user_balance.setDouble(1, new_rc_liability_balance);
-						update_user_balance.setString(2, rc_liability_id);
+						update_user_balance.setString(2, liability_account_id);
 						update_user_balance.executeUpdate();
 						
 						break;

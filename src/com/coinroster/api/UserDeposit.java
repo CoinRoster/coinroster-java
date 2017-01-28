@@ -47,7 +47,7 @@ public class UserDeposit extends Utils
 			cash_register_address = input.getString("cash_register_address"),					
 			created_by = user_id,
 			transaction_type = "BTC-DEPOSIT",
-			from_account = db.get_id_for_username("internal_btc_liability"),
+			from_account = db.get_id_for_username("internal_liability"),
 			to_account = user_id,
 			from_currency = "BTC",
 			to_currency = "BTC",

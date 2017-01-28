@@ -51,10 +51,10 @@ public class FinalizePendingDeposit extends Utils
 
 			JSONObject 
 			
-			btc_liability = db.select_user("username", "internal_btc_liability"),
+			liability_account = db.select_user("username", "internal_liability"),
 			user = db.select_user("id", user_id);
 
-			String btc_liability_id = btc_liability.getString("user_id");
+			String btc_liability_id = liability_account.getString("user_id");
 			
 			// unlock and break method if user key is invalid:
 			
@@ -69,7 +69,7 @@ public class FinalizePendingDeposit extends Utils
 		  
 			double
 			
-			btc_liability_balance = btc_liability.getDouble("btc_balance"),
+			btc_liability_balance = liability_account.getDouble("btc_balance"),
 			user_btc_balance = user.getDouble("btc_balance");
 
 			// add received amount to user balance:
