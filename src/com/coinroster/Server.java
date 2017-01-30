@@ -2,6 +2,22 @@ package com.coinroster;
 
 /*
 
+Database:
+
+create table if not exists category (
+code VARCHAR(10),
+description VARCHAR(40),
+active_flag int default 1
+);
+
+create table if not exists sub_category (
+category VARCHAR(10),
+code VARCHAR(10),
+description VARCHAR(40),
+active_flag int default 1,
+tile_image VARCHAR(120)
+); 
+
 To-do:
 
 SQL - build indexes on IDs
