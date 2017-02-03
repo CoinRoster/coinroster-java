@@ -2,6 +2,7 @@ package com.coinroster;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 
 public class Utils 
@@ -76,6 +78,18 @@ public class Utils
 				writer.newLine();
 				}
 			}
+		}
+
+	protected static void write_bytes(String file_path, byte[] file_data) throws IOException 
+		{
+		FileOutputStream fos = new FileOutputStream(file_path);
+		fos.write(file_data);
+		fos.close();
+		}
+	
+	public static byte[] base64_to_bytearray(String data) throws Exception 
+		{
+		return Base64.decodeBase64(data);
 		}
 	
 	public static byte[] inputstream_to_bytearray(InputStream in) throws Exception

@@ -16,11 +16,11 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
-public class CreateEntryDFS extends Utils
+public class CreateEntryRoster extends Utils
 	{
 	public static String method_level = "standard";
 	@SuppressWarnings("unused")
-	public CreateEntryDFS(MethodInstance method) throws Exception 
+	public CreateEntryRoster(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -185,13 +185,13 @@ public class CreateEntryDFS extends Utils
 				
 				// make a map of system player prices to compare against
 				
-				JSONArray odds_table = new JSONArray(contest.getString("odds_table"));
+				JSONArray option_table = new JSONArray(contest.getString("option_table"));
 				
 				TreeMap<Integer, Double> pricing_table = new TreeMap<Integer, Double>();
 				
-				for (int i=0, limit=odds_table.length(); i<limit; i++)
+				for (int i=0, limit=option_table.length(); i<limit; i++)
 					{
-					JSONObject player = odds_table.getJSONObject(i);
+					JSONObject player = option_table.getJSONObject(i);
 					pricing_table.put(player.getInt("id"), player.getDouble("price"));
 					}
 				
@@ -308,18 +308,16 @@ public class CreateEntryDFS extends Utils
 					update_btc_contest_account.executeUpdate();
 					}
 				
-				// create entr(ies)
+				// create entry
 				
-				for (int i=0; i<number_of_entries; i++)
-					{
-					PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
-					create_entry.setInt(1, contest_id);
-					create_entry.setString(2, created_by);			
-					create_entry.setLong(3, System.currentTimeMillis());
-					create_entry.setDouble(4, cost_per_entry);
-					create_entry.setString(5, roster.toString());
-					create_entry.executeUpdate();
-					}
+				
+				PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
+				create_entry.setInt(1, contest_id);
+				create_entry.setString(2, created_by);			
+				create_entry.setLong(3, System.currentTimeMillis());
+				create_entry.setDouble(4, cost_per_entry * number_of_entries);
+				create_entry.setString(5, roster.toString());
+				create_entry.executeUpdate();
 
 				success = true;
 				}

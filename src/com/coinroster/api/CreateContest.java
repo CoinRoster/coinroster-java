@@ -28,15 +28,18 @@ public class CreateContest extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-            String
-            
-            category = input.getString("category"),
-            sub_category = input.getString("sub_category"),
-            title = input.getString("title"),
-            description = input.getString("description"),
-            settlement_type = input.getString("settlement_type"),
-            entries_per_user_STRING = input.getString("entries_per_user"),
-            odds_source = input.getString("odds_source");
+			// get common fields:
+			
+			String category = input.getString("category");
+			String sub_category = input.getString("sub_category");
+			String contest_type = input.getString("contest_type");
+			String title = input.getString("title");
+			String description = input.getString("description");
+            double rake = input.getDouble("rake");
+            double cost_per_entry = input.getDouble("cost_per_entry");
+            Long registration_deadline = input.getLong("registration_deadline");
+            JSONArray option_table = input.getJSONArray("option_table");
+            // validate common fields
             
             if (title.length() > 255)
             	{
@@ -44,20 +47,12 @@ public class CreateContest extends Utils
                 break method;
             	}
             
-            Long registration_deadline = input.getLong("registration_deadline");
-            
             if (registration_deadline - System.currentTimeMillis() < 12 * 60 * 60 * 1000)
             	{
             	output.put("error", "Registration deadline must be at least 12 hours from now");
                 break method;
             	}
             
-            double
-            
-            rake = input.getDouble("rake"),
-            cost_per_entry = input.getDouble("cost_per_entry"),
-            salary_cap = input.getDouble("salary_cap");
-
             if (rake < 0 || rake >= 100)
             	{
                 output.put("error", "Rake cannot be < 0 or > 100");
@@ -71,204 +66,272 @@ public class CreateContest extends Utils
             	output.put("error", "Cost per entry cannot be 0");
                 break method;
             	}
-            
-            // validate cost_per_entry
-            
-            int
-            
-            min_users = input.getInt("min_users"),
-            max_users = input.getInt("max_users"), // 0 = unlimited
-            entries_per_user = 0,
-            roster_size = input.getInt("roster_size");
-            
-            if (min_users < 2)
-            	{
-        		output.put("error", "Invalid value for [min users]");
-        		break method;
-            	}
-            if (max_users < min_users && max_users != 0) // 0 = unlimited
-	        	{
-	    		output.put("error", "Invalid value for [max users]");
-	    		break method;
-	        	}
-            	
-            switch (entries_per_user_STRING)
-            	{
-            	case "UNLIMITED" :
-            		entries_per_user = 0; // 0 = unlimited
-            		break;
-            	case "ONE-ONLY" :
-            		entries_per_user = 1;
-            		break;
-            	default:
-            		output.put("error", "Invalid value for [entries per user]");
-            		break method;
-            	}
-            
-            if (roster_size < 0)
-            	{
-            	output.put("error", "Roster size cannobe be negative");
-        		break method;
-            	}
 
-            JSONArray
-
-            pay_table = input.getJSONArray("pay_table"),
-            pay_table_final = new JSONArray(),
-            odds_table = input.getJSONArray("odds_table");
-            
-            switch (settlement_type)
-            	{
-            	case "HEADS-UP":
-            		if (min_users != 2 || max_users != 2)
-            			{
-            			output.put("error", "Invalid value(s) for number of users");
-                		break method;
-            			}
-            		break;
-            	case "DOUBLE-UP":
-            		break;
-            	case "JACKPOT":
-            		try {
-            			int number_of_lines = pay_table.length();
-            			
-            			if (number_of_lines < 3)
-            				{
-            				output.put("error", "Pay table must have at least 3 ranks");
-                    		break method;
-            				}
-            			
-            			int last_rank = 0;
-            			double total_payout = 0;
-            			for (int i=0; i<pay_table.length(); i++)
-            				{
-            				JSONObject line = pay_table.getJSONObject(i);
-            				
-            				int rank = line.getInt("rank");
-            				if (rank - last_rank != 1)
-            					{
-            					output.put("error", "Invalid ranks in pay table");
-                        		break method;
-            					}
-            				last_rank = rank;
-            				
-            				double payout = line.getDouble("payout");
-            				if (payout == 0 || payout >= 100)
-            					{
-            					output.put("error", "Pay table rank " + rank + ": payout cannot be " + payout);
-                        		break method;
-            					}
-            				total_payout += payout;
-            				
-            				payout = payout/100;
-            				
-            				JSONObject new_line = new JSONObject();
-            				
-            				new_line.put("rank", rank);
-            				new_line.put("payout", payout);
-            				
-            				pay_table_final.put(new_line);
-            				}
-            			if (total_payout < 100)
-            				{
-            				output.put("error", "Pay table under-allocated: " + total_payout);
-                    		break method;
-            				}
-            			else if (total_payout > 100)
-	        				{
-	        				output.put("error", "Pay table over-allocated: " + total_payout);
-	                		break method;
-	        				}
-            			}
-            		catch (Exception e)
-            			{
-            			output.put("error", "Invalid pay table");
-                		break method;
-            			}
-            		break;
-            	default:
-            		output.put("error", "Invalid value for [settlement type]");
-            		break method;
-            	}
-            try {
-	            for (int i=0; i<odds_table.length(); i++)
-					{
-					JSONObject line = odds_table.getJSONObject(i);
-					
-					String 
-					
-					name = line.getString("name"),
-					odds = line.getString("odds");
-					
-					if (name == "" || name == null)
-						{
-						output.put("error", "Pay table row " + (i+1) + ": no name entered");
-                		break method;
-						}
-					if (odds == "" || odds == null) // consider adding more validation here
-						{
-						output.put("error", "Pay table row " + (i+1) + ": no odds entered");
-	            		break method;
-						}
-					
-					double price = line.getDouble("price");
-					
-					if (price == 0)
-						{
-						output.put("error", "Pay table row " + (i+1) + ": invalid odds or price");
-	            		break method;
-						}
-					if (price > salary_cap)
-						{
-						output.put("error", "Pay table row " + (i+1) + ": price cannot be greater than salary cap");
-	            		break method;
-						}
-					}
-	            }
-    		catch (Exception e)
-    			{
-    			output.put("error", "Invalid odds table");
-        		break method;
-    			}
-            
             log("Contest parameters:");
             
             log("category: " + category);
             log("sub_category: " + sub_category);
+            log("contest_type: " + contest_type);
             log("title: " + title);
             log("description: " + description);
             log("registration_deadline: " + registration_deadline);
             log("rake: " + rake);
             log("cost_per_entry: " + cost_per_entry);
-            log("settlement_type: " + settlement_type);
-            log("min_users: " + min_users);
-            log("max_users: " + max_users);
-            log("entries_per_user: " + entries_per_user);
-            log("roster_size: " + roster_size);
-            log("pay_table: " + pay_table);
-            log("salary_cap: " + salary_cap);
-            log("odds_table: " + odds_table);
             
-			PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, odds_table, created, created_by, roster_size, odds_source) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-			create_contest.setString(1, category);
-			create_contest.setString(2, sub_category);
-			create_contest.setString(3, title);
-			create_contest.setString(4, description);
-			create_contest.setLong(5, registration_deadline);
-			create_contest.setDouble(6, rake);
-			create_contest.setDouble(7, cost_per_entry);
-			create_contest.setString(8, settlement_type);
-			create_contest.setInt(9, min_users);
-			create_contest.setInt(10, max_users);
-			create_contest.setInt(11, entries_per_user);
-			create_contest.setString(12, pay_table_final.toString());
-			create_contest.setDouble(13, salary_cap);
-			create_contest.setString(14, odds_table.toString());
-			create_contest.setLong(15, System.currentTimeMillis());
-			create_contest.setString(16, session.user_id());
-			create_contest.setInt(17, roster_size);
-			create_contest.setString(18, odds_source);
-			create_contest.executeUpdate();
+            if (contest_type.equals("ROSTER"))
+	            {
+    			String entries_per_user_STRING = input.getString("entries_per_user");
+    			String settlement_type = input.getString("settlement_type");
+	            double salary_cap = input.getDouble("salary_cap");
+	            int min_users = input.getInt("min_users");
+	            int max_users = input.getInt("max_users"); // 0 = unlimited
+	            int entries_per_user = 0;
+	            int roster_size = input.getInt("roster_size");
+	            JSONArray pay_table = input.getJSONArray("pay_table");
+	            JSONArray pay_table_final = new JSONArray();
+	            
+	            if (min_users < 2)
+	            	{
+	        		output.put("error", "Invalid value for [min users]");
+	        		break method;
+	            	}
+	            if (max_users < min_users && max_users != 0) // 0 = unlimited
+		        	{
+		    		output.put("error", "Invalid value for [max users]");
+		    		break method;
+		        	}
+	            	
+	            switch (entries_per_user_STRING)
+	            	{
+	            	case "UNLIMITED" :
+	            		entries_per_user = 0; // 0 = unlimited
+	            		break;
+	            	case "ONE-ONLY" :
+	            		entries_per_user = 1;
+	            		break;
+	            	default:
+	            		output.put("error", "Invalid value for [entries per user]");
+	            		break method;
+	            	}
+	            
+	            if (roster_size < 0)
+	            	{
+	            	output.put("error", "Roster size cannobe be negative");
+	        		break method;
+	            	}
+	            
+	            // validate settlement instructions
+	
+	            switch (settlement_type)
+	            	{
+	            	case "HEADS-UP":
+	            		
+	            		if (min_users != 2 || max_users != 2)
+	            			{
+	            			output.put("error", "Invalid value(s) for number of users");
+	                		break method;
+	            			}
+	            		break;
+	            		
+	            	case "DOUBLE-UP": break;
+	            		
+	            	case "JACKPOT":
+	            		
+	            		try {
+	            			int number_of_lines = pay_table.length();
+	            			
+	            			if (number_of_lines < 3)
+	            				{
+	            				output.put("error", "Pay table must have at least 3 ranks");
+	                    		break method;
+	            				}
+	            			
+	            			int last_rank = 0;
+	            			double total_payout = 0;
+	            			
+	            			for (int i=0; i<pay_table.length(); i++)
+	            				{
+	            				JSONObject line = pay_table.getJSONObject(i);
+	            				
+	            				int rank = line.getInt("rank");
+	            				if (rank - last_rank != 1)
+	            					{
+	            					output.put("error", "Invalid ranks in pay table");
+	                        		break method;
+	            					}
+	            				last_rank = rank;
+	            				
+	            				double payout = line.getDouble("payout");
+	            				if (payout == 0 || payout >= 100)
+	            					{
+	            					output.put("error", "Pay table rank " + rank + ": payout cannot be " + payout);
+	                        		break method;
+	            					}
+	            				total_payout += payout;
+	            				
+	            				payout = payout/100;
+	            				
+	            				JSONObject new_line = new JSONObject();
+	            				
+	            				new_line.put("rank", rank);
+	            				new_line.put("payout", payout);
+	            				
+	            				pay_table_final.put(new_line);
+	            				}
+	            			
+	            			if (total_payout < 100)
+	            				{
+	            				output.put("error", "Pay table under-allocated: " + total_payout);
+	                    		break method;
+	            				}
+	            			else if (total_payout > 100)
+		        				{
+		        				output.put("error", "Pay table over-allocated: " + total_payout);
+		                		break method;
+		        				}
+	            			}
+	            		catch (Exception e)
+	            			{
+	            			output.put("error", "Invalid pay table");
+	                		break method;
+	            			}
+	            		break;
+	            		
+	            	default:
+	            		
+	            		output.put("error", "Invalid value for [settlement type]");
+	            		break method;
+	            		
+	            	}
+
+	            // validate player table
+	            
+	            try {
+		            for (int i=0; i<option_table.length(); i++)
+						{
+						JSONObject line = option_table.getJSONObject(i);
+						
+						String 
+						
+						name = line.getString("name"),
+						odds = line.getString("odds");
+						
+						if (name == "" || name == null)
+							{
+							output.put("error", "Player table row " + (i+1) + ": no name entered");
+	                		break method;
+							}
+						if (odds == "" || odds == null) // consider adding more validation here
+							{
+							output.put("error", "Player table row " + (i+1) + ": no odds entered");
+		            		break method;
+							}
+						
+						double price = line.getDouble("price");
+						
+						if (price == 0)
+							{
+							output.put("error", "Player table row " + (i+1) + ": invalid odds or price");
+		            		break method;
+							}
+						if (price > salary_cap)
+							{
+							output.put("error", "Player table row " + (i+1) + ": price cannot be greater than salary cap");
+		            		break method;
+							}
+						}
+		            }
+	    		catch (Exception e)
+	    			{
+	    			output.put("error", "Invalid player table");
+	        		break method;
+	    			}
+	
+				String odds_source = input.getString("odds_source");
+	            
+	            log("settlement_type: " + settlement_type);
+	            log("min_users: " + min_users);
+	            log("max_users: " + max_users);
+	            log("entries_per_user: " + entries_per_user);
+	            log("roster_size: " + roster_size);
+	            log("salary_cap: " + salary_cap);
+	            //log("pay_table: " + pay_table);
+	            //log("option_table: " + option_table);
+	            
+				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				create_contest.setString(1, category);
+				create_contest.setString(2, sub_category);
+				create_contest.setString(3, contest_type);
+				create_contest.setString(4, title);
+				create_contest.setString(5, description);
+				create_contest.setLong(6, registration_deadline);
+				create_contest.setDouble(7, rake);
+				create_contest.setDouble(8, cost_per_entry);
+				create_contest.setString(9, settlement_type);
+				create_contest.setInt(10, min_users);
+				create_contest.setInt(11, max_users);
+				create_contest.setInt(12, entries_per_user);
+				create_contest.setString(13, pay_table_final.toString());
+				create_contest.setDouble(14, salary_cap);
+				create_contest.setString(15, option_table.toString());
+				create_contest.setLong(16, System.currentTimeMillis());
+				create_contest.setString(17, session.user_id());
+				create_contest.setInt(18, roster_size);
+				create_contest.setString(19, odds_source);
+				create_contest.executeUpdate();
+	            }
+            else if (contest_type.equals("PARI-MUTUEL"))
+            	{
+            	// validate option table:
+            	
+            	int number_of_options = option_table.length();
+            	
+            	if (number_of_options < 2)
+            		{
+            		output.put("error", "There must be 2 or more options");
+            		break method;
+            		}
+            	
+            	int last_id = 0;
+            	
+            	for (int i=0; i<number_of_options; i++)
+					{
+					JSONObject line = option_table.getJSONObject(i);
+					
+					int id = line.getInt("id");
+					if (id - last_id != 1)
+						{
+						output.put("error", "Invalid ids in option table");
+	            		break method;
+						}
+					last_id = id;
+					
+					String option_description = line.getString("description");
+					
+					if (option_description.equals(""))
+						{
+						output.put("error", "Option " + id + " has no description");
+	            		break method;
+						}
+					}
+            	
+            	String settlement_type = "PARI-MUTUEL";
+            	
+            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				create_contest.setString(1, category);
+				create_contest.setString(2, sub_category);
+				create_contest.setString(3, contest_type);
+				create_contest.setString(4, title);
+				create_contest.setString(5, description);
+				create_contest.setLong(6, registration_deadline);
+				create_contest.setDouble(7, rake);
+				create_contest.setDouble(8, cost_per_entry);
+				create_contest.setString(9, settlement_type);
+				create_contest.setString(10, option_table.toString());
+				create_contest.setLong(11, System.currentTimeMillis());
+				create_contest.setString(12, session.user_id());
+				create_contest.executeUpdate();
+            	}
             
             output.put("status", "1");
 			

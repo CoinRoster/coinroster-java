@@ -2,19 +2,19 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 import org.json.JSONObject;
 
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
-public class CreateCategory extends Utils
+public class UpsertCategory extends Utils
 	{
 	public static String method_level = "admin";
 	@SuppressWarnings("unused")
-	public CreateCategory(MethodInstance method) throws Exception 
+	public UpsertCategory(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -33,9 +33,7 @@ public class CreateCategory extends Utils
             
             code = input.getString("code"),
             description = input.getString("description");
-            
-            int active_flag = input.getInt("active_flag");
-            
+           
             if (code.equals("")) 
             	{
                 output.put("error", "Code cannot be empty");
@@ -46,28 +44,19 @@ public class CreateCategory extends Utils
 	            output.put("error", "Description cannot be empty");
 	        	break method;
 	        	}
-            if (active_flag != 0 && active_flag != 1)
-            	{
-            	output.put("error", "Active flag must be 0 or 1");
-            	break method;
-        		}
-            
-            PreparedStatement select_category = sql_connection.prepareStatement("select * from category where code = ? or description = ?");
-            select_category.setString(1, code);
-            select_category.setString(2, description);
-            ResultSet rs = select_category.executeQuery();
-            
-            if (rs.next())
-            	{
-            	output.put("error", "Duplicate code or description!");
-            	break method;
-            	}
-            
-			PreparedStatement create_category = sql_connection.prepareStatement("insert into category(code, description, active_flag) values(?, ?, ?)");				
+
+			PreparedStatement create_category = sql_connection.prepareStatement("replace into category(code, description) values(?, ?)");				
 			create_category.setString(1, code);
 			create_category.setString(2, description);
-			create_category.setInt(3, active_flag);
-			create_category.executeUpdate();
+			
+			try {
+				create_category.executeUpdate();
+				}
+			catch (MySQLIntegrityConstraintViolationException e)
+				{
+				output.put("error", "Category [" + code + "] already exists");
+            	break method;
+				}
             
             output.put("status", "1");
 			

@@ -2,21 +2,11 @@ package com.coinroster;
 
 /*
 
-Database:
-
-create table if not exists category (
-code VARCHAR(10),
-description VARCHAR(40),
-active_flag int default 1
-);
-
-create table if not exists sub_category (
-category VARCHAR(10),
-code VARCHAR(10),
-description VARCHAR(40),
-active_flag int default 1,
-tile_image VARCHAR(120)
-); 
+MySQL: create table if not exists category (...
+MySQL: create table if not exists sub_category (...
+MySQL: drop table contest;
+MySQL: create table if not exists contest (...
+NGINX config: remove lobby folder
 
 To-do:
 
@@ -86,7 +76,7 @@ import javax.mail.internet.MimeMessage;
 public class Server extends Utils
 	{
 	protected static String 
-
+	
 	java_path = "/usr/share/java/",
 	java_out_path,
 	java_object_path,
@@ -112,7 +102,11 @@ public class Server extends Utils
 	cipher_name = "AES/CBC/PKCS5PADDING",
 	init_vector = "AAAAAAAAAAAAAAAA";
 
-	public static String host;
+	public static String 
+	
+	html_path = "/usr/share/nginx/html/coinroster.com",
+	
+	host;
 
 	static int
 	

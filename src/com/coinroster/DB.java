@@ -160,6 +160,40 @@ public class DB
 		}
 
 //------------------------------------------------------------------------------------
+	
+	// GET CATEGORY DESCRIPTION
+
+	public String get_category_description(String code) throws Exception
+		{
+		String description = null;
+
+		PreparedStatement select_category = sql_connection.prepareStatement("select description from category where code = ?");
+		select_category.setString(1, code);
+		ResultSet result_set = select_category.executeQuery();
+
+		if (result_set.next()) description = result_set.getString(1);
+
+		return description;
+		}
+
+//------------------------------------------------------------------------------------
+	
+	// GET SUB-CATEGORY DESCRIPTION
+
+	public String get_sub_category_description(String code) throws Exception
+		{
+		String description = null;
+
+		PreparedStatement select_sub_category = sql_connection.prepareStatement("select description from sub_category where code = ?");
+		select_sub_category.setString(1, code);
+		ResultSet result_set = select_sub_category.executeQuery();
+
+		if (result_set.next()) description = result_set.getString(1);
+
+		return description;
+		}
+
+//------------------------------------------------------------------------------------
 
 	// GET CONTEST TITLE
 
@@ -174,6 +208,23 @@ public class DB
 		if (result_set.next()) contest_title = result_set.getString(1);
 
 		return contest_title;
+		}
+
+//------------------------------------------------------------------------------------
+
+	// GET CONTEST PRIZE POOL
+
+	public double get_contest_prize_pool(int contest_id) throws Exception
+		{
+		double total_prize_pool = 0;
+
+		PreparedStatement get_total_prize_pool = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
+		get_total_prize_pool.setInt(1, contest_id);
+		ResultSet result_set = get_total_prize_pool.executeQuery();
+
+		if (result_set.next()) total_prize_pool = result_set.getDouble(1);
+
+		return total_prize_pool;
 		}
 
 //------------------------------------------------------------------------------------
@@ -197,32 +248,34 @@ public class DB
 			String created_by = result_set.getString(3);
 			String category = result_set.getString(4);
 			String sub_category = result_set.getString(5);
-			String title = result_set.getString(6);
-			String description = result_set.getString(7);
-			String settlement_type = result_set.getString(8);
-			String pay_table = result_set.getString(9);
-			String odds_table = result_set.getString(10);
-			double rake = result_set.getDouble(11);
-			double salary_cap = result_set.getDouble(12);
-			double cost_per_entry = result_set.getDouble(13);
-			int min_users = result_set.getInt(14);
-			int max_users = result_set.getInt(15);
-			int entries_per_user = result_set.getInt(16);
-			Long registration_deadline = result_set.getLong(17);
-			int status = result_set.getInt(18);
-			int roster_size = result_set.getInt(19);
-			String odds_source = result_set.getString(20);
+			String contest_type = result_set.getString(6);
+			String title = result_set.getString(7);
+			String description = result_set.getString(8);
+			String settlement_type = result_set.getString(9);
+			String pay_table = result_set.getString(10);
+			String option_table = result_set.getString(11);
+			double rake = result_set.getDouble(12);
+			double salary_cap = result_set.getDouble(13);
+			double cost_per_entry = result_set.getDouble(14);
+			int min_users = result_set.getInt(15);
+			int max_users = result_set.getInt(16);
+			int entries_per_user = result_set.getInt(17);
+			Long registration_deadline = result_set.getLong(18);
+			int status = result_set.getInt(19);
+			int roster_size = result_set.getInt(20);
+			String odds_source = result_set.getString(21);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
 			contest.put("created_by", created_by);
 			contest.put("category", category);
 			contest.put("sub_category", sub_category);
+			contest.put("contest_type", contest_type);
 			contest.put("title", title);
 			contest.put("description", description);
 			contest.put("settlement_type", settlement_type);
 			contest.put("pay_table", pay_table);
-			contest.put("odds_table", odds_table);
+			contest.put("option_table", option_table);
 			contest.put("rake", rake);
 			contest.put("salary_cap", salary_cap);
 			contest.put("cost_per_entry", cost_per_entry);

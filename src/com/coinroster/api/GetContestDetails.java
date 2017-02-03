@@ -12,7 +12,7 @@ import com.coinroster.Utils;
 
 public class GetContestDetails extends Utils
 	{
-	public static String method_level = "standard";
+	public static String method_level = "guest";
 	@SuppressWarnings("unused")
 	public GetContestDetails(MethodInstance method) throws Exception 
 		{
@@ -43,21 +43,37 @@ public class GetContestDetails extends Utils
 				
 				int number_of_entries = entries.length();
 				
-				output.put("category", contest.get("category"));
-				output.put("sub_category", contest.get("sub_category"));
+				String contest_type = contest.getString("contest_type");
+				
+				output.put("category", db.get_category_description(contest.getString("category")));
+				output.put("sub_category", db.get_sub_category_description(contest.getString("sub_category")));
+				output.put("contest_type", contest_type);
 				output.put("title", contest.get("title"));
 				output.put("description", contest.get("description"));
 				output.put("settlement_type", contest.get("settlement_type"));
-				output.put("pay_table", contest.get("pay_table"));
-				output.put("odds_table", contest.get("odds_table"));
-				output.put("salary_cap", contest.get("salary_cap"));
-				output.put("cost_per_entry", contest.get("cost_per_entry"));
-				output.put("min_users", contest.get("min_users"));
-				output.put("max_users", contest.get("max_users"));
-				output.put("entries_per_user", contest.get("entries_per_user"));
+				output.put("option_table", contest.get("option_table"));
 				output.put("contest_status", contest.get("status"));
-				output.put("roster_size", contest.get("roster_size"));
-				output.put("number_of_entries", number_of_entries);
+				output.put("registration_deadline", contest.get("registration_deadline"));
+
+				double 
+				
+				total_prize_pool = db.get_contest_prize_pool(contest_id),
+				cost_per_entry = contest.getDouble("cost_per_entry");
+				
+				output.put("total_prize_pool", total_prize_pool);
+				output.put("cost_per_entry", cost_per_entry);
+				output.put("rake", contest.getDouble("rake"));
+				
+				if (contest_type.equals("ROSTER"))
+					{
+					output.put("pay_table", contest.get("pay_table"));
+					output.put("salary_cap", contest.get("salary_cap"));
+					output.put("min_users", contest.get("min_users"));
+					output.put("max_users", contest.get("max_users"));
+					output.put("entries_per_user", contest.get("entries_per_user"));
+					output.put("roster_size", contest.get("roster_size"));
+					output.put("number_of_entries", total_prize_pool / cost_per_entry);
+					}
 				
 				output.put("status", "1");
 				}
