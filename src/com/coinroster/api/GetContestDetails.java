@@ -51,7 +51,6 @@ public class GetContestDetails extends Utils
 				output.put("title", contest.get("title"));
 				output.put("description", contest.get("description"));
 				output.put("settlement_type", contest.get("settlement_type"));
-				output.put("option_table", contest.get("option_table"));
 				output.put("contest_status", contest.get("status"));
 				output.put("registration_deadline", contest.get("registration_deadline"));
 
@@ -73,6 +72,31 @@ public class GetContestDetails extends Utils
 					output.put("entries_per_user", contest.get("entries_per_user"));
 					output.put("roster_size", contest.get("roster_size"));
 					output.put("number_of_entries", total_prize_pool / cost_per_entry);
+					output.put("option_table", contest.get("option_table"));
+					}
+				else if (contest_type.equals("PARI-MUTUEL"))
+					{
+					JSONArray 
+					
+					option_table = new JSONArray(contest.getString("option_table")),
+					option_table_with_wager_totals = new JSONArray();
+					
+					int number_of_options = option_table.length();
+					
+					double wager_grand_total = 0;
+					
+					for (int i=0; i<number_of_options; i++)
+						{
+						JSONObject option_item = option_table.getJSONObject(i);
+						int option_id = option_item.getInt("id");
+						double wager_total = db.get_option_wager_total(contest_id, option_id);
+						option_item.put("wager_total", wager_total);
+						wager_grand_total += wager_total;
+						option_table_with_wager_totals.put(option_item);
+						}
+					
+					output.put("option_table", option_table_with_wager_totals.toString());
+					output.put("wager_grand_total", wager_grand_total);
 					}
 				
 				output.put("status", "1");

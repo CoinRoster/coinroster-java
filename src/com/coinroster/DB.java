@@ -218,13 +218,31 @@ public class DB
 		{
 		double total_prize_pool = 0;
 
-		PreparedStatement get_total_prize_pool = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
-		get_total_prize_pool.setInt(1, contest_id);
-		ResultSet result_set = get_total_prize_pool.executeQuery();
+		PreparedStatement get_contest_prize_pool = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
+		get_contest_prize_pool.setInt(1, contest_id);
+		ResultSet result_set = get_contest_prize_pool.executeQuery();
 
 		if (result_set.next()) total_prize_pool = result_set.getDouble(1);
 
 		return total_prize_pool;
+		}
+
+//------------------------------------------------------------------------------------
+
+	// GET WAGER TOTAL FOR PARI-MUTUEL OPTION
+
+	public double get_option_wager_total(int contest_id, int option_id) throws Exception
+		{
+		double option_wager_total = 0;
+
+		PreparedStatement get_option_wager_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ? and entry_data = ?");
+		get_option_wager_total.setInt(1, contest_id);
+		get_option_wager_total.setInt(2, option_id);
+		ResultSet result_set = get_option_wager_total.executeQuery();
+
+		if (result_set.next()) option_wager_total = result_set.getDouble(1);
+
+		return option_wager_total;
 		}
 
 //------------------------------------------------------------------------------------

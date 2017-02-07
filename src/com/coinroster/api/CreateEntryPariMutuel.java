@@ -3,8 +3,6 @@ package com.coinroster.api;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.HashSet;
-import java.util.TreeMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -16,11 +14,11 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
-public class CreateEntryRoster extends Utils
+public class CreateEntryPariMutuel extends Utils
 	{
 	public static String method_level = "standard";
 	@SuppressWarnings("unused")
-	public CreateEntryRoster(MethodInstance method) throws Exception 
+	public CreateEntryPariMutuel(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -37,10 +35,11 @@ public class CreateEntryRoster extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			int contest_id = input.getInt("contest_id"),
-			number_of_entries = input.getInt("number_of_entries");
+			int contest_id = input.getInt("contest_id");
 			boolean use_rc = input.getBoolean("use_rc");
-			JSONArray roster = input.getJSONArray("roster");
+			JSONArray wagers = input.getJSONArray("wagers");
+			
+			int number_of_user_wagers = wagers.length();
 			
 			double
 			
@@ -85,12 +84,36 @@ public class CreateEntryRoster extends Utils
 					break lock;
 					}
 				
-				// validate number of entries
-			
-				if (number_of_entries <= 0)
+				// validate wagers
+				
+				JSONArray option_table = new JSONArray(contest.getString("option_table"));
+				
+				int number_of_options = option_table.length();
+				
+				double 
+				
+				cost_per_entry = contest.getDouble("cost_per_entry"),
+				total_entry_fees = 0;
+				
+				for (int i=0; i<number_of_user_wagers; i++)
 					{
-					output.put("error", "Number of entries cannot be " + number_of_entries);
-					break lock;
+					JSONObject wager_item = wagers.getJSONObject(i);
+					
+					int option_id = wager_item.getInt("id");
+					double wager = wager_item.getDouble("wager");
+					
+					if (option_id > number_of_options)
+						{
+						output.put("error", "Invalid outcome id: " + option_id);
+						break lock;
+						}
+					if (wager < cost_per_entry)
+						{
+						output.put("error", "Wager on outcome " + option_id + " is less than the min wager");
+						break lock;
+						}
+					
+					total_entry_fees += wager;
 					}
 				
 				// make sure user can afford entr(ies)
@@ -99,129 +122,15 @@ public class CreateEntryRoster extends Utils
 				
 				double 
 				
-				cost_per_entry = contest.getDouble("cost_per_entry"),
-				total_entry_fees = number_of_entries * cost_per_entry,
 				btc_balance = user.getDouble("btc_balance"),
 				rc_balance = user.getDouble("rc_balance"),
 				available_balance = btc_balance;
-			
+								
 				if (use_rc) available_balance += rc_balance;
 				
 				if (total_entry_fees > available_balance)
 					{
 					output.put("error", "Insufficient funds");
-					break lock;
-					}
-				
-				// validate contest max number of users, max entries per user
-				
-				JSONArray existing_entries = db.select_contest_entries(contest_id);
-				
-				int 
-				
-				number_of_existing_entries = existing_entries.length(),
-				previous_user_entries = 0,
-				number_of_unique_users = 1; // optimistically including current user
-				
-				if (number_of_existing_entries > 0)
-					{
-					HashSet<String> unique_users = new HashSet<String>();
-			
-					for (int i=0; i<number_of_existing_entries; i++)
-						{
-						JSONObject entry = existing_entries.getJSONObject(i);
-						
-						String this_user_id = entry.getString("user_id");
-						
-						if (this_user_id.equals(user_id)) 
-							{
-							previous_user_entries++;
-							continue;
-							}
-						
-						/* exclude current user from hashset (continue) so that count 
-						   is not affected by entries they submitted previously */
-
-						if (!unique_users.contains(this_user_id)) unique_users.add(this_user_id);
-						}
-					
-					number_of_unique_users += unique_users.size();
-					}
-				
-				// validate max number of users
-				
-				int max_users = contest.getInt("max_users");
-				
-				if (max_users != 0 && number_of_unique_users > max_users)
-					{
-					output.put("error", "Contest registration is full");
-					break lock;
-					}
-				
-				// validate max entries per user
-				
-				int entries_per_user = contest.getInt("entries_per_user");
-				
-				if (entries_per_user != 0 && previous_user_entries + number_of_entries > entries_per_user)
-					{
-					output.put("error", "You are over the maximum number of entries for this contest");
-					break lock;
-					}
-								
-				// validate roster size
-			
-				int
-				
-				roster_size_user = roster.length(),
-				roster_size = contest.getInt("roster_size");
-				
-				if (roster_size != 0 && roster_size_user != roster_size)
-					{
-					output.put("error", "Invalid roster size");
-					break lock;
-					}
-				
-				// make a map of system player prices to compare against
-				
-				JSONArray option_table = new JSONArray(contest.getString("option_table"));
-				
-				TreeMap<Integer, Double> pricing_table = new TreeMap<Integer, Double>();
-				
-				for (int i=0, limit=option_table.length(); i<limit; i++)
-					{
-					JSONObject player = option_table.getJSONObject(i);
-					pricing_table.put(player.getInt("id"), player.getDouble("price"));
-					}
-				
-				// validate user's player prices against system player prices
-				
-				double roster_total_salary = 0;
-
-				for (int i=0; i<roster_size_user; i++)
-					{
-					JSONObject player = roster.getJSONObject(i);
-
-					double 
-					
-					player_price_user = player.getDouble("price"),
-					player_price_system = pricing_table.get(player.getInt("id"));
-					
-					if (player_price_user != player_price_system)
-						{
-						output.put("error", "Player prices have changed");
-						break lock;
-						}
-					
-					roster_total_salary += player_price_user;
-					}
-				
-				// validate roster against salary cap
-								
-				double salary_cap = contest.getDouble("salary_cap");
-				
-				if (roster_total_salary > salary_cap)
-					{
-					output.put("error", "Roster has exceeded salary cap");
 					break lock;
 					}
 				
@@ -306,17 +215,24 @@ public class CreateEntryRoster extends Utils
 					update_btc_contest_account.executeUpdate();
 					}
 				
-				// create entry
+				// create entries (one per wager)
 				
+				for (int i=0; i<wagers.length(); i++)
+					{
+					JSONObject wager_item = wagers.getJSONObject(i);
+					
+					int option_id = wager_item.getInt("id");
+					double wager = wager_item.getDouble("wager");
 				
-				PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
-				create_entry.setInt(1, contest_id);
-				create_entry.setString(2, created_by);			
-				create_entry.setLong(3, System.currentTimeMillis());
-				create_entry.setDouble(4, cost_per_entry * number_of_entries);
-				create_entry.setString(5, roster.toString());
-				create_entry.executeUpdate();
-
+					PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
+					create_entry.setInt(1, contest_id);
+					create_entry.setString(2, created_by);			
+					create_entry.setLong(3, System.currentTimeMillis());
+					create_entry.setDouble(4, wager);
+					create_entry.setString(5, Integer.toString(option_id));
+					create_entry.executeUpdate();
+					}
+				
 				success = true;
 				}
 			
@@ -385,16 +301,16 @@ public class CreateEntryRoster extends Utils
 				subject = "Entry confirmation for " + contest_title, 
 				message_body = "";
 				
-				message_body += "You have successfully entered <b>" + number_of_entries + " roster</b>" + (number_of_entries > 1 ? "s" : "") + " for Contest " + contest_id + ": <b>" + contest_title + "</b>";
+				message_body += "You have successfully entered <b>" + number_of_user_wagers + " wager</b>" + (number_of_user_wagers > 1 ? "s" : "") + " for Contest " + contest_id + ": <b>" + contest_title + "</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
-				message_body += "You may view your rosters <a href='" + Server.host + "/contests/'>here</a>.";
+				message_body += "You may view your wagers <a href='" + Server.host + "/contests/'>here</a>.";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "Please do not reply to this email.";
 				
 				new UserMail(user, subject, message_body);
-				
+
 				output.put("status", "1");
 				}
 			
