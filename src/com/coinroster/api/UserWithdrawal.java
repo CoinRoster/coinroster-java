@@ -39,6 +39,12 @@ public class UserWithdrawal extends Utils
 		
 			double amount_to_withdraw = input.getDouble("amount_to_withdraw");
 			
+			if (amount_to_withdraw <= 0)
+				{
+				output.put("error", "Amount must be positive");
+				break method;
+				}
+			
 			String
 			 
 			user_id = session.user_id(),

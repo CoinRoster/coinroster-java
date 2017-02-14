@@ -3,8 +3,6 @@ package com.coinroster.api;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.TreeMap;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -34,43 +32,26 @@ public class EntryReport extends Utils
 			
 //------------------------------------------------------------------------------------
 		
+			int contest_id = input.getInt("contest_id");
+			
 			JSONArray entry_report = new JSONArray();
 			
-			PreparedStatement select_entries = null;
-			
-			String request_source = input.getString("request_source");
-			
-			boolean is_admin = session.user_level().equals("1") && request_source.equals("admin_panel");
-
-			if (is_admin) select_entries = sql_connection.prepareStatement("select * from entry order by id desc");
-			else 
-				{
-				select_entries = sql_connection.prepareStatement("select * from entry where user_id = ? order by id desc");
-				select_entries.setString(1, session.user_id());
-				}
-			
+			PreparedStatement select_entries = sql_connection.prepareStatement("select * from entry where user_id = ? and contest_id = ? order by id desc");
+			select_entries.setString(1, session.user_id());
+			select_entries.setInt(2, contest_id);
 			ResultSet result_set = select_entries.executeQuery();
 			
-			TreeMap<Integer, String> contest_titles = new TreeMap<Integer, String>();
-
 			while (result_set.next())
 				{
 				int id = result_set.getInt(1);
-				int contest_id = result_set.getInt(2);
+				//int contest_id = result_set.getInt(2);
 				String user_id = result_set.getString(3);
 				Long created = result_set.getLong(4);
 				double amount = result_set.getDouble(5);
 				String entry_data = result_set.getString(6);
 				
-				String contest_title;
+				String contest_title = db.get_contest_title(contest_id);
 				
-				if (contest_titles.containsKey(contest_id)) contest_title = contest_titles.get(contest_id);
-				else
-					{
-					contest_title = db.get_contest_title(contest_id);
-					contest_titles.put(contest_id, contest_title);
-					} 
-
 				JSONObject entry = new JSONObject();
 				
 				entry.put("id", id);

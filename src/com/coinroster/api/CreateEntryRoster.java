@@ -1,5 +1,6 @@
 package com.coinroster.api;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -100,12 +101,20 @@ public class CreateEntryRoster extends Utils
 				double 
 				
 				cost_per_entry = contest.getDouble("cost_per_entry"),
-				total_entry_fees = number_of_entries * cost_per_entry,
 				btc_balance = user.getDouble("btc_balance"),
 				rc_balance = user.getDouble("rc_balance"),
 				available_balance = btc_balance;
-			
+				
 				if (use_rc) available_balance += rc_balance;
+				
+				// use BigDecimal to avoid floating point issues:
+				
+				BigDecimal _total_entry_fees = BigDecimal.valueOf(cost_per_entry).multiply(BigDecimal.valueOf(number_of_entries));
+				
+				double total_entry_fees = _total_entry_fees.doubleValue();
+
+				log("Available balance: " + available_balance);
+				log("Total entry fees: " + total_entry_fees);
 				
 				if (total_entry_fees > available_balance)
 					{
@@ -308,12 +317,11 @@ public class CreateEntryRoster extends Utils
 				
 				// create entry
 				
-				
 				PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
 				create_entry.setInt(1, contest_id);
 				create_entry.setString(2, created_by);			
 				create_entry.setLong(3, System.currentTimeMillis());
-				create_entry.setDouble(4, cost_per_entry * number_of_entries);
+				create_entry.setDouble(4, total_entry_fees);
 				create_entry.setString(5, roster.toString());
 				create_entry.executeUpdate();
 

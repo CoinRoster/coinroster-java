@@ -178,7 +178,6 @@ public class ContestSettlement
 
 		while (transaction.next())
 			{
-			int transaction_id = transaction.getInt(1);
 			String created_by = transaction.getString(3);
 			String trans_type = transaction.getString(4);
 			String from_account = transaction.getString(5);
@@ -219,7 +218,7 @@ public class ContestSettlement
 				trans_type = from_currency + "-CONTEST-ENTRY-REVERSAL";
 				from_account = contest_account_id;
 				to_account = user_id;
-				memo = "Reversal of transaction " + transaction_id;
+				memo = "Contest " + contest_id + " was under-subscribed.";
 				
 				PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_transaction.setLong(1, System.currentTimeMillis());

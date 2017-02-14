@@ -17,7 +17,6 @@ import com.coinroster.internal.UserMail;
 public class UserDeposit extends Utils
 	{
 	public static String method_level = "standard";
-	@SuppressWarnings("unused")
 	public UserDeposit(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -35,9 +34,15 @@ public class UserDeposit extends Utils
 			
 //------------------------------------------------------------------------------------
 
-			long transaction_timestamp = System.currentTimeMillis();
-			
 			double amount_to_deposit = input.getDouble("amount_to_deposit");
+
+			if (amount_to_deposit <= 0)
+				{
+				output.put("error", "Amount must be positive");
+				break method;
+				}
+			
+			long transaction_timestamp = System.currentTimeMillis();
 			
 			String 
 			
