@@ -50,13 +50,13 @@ public class EntryReport extends Utils
 				double amount = result_set.getDouble(5);
 				String entry_data = result_set.getString(6);
 				
-				String contest_title = db.get_contest_title(contest_id);
+				//String contest_title = db.get_contest_title(contest_id);
 				
 				JSONObject entry = new JSONObject();
 				
 				entry.put("id", id);
 				entry.put("contest_id", contest_id);
-				entry.put("contest_title", contest_title);
+				//entry.put("contest_title", contest_title);
 				entry.put("user_id", user_id);
 				entry.put("created", created);
 				entry.put("amount", amount);

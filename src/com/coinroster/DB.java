@@ -311,6 +311,38 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	// SELECT CONTEST ENTRY 
+
+	public JSONObject select_entry(int entry_id) throws Exception
+		{
+		JSONObject entry = null;
+		
+		PreparedStatement select_user = sql_connection.prepareStatement("select * from entry where id = ?");
+		select_user.setInt(1, entry_id);
+		ResultSet result_set = select_user.executeQuery();
+
+		if (result_set.next())
+			{
+			int contest_id = result_set.getInt(2);
+			String user_id = result_set.getString(3);
+			Long created = result_set.getLong(4);
+			double amount = result_set.getDouble(5);
+			String entry_data = result_set.getString(6);
+
+			entry = new JSONObject();
+			
+			entry.put("entry_id", entry_id);
+			entry.put("contest_id", contest_id);
+			entry.put("user_id", user_id);
+			entry.put("created", created);
+			entry.put("amount", amount);
+			entry.put("entry_data", entry_data);
+			}
+
+		return entry;
+		}
+//------------------------------------------------------------------------------------
+
 	// SELECT CONTEST ENTRIES (WITH/WITHOUT USER ID)
 
 	public JSONArray select_contest_entries(int contest_id) throws Exception
