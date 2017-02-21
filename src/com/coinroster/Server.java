@@ -7,6 +7,8 @@ MySQL: create table if not exists sub_category (...
 MySQL: drop table contest;
 MySQL: create table if not exists contest (...
 NGINX config: remove lobby folder
+MySQL: alter table contest drop outcome_table;
+MySQL: alter table contest add settled_by varchar(40) default NULL;
 
 To-do:
 

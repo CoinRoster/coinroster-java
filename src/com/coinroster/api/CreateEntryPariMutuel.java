@@ -80,7 +80,7 @@ public class CreateEntryPariMutuel extends Utils
 				
 				if (contest.getInt("status") != 1)
 					{
-					output.put("error", "Contest " + contest_id + " is not open for registration");
+					output.put("error", "Contest #" + contest_id + " is not open for registration");
 					break lock;
 					}
 				
@@ -251,7 +251,7 @@ public class CreateEntryPariMutuel extends Utils
 					to_account = contest_account_id,
 					from_currency = "RC",
 					to_currency = "RC",
-					memo = "Entry fees (RC) for " + contest_title;
+					memo = "Entry fees (RC) for contest #" + contest_id;
 					
 					PreparedStatement rc_contest_entry = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 					rc_contest_entry.setLong(1, System.currentTimeMillis());
@@ -278,7 +278,7 @@ public class CreateEntryPariMutuel extends Utils
 					to_account = contest_account_id,
 					from_currency = "BTC",
 					to_currency = "BTC",
-					memo = "Entry fees (BTC) for " + contest_title;
+					memo = "Entry fees (BTC) for contest #" + contest_id;
 					
 					PreparedStatement btc_contest_entry = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 					btc_contest_entry.setLong(1, System.currentTimeMillis());
@@ -298,10 +298,10 @@ public class CreateEntryPariMutuel extends Utils
 				
 				String
 				
-				subject = "Entry confirmation for " + contest_title, 
+				subject = "Entry confirmation for contest #" + contest_id, 
 				message_body = "";
 				
-				message_body += "You have successfully entered <b>" + number_of_user_wagers + " wager</b>" + (number_of_user_wagers > 1 ? "s" : "") + " for Contest " + contest_id + ": <b>" + contest_title + "</b>";
+				message_body += "You have successfully entered <b>" + number_of_user_wagers + " wager" + (number_of_user_wagers > 1 ? "s" : "") + "</b> for contest #" + contest_id + " - <b>" + contest_title + "</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "You may view your wagers <a href='" + Server.host + "/contests/'>here</a>.";

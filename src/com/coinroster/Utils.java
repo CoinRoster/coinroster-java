@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -105,4 +107,32 @@ public class Utils
 		return buffer.toByteArray();
 		}
 
+	final static int MAX_PRECISION = 8;
+	public static double multiply(double in1, double in2, int max_precision)
+		{
+		if (max_precision == 0) max_precision = MAX_PRECISION;
+		BigDecimal out = BigDecimal.valueOf(in1).multiply(BigDecimal.valueOf(in2));
+		out = out.setScale(max_precision, RoundingMode.HALF_UP);
+		return out.doubleValue();
+		}
+	public static double divide(double in1, double in2, int max_precision) // requires rounding in the actual divide function
+		{
+		if (max_precision == 0) max_precision = MAX_PRECISION;
+		BigDecimal out = BigDecimal.valueOf(in1).divide(BigDecimal.valueOf(in2), max_precision, RoundingMode.HALF_UP);
+		return out.doubleValue();
+		}
+	public static double add(double in1, double in2, int max_precision)
+		{
+		if (max_precision == 0) max_precision = MAX_PRECISION;
+		BigDecimal out = BigDecimal.valueOf(in1).add(BigDecimal.valueOf(in2));
+		out = out.setScale(max_precision, RoundingMode.HALF_UP);
+		return out.doubleValue();
+		}
+	public static double subtract(double in1, double in2, int max_precision)
+		{
+		if (max_precision == 0) max_precision = MAX_PRECISION;
+		BigDecimal out = BigDecimal.valueOf(in1).subtract(BigDecimal.valueOf(in2));
+		out = out.setScale(max_precision, RoundingMode.HALF_UP);
+		return out.doubleValue();
+		}
 	}

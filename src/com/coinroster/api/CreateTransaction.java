@@ -114,11 +114,8 @@ public class CreateTransaction extends Utils
 						// deduct transaction amount from internal_btc_liability:
 						
 						Double new_btc_liability_balance = btc_liability_balance - transaction_amount;
-	
-						PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-						update_btc_liability_balance.setDouble(1, new_btc_liability_balance);
-						update_btc_liability_balance.setString(2, liability_account_id);
-						update_btc_liability_balance.executeUpdate();
+						
+						db.update_btc_balance(liability_account_id, new_btc_liability_balance);
 	
 						// --- TO --- user
 						
@@ -128,11 +125,8 @@ public class CreateTransaction extends Utils
 						// add transaction amount to user:
 						
 						Double new_user_btc_balance = user_btc_balance + transaction_amount;
-			 
-						PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-						update_user_balance.setDouble(1, new_user_btc_balance);
-						update_user_balance.setString(2, user_id);
-						update_user_balance.executeUpdate();
+
+						db.update_btc_balance(user_id, new_user_btc_balance);
 						
 						break;
 						}
@@ -153,10 +147,7 @@ public class CreateTransaction extends Utils
 						
 						Double new_user_btc_balance = user_btc_balance - transaction_amount;
 	
-						PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-						update_btc_liability_balance.setDouble(1, new_user_btc_balance);
-						update_btc_liability_balance.setString(2, user_id);
-						update_btc_liability_balance.executeUpdate();
+						db.update_btc_balance(user_id, new_user_btc_balance);
 	
 						// --- TO --- internal_btc_liability
 	
@@ -167,10 +158,7 @@ public class CreateTransaction extends Utils
 						
 						Double new_btc_liability_balance = btc_liability_balance + transaction_amount;
 						
-						PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-						update_user_balance.setDouble(1, new_btc_liability_balance);
-						update_user_balance.setString(2, liability_account_id);
-						update_user_balance.executeUpdate();
+						db.update_btc_balance(liability_account_id, new_btc_liability_balance);
 						
 						break;
 						}
@@ -184,11 +172,8 @@ public class CreateTransaction extends Utils
 						// deduct transaction amount from internal_rc_liability:
 						
 						Double new_rc_liability_balance = rc_liability_balance - transaction_amount;
-	
-						PreparedStatement update_rc_liability_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
-						update_rc_liability_balance.setDouble(1, new_rc_liability_balance);
-						update_rc_liability_balance.setString(2, liability_account_id);
-						update_rc_liability_balance.executeUpdate();
+
+						db.update_rc_balance(liability_account_id, new_rc_liability_balance);
 	
 						// --- TO --- user
 						
@@ -198,11 +183,8 @@ public class CreateTransaction extends Utils
 						// add transaction amount to user:
 						
 						Double new_user_rc_balance = user_rc_balance + transaction_amount;
-			 
-						PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
-						update_user_balance.setDouble(1, new_user_rc_balance);
-						update_user_balance.setString(2, user_id);
-						update_user_balance.executeUpdate();
+
+						db.update_rc_balance(user_id, new_user_rc_balance);
 						
 						break;
 						}
@@ -222,11 +204,8 @@ public class CreateTransaction extends Utils
 						// deduct transaction amount from user:
 						
 						Double new_user_rc_balance = user_rc_balance - transaction_amount;
-	
-						PreparedStatement update_rc_liability_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
-						update_rc_liability_balance.setDouble(1, new_user_rc_balance);
-						update_rc_liability_balance.setString(2, user_id);
-						update_rc_liability_balance.executeUpdate();
+
+						db.update_rc_balance(user_id, new_user_rc_balance);
 	
 						// --- TO --- internal_rc_liability
 	
@@ -236,11 +215,8 @@ public class CreateTransaction extends Utils
 						// add transaction amount to internal_rc_liability:
 						
 						Double new_rc_liability_balance = rc_liability_balance + transaction_amount;
-						
-						PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
-						update_user_balance.setDouble(1, new_rc_liability_balance);
-						update_user_balance.setString(2, liability_account_id);
-						update_user_balance.executeUpdate();
+
+						db.update_rc_balance(liability_account_id, new_rc_liability_balance);
 						
 						break;
 						}

@@ -500,5 +500,26 @@ public class DB
 		}
 
 //------------------------------------------------------------------------------------
-		
+	
+	// UPDATE BTC BALANCE
+	
+	public void update_btc_balance(String user_id, double new_btc_balance) throws Exception
+		{
+		PreparedStatement update_btc_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
+		update_btc_balance.setDouble(1, new_btc_balance);
+		update_btc_balance.setString(2, user_id);
+		update_btc_balance.executeUpdate();
+		}
+	
+//------------------------------------------------------------------------------------
+
+	// UPDATE RC BALANCE
+	
+	public void update_rc_balance(String user_id, double new_rc_balance) throws Exception
+		{
+		PreparedStatement update_rc_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
+		update_rc_balance.setDouble(1, new_rc_balance);
+		update_rc_balance.setString(2, user_id);
+		update_rc_balance.executeUpdate();
+		}
 	}
