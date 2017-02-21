@@ -47,9 +47,9 @@ public class CreateContest extends Utils
                 break method;
             	}
             
-            if (registration_deadline - System.currentTimeMillis() < 12 * 60 * 60 * 1000)
+            if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
             	{
-            	output.put("error", "Registration deadline must be at least 12 hours from now");
+            	output.put("error", "Registration deadline must be at least 1 hour from now");
                 break method;
             	}
             

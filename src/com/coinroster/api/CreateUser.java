@@ -99,79 +99,95 @@ public class CreateUser extends Utils
 			
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write");
+			
+			boolean success = false;
 
-			// if username exists, unlock
-			
-			if (db.select_user("username", username) != null)
-				{
-				output.put("error_message", "Username is taken");
-				statement.execute("unlock tables");
-				break method;
-				}
+			try {
+				lock : {
 
-			// user table is still locked | create new user:
-			
-			String new_password_hash = Server.SHA1(password + new_user_id);
-			
-			PreparedStatement create_user;
-
-			if (referral == null) 
-				{
-				create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key) values(?, ?, ?, ?, ?, ?, ?, ?)");
-				create_user.setString(8, email_ver_key);
-				}
-			else
-				{		
-				create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
-				create_user.setInt(8, Integer.parseInt(referral_program));
-				create_user.setString(9, referrer_id);
-				}
-			
-			create_user.setString(1, new_user_id);
-			create_user.setString(2, username);
-			create_user.setString(3, new_password_hash);
-			create_user.setInt(4, user_level);
-			create_user.setLong(5, System.currentTimeMillis());
-			create_user.setString(6, email_address);
-			create_user.setInt(7, email_ver_flag);
-			
-			create_user.executeUpdate();
-			
-			statement.execute("unlock tables");
-			
-			if (referral != null)
-				{
-				// delete all referral records associated with the referred email address:
+					if (db.select_user("username", username) != null)
+						{
+						output.put("error_message", "Username is taken");
+						break lock;
+						}
 	
-				PreparedStatement delete_from_referral = sql_connection.prepareStatement("delete from referral where email_address = ?");
-				delete_from_referral.setString(1, email_address);
-				delete_from_referral.executeUpdate();
-				
-				db.store_verified_email(new_user_id, email_address);
-				
-				// send email to referrer:
-				
-				JSONObject referrer = db.select_user("id", referrer_id);
-				
-				String
-				
-				subject = "Successful referral",
-				message_body = "<b>" + email_address + "</b> has signed up to CoinRoster!";
-				
-				new UserMail(referrer, subject, message_body);
+					// username is available - create user
+					
+					String new_password_hash = Server.SHA1(password + new_user_id);
+					
+					PreparedStatement create_user;
+	
+					if (referral == null) 
+						{
+						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key) values(?, ?, ?, ?, ?, ?, ?, ?)");
+						create_user.setString(8, email_ver_key);
+						}
+					else
+						{		
+						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						create_user.setInt(8, Integer.parseInt(referral_program));
+						create_user.setString(9, referrer_id);
+						}
+					
+					create_user.setString(1, new_user_id);
+					create_user.setString(2, username);
+					create_user.setString(3, new_password_hash);
+					create_user.setInt(4, user_level);
+					create_user.setLong(5, System.currentTimeMillis());
+					create_user.setString(6, email_address);
+					create_user.setInt(7, email_ver_flag);
+					
+					create_user.executeUpdate();
+					
+					success = true;
+					}
 				}
-
-			// log the new user in:
-
-			String new_session_token = session.create_session(sql_connection, session, username, new_user_id, user_level);
-
-			method.response.new_session_token = new_session_token;
+			catch (Exception e)
+				{
+				Server.exception(e);
+				output.put("error_message", "Unable to create user");
+				}
+			finally
+				{
+				statement.execute("unlock tables");
+				}
 			
-			// if user is unverified, send email verification:
-			
-			if (user_level == 3) db.send_verification_email(username, email_address, email_ver_key);
+			if (success)
+				{
+				if (referral != null)
+					{
+					// delete all referral records associated with the referred email address:
 		
-			output.put("status", "1");
+					PreparedStatement delete_from_referral = sql_connection.prepareStatement("delete from referral where email_address = ?");
+					delete_from_referral.setString(1, email_address);
+					delete_from_referral.executeUpdate();
+					
+					db.store_verified_email(new_user_id, email_address);
+					
+					// send email to referrer:
+					
+					JSONObject referrer = db.select_user("id", referrer_id);
+					
+					String
+					
+					subject = "Successful referral",
+					message_body = "<b>" + email_address + "</b> has signed up to CoinRoster!";
+					
+					new UserMail(referrer, subject, message_body);
+					}
+	
+				// log the new user in:
+	
+				String new_session_token = session.create_session(sql_connection, session, username, new_user_id, user_level);
+	
+				method.response.new_session_token = new_session_token;
+				
+				// if user is unverified, send email verification:
+				
+				if (user_level == 3) db.send_verification_email(username, email_address, email_ver_key);
+			
+				output.put("status", "1");
+				}
 			
 //------------------------------------------------------------------------------------
 

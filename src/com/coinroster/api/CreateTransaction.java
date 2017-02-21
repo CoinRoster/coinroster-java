@@ -71,174 +71,178 @@ public class CreateTransaction extends Utils
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write");
 
-			// get records for internal accounts and user account:
+			JSONObject user = null;
 			
-			JSONObject
-			
-			liability_account = db.select_user("username", "internal_liability"),
-			user = db.select_user("id", user_id);
-			
-			String liability_account_id = liability_account.getString("user_id");
-
-			boolean transaction_ok = false;
+			boolean success = false;
 		
-			lock : {
-
-				if (user == null) 
-					{
-					output.put("error", "Invalid user account");
-					break lock;
-					}
-	
-				// get account balances:
-			  
-				double
+			try {
+				lock : {
 				
-				btc_liability_balance = liability_account.getDouble("btc_balance"),
-				rc_liability_balance = liability_account.getDouble("rc_balance"),
-	
-				user_btc_balance = user.getDouble("btc_balance"),
-				user_rc_balance = user.getDouble("rc_balance");
-				
-				// transaction-specific logic:
-				
-				switch (transaction_type)
-					{
-					case "BTC-DEPOSIT":
+					user =  db.select_user("id", user_id);
+					
+					if (user == null) 
 						{
-						// --- FROM --- internal_btc_liability
-				
-						from_account = liability_account_id;
-						from_currency = "BTC";
-						
-						// deduct transaction amount from internal_btc_liability:
-						
-						Double new_btc_liability_balance = btc_liability_balance - transaction_amount;
-						
-						db.update_btc_balance(liability_account_id, new_btc_liability_balance);
-	
-						// --- TO --- user
-						
-						to_account = user_id;
-						to_currency = "BTC";
-						
-						// add transaction amount to user:
-						
-						Double new_user_btc_balance = user_btc_balance + transaction_amount;
-
-						db.update_btc_balance(user_id, new_user_btc_balance);
-						
-						break;
-						}
-					case "BTC-WITHDRAWAL":
-						{
-						if (transaction_amount > user_btc_balance) 
-							{
-							output.put("error", "User has insufficient funds");
-							break lock;
-							}
-						
-						// --- FROM --- user
-			
-						from_account = user_id;
-						from_currency = "BTC";
-						
-						// deduct transaction amount from user:
-						
-						Double new_user_btc_balance = user_btc_balance - transaction_amount;
-	
-						db.update_btc_balance(user_id, new_user_btc_balance);
-	
-						// --- TO --- internal_btc_liability
-	
-						to_account = liability_account_id;
-						to_currency = "BTC";
-	
-						// add transaction amount to internal_btc_liability:
-						
-						Double new_btc_liability_balance = btc_liability_balance + transaction_amount;
-						
-						db.update_btc_balance(liability_account_id, new_btc_liability_balance);
-						
-						break;
-						}
-					case "RC-DEPOSIT":
-						{
-						// --- FROM --- internal_rc_liability
-						
-						from_account = liability_account_id;
-						from_currency = "RC";
-						
-						// deduct transaction amount from internal_rc_liability:
-						
-						Double new_rc_liability_balance = rc_liability_balance - transaction_amount;
-
-						db.update_rc_balance(liability_account_id, new_rc_liability_balance);
-	
-						// --- TO --- user
-						
-						to_account = user_id;
-						to_currency = "RC";
-						
-						// add transaction amount to user:
-						
-						Double new_user_rc_balance = user_rc_balance + transaction_amount;
-
-						db.update_rc_balance(user_id, new_user_rc_balance);
-						
-						break;
-						}
-					case "RC-WITHDRAWAL":
-						{
-						if (transaction_amount > user_rc_balance)
-							{
-							output.put("error", "User has insufficient funds");
-							break lock;
-							}
-						
-						// --- FROM --- user
-			
-						from_account = user_id;
-						from_currency = "RC";
-						
-						// deduct transaction amount from user:
-						
-						Double new_user_rc_balance = user_rc_balance - transaction_amount;
-
-						db.update_rc_balance(user_id, new_user_rc_balance);
-	
-						// --- TO --- internal_rc_liability
-	
-						to_account = liability_account_id;
-						to_currency = "RC";
-	
-						// add transaction amount to internal_rc_liability:
-						
-						Double new_rc_liability_balance = rc_liability_balance + transaction_amount;
-
-						db.update_rc_balance(liability_account_id, new_rc_liability_balance);
-						
-						break;
-						}
-					default: 
-						{
-						output.put("error", "Invalid transaction");
+						output.put("error", "Invalid user account");
 						break lock;
 						}
-					}
-				
-				// we only get here if none of the 'break transaction' conditions are triggered
-				
-				transaction_ok = true;
-				}
-			
-			// immediately after transaction block completes, unlock user table
 
-			statement.execute("unlock tables");
+					JSONObject liability_account = db.select_user("username", "internal_liability");
+					String liability_account_id = liability_account.getString("user_id");
+
+					// get account balances:
+				  
+					double
+					
+					btc_liability_balance = liability_account.getDouble("btc_balance"),
+					rc_liability_balance = liability_account.getDouble("rc_balance"),
+		
+					user_btc_balance = user.getDouble("btc_balance"),
+					user_rc_balance = user.getDouble("rc_balance");
+					
+					// transaction-specific logic:
+					
+					switch (transaction_type)
+						{
+						case "BTC-DEPOSIT":
+							{
+							// --- FROM --- internal_btc_liability
+					
+							from_account = liability_account_id;
+							from_currency = "BTC";
+							
+							// deduct transaction amount from internal_btc_liability:
+							
+							Double new_btc_liability_balance = subtract(btc_liability_balance, transaction_amount, 0);
+							
+							db.update_btc_balance(liability_account_id, new_btc_liability_balance);
+		
+							// --- TO --- user
+							
+							to_account = user_id;
+							to_currency = "BTC";
+							
+							// add transaction amount to user:
+							
+							Double new_user_btc_balance = add(user_btc_balance, transaction_amount, 0);
+		
+							db.update_btc_balance(user_id, new_user_btc_balance);
+							
+							break;
+							}
+						case "BTC-WITHDRAWAL":
+							{
+							if (transaction_amount > user_btc_balance) 
+								{
+								output.put("error", "User has insufficient funds");
+								break lock;
+								}
+							
+							// --- FROM --- user
+				
+							from_account = user_id;
+							from_currency = "BTC";
+							
+							// deduct transaction amount from user:
+							
+							Double new_user_btc_balance = subtract(user_btc_balance, transaction_amount, 0);
+		
+							db.update_btc_balance(user_id, new_user_btc_balance);
+		
+							// --- TO --- internal_btc_liability
+		
+							to_account = liability_account_id;
+							to_currency = "BTC";
+		
+							// add transaction amount to internal_btc_liability:
+							
+							Double new_btc_liability_balance = add(btc_liability_balance, transaction_amount, 0);
+							
+							db.update_btc_balance(liability_account_id, new_btc_liability_balance);
+							
+							break;
+							}
+						case "RC-DEPOSIT":
+							{
+							// --- FROM --- internal_rc_liability
+							
+							from_account = liability_account_id;
+							from_currency = "RC";
+							
+							// deduct transaction amount from internal_rc_liability:
+							
+							Double new_rc_liability_balance = subtract(rc_liability_balance, transaction_amount, 0);
+		
+							db.update_rc_balance(liability_account_id, new_rc_liability_balance);
+		
+							// --- TO --- user
+							
+							to_account = user_id;
+							to_currency = "RC";
+							
+							// add transaction amount to user:
+							
+							Double new_user_rc_balance = add(user_rc_balance, transaction_amount, 0);
+		
+							db.update_rc_balance(user_id, new_user_rc_balance);
+							
+							break;
+							}
+						case "RC-WITHDRAWAL":
+							{
+							if (transaction_amount > user_rc_balance)
+								{
+								output.put("error", "User has insufficient funds");
+								break lock;
+								}
+							
+							// --- FROM --- user
+				
+							from_account = user_id;
+							from_currency = "RC";
+							
+							// deduct transaction amount from user:
+							
+							Double new_user_rc_balance = subtract(user_rc_balance, transaction_amount, 0);
+		
+							db.update_rc_balance(user_id, new_user_rc_balance);
+		
+							// --- TO --- internal_rc_liability
+		
+							to_account = liability_account_id;
+							to_currency = "RC";
+		
+							// add transaction amount to internal_rc_liability:
+							
+							Double new_rc_liability_balance = add(rc_liability_balance, transaction_amount, 0);
+		
+							db.update_rc_balance(liability_account_id, new_rc_liability_balance);
+							
+							break;
+							}
+						default: 
+							{
+							output.put("error", "Invalid transaction");
+							break lock;
+							}
+						}
+					
+					// we only get here if none of the 'break transaction' conditions are triggered
+					
+					success = true;
+					}
+				}
+			catch (Exception e)
+				{
+				Server.exception(e);
+				}
+			finally
+				{
+				statement.execute("unlock tables");
+				}
 			
 			// if transaction completed successfully, record it and send emails
 			
-			if (transaction_ok)
+			if (success)
 				{				
 				Long transaction_timestamp = System.currentTimeMillis();
 				

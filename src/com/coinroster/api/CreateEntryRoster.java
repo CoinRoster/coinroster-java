@@ -1,6 +1,5 @@
 package com.coinroster.api;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -55,281 +54,276 @@ public class CreateEntryRoster extends Utils
 			contest_account_id = null,
 			contest_title = null;
 			
-			boolean success = false;
-			
-			JSONObject user = null;
-			
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write");
+			statement.execute("lock tables user write, contest write, entry write, transaction write");
 			
-			lock : {
+			JSONObject user = null;
 			
-				// make sure contest id is valid
-				
-				JSONObject contest = db.select_contest(contest_id);
-				
-				if (contest == null)
-					{
-					output.put("error", "Invalid contest ID: " + contest_id);
-					break lock;
-					}
-				
-				contest_title = contest.getString("title");
-				
-				// make sure contest is open for registration
-				
-				if (contest.getInt("status") != 1)
-					{
-					output.put("error", "Contest " + contest_id + " is not open for registration");
-					break lock;
-					}
-				
-				// validate number of entries
-			
-				if (number_of_entries <= 0)
-					{
-					output.put("error", "Number of entries cannot be " + number_of_entries);
-					break lock;
-					}
-				
-				// make sure user can afford entr(ies)
+			boolean success = false;
 
-				user = db.select_user("id", user_id);
-				
-				double 
-				
-				cost_per_entry = contest.getDouble("cost_per_entry"),
-				btc_balance = user.getDouble("btc_balance"),
-				rc_balance = user.getDouble("rc_balance"),
-				available_balance = btc_balance;
-				
-				if (use_rc) available_balance += rc_balance;
-				
-				// use BigDecimal to avoid floating point issues:
-				
-				BigDecimal _total_entry_fees = BigDecimal.valueOf(cost_per_entry).multiply(BigDecimal.valueOf(number_of_entries));
-				
-				double total_entry_fees = _total_entry_fees.doubleValue();
+			try {
+				lock : {
 
-				log("Available balance: " + available_balance);
-				log("Total entry fees: " + total_entry_fees);
-				
-				if (total_entry_fees > available_balance)
-					{
-					output.put("error", "Insufficient funds");
-					break lock;
-					}
-				
-				// validate contest max number of users, max entries per user
-				
-				JSONArray existing_entries = db.select_contest_entries(contest_id);
-				
-				int 
-				
-				number_of_existing_entries = existing_entries.length(),
-				previous_user_entries = 0,
-				number_of_unique_users = 1; // optimistically including current user
-				
-				if (number_of_existing_entries > 0)
-					{
-					HashSet<String> unique_users = new HashSet<String>();
-			
-					for (int i=0; i<number_of_existing_entries; i++)
+					// make sure contest id is valid
+					
+					JSONObject contest = db.select_contest(contest_id);
+					
+					if (contest == null)
 						{
-						JSONObject entry = existing_entries.getJSONObject(i);
-						
-						String this_user_id = entry.getString("user_id");
-						
-						if (this_user_id.equals(user_id)) 
-							{
-							previous_user_entries++;
-							continue;
-							}
-						
-						/* exclude current user from hashset (continue) so that count 
-						   is not affected by entries they submitted previously */
-
-						if (!unique_users.contains(this_user_id)) unique_users.add(this_user_id);
-						}
-					
-					number_of_unique_users += unique_users.size();
-					}
-				
-				// validate max number of users
-				
-				int max_users = contest.getInt("max_users");
-				
-				if (max_users != 0 && number_of_unique_users > max_users)
-					{
-					output.put("error", "Contest registration is full");
-					break lock;
-					}
-				
-				// validate max entries per user
-				
-				int entries_per_user = contest.getInt("entries_per_user");
-				
-				if (entries_per_user != 0 && previous_user_entries + number_of_entries > entries_per_user)
-					{
-					output.put("error", "You are over the maximum number of entries for this contest");
-					break lock;
-					}
-								
-				// validate roster size
-			
-				int
-				
-				roster_size_user = roster.length(),
-				roster_size = contest.getInt("roster_size");
-				
-				if (roster_size != 0 && roster_size_user != roster_size)
-					{
-					output.put("error", "Invalid roster size");
-					break lock;
-					}
-				
-				// make a map of system player prices to compare against
-				
-				JSONArray option_table = new JSONArray(contest.getString("option_table"));
-				
-				TreeMap<Integer, Double> pricing_table = new TreeMap<Integer, Double>();
-				
-				for (int i=0, limit=option_table.length(); i<limit; i++)
-					{
-					JSONObject player = option_table.getJSONObject(i);
-					pricing_table.put(player.getInt("id"), player.getDouble("price"));
-					}
-				
-				// validate user's player prices against system player prices
-				
-				double roster_total_salary = 0;
-
-				for (int i=0; i<roster_size_user; i++)
-					{
-					JSONObject player = roster.getJSONObject(i);
-
-					double 
-					
-					player_price_user = player.getDouble("price"),
-					player_price_system = pricing_table.get(player.getInt("id"));
-					
-					if (player_price_user != player_price_system)
-						{
-						output.put("error", "Player prices have changed");
+						output.put("error", "Invalid contest ID: " + contest_id);
 						break lock;
 						}
 					
-					roster_total_salary += player_price_user;
-					}
-				
-				// validate roster against salary cap
-								
-				double salary_cap = contest.getDouble("salary_cap");
-				
-				if (roster_total_salary > salary_cap)
-					{
-					output.put("error", "Roster has exceeded salary cap");
-					break lock;
-					}
-				
-				// --------------------------------------------- //
-				// if we get here, the entry has been validated! //
-				// --------------------------------------------- //
-
-				// calculate user balances and transaction amounts
-
-				if (use_rc && rc_balance > 0)
-					{
-					double temp_rc_balance = rc_balance - total_entry_fees;
-
-					// user has enough RC to cover all entry fees:
+					contest_title = contest.getString("title");
 					
-					if (temp_rc_balance >= 0)
+					// make sure contest is open for registration
+					
+					if (contest.getInt("status") != 1)
 						{
-						rc_transaction_amount = total_entry_fees;
-						rc_balance = temp_rc_balance;
+						output.put("error", "Contest #" + contest_id + " is not open for registration");
+						break lock;
 						}
 					
-					// user does not have enough RC to cover all entry fees:
-					
-					else
+					// validate number of entries
+				
+					if (number_of_entries <= 0)
 						{
-						// entire RC balance being spent:
-						
-						rc_transaction_amount = rc_balance;
-						rc_balance = 0;
-						
-						// overflow is removed from BTC balance:
-						
-						btc_transaction_amount = Math.abs(temp_rc_balance);
-						btc_balance -= btc_transaction_amount;
+						output.put("error", "Number of entries cannot be " + number_of_entries);
+						break lock;
 						}
-					}
-				else 
-					{
-					btc_balance -= total_entry_fees;
-					btc_transaction_amount = total_entry_fees;
-					}
-				
-				// update user's account balances
-
-				PreparedStatement update_user_balances = sql_connection.prepareStatement("update user set btc_balance = ?, rc_balance = ? where id = ?");
-				update_user_balances.setDouble(1, btc_balance);
-				update_user_balances.setDouble(2, rc_balance);
-				update_user_balances.setString(3, user_id);
-				update_user_balances.executeUpdate();
-				
-				JSONObject contest_account = db.select_user("username", "internal_contest_asset");
-				
-				contest_account_id = contest_account.getString("user_id");
-
-				// update RC contest asset account (if applicable)
-				
-				if (rc_transaction_amount > 0)
-					{
-					// update account balance:
-
-					double rc_contest_account_balance = contest_account.getDouble("rc_balance");
-					rc_contest_account_balance += rc_transaction_amount;
 					
-					PreparedStatement update_rc_contest_account = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
-					update_rc_contest_account.setDouble(1, rc_contest_account_balance);
-					update_rc_contest_account.setString(2, contest_account_id);
-					update_rc_contest_account.executeUpdate();
-					}
-				
-				// update BTC contest asset account (if applicable)
-				
-				if (btc_transaction_amount > 0)
-					{
-					// update account balance:
-
-					double btc_contest_account_balance = contest_account.getDouble("btc_balance");
-					btc_contest_account_balance += btc_transaction_amount;
+					// make sure user can afford entr(ies)
+	
+					user = db.select_user("id", user_id);
 					
-					PreparedStatement update_btc_contest_account = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-					update_btc_contest_account.setDouble(1, btc_contest_account_balance);
-					update_btc_contest_account.setString(2, contest_account_id);
-					update_btc_contest_account.executeUpdate();
-					}
+					double 
+					
+					cost_per_entry = contest.getDouble("cost_per_entry"),
+					btc_balance = user.getDouble("btc_balance"),
+					rc_balance = user.getDouble("rc_balance"),
+					available_balance = btc_balance;
+					
+					if (use_rc) available_balance = add(available_balance, rc_balance, 0);
+					
+					double total_entry_fees = multiply(cost_per_entry, number_of_entries, 0);
+	
+					log("Available balance: " + available_balance);
+					log("Total entry fees: " + total_entry_fees);
+					
+					if (total_entry_fees > available_balance)
+						{
+						output.put("error", "Insufficient funds");
+						break lock;
+						}
+					
+					// validate contest max number of users, max entries per user
+					
+					JSONArray existing_entries = db.select_contest_entries(contest_id);
+					
+					int 
+					
+					number_of_existing_entries = existing_entries.length(),
+					previous_user_entries = 0,
+					number_of_unique_users = 1; // optimistically including current user
+					
+					if (number_of_existing_entries > 0)
+						{
+						HashSet<String> unique_users = new HashSet<String>();
 				
-				// create entry
+						for (int i=0; i<number_of_existing_entries; i++)
+							{
+							JSONObject entry = existing_entries.getJSONObject(i);
+							
+							String this_user_id = entry.getString("user_id");
+							
+							if (this_user_id.equals(user_id)) 
+								{
+								previous_user_entries++;
+								continue;
+								}
+							
+							/* exclude current user from hashset (continue) so that count 
+							   is not affected by entries they submitted previously */
+	
+							if (!unique_users.contains(this_user_id)) unique_users.add(this_user_id);
+							}
+						
+						number_of_unique_users += unique_users.size();
+						}
+					
+					// validate max number of users
+					
+					int max_users = contest.getInt("max_users");
+					
+					if (max_users != 0 && number_of_unique_users > max_users)
+						{
+						output.put("error", "Contest registration is full");
+						break lock;
+						}
+					
+					// validate max entries per user
+					
+					int entries_per_user = contest.getInt("entries_per_user");
+					
+					if (entries_per_user != 0 && previous_user_entries + number_of_entries > entries_per_user)
+						{
+						output.put("error", "You have exceeded the maximum number of entries for this contest");
+						break lock;
+						}
+									
+					// validate roster size
 				
-				PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
-				create_entry.setInt(1, contest_id);
-				create_entry.setString(2, created_by);			
-				create_entry.setLong(3, System.currentTimeMillis());
-				create_entry.setDouble(4, total_entry_fees);
-				create_entry.setString(5, roster.toString());
-				create_entry.executeUpdate();
+					int
+					
+					roster_size_user = roster.length(),
+					roster_size = contest.getInt("roster_size");
+					
+					if (roster_size != 0 && roster_size_user != roster_size)
+						{
+						output.put("error", "Invalid roster size");
+						break lock;
+						}
+					
+					// make a map of system player prices to compare against
+					
+					JSONArray option_table = new JSONArray(contest.getString("option_table"));
+					
+					TreeMap<Integer, Double> pricing_table = new TreeMap<Integer, Double>();
+					
+					for (int i=0, limit=option_table.length(); i<limit; i++)
+						{
+						JSONObject player = option_table.getJSONObject(i);
+						pricing_table.put(player.getInt("id"), player.getDouble("price"));
+						}
+					
+					// validate user's player prices against system player prices
+					
+					double roster_total_salary = 0;
+	
+					for (int i=0; i<roster_size_user; i++)
+						{
+						JSONObject player = roster.getJSONObject(i);
+	
+						double 
+						
+						player_price_user = player.getDouble("price"),
+						player_price_system = pricing_table.get(player.getInt("id"));
+						
+						if (player_price_user != player_price_system)
+							{
+							output.put("error", "Player prices have changed");
+							break lock;
+							}
+						
+						roster_total_salary = add(roster_total_salary, player_price_user, 0);
+						}
+					
+					// validate roster against salary cap
+									
+					double salary_cap = contest.getDouble("salary_cap");
+					
+					if (roster_total_salary > salary_cap)
+						{
+						output.put("error", "Roster has exceeded salary cap");
+						break lock;
+						}
+					
+					// --------------------------------------------- //
+					// if we get here, the entry has been validated! //
+					// --------------------------------------------- //
+	
+					// calculate user balances and transaction amounts
+					
+					if (use_rc && rc_balance > 0)
+						{
+						double temp_rc_balance = subtract(rc_balance, total_entry_fees, 0);
+	
+						// user has enough RC to cover all entry fees:
+						
+						if (temp_rc_balance >= 0)
+							{
+							rc_transaction_amount = total_entry_fees;
+							rc_balance = temp_rc_balance;
+							}
+						
+						// user does not have enough RC to cover all entry fees:
+						
+						else
+							{
+							// entire RC balance being spent:
+							
+							rc_transaction_amount = rc_balance;
+							rc_balance = 0;
+							
+							// overflow is removed from BTC balance:
+							
+							btc_transaction_amount = Math.abs(temp_rc_balance);
+							btc_balance = subtract(btc_balance, btc_transaction_amount, 0);
+							}
+						}
+					else 
+						{
+						btc_balance = subtract(btc_balance, total_entry_fees, 0);
+						btc_transaction_amount = total_entry_fees;
+						}
 
-				success = true;
+					// update user's account balances
+					
+					db.update_btc_balance(user_id, btc_balance);
+					db.update_rc_balance(user_id, rc_balance);
+	
+					JSONObject contest_account = db.select_user("username", "internal_contest_asset");
+					
+					contest_account_id = contest_account.getString("user_id");
+	
+					// update RC contest asset account (if applicable)
+					
+					if (rc_transaction_amount > 0)
+						{
+						// update account balance:
+	
+						double rc_contest_account_balance = contest_account.getDouble("rc_balance");
+						rc_contest_account_balance = add(rc_contest_account_balance, rc_transaction_amount, 0);
+
+						db.update_rc_balance(contest_account_id, rc_contest_account_balance);
+						}
+					
+					// update BTC contest asset account (if applicable)
+					
+					if (btc_transaction_amount > 0)
+						{
+						// update account balance:
+	
+						double btc_contest_account_balance = contest_account.getDouble("btc_balance");
+						btc_contest_account_balance = add (btc_contest_account_balance, btc_transaction_amount, 0);
+						
+						db.update_btc_balance(contest_account_id, btc_contest_account_balance);
+						}
+					
+					// create entry
+					
+					PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
+					create_entry.setInt(1, contest_id);
+					create_entry.setString(2, created_by);			
+					create_entry.setLong(3, System.currentTimeMillis());
+					create_entry.setDouble(4, total_entry_fees);
+					create_entry.setString(5, roster.toString());
+					create_entry.executeUpdate();
+	
+					success = true;
+					}
 				}
-			
-			statement.execute("unlock tables");
-			
+			catch (Exception e)
+				{
+				Server.exception(e);
+				}
+			finally
+				{
+				statement.execute("unlock tables");
+				}
+		
 			if (success)
 				{
 				// create transaction for RC transfer:

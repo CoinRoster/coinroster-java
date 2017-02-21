@@ -119,7 +119,7 @@ public class UpdateRoster extends Utils
 					break method;
 					}
 				
-				roster_total_salary += player_price_user;
+				roster_total_salary = add(roster_total_salary, player_price_user, 0);
 				}
 			
 			// validate roster against salary cap

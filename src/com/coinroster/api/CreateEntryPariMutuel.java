@@ -53,191 +53,190 @@ public class CreateEntryPariMutuel extends Utils
 			contest_account_id = null,
 			contest_title = null;
 			
-			boolean success = false;
-			
-			JSONObject user = null;
-			
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write");
+			statement.execute("lock tables user write, contest write, entry write, transaction write");
+
+			JSONObject user = null;
 			
-			lock : {
-			
-				// make sure contest id is valid
+			boolean success = false;
+						
+			try {
+				lock : {
 				
-				JSONObject contest = db.select_contest(contest_id);
+					// make sure contest id is valid
 				
-				if (contest == null)
-					{
-					output.put("error", "Invalid contest ID: " + contest_id);
-					break lock;
-					}
-				
-				contest_title = contest.getString("title");
-				
-				// make sure contest is open for registration
-				
-				if (contest.getInt("status") != 1)
-					{
-					output.put("error", "Contest #" + contest_id + " is not open for registration");
-					break lock;
-					}
-				
-				// validate wagers
-				
-				JSONArray option_table = new JSONArray(contest.getString("option_table"));
-				
-				int number_of_options = option_table.length();
-				
-				double 
-				
-				cost_per_entry = contest.getDouble("cost_per_entry"),
-				total_entry_fees = 0;
-				
-				for (int i=0; i<number_of_user_wagers; i++)
-					{
-					JSONObject wager_item = wagers.getJSONObject(i);
+					JSONObject contest = db.select_contest(contest_id);
 					
-					int option_id = wager_item.getInt("id");
-					double wager = wager_item.getDouble("wager");
-					
-					if (option_id > number_of_options)
+					if (contest == null)
 						{
-						output.put("error", "Invalid outcome id: " + option_id);
-						break lock;
-						}
-					if (wager < cost_per_entry)
-						{
-						output.put("error", "Wager on outcome " + option_id + " is less than the min wager");
+						output.put("error", "Invalid contest ID: " + contest_id);
 						break lock;
 						}
 					
-					total_entry_fees += wager;
-					}
-				
-				// make sure user can afford entr(ies)
-
-				user = db.select_user("id", user_id);
-				
-				double 
-				
-				btc_balance = user.getDouble("btc_balance"),
-				rc_balance = user.getDouble("rc_balance"),
-				available_balance = btc_balance;
-								
-				if (use_rc) available_balance += rc_balance;
-				
-				if (total_entry_fees > available_balance)
-					{
-					output.put("error", "Insufficient funds");
-					break lock;
-					}
-				
-				// --------------------------------------------- //
-				// if we get here, the entry has been validated! //
-				// --------------------------------------------- //
-
-				// calculate user balances and transaction amounts
-
-				if (use_rc && rc_balance > 0)
-					{
-					double temp_rc_balance = rc_balance - total_entry_fees;
-
-					// user has enough RC to cover all entry fees:
+					contest_title = contest.getString("title");
 					
-					if (temp_rc_balance >= 0)
+					// make sure contest is open for registration
+					
+					if (contest.getInt("status") != 1)
 						{
-						rc_transaction_amount = total_entry_fees;
-						rc_balance = temp_rc_balance;
+						output.put("error", "Contest #" + contest_id + " is not open for registration");
+						break lock;
 						}
 					
-					// user does not have enough RC to cover all entry fees:
+					// validate wagers
 					
-					else
+					JSONArray option_table = new JSONArray(contest.getString("option_table"));
+					
+					int number_of_options = option_table.length();
+					
+					double 
+					
+					cost_per_entry = contest.getDouble("cost_per_entry"),
+					total_entry_fees = 0;
+					
+					for (int i=0; i<number_of_user_wagers; i++)
 						{
-						// entire RC balance being spent:
+						JSONObject wager_item = wagers.getJSONObject(i);
 						
-						rc_transaction_amount = rc_balance;
-						rc_balance = 0;
+						int option_id = wager_item.getInt("id");
+						double wager = wager_item.getDouble("wager");
 						
-						// overflow is removed from BTC balance:
+						if (option_id > number_of_options)
+							{
+							output.put("error", "Invalid outcome id: " + option_id);
+							break lock;
+							}
+						if (wager < cost_per_entry)
+							{
+							output.put("error", "Wager on outcome " + option_id + " is less than the min wager");
+							break lock;
+							}
 						
-						btc_transaction_amount = Math.abs(temp_rc_balance);
-						btc_balance -= btc_transaction_amount;
+						total_entry_fees = add(total_entry_fees, wager, 0);
 						}
-					}
-				else 
-					{
-					btc_balance -= total_entry_fees;
-					btc_transaction_amount = total_entry_fees;
-					}
-				
-				// update user's account balances
-
-				PreparedStatement update_user_balances = sql_connection.prepareStatement("update user set btc_balance = ?, rc_balance = ? where id = ?");
-				update_user_balances.setDouble(1, btc_balance);
-				update_user_balances.setDouble(2, rc_balance);
-				update_user_balances.setString(3, user_id);
-				update_user_balances.executeUpdate();
-				
-				JSONObject contest_account = db.select_user("username", "internal_contest_asset");
-				
-				contest_account_id = contest_account.getString("user_id");
-
-				// update RC contest asset account (if applicable)
-				
-				if (rc_transaction_amount > 0)
-					{
-					// update account balance:
-
-					double rc_contest_account_balance = contest_account.getDouble("rc_balance");
-					rc_contest_account_balance += rc_transaction_amount;
 					
-					PreparedStatement update_rc_contest_account = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
-					update_rc_contest_account.setDouble(1, rc_contest_account_balance);
-					update_rc_contest_account.setString(2, contest_account_id);
-					update_rc_contest_account.executeUpdate();
-					}
-				
-				// update BTC contest asset account (if applicable)
-				
-				if (btc_transaction_amount > 0)
-					{
-					// update account balance:
+					// make sure user can afford entr(ies)
+	
+					user = db.select_user("id", user_id);
+					
+					double 
+					
+					btc_balance = user.getDouble("btc_balance"),
+					rc_balance = user.getDouble("rc_balance"),
+					available_balance = btc_balance;
+									
+					if (use_rc) available_balance = add(available_balance, rc_balance, 0);
+					
+					if (total_entry_fees > available_balance)
+						{
+						output.put("error", "Insufficient funds");
+						break lock;
+						}
+					
+					// --------------------------------------------- //
+					// if we get here, the entry has been validated! //
+					// --------------------------------------------- //
+	
+					// calculate user balances and transaction amounts
+	
+					if (use_rc && rc_balance > 0)
+						{
+						double temp_rc_balance = subtract(rc_balance, total_entry_fees, 0);
+	
+						// user has enough RC to cover all entry fees:
+						
+						if (temp_rc_balance >= 0)
+							{
+							rc_transaction_amount = total_entry_fees;
+							rc_balance = temp_rc_balance;
+							}
+						
+						// user does not have enough RC to cover all entry fees:
+						
+						else
+							{
+							// entire RC balance being spent:
+							
+							rc_transaction_amount = rc_balance;
+							rc_balance = 0;
+							
+							// overflow is removed from BTC balance:
+							
+							btc_transaction_amount = Math.abs(temp_rc_balance);
+							btc_balance = subtract(btc_balance, btc_transaction_amount, 0);
+							}
+						}
+					else 
+						{
+						btc_balance = subtract(btc_balance, total_entry_fees, 0);
+						btc_transaction_amount = total_entry_fees;
+						}
+					
+					// update user's account balances
+					
+					db.update_btc_balance(user_id, btc_balance);
+					db.update_rc_balance(user_id, rc_balance);
+	
+					JSONObject contest_account = db.select_user("username", "internal_contest_asset");
+					
+					contest_account_id = contest_account.getString("user_id");
+	
+					// update RC contest asset account (if applicable)
+					
+					if (rc_transaction_amount > 0)
+						{
+						// update account balance:
+	
+						double rc_contest_account_balance = contest_account.getDouble("rc_balance");
+						rc_contest_account_balance = add(rc_contest_account_balance, rc_transaction_amount, 0);
 
-					double btc_contest_account_balance = contest_account.getDouble("btc_balance");
-					btc_contest_account_balance += btc_transaction_amount;
+						db.update_rc_balance(contest_account_id, rc_contest_account_balance);
+						}
 					
-					PreparedStatement update_btc_contest_account = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-					update_btc_contest_account.setDouble(1, btc_contest_account_balance);
-					update_btc_contest_account.setString(2, contest_account_id);
-					update_btc_contest_account.executeUpdate();
-					}
-				
-				// create entries (one per wager)
-				
-				for (int i=0; i<wagers.length(); i++)
-					{
-					JSONObject wager_item = wagers.getJSONObject(i);
+					// update BTC contest asset account (if applicable)
 					
-					int option_id = wager_item.getInt("id");
-					double wager = wager_item.getDouble("wager");
-				
-					PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
-					create_entry.setInt(1, contest_id);
-					create_entry.setString(2, created_by);			
-					create_entry.setLong(3, System.currentTimeMillis());
-					create_entry.setDouble(4, wager);
-					create_entry.setString(5, Integer.toString(option_id));
-					create_entry.executeUpdate();
+					if (btc_transaction_amount > 0)
+						{
+						// update account balance:
+	
+						double btc_contest_account_balance = contest_account.getDouble("btc_balance");
+						btc_contest_account_balance = add (btc_contest_account_balance, btc_transaction_amount, 0);
+						
+						db.update_btc_balance(contest_account_id, btc_contest_account_balance);
+						}
+					
+					// create entries (one per wager)
+					
+					for (int i=0; i<wagers.length(); i++)
+						{
+						JSONObject wager_item = wagers.getJSONObject(i);
+						
+						int option_id = wager_item.getInt("id");
+						double wager = wager_item.getDouble("wager");
+					
+						PreparedStatement create_entry = sql_connection.prepareStatement("insert into entry(contest_id, user_id, created, amount, entry_data) values(?, ?, ?, ?, ?)");	
+						create_entry.setInt(1, contest_id);
+						create_entry.setString(2, created_by);			
+						create_entry.setLong(3, System.currentTimeMillis());
+						create_entry.setDouble(4, wager);
+						create_entry.setString(5, Integer.toString(option_id));
+						create_entry.executeUpdate();
+						}
+					
+					success = true;
 					}
-				
-				success = true;
 				}
-			
-			statement.execute("unlock tables");
-			
+			catch (Exception e)
+				{
+				Server.exception(e);
+				}
+			finally
+				{
+				statement.execute("unlock tables");
+				}
+		
 			if (success)
 				{
 				// create transaction for RC transfer:

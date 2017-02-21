@@ -84,7 +84,7 @@ public class Server extends Utils
 	java_object_path,
 	jar_filename = "coinroster.jar",
 	
-	version = "1.3 - finished cash register",
+	version = "1.4 - finished pari-mutuels",
 	start_time = new SimpleDateFormat("MMM d h:mm:ss a").format(new Date()),
 
 	sql_database = "jdbc:mysql://localhost:3306/coinroster",

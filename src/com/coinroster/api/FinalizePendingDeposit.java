@@ -16,6 +16,7 @@ import com.coinroster.internal.UserMail;
 public class FinalizePendingDeposit extends Utils
 	{
 	public static String method_level = "admin";
+	@SuppressWarnings("unused")
 	public FinalizePendingDeposit(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -35,7 +36,7 @@ public class FinalizePendingDeposit extends Utils
 		
 			String 
 			
-			user_id = session.user_id(),
+			user_account_id = input.getString("user_account_id"),
 			memo = input.getString("memo");
 
 			int transaction_id = input.getInt("transaction_id");
@@ -47,85 +48,92 @@ public class FinalizePendingDeposit extends Utils
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write");
 
-			// get user_xref records for internal accounts and user account:
+			JSONObject user = null;
+					
+			boolean success = false;
+			
+			try {
+				lock : {
+				
+					user = db.select_user("id", user_account_id);
 
-			JSONObject 
+					// unlock and break method if user key is invalid:
+					
+					if (user == null) 
+						{
+						output.put("error", "Invalid user account");
+						break lock;
+						}
+	
+					JSONObject liability_account = db.select_user("username", "internal_liability");
+					String btc_liability_id = liability_account.getString("user_id");
+					
+					// get account balances:
+				  
+					double
+					
+					btc_liability_balance = liability_account.getDouble("btc_balance"),
+					user_btc_balance = user.getDouble("btc_balance");
+	
+					// add received amount to user balance:
+					
+					double new_btc_balance = add(user_btc_balance, received_amount, 0);
+					
+					db.update_btc_balance(user_account_id, new_btc_balance);
 			
-			liability_account = db.select_user("username", "internal_liability"),
-			user = db.select_user("id", user_id);
+					// subtract received amount from internal_btc_liability:
+					
+					Double new_btc_liability_balance = subtract(btc_liability_balance, received_amount, 0);
+					
+					db.update_btc_balance(btc_liability_id, new_btc_liability_balance);
 
-			String btc_liability_id = liability_account.getString("user_id");
-			
-			// unlock and break method if user key is invalid:
-			
-			if (user == null) 
+					success = true;
+					}
+				}
+			catch (Exception e)
+				{
+				Server.exception(e);
+				}
+			finally
 				{
 				statement.execute("unlock tables");
-				output.put("error", "Invalid user account");
-				break method;
 				}
 
-			// get account balances:
-		  
-			double
-			
-			btc_liability_balance = liability_account.getDouble("btc_balance"),
-			user_btc_balance = user.getDouble("btc_balance");
-
-			// add received amount to user balance:
-			
-			Double new_user_btc_balance = user_btc_balance + received_amount;
+			if (success)
+				{
+				PreparedStatement update_transaction = sql_connection.prepareStatement("update transaction set pending_flag = 0, amount = ?, memo = ? where id = ?");
+				update_transaction.setDouble(1, received_amount);
+				update_transaction.setString(2, memo);
+				update_transaction.setInt(3, transaction_id);
+				update_transaction.executeUpdate();
+				
+				// communications
 	
-			PreparedStatement update_btc_liability_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-			update_btc_liability_balance.setDouble(1, new_user_btc_balance);
-			update_btc_liability_balance.setString(2, user_id);
-			update_btc_liability_balance.executeUpdate();
-
-			// subtract received amount from internal_btc_liability:
-			
-			Double new_btc_liability_balance = btc_liability_balance - received_amount;
-			
-			PreparedStatement update_user_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
-			update_user_balance.setDouble(1, new_btc_liability_balance);
-			update_user_balance.setString(2, btc_liability_id);
-			update_user_balance.executeUpdate();
-
-			statement.execute("unlock tables");
-			
-			// finally, update transaction record:
-			
-			PreparedStatement update_transaction = sql_connection.prepareStatement("update transaction set pending_flag = 0, amount = ?, memo = ? where id = ?");
-			update_transaction.setDouble(1, received_amount);
-			update_transaction.setString(2, memo);
-			update_transaction.setInt(3, transaction_id);
-			update_transaction.executeUpdate();
-			
-			// communications
-
-			String
-			
-			subject = "Deposit confirmation", 
-			
-			message_body = "Hi <b><!--USERNAME--></b>,";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "We have received your deposit and have credited your account!";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "Transaction ID: <b>" + transaction_id + "</b>";
-			message_body += "<br/>";
-			message_body += "Amount received: <b>" + format_btc(received_amount) + " BTC</b>";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "Please do not reply to this email.";
-			
-			new UserMail(user, subject, message_body);
-			
-			output.put("status", "1");
+				String
+				
+				subject = "Deposit confirmation", 
+				
+				message_body = "Hi <b><!--USERNAME--></b>,";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "We have received your deposit and have credited your account!";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+				message_body += "<br/>";
+				message_body += "Amount received: <b>" + format_btc(received_amount) + " BTC</b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Please do not reply to this email.";
+				
+				new UserMail(user, subject, message_body);
+				
+				output.put("status", "1");
+				}
 			
 //------------------------------------------------------------------------------------
 
