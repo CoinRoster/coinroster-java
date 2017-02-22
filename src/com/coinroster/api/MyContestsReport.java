@@ -53,18 +53,16 @@ public class MyContestsReport extends Utils
 				{
 				int contest_id = contest_id_rs.getInt(1);
 				
-				PreparedStatement get_contest_details = sql_connection.prepareStatement("select category, sub_category, title, settlement_type, cost_per_entry, registration_deadline, status from contest where id = ?");
-				get_contest_details.setInt(1, contest_id);
-				ResultSet contest_details_rs = get_contest_details.executeQuery();
-				contest_details_rs.next();
+				JSONObject contest = db.select_contest(contest_id);
 				
-				String category = contest_details_rs.getString(1);
-				String sub_category = contest_details_rs.getString(2);
-				String title = contest_details_rs.getString(3);
-				String settlement_type = contest_details_rs.getString(4);
-				double cost_per_entry = contest_details_rs.getDouble(5);
-				Long registration_deadline = contest_details_rs.getLong(6);
-				int status = contest_details_rs.getInt(7);
+				String category = contest.getString("category");
+				String sub_category = contest.getString("sub_category");
+				String contest_type = contest.getString("contest_type");
+				String title = contest.getString("title");
+				String settlement_type = contest.getString("description");
+				double cost_per_entry = contest.getDouble("cost_per_entry");
+				Long registration_deadline = contest.getLong("registration_deadline");
+				int status = contest.getInt("status");
 				
 				PreparedStatement get_user_entry_stats = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ? and user_id = ?");
 				get_user_entry_stats.setInt(1, contest_id);
@@ -78,22 +76,23 @@ public class MyContestsReport extends Utils
 				
 				double user_entries_count = _user_entries_count.doubleValue();
 				
-				JSONObject contest = new JSONObject();
+				JSONObject contest_item = new JSONObject();
 				
-				contest.put("id", contest_id);
-				contest.put("category", category);
-				contest.put("sub_category", sub_category);
-				contest.put("category_description", db.get_category_description(category));
-				contest.put("sub_category_description", db.get_sub_category_description(sub_category));
-				contest.put("title", title);
-				contest.put("settlement_type", settlement_type);
-				contest.put("cost_per_entry", cost_per_entry);
-				contest.put("registration_deadline", registration_deadline);
-				contest.put("user_entries_count", user_entries_count);
-				contest.put("user_entries_value", user_entries_value);
-				contest.put("status", status);
+				contest_item.put("id", contest_id);
+				contest_item.put("category", category);
+				contest_item.put("sub_category", sub_category);
+				contest_item.put("contest_type", contest_type);
+				contest_item.put("category_description", db.get_category_description(category));
+				contest_item.put("sub_category_description", db.get_sub_category_description(sub_category));
+				contest_item.put("title", title);
+				contest_item.put("settlement_type", settlement_type);
+				contest_item.put("cost_per_entry", cost_per_entry);
+				contest_item.put("registration_deadline", registration_deadline);
+				contest_item.put("user_entries_count", user_entries_count);
+				contest_item.put("user_entries_value", user_entries_value);
+				contest_item.put("status", status);
 				
-				user_contest_report.put(contest);
+				user_contest_report.put(contest_item);
 				}
 			
 			output.put("user_contest_report", user_contest_report);
