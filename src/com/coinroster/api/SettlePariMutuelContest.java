@@ -206,11 +206,77 @@ public class SettlePariMutuelContest extends Utils
 						
 						JSONObject user = db.select_user("id", user_id);
 						
+						double user_btc_balance = user.getDouble("btc_balance");
+						int free_play = user.getInt("free_play");
+						
 						log("");
 						log("User: " + user_id);
 						log("Wager: " + user_wager);
 						log("Selection: " + selection);
 						log("Amount raked: " + user_raked_amount);
+						
+						if (free_play == 1)
+							{
+							log("Free play credit: " + user_raked_amount);
+							
+							user_btc_balance = add(user_btc_balance, user_raked_amount, 0);
+							
+							actual_rake_amount = subtract(actual_rake_amount, user_raked_amount, 0);
+							
+							db.update_btc_balance(user_id, user_btc_balance);
+							
+							String 
+							
+							transaction_type = "BTC-RAKE-CREDIT",
+							from_account = contest_account_id,
+							to_account = user_id,
+							from_currency = "BTC",
+							to_currency = "BTC",
+							memo = "Rake credit (BTC) from contest #" + contest_id;
+							
+							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+							create_transaction.setLong(1, System.currentTimeMillis());
+							create_transaction.setString(2, contest_admin);
+							create_transaction.setString(3, transaction_type);
+							create_transaction.setString(4, from_account);
+							create_transaction.setString(5, to_account);
+							create_transaction.setDouble(6, user_raked_amount);
+							create_transaction.setString(7, from_currency);
+							create_transaction.setString(8, to_currency);
+							create_transaction.setString(9, memo);
+							create_transaction.setInt(10, contest_id);
+							create_transaction.executeUpdate();
+							}
+						else // this has to be an else, otherwise we could end up crediting 1.5 x the rake
+							{
+							String referrer = user.getString("referrer");
+							if (!referrer.equals("")) // process referral payout if applicable
+								{
+								double referrer_payout = 0;
+								
+								switch (user.getInt("referral_program"))
+									{
+									case 1 : // perpetual 50% of rake
+										{
+										double affiliate_multiple = 0.5;
+										referrer_payout = multiply(user_raked_amount, affiliate_multiple, 0);
+										break;
+										}
+									}
+								
+								actual_rake_amount = subtract(actual_rake_amount, referrer_payout, 0);
+								total_referrer_payout = add(total_referrer_payout, referrer_payout, 0);
+								
+								log("Referral payout for " + referrer + " : " + referrer_payout);
+								
+								if (referrer_map.containsKey(referrer))
+									{
+									referrer_payout = add(referrer_payout, referrer_map.get(referrer), 0);
+									referrer_map.put(referrer, referrer_payout);
+									}
+								else referrer_map.put(referrer, referrer_payout);
+								}
+							}
 											
 						if (selection == winning_outcome)
 							{
@@ -218,7 +284,6 @@ public class SettlePariMutuelContest extends Utils
 							
 							log("Winnings: " + user_winnings);
 							
-							double user_btc_balance = user.getDouble("btc_balance");
 							user_btc_balance = add(user_btc_balance, user_winnings, 0);
 							
 							actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
@@ -263,34 +328,6 @@ public class SettlePariMutuelContest extends Utils
 							new UserMail(user, subject, message_body);
 							}
 						//else {in future, send email if user opts to receive emails when they lose}
-			
-						String referrer = user.getString("referrer");
-						if (!referrer.equals("")) // process referral payout if applicable
-							{
-							double referrer_payout = 0;
-							
-							switch (user.getInt("referral_program"))
-								{
-								case 1 : // perpetual 50% of rake
-									{
-									double affiliate_multiple = 0.5;
-									referrer_payout = multiply(user_raked_amount, affiliate_multiple, 0);
-									break;
-									}
-								}
-							
-							actual_rake_amount = subtract(actual_rake_amount, referrer_payout, 0);
-							total_referrer_payout = add(total_referrer_payout, referrer_payout, 0);
-							
-							log("Referral payout for " + referrer + " : " + referrer_payout);
-							
-							if (referrer_map.containsKey(referrer))
-								{
-								referrer_payout = add(referrer_payout, referrer_map.get(referrer), 0);
-								referrer_map.put(referrer, referrer_payout);
-								}
-							else referrer_map.put(referrer, referrer_payout);
-							}
 						}
 					
 					log("");

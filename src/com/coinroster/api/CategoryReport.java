@@ -45,7 +45,7 @@ public class CategoryReport extends Utils
 			
 			JSONArray category_report = new JSONArray();
 			
-			PreparedStatement select_categories = sql_connection.prepareStatement("select * from category");
+			PreparedStatement select_categories = sql_connection.prepareStatement("select * from category order by position asc");
 			ResultSet category_rs = select_categories.executeQuery();
 
 			while (category_rs.next())
