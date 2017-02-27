@@ -55,9 +55,12 @@ public class UserReport extends Utils
 				int newsletter_flag = result_set.getInt(13);
 				int referral_program = result_set.getInt(14);
 				String referrer = result_set.getString(15);
-				String referrer_username = "";
 				int ext_address_secure_flag = result_set.getInt(16);
-		 
+				int free_play = result_set.getInt(17);
+				Long last_active = result_set.getLong(18);
+				
+				String referrer_username = "";
+				
 				if (referrer != null) referrer_username = db.get_username_for_id(referrer);
 				if (email_address == null) email_address = "";
 				
@@ -75,6 +78,8 @@ public class UserReport extends Utils
 				user.put("newsletter_flag", newsletter_flag);
 				user.put("referral_program", referral_program);
 				user.put("referrer_username", referrer_username);
+				user.put("free_play", free_play);
+				user.put("last_active", last_active);
 				
 				user_report.put(user);
 				}
