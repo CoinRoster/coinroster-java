@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.BuildLobby;
 
 public class CreateContest extends Utils
 	{
@@ -332,7 +333,9 @@ public class CreateContest extends Utils
 				create_contest.setString(12, session.user_id());
 				create_contest.executeUpdate();
             	}
-            
+
+			new BuildLobby(sql_connection);
+			
             output.put("status", "1");
 			
 //------------------------------------------------------------------------------------

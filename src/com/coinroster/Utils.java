@@ -3,6 +3,7 @@ package com.coinroster;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -63,13 +64,13 @@ public class Utils
 
 	final static Charset ENCODING = StandardCharsets.UTF_8;
 	
-	static List<String> read(String file_path) throws IOException 
+	public static List<String> read(String file_path) throws IOException 
 		{
 		Path path = Paths.get(file_path);
 		return Files.readAllLines(path, ENCODING);
 		}
 	
-	static void write(String file_path, String[] array) throws IOException 
+	protected static void write(String file_path, String[] array) throws IOException 
 		{
 		Path path = Paths.get(file_path);
 		try (BufferedWriter writer = Files.newBufferedWriter(path, ENCODING))
@@ -82,6 +83,19 @@ public class Utils
 			}
 		}
 
+	protected static String read_to_string(String path) throws IOException 
+		{
+		byte[] encoded = Files.readAllBytes(Paths.get(path));
+		return new String(encoded, StandardCharsets.UTF_8);
+		}
+
+	protected static void write_to_string(String file_path, String file_string) throws IOException 
+		{
+		BufferedWriter writer = new BufferedWriter(new FileWriter(file_path));
+		writer.write(file_string);
+		writer.close();
+		}	
+	
 	protected static void write_bytes(String file_path, byte[] file_data) throws IOException 
 		{
 		FileOutputStream fos = new FileOutputStream(file_path);

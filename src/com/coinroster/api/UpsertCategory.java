@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.BuildLobby;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
 public class UpsertCategory extends Utils
@@ -57,6 +58,8 @@ public class UpsertCategory extends Utils
 				output.put("error", "Category [" + code + "] already exists");
             	break method;
 				}
+			
+			new BuildLobby(sql_connection);
             
             output.put("status", "1");
 			

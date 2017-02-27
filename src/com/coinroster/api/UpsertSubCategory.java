@@ -10,6 +10,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.BuildLobby;
 
 public class UpsertSubCategory extends Utils
 	{
@@ -109,6 +110,8 @@ public class UpsertSubCategory extends Utils
             	break method;
             	}
    
+    		new BuildLobby(sql_connection);
+    		
             output.put("status", "1");
 			
 //------------------------------------------------------------------------------------

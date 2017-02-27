@@ -118,7 +118,7 @@ public class ContestReport extends Utils
 				contest_report.put(contest);
 				}
 			
-			output.put("contest_report", contest_report);
+			output.put("contest_report", contest_report);			
 			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------

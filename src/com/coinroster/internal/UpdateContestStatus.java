@@ -11,5 +11,7 @@ public class UpdateContestStatus
 		update_contest_status.setInt(1, new_status);
 		update_contest_status.setInt(2, contest_id);
 		update_contest_status.executeUpdate();
+		
+		new BuildLobby(sql_connection);
 		}
 	}
