@@ -128,6 +128,12 @@ public class SettlePariMutuelContest extends Utils
 		
 					actual_rake_amount = wagers_total; // gets decremented every time something is paid out
 					
+					if (wagers_total == 0)
+						{
+						output.put("error", "Nothing has been wagered (based on entries)");
+						break lock;
+						}
+					
 					double payout_ratio = divide(user_winnings_total, winning_outcome_total, 0);
 					
 					log("Payout ratio: " + payout_ratio);
