@@ -15,6 +15,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.UserMail;
 
 public class SettlePariMutuelContest extends Utils
@@ -486,6 +487,8 @@ public class SettlePariMutuelContest extends Utils
 					update_contest.setString(2, option_table.toString());
 					update_contest.setInt(3, contest_id);
 					update_contest.executeUpdate();
+					
+					new BuildLobby(sql_connection);
 		
 					output.put("status", "1");
 					}
