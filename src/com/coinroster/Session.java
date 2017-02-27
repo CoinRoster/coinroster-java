@@ -2,7 +2,7 @@ package com.coinroster;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-
+import java.sql.SQLException;
 public class Session 
 	{
 	private String 
@@ -94,6 +94,32 @@ public class Session
 					Long.toString(System.currentTimeMillis())
 					}
 				);
+			new Thread() 
+				{
+				public void run() 
+					{
+					Connection sql_connection = null;
+					try {
+						sql_connection = Server.sql_connection();
+						PreparedStatement update_last_active = sql_connection.prepareStatement("update user set last_active = ? where id = ?");
+						update_last_active.setLong(1, System.currentTimeMillis());
+						update_last_active.setString(2, user_id);
+						update_last_active.executeUpdate();
+						} 
+					catch (Exception e) 
+						{
+						Server.exception(e);
+						} 
+					finally
+						{
+						if (sql_connection != null)
+							{
+							try {sql_connection.close();} 
+							catch (SQLException ignore) {}
+							}
+						}
+					}
+				}.start();
 			return true;
 			}
 		else return false;

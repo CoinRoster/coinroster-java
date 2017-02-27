@@ -337,7 +337,7 @@ public class Server extends Utils
 			host = "https://www.coinroster.com";
 			relay_email_from = "CoinRoster";
 			relay_email_address = "management@coinroster.com";
-			relay_email_password = "CoinRoster123";
+			relay_email_password = "ywhrea14432e%#";
 			}
 		else if (control.get("production").equals("0"))
 			{
@@ -350,7 +350,7 @@ public class Server extends Utils
 			host = "https://coinroster.nlphd.com";
 			relay_email_from = "CoinRoster Dev";
 			relay_email_address = "coinroster@gmail.com";
-			relay_email_password = "CoinRoster123!";
+			relay_email_password = "hjpoinlfds#$D";
 			}
 		else
 			{
