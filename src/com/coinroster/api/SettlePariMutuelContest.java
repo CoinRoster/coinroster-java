@@ -320,10 +320,10 @@ public class SettlePariMutuelContest extends Utils
 							
 							String
 							
-							subject = "You won " + user_winnings + " BTC in contest #" + contest_id, 
+							subject = "You won " + format_btc(user_winnings) + " BTC in contest #" + contest_id, 
 							message_body = "";
 							
-							message_body += "You won <b>" + user_winnings + " BTC</b> in contest #" + contest_id + " - <b>" + contest_title + "</b>";
+							message_body += "You won <b>" + format_btc(user_winnings) + " BTC</b> in contest #" + contest_id + " - <b>" + contest_title + "</b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
 							message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
@@ -438,7 +438,7 @@ public class SettlePariMutuelContest extends Utils
 						subject = "Referral revenue for contest #" + contest_id, 
 						message_body = "";
 						
-						message_body += "You earned <b>" + referrer_payout + " RC</b> in referral revenue from contest #" + contest_id + " - <b>" + contest_title + "</b>";
+						message_body += "You earned <b>" + format_btc(referrer_payout) + " RC</b> in referral revenue from contest #" + contest_id + " - <b>" + contest_title + "</b>";
 						message_body += "<br/>";
 						message_body += "<br/>";
 						message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";

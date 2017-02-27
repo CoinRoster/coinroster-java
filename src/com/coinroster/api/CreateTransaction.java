@@ -49,11 +49,21 @@ public class CreateTransaction extends Utils
 			to_currency = "",
 			
 			memo = input.getString("memo");
-
+			
+			boolean display_as_adjustment = input.getBoolean("display_as_adjustment");
+			
 			// initial validation:
 
-			if (user_id.length() != 40) break method;
-			if (memo.length() > 60) break method;
+			if (user_id.length() != 40) 
+				{
+				output.put("error", "Invalid user ID");
+				break method;
+				}
+			if (memo.length() > 500) 
+				{
+				output.put("error", "Memo is too long (max 500 chars)");
+				break method;
+				}
 	 
 			Double transaction_amount = null;
 			
@@ -244,6 +254,8 @@ public class CreateTransaction extends Utils
 			
 			if (success)
 				{				
+				if (display_as_adjustment) transaction_type = from_currency + "-ADJUSTMENT"; // to_currency and from_currency are always the same
+				
 				Long transaction_timestamp = System.currentTimeMillis();
 				
 				PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
@@ -280,6 +292,8 @@ public class CreateTransaction extends Utils
 				message_body += "Amount: <b>" + format_btc(transaction_amount) + "</b>";
 				message_body += "<br/>";
 				message_body += "Currency: <b>" + from_currency + "</b>";
+				message_body += "<br/>";
+				message_body += "Memo: <b>" + memo + "</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
