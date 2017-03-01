@@ -72,6 +72,7 @@ public class CreateUser extends Utils
 			else
 				{
 				email_address = no_whitespace(input.getString("email_address"));
+				
 				if (!is_valid_email(email_address))
 					{
 					output.put("error_message", "Invalid email address");

@@ -14,7 +14,6 @@ import com.coinroster.Utils;
 public class SendReferral extends Utils
 	{
 	public static String method_level = "standard";
-	@SuppressWarnings("unused")
 	public SendReferral(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -45,6 +44,12 @@ public class SendReferral extends Utils
 			
 			email_contact_name = "Referral",
 			email_address = no_whitespace(input.getString("email_address"));
+			
+			if (!is_valid_email(email_address))
+				{
+				output.put("error_message", "Invalid email address");
+				break method;
+				}
 			
 			PreparedStatement create_user = sql_connection.prepareStatement("insert into referral(referral_key, referrer_id, referrer_username, email_address, referral_program, created) values(?, ?, ?, ?, ?, ?)");				
 			create_user.setString(1, referral_key);

@@ -13,7 +13,6 @@ import com.coinroster.Utils;
 public class AddEmailAddress extends Utils
 	{
 	public static String method_level = "standard";
-	@SuppressWarnings("unused")
 	public AddEmailAddress(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -34,6 +33,12 @@ public class AddEmailAddress extends Utils
 			user_id = session.user_id(),
 			email_address = no_whitespace(input.getString("email_address")),
 			new_email_ver_key = Server.generate_key(email_address);
+
+			if (!is_valid_email(email_address))
+				{
+				output.put("error_message", "Invalid email address");
+				break method;
+				}
 			
 			int newsletter_flag = input.getInt("newsletter_flag"); // 1 for true, 0 for false
 			
