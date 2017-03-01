@@ -83,7 +83,7 @@ public class CloseContestRegistration extends Utils
 							message_body = "Hello <b><!--USERNAME--></b>,";
 							message_body += "<br/>";
 							message_body += "<br/>";
-							message_body += "Contest #" + contest_id + " - " + contest_title + " - is in play!";
+							message_body += "Contest #" + contest_id + " is in play - " + contest_title;
 							message_body += "<br/>";
 							message_body += "<br/>";
 							message_body += "You will receive a notification when the contest has been settled.";
@@ -91,13 +91,13 @@ public class CloseContestRegistration extends Utils
 						else // contest is under-subscribed
 							{
 							Server.log("Contest #" + contest_id + " is under-subscribed");
+
+							new UpdateContestStatus(sql_connection, contest_id, 4);
 							
 							Statement statement = sql_connection.createStatement();
 							statement.execute("lock tables user write, contest write, entry write, transaction write");
 
 							try {
-								new UpdateContestStatus(sql_connection, contest_id, 4);
-								
 								JSONObject contest_account = db.select_user("username", "internal_contest_asset");
 								
 								String contest_account_id = contest_account.getString("user_id");
