@@ -40,6 +40,7 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
+            
             // validate common fields
             
             if (title.length() > 255)
@@ -60,7 +61,7 @@ public class CreateContest extends Utils
                 break method;
             	}
             
-            rake = rake / 100; // convert to %
+            rake = divide(rake, 100, 0); // convert to %
             
             if (cost_per_entry == 0)
             	{
@@ -83,7 +84,7 @@ public class CreateContest extends Utils
 	            {
     			String entries_per_user_STRING = input.getString("entries_per_user");
     			String settlement_type = input.getString("settlement_type");
-	            double salary_cap = input.getDouble("salary_cap");
+	            int salary_cap = input.getInt("salary_cap");
 	            int min_users = input.getInt("min_users");
 	            int max_users = input.getInt("max_users"); // 0 = unlimited
 	            int entries_per_user = 0;
@@ -168,9 +169,10 @@ public class CreateContest extends Utils
 	            					output.put("error", "Pay table rank " + rank + ": payout cannot be " + payout);
 	                        		break method;
 	            					}
-	            				total_payout += payout;
 	            				
-	            				payout = payout/100;
+	            				total_payout = add(total_payout, payout, 0);
+	            				
+	            				payout = divide(payout, 100, 0);
 	            				
 	            				JSONObject new_line = new JSONObject();
 	            				
@@ -228,7 +230,8 @@ public class CreateContest extends Utils
 		            		break method;
 							}
 						
-						double price = line.getDouble("price");
+						int price = line.getInt("price"); // force price to integer
+						line.put("price", price);
 						
 						if (price == 0)
 							{
@@ -240,6 +243,8 @@ public class CreateContest extends Utils
 							output.put("error", "Player table row " + (i+1) + ": price cannot be greater than salary cap");
 		            		break method;
 							}
+						
+						option_table.put(i, line);
 						}
 		            }
 	    		catch (Exception e)
