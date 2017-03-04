@@ -88,7 +88,7 @@ public class BuildLobby extends Utils
 					
 					String sub_category_html = sub_category_template;
 					
-					sub_category_html = sub_category_html.replace("factory:category_href", "/category.html#main=" + category_code + "&amp;sub=" + sub_category_code);
+					sub_category_html = sub_category_html.replace("factory:category_href", "/category.html?main=" + category_code + "&amp;sub=" + sub_category_code);
 					sub_category_html = sub_category_html.replace("factory:image_path", "/img/lobby_tiles/" + image_name);
 					sub_category_html = sub_category_html.replace("<!-- factory:sub_category_description -->", sub_category_description);
 					
