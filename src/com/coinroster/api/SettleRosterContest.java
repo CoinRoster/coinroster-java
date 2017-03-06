@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -18,11 +21,11 @@ import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.UserMail;
 
-public class SettlePariMutuelContest extends Utils
+public class SettleRosterContest extends Utils
 	{
 	public static String method_level = "admin";
 	@SuppressWarnings("unused")
-	public SettlePariMutuelContest(MethodInstance method) throws Exception 
+	public SettleRosterContest(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -41,10 +44,9 @@ public class SettlePariMutuelContest extends Utils
 		
 			String contest_admin = session.user_id();
 			
-			int 
+			int contest_id = input.getInt("contest_id");
 			
-			contest_id = input.getInt("contest_id"),
-			winning_outcome = input.getInt("winning_outcome");
+			JSONArray player_scores = input.getJSONArray("player_scores");
 			
 			// lock it all
 			
@@ -63,9 +65,9 @@ public class SettlePariMutuelContest extends Utils
 						break lock;
 						}
 					
-					if (!contest.getString("contest_type").equals("PARI-MUTUEL"))
+					if (!contest.getString("contest_type").equals("ROSTER"))
 						{
-						output.put("error", "Contest " + contest_id + " is not a pari-mutuel contest");
+						output.put("error", "Contest " + contest_id + " is not a roster contest");
 						break lock;
 						}
 					
@@ -75,32 +77,46 @@ public class SettlePariMutuelContest extends Utils
 						break lock;
 						}
 					
-					JSONArray option_table = new JSONArray(contest.getString("option_table"));
+					// make a map of player scores 
 					
-					boolean valid_option = false;
+					Map<Integer, Integer> score_map = new TreeMap<Integer, Integer>();
+					Map<Integer, String> raw_score_map = new TreeMap<Integer, String>();
 					
-					for (int i=0; i<option_table.length(); i++)
+					for (int i=0, limit=player_scores.length(); i<limit; i++)
 						{
-						JSONObject option = option_table.getJSONObject(i);
+						JSONObject player = player_scores.getJSONObject(i);
 						
-						int option_id = option.getInt("id");
+						int player_id = player.getInt("id");
 						
-						if (winning_outcome == option_id) 
+						score_map.put(player_id, player.getInt("score"));
+						raw_score_map.put(player_id, player.getString("score_raw"));
+						}
+					
+					// loop through system players to make sure all players have been assigned a score
+					// add player scores to JSONObject to be written back into contest
+					
+					JSONArray system_players = new JSONArray(contest.getString("option_table"));
+
+					for (int i=0, limit=system_players.length(); i<limit; i++)
+						{
+						JSONObject player = system_players.getJSONObject(i);
+						
+						int player_id = player.getInt("id");
+						
+						if (!score_map.containsKey(player_id))
 							{
-							option.put("outcome", 1);
-							valid_option = true;
+							output.put("error", "No score provided for " + player.getString("name"));
+							break lock;
 							}
-						else option.put("outcome", 0);
+						
+						player.put("score", score_map.get(player_id));
+						player.put("score_raw", raw_score_map.get(player_id));
+						
+						system_players.put(player_id, player);
 						}
 					
-					if (!valid_option)
-						{
-						output.put("error", "Invalid winning option id: " + winning_outcome);
-						break lock;
-						}
-					
-					// if we get here, user has provided a valid option for a pari_mutuel contest that is in play
-		
+					// if we get here, user has provided complete player scores for a roster contest that is in play
+
 					// we'll need to access the liability and contest_asset accounts in multiple places:
 					
 					JSONObject liability_account = db.select_user("username", "internal_liability");
@@ -109,64 +125,35 @@ public class SettlePariMutuelContest extends Utils
 					JSONObject contest_account = db.select_user("username", "internal_contest_asset");
 					String contest_account_id = contest_account.getString("user_id");
 					
-					// first we calculate basic settlement amounts
+					// checksum of entries against transactions
 					
-					PreparedStatement get_amounts = sql_connection.prepareStatement("select sum(amount), sum(if(entry_data = ?, amount, 0)) from entry where contest_id = ?");
-					get_amounts.setInt(1, winning_outcome);
-					get_amounts.setInt(2, contest_id);
-					ResultSet amount_rs = get_amounts.executeQuery();
+					PreparedStatement get_entry_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
+					get_entry_total.setInt(1, contest_id);
+					ResultSet entry_total_rs = get_entry_total.executeQuery();
+					entry_total_rs.next();
 					
-					amount_rs.next();
-					
-					double
-					
-					wagers_total = amount_rs.getDouble(1),
-					winning_outcome_total = amount_rs.getDouble(2),
-					
-					rake = contest.getDouble("rake"),
-					rake_amount = multiply(rake, wagers_total, 0),
-					user_winnings_total = subtract(wagers_total, rake_amount, 0),
-		
-					actual_rake_amount = wagers_total; // gets decremented every time something is paid out
-					
-					if (wagers_total == 0)
-						{
-						output.put("error", "Nothing has been wagered (based on entries)");
-						break lock;
-						}
-					
-					double payout_ratio = divide(user_winnings_total, winning_outcome_total, 0);
-					
-					log("Payout ratio: " + payout_ratio);
-					
-					// get totals wagered in both BTC and RC from transactions:
-					
-					PreparedStatement get_totals = sql_connection.prepareStatement("select sum(case when trans_type = 'BTC-CONTEST-ENTRY' then amount end), sum(case when trans_type = 'RC-CONTEST-ENTRY' then amount end) from transaction where contest_id = ?");
-					get_totals.setInt(1, contest_id);
-					ResultSet totals_rs = get_totals.executeQuery();
+					PreparedStatement get_transaction_totals = sql_connection.prepareStatement("select sum(case when trans_type = 'BTC-CONTEST-ENTRY' then amount end), sum(case when trans_type = 'RC-CONTEST-ENTRY' then amount end) from transaction where contest_id = ?");
+					get_transaction_totals.setInt(1, contest_id);
+					ResultSet totals_rs = get_transaction_totals.executeQuery();
 					totals_rs.next();
 					
 					double 
 					
 					btc_wagers_total = totals_rs.getDouble(1),
 					rc_wagers_total = totals_rs.getDouble(2),
+
+					total_from_entries = entry_total_rs.getDouble(1),
+					total_from_transactions = add(btc_wagers_total, rc_wagers_total, 0),
+					total_referrer_payout = 0;
 					
-					total_from_transactions = add(btc_wagers_total, rc_wagers_total, 0);
-		
-					log("Winning selection: " + winning_outcome);
-					log("Total wagers based on transaction records: " + total_from_transactions);
-					log("Total wagers based on entry records: " + wagers_total);
-					log("Rake: " + rake);
-					log("Rake amount: " + rake_amount);
-					log("Total winnings: " + user_winnings_total);
-					log("Total wagered on winning outcome: " + winning_outcome_total);
-					
-					if (wagers_total != total_from_transactions)
+					// check roster amounts against transactions
+
+					if (total_from_entries != total_from_transactions)
 						{
 						output.put("error", "Total based on entries does not match total based on transactions - this is serious!");
 						break lock;
 						}
-					
+
 					// pull all funds from the contest
 					
 					double 
@@ -182,7 +169,7 @@ public class SettlePariMutuelContest extends Utils
 					update_contest_account.setDouble(2, rc_contest_balance);
 					update_contest_account.setString(3, contest_account_id);
 					update_contest_account.executeUpdate();
-					
+				
 					// prepare rc swap - at this stage, convert all RC pulled from the contest into BTC
 					
 					double 
@@ -193,34 +180,81 @@ public class SettlePariMutuelContest extends Utils
 					btc_liability_balance = subtract(btc_liability_balance, rc_wagers_total, 0); // subtract increases liability
 					rc_liability_balance = add(rc_liability_balance, rc_wagers_total, 0); // add decreases liability
 					
-					// some accumulators for referrer payouts
-			
+					// get all rosters, score them, sort them into score buckets high to low, process referral revenue
+					
+					double
+					
+					rake = contest.getDouble("rake"),
+					rake_amount = multiply(rake, total_from_entries, 0),
+					user_winnings_total = subtract(total_from_entries, rake_amount, 0),
+					actual_rake_amount = total_from_entries,
+					
+					cost_per_entry = contest.getDouble("cost_per_entry");
+
+					log("Pool: " + total_from_entries);
+					log("Rake: " + rake);
+					log("Rake amount: " + rake_amount);
+					log("User winnings: " + user_winnings_total);
+					
+					String settlement_type = contest.getString("settlement_type");
+					
+					TreeMap<Double, List<Integer>> roster_rankings = new TreeMap<Double, List<Integer>>(Collections.reverseOrder());
+					Map<Integer, JSONObject> roster_map = new TreeMap<Integer, JSONObject>();
 					TreeMap<String, Double> referrer_map = new TreeMap<String, Double>();
-					double total_referrer_payout = 0;
 					
-					// process entries, credit winners, build up referrer_map
+					JSONArray rosters = db.select_contest_entries(contest_id);
 					
-					PreparedStatement select_entries = sql_connection.prepareStatement("select user_id, sum(amount), entry_data from entry where contest_id = ? group by entry_data, user_id");
-					select_entries.setInt(1, contest_id);
-					ResultSet entry_rs = select_entries.executeQuery();
-					
-					while (entry_rs.next())
+					for (int i=0, limit=rosters.length(); i<limit; i++)
 						{
-						String user_id = entry_rs.getString(1);
-						double user_wager = entry_rs.getDouble(2);
-						int selection = entry_rs.getInt(3);
-						double user_raked_amount = multiply(user_wager, rake, 0);
+						// get roster details ----------------------------------------------
+						
+						JSONObject roster = rosters.getJSONObject(i);
+						
+						int roster_id = roster.getInt("entry_id");
+						roster_map.put(roster_id, roster);
+						
+						String user_id = roster.getString("user_id");
+						double amount = roster.getDouble("amount");
+						JSONArray entry_data = new JSONArray(roster.getString("entry_data"));
+						int number_of_rosters = (int) divide(amount, cost_per_entry, 0);
+
+						log("");
+						log("Roster ID: " + roster_id);
+						log("User ID: " + user_id);
+						log("Amount: " + amount);
+						log("Qty: " + number_of_rosters);
+						
+						// score roster ----------------------------------------------------
+						
+						double roster_score = 0;
+						
+						for (int j=0; j<entry_data.length(); j++)
+							{
+							JSONObject player = entry_data.getJSONObject(j);
+							int player_score = score_map.get(player.getInt("id"));
+							roster_score = add(roster_score, player_score, 0);
+							}
+						
+						List<Integer> rosters_at_score = null;
+						
+						if (roster_rankings.containsKey(roster_score)) rosters_at_score = roster_rankings.get(roster_score);
+						else rosters_at_score = new ArrayList<Integer>();
+						
+						rosters_at_score.add(roster_id);
+						roster_rankings.put(roster_score, rosters_at_score);
+						
+						log("Score: " + (int) roster_score);
+						
+						// handle the rake -------------------------------------------------
 						
 						JSONObject user = db.select_user("id", user_id);
-						
+
+						double user_raked_amount = multiply(amount, rake, 0);
 						double user_btc_balance = user.getDouble("btc_balance");
-						int free_play = user.getInt("free_play");
+
+						log("Raked amount: " + user_raked_amount);
 						
-						log("");
-						log("User: " + user_id);
-						log("Wager: " + user_wager);
-						log("Selection: " + selection);
-						log("Amount raked: " + user_raked_amount);
+						int free_play = user.getInt("free_play");
 						
 						if (free_play == 1)
 							{
@@ -284,76 +318,148 @@ public class SettlePariMutuelContest extends Utils
 								else referrer_map.put(referrer, referrer_payout);
 								}
 							}
-											
-						if (selection == winning_outcome)
-							{
-							double user_winnings = multiply(user_wager, payout_ratio, 0);
-							
-							log("Winnings: " + user_winnings);
-							
-							user_btc_balance = add(user_btc_balance, user_winnings, 0);
-							
-							actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
-							
-							db.update_btc_balance(user_id, user_btc_balance);
-		
-							String 
-							
-							transaction_type = "BTC-CONTEST-WINNINGS",
-							from_account = contest_account_id,
-							to_account = user_id,
-							from_currency = "BTC",
-							to_currency = "BTC",
-							memo = "Winnings (BTC) from contest #" + contest_id;
-							
-							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-							create_transaction.setLong(1, System.currentTimeMillis());
-							create_transaction.setString(2, contest_admin);
-							create_transaction.setString(3, transaction_type);
-							create_transaction.setString(4, from_account);
-							create_transaction.setString(5, to_account);
-							create_transaction.setDouble(6, user_winnings);
-							create_transaction.setString(7, from_currency);
-							create_transaction.setString(8, to_currency);
-							create_transaction.setString(9, memo);
-							create_transaction.setInt(10, contest_id);
-							create_transaction.executeUpdate();
-							
-							String
-							
-							subject = "You picked the correct outcome in contest #" + contest_id, 
-							message_body = "";
-							
-							message_body += "You picked the correct outcome in contest #" + contest_id + " - <b>" + contest_title + "</b>";
-							message_body += "<br/>";
-							message_body += "<br/>";
-							message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
-							message_body += "<br/>";
-							message_body += "<br/>";
-							message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
-							message_body += "<br/>";
-							message_body += "<br/>";
-							message_body += "Please do not reply to this email.";
-							
-							new UserMail(user, subject, message_body);
-							}
-						//else {in future, send email if user opts to receive emails when they lose}
 						}
 					
+					
+					/* code snippet to iterate over rosters in descending order of score
+
+					for (Map.Entry<Double, List<Integer>> entry : roster_rankings.entrySet()) 
+						{
+						log(entry.getKey());
+						List<Integer> rosters_at_score = entry.getValue();
+						
+						for (int i=0, limit = rosters_at_score.size(); i<limit; i++)
+							{
+							int roster_id = rosters_at_score.get(i);
+							JSONObject roster = roster_map.get(roster_id);
+							}
+						}
+						
+					*/
+					
+					switch (settlement_type)
+						{
+						case "HEADS-UP" :
+							{
+							// heads up:
+								
+							log("");
+							log("Settling heads up");
+								
+							int roster_count_at_score = 0;
+
+							Map<String, Integer> winner_map = new TreeMap<String, Integer>();
+							
+							List<Integer> winning_rosters = roster_rankings.get(roster_rankings.firstKey());
+							
+							for (int i=0; i<winning_rosters.size(); i++)
+								{
+								int roster_id = winning_rosters.get(i);
+								JSONObject roster = roster_map.get(roster_id);
+								String user_id = roster.getString("user_id");
+								
+								int win_count = 0;
+								
+								if (winner_map.containsKey(user_id)) win_count = winner_map.get(user_id);
+								
+								win_count++;
+								roster_count_at_score++;
+								
+								winner_map.put(user_id, win_count);
+								}
+							
+							for (Map.Entry<String, Integer> entry : winner_map.entrySet()) 
+								{
+								String user_id = entry.getKey();							
+								int win_count = entry.getValue();
+								
+								JSONObject user = db.select_user("id", user_id);
+								
+								double 
+								
+								user_btc_balance = user.getDouble("btc_balance"),
+								
+								win_multiple = divide(win_count, roster_count_at_score, 0),
+								user_winnings = multiply(win_multiple, user_winnings_total, 0);
+								
+								user_btc_balance = add(user_btc_balance, user_winnings, 0);
+								actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0); 
+								
+								boolean outright_win = win_multiple == 1.0 ? true : false; // false = some kind of tie
+
+								log("");
+								log("User: " + user_id);
+								log("Win multiple: " + win_multiple);
+								log("Winnings: " + user_winnings);
+								
+								db.update_btc_balance(user_id, user_btc_balance);
+								
+								String 
+								
+								transaction_type = "BTC-CONTEST-WINNINGS",
+								from_account = contest_account_id,
+								to_account = user_id,
+								from_currency = "BTC",
+								to_currency = "BTC",
+								memo = "Winnings (BTC) from contest #" + contest_id;
+								
+								PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+								create_transaction.setLong(1, System.currentTimeMillis());
+								create_transaction.setString(2, contest_admin);
+								create_transaction.setString(3, transaction_type);
+								create_transaction.setString(4, from_account);
+								create_transaction.setString(5, to_account);
+								create_transaction.setDouble(6, user_winnings);
+								create_transaction.setString(7, from_currency);
+								create_transaction.setString(8, to_currency);
+								create_transaction.setString(9, memo);
+								create_transaction.setInt(10, contest_id);
+								create_transaction.executeUpdate();
+								
+								String
+								
+								subject = "You " + (outright_win ? "had" : "tied") + " the highest-scoring roster in contest #" + contest_id, 
+								message_body = "";
+								
+								message_body += "You " + (outright_win ? "had" : "tied") + " the highest-scoring roster in contest #" + contest_id + " - <b>" + contest_title + "</b>";
+								message_body += "<br/>";
+								message_body += "<br/>";
+								message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
+								message_body += "<br/>";
+								message_body += "<br/>";
+								message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
+								message_body += "<br/>";
+								message_body += "<br/>";
+								message_body += "Please do not reply to this email.";
+								
+								new UserMail(user, subject, message_body);
+								}
+							
+							} break;
+						case "DOUBLE-UP" :
+							{
+							
+							} break;
+						case "JACKPOT" :
+							{
+							
+							} break;
+						}
+
 					log("");
 					log("Actual rake amount: " + actual_rake_amount);
-					
+
 					// now we swap BTC to RC for referral payouts
 					
 					btc_liability_balance = add(btc_liability_balance, total_referrer_payout, 0); // add decreases liability
 					rc_liability_balance = subtract(rc_liability_balance, total_referrer_payout, 0); // subtract increases liability
-									
+	
 					PreparedStatement update_liability = sql_connection.prepareStatement("update user set btc_balance = ?, rc_balance = ? where id = ?");
 					update_liability.setDouble(1, btc_liability_balance);
 					update_liability.setDouble(2, rc_liability_balance);
 					update_liability.setString(3, liability_account_id);
 					update_liability.executeUpdate();
-					
+
 					// compare rc_liability_balance against original to determine net swap
 					
 					double starting_rc_liability_balance = liability_account.getDouble("rc_balance");
@@ -385,7 +491,7 @@ public class SettlePariMutuelContest extends Utils
 							
 							swap_amount = subtract(rc_liability_balance, starting_rc_liability_balance, 0);
 							}
-										
+	
 						PreparedStatement swap = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 						swap.setLong(1, System.currentTimeMillis());
 						swap.setString(2, contest_admin);
@@ -423,7 +529,7 @@ public class SettlePariMutuelContest extends Utils
 						from_currency = "RC",
 						to_currency = "RC",
 						memo = "Referral revenue (RC) from contest #" + contest_id;
-						
+
 						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 						create_transaction.setLong(1, System.currentTimeMillis());
 						create_transaction.setString(2, contest_admin);
@@ -436,7 +542,7 @@ public class SettlePariMutuelContest extends Utils
 						create_transaction.setString(9, memo);
 						create_transaction.setInt(10, contest_id);
 						create_transaction.executeUpdate();
-						
+
 						String
 						
 						subject = "Referral revenue for contest #" + contest_id, 
@@ -469,7 +575,7 @@ public class SettlePariMutuelContest extends Utils
 					from_currency = "BTC",
 					to_currency = "BTC",
 					memo = "Rake (BTC) from contest #" + contest_id;
-					
+
 					PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 					create_transaction.setLong(1, System.currentTimeMillis());
 					create_transaction.setString(2, contest_admin);
@@ -482,12 +588,12 @@ public class SettlePariMutuelContest extends Utils
 					create_transaction.setString(9, memo);
 					create_transaction.setInt(10, contest_id);
 					create_transaction.executeUpdate();
-					
+
 					// update contest to settled, add updated option table (has an outcome flag on each option):
-					
+
 					PreparedStatement update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ? where id = ?");
 					update_contest.setString(1, contest_admin);
-					update_contest.setString(2, option_table.toString());
+					update_contest.setString(2, system_players.toString());
 					update_contest.setInt(3, contest_id);
 					update_contest.executeUpdate();
 		
@@ -502,9 +608,9 @@ public class SettlePariMutuelContest extends Utils
 				{
 				statement.execute("unlock tables");
 				}
-			
+
 			new BuildLobby(sql_connection);
-						
+			
 //------------------------------------------------------------------------------------
 
 			} method.response.send(output);

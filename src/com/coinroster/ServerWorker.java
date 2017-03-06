@@ -36,6 +36,12 @@ public class ServerWorker extends Utils implements Runnable
 						new StaticAsset(request, response);
 						break;
 						}
+					case "ssi":
+						{
+						OutputStream response = socket.getOutputStream();
+						new SSI(request, response);
+						break;
+						}
 					}
 				}
 			else // not well-formed, open command handler if localhost
