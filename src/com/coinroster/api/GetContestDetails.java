@@ -1,6 +1,8 @@
 package com.coinroster.api;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -41,8 +43,6 @@ public class GetContestDetails extends Utils
 				{
 				JSONArray entries = db.select_contest_entries(contest_id);
 				
-				int number_of_entries = entries.length();
-				
 				String contest_type = contest.getString("contest_type");
 				
 				output.put("category", db.get_category_description(contest.getString("category")));
@@ -53,26 +53,49 @@ public class GetContestDetails extends Utils
 				output.put("settlement_type", contest.get("settlement_type"));
 				output.put("contest_status", contest.get("status"));
 				output.put("registration_deadline", contest.get("registration_deadline"));
+				output.put("settled", contest.get("settled"));
 
 				double 
 				
 				total_prize_pool = db.get_contest_prize_pool(contest_id),
 				cost_per_entry = contest.getDouble("cost_per_entry");
+
+				int current_users = db.get_contest_current_users(contest_id);
 				
 				output.put("total_prize_pool", total_prize_pool);
 				output.put("cost_per_entry", cost_per_entry);
 				output.put("rake", contest.getDouble("rake"));
+				output.put("current_users", current_users);
+				output.put("min_users", contest.get("min_users"));
+				output.put("max_users", contest.get("max_users"));
 				
 				if (contest_type.equals("ROSTER"))
 					{
+					int number_of_entries = (int) divide(total_prize_pool, cost_per_entry, 0);
+					double entries_per_user = contest.getDouble("entries_per_user");
+					
 					output.put("pay_table", contest.get("pay_table"));
 					output.put("salary_cap", contest.get("salary_cap"));
-					output.put("min_users", contest.get("min_users"));
-					output.put("max_users", contest.get("max_users"));
-					output.put("entries_per_user", contest.get("entries_per_user"));
 					output.put("roster_size", contest.get("roster_size"));
-					output.put("number_of_entries", total_prize_pool / cost_per_entry);
+					output.put("number_of_entries", number_of_entries);
 					output.put("option_table", contest.get("option_table"));
+					output.put("entries_per_user", entries_per_user);
+					
+					if (session.active())
+						{
+						PreparedStatement get_user_amount = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ? and user_id = ?");
+						get_user_amount.setInt(1, contest_id);
+						get_user_amount.setString(2, session.user_id());
+						ResultSet result_set = get_user_amount.executeQuery();
+
+						result_set.next();
+						
+						double total_entered_amount = result_set.getDouble(1);
+						
+						int active_user_entries = (int) divide(total_entered_amount, cost_per_entry, 0);
+						output.put("active_user_entries", active_user_entries);
+						}
+					
 					}
 				else if (contest_type.equals("PARI-MUTUEL"))
 					{
@@ -94,7 +117,8 @@ public class GetContestDetails extends Utils
 						wager_grand_total += wager_total;
 						option_table_with_wager_totals.put(option_item);
 						}
-					
+
+					output.put("entries_per_user", 0); // show "Unlimited"
 					output.put("option_table", option_table_with_wager_totals.toString());
 					output.put("wager_grand_total", wager_grand_total);
 					}

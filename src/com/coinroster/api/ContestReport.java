@@ -93,6 +93,7 @@ public class ContestReport extends Utils
 					}
 			
 				double total_prize_pool = db.get_contest_prize_pool(id);
+				int current_users = db.get_contest_current_users(id);
 					
 				contest.put("id", id);
 				contest.put("created", created);
@@ -108,6 +109,7 @@ public class ContestReport extends Utils
 				contest.put("salary_cap", salary_cap);
 				contest.put("cost_per_entry", cost_per_entry);
 				contest.put("min_users", min_users);
+				contest.put("current_users", current_users);
 				contest.put("max_users", max_users);
 				contest.put("entries_per_user", entries_per_user);
 				contest.put("registration_deadline", registration_deadline);

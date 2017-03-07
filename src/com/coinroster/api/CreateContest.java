@@ -82,12 +82,11 @@ public class CreateContest extends Utils
             
             if (contest_type.equals("ROSTER"))
 	            {
-    			String entries_per_user_STRING = input.getString("entries_per_user");
     			String settlement_type = input.getString("settlement_type");
 	            int salary_cap = input.getInt("salary_cap");
 	            int min_users = input.getInt("min_users");
 	            int max_users = input.getInt("max_users"); // 0 = unlimited
-	            int entries_per_user = 0;
+	            int entries_per_user = input.getInt("entries_per_user");
 	            int roster_size = input.getInt("roster_size");
 	            JSONArray pay_table = input.getJSONArray("pay_table");
 	            JSONArray pay_table_final = new JSONArray();
@@ -102,23 +101,16 @@ public class CreateContest extends Utils
 		    		output.put("error", "Invalid value for [max users]");
 		    		break method;
 		        	}
-	            	
-	            switch (entries_per_user_STRING)
-	            	{
-	            	case "UNLIMITED" :
-	            		entries_per_user = 0; // 0 = unlimited
-	            		break;
-	            	case "ONE-ONLY" :
-	            		entries_per_user = 1;
-	            		break;
-	            	default:
-	            		output.put("error", "Invalid value for [entries per user]");
-	            		break method;
-	            	}
 	            
 	            if (roster_size < 0)
 	            	{
 	            	output.put("error", "Roster size cannobe be negative");
+	        		break method;
+	            	}
+	            
+	            if (entries_per_user < 0)
+	            	{
+	            	output.put("error", "Invalid value for [entries per user]");
 	        		break method;
 	            	}
 	            

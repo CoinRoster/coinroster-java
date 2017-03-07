@@ -43,7 +43,7 @@ public class MyContestsReport extends Utils
 			
 			String user_id = session.user_id();
 			
-			PreparedStatement get_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status < 3 order by contest.status asc, entry.id desc");
+			PreparedStatement get_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status < 4 order by contest.status asc, entry.id desc");
 			get_contest_ids.setString(1, user_id);
 			ResultSet contest_id_rs = get_contest_ids.executeQuery();
 

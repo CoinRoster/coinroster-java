@@ -31,7 +31,6 @@ public class BuildLobby extends Utils
 			ResultSet category_rs = select_categories.executeQuery();
 			
 			boolean visible_categories = false;
-			boolean first_category = true;
 
 			while (category_rs.next())
 				{
@@ -108,14 +107,6 @@ public class BuildLobby extends Utils
 					{
 					lobby_builder.append(category_html);
 					visible_categories = true;
-					
-					// this is used to add a class to all section_header elements except for the first one
-					
-					if (first_category)
-						{
-						category_template = category_template.replace("additional_header_class", "section_header_override");
-						first_category = false;
-						}
 					}
 				}
 			

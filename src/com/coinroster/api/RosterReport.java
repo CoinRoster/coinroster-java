@@ -11,11 +11,11 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
-public class EntryReport extends Utils
+public class RosterReport extends Utils
 	{
-	public static String method_level = "standard";
+	public static String method_level = "guest";
 	@SuppressWarnings("unused")
-	public EntryReport(MethodInstance method) throws Exception 
+	public RosterReport(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -34,11 +34,18 @@ public class EntryReport extends Utils
 		
 			int contest_id = input.getInt("contest_id");
 			
+			JSONObject contest = db.select_contest(contest_id);
+			
+			if (!contest.getString("contest_type").equals("ROSTER"))
+				{
+				output.put("error", "Contest #" + contest_id + " is not a roster contest.");
+				break method;
+				}
+			
 			JSONArray entry_report = new JSONArray();
 			
-			PreparedStatement select_entries = sql_connection.prepareStatement("select * from entry where user_id = ? and contest_id = ? order by id desc");
-			select_entries.setString(1, session.user_id());
-			select_entries.setInt(2, contest_id);
+			PreparedStatement select_entries = sql_connection.prepareStatement("select * from entry where contest_id = ? order by score desc, payout desc, id desc");
+			select_entries.setInt(1, contest_id);
 			ResultSet result_set = select_entries.executeQuery();
 			
 			while (result_set.next())
@@ -56,7 +63,7 @@ public class EntryReport extends Utils
 				
 				entry.put("id", id);
 				entry.put("contest_id", contest_id);
-				entry.put("user_id", user_id);
+				entry.put("user", db.get_username_for_id(user_id));
 				entry.put("created", created);
 				entry.put("amount", amount);
 				entry.put("entry_data", entry_data);

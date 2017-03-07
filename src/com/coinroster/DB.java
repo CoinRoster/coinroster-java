@@ -231,6 +231,23 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	// GET NUMBER OF USERS IN CONTEST
+
+	public int get_contest_current_users(int contest_id) throws Exception
+		{
+		int current_users = 0;
+
+		PreparedStatement get_contest_current_users = sql_connection.prepareStatement("select count(distinct(user_id)) from entry where contest_id = ?");
+		get_contest_current_users.setInt(1, contest_id);
+		ResultSet result_set = get_contest_current_users.executeQuery();
+
+		if (result_set.next()) current_users = result_set.getInt(1);
+
+		return current_users;
+		}
+
+//------------------------------------------------------------------------------------
+
 	// GET WAGER TOTAL FOR PARI-MUTUEL OPTION
 
 	public double get_option_wager_total(int contest_id, int option_id) throws Exception
@@ -284,6 +301,8 @@ public class DB
 			int status = result_set.getInt(19);
 			int roster_size = result_set.getInt(20);
 			String odds_source = result_set.getString(21);
+			String settled_by = result_set.getString(22);
+			Long settled = result_set.getLong(23);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
@@ -306,6 +325,8 @@ public class DB
 			contest.put("status", status);
 			contest.put("roster_size", roster_size);
 			contest.put("odds_source", odds_source);
+			contest.put("settled_by", settled_by);
+			contest.put("settled", settled);
 			}
 
 		return contest;
@@ -407,6 +428,26 @@ public class DB
 			}
 
 		return entries;
+		}
+
+//------------------------------------------------------------------------------------
+
+	// CHECK IF USER HAS ENTERED CONTEST
+
+	public boolean has_user_entered_contest(int contest_id, String user_id) throws Exception
+		{
+		boolean result = false;
+
+		PreparedStatement has_user_entered_contest = sql_connection.prepareStatement("select count(*) from entry where contest_id = ? and user_id = ?");
+		has_user_entered_contest.setInt(1, contest_id);
+		has_user_entered_contest.setString(2, user_id);
+		ResultSet result_set = has_user_entered_contest.executeQuery();
+
+		result_set.next();
+		
+		if (result_set.getInt(1) != 0) result = true;
+
+		return result;
 		}
 
 //------------------------------------------------------------------------------------
@@ -523,5 +564,25 @@ public class DB
 		update_rc_balance.setDouble(1, new_rc_balance);
 		update_rc_balance.setString(2, user_id);
 		update_rc_balance.executeUpdate();
+		}
+	
+//------------------------------------------------------------------------------------
+
+	// UPDATE ROSTER SCORE / PAYOUT
+	
+	public void update_roster_score(int entry_id, double score) throws Exception
+		{
+		PreparedStatement update_entry = sql_connection.prepareStatement("update entry set score = ? where id = ?");
+		update_entry.setDouble(1, score);
+		update_entry.setInt(2, entry_id);
+		update_entry.executeUpdate();
+		}
+	
+	public void update_roster_payout(int entry_id, double payout) throws Exception
+		{
+		PreparedStatement update_entry = sql_connection.prepareStatement("update entry set payout = ? where id = ?");
+		update_entry.setDouble(1, payout);
+		update_entry.setInt(2, entry_id);
+		update_entry.executeUpdate();
 		}
 	}
