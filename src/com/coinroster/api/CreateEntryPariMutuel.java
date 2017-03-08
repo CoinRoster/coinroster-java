@@ -303,7 +303,7 @@ public class CreateEntryPariMutuel extends Utils
 				message_body += "You have successfully entered <b>" + number_of_user_wagers + " wager" + (number_of_user_wagers > 1 ? "s" : "") + "</b> for contest #" + contest_id + " - <b>" + contest_title + "</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
-				message_body += "You may view your wagers <a href='" + Server.host + "/contests/'>here</a>.";
+				message_body += "You may view your wagers <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>here</a>.";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "Please do not reply to this email.";

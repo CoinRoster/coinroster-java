@@ -641,7 +641,7 @@ public class SettleContest extends Utils
 									message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 									message_body += "<br/>";
 									message_body += "<br/>";
-									message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
+									message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
 									message_body += "<br/>";
 									message_body += "<br/>";
 									message_body += "Please do not reply to this email.";
@@ -840,7 +840,7 @@ public class SettleContest extends Utils
 											message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
-											message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
+											message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
 											message_body += "<br/>";
 											message_body += "<br/>";
 											message_body += "Please do not reply to this email.";
@@ -1009,7 +1009,7 @@ public class SettleContest extends Utils
 											message_body += "Total payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
-											message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
+											message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
 											message_body += "<br/>";
 											message_body += "<br/>";
 											message_body += "Please do not reply to this email.";
@@ -1173,7 +1173,7 @@ public class SettleContest extends Utils
 											message_body += "Total payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
-											message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
+											message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
 											message_body += "<br/>";
 											message_body += "<br/>";
 											message_body += "Please do not reply to this email.";

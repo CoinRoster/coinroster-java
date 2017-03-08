@@ -390,7 +390,7 @@ public class CreateEntryRoster extends Utils
 				message_body += "You have successfully entered <b>" + number_of_entries + " roster" + (number_of_entries > 1 ? "s" : "") + "</b> for contest #" + contest_id + " - <b>" + contest_title + "</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
-				message_body += "You may view your rosters <a href='" + Server.host + "/contests/'>here</a>.";
+				message_body += "You may view your rosters <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>here</a>.";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "Please do not reply to this email.";
