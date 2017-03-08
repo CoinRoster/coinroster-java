@@ -105,6 +105,8 @@ public class SettleContest extends Utils
 					
 					Map<Integer, Integer> score_map = new TreeMap<Integer, Integer>();
 					Map<Integer, String> raw_score_map = new TreeMap<Integer, String>();
+					
+					boolean raw_scores = true;
 
 					//--------------------------------------------------------------------------------------------------------------
 				
@@ -163,7 +165,16 @@ public class SettleContest extends Utils
 								int player_id = player.getInt("id");
 								
 								score_map.put(player_id, player.getInt("score"));
-								raw_score_map.put(player_id, player.getString("score_raw"));
+								
+								if (raw_scores) // default is true
+									{
+									if (!player.has("score_raw"))
+										{
+										raw_scores = false; // override to false before first attempt to process
+										continue;
+										}
+									raw_score_map.put(player_id, player.getString("score_raw"));
+									}
 								}
 								
 							// loop through system players to make sure all players have been assigned a score
@@ -185,8 +196,12 @@ public class SettleContest extends Utils
 									break lock;
 									}
 								
-								player.put("score", score_map.get(player_id));
-								player.put("score_raw", raw_score_map.get(player_id));
+								int score = score_map.get(player_id);
+								
+								player.put("score", score);
+								
+								if (raw_scores) player.put("score_raw", raw_score_map.get(player_id));
+								else player.put("score_raw", score);
 								
 								option_table.put(i, player);
 								}
@@ -671,7 +686,6 @@ public class SettleContest extends Utils
 							for (int roster_pointer=0; roster_pointer<entries.length(); roster_pointer++)
 								{								
 								JSONObject roster = entries.getJSONObject(roster_pointer);
-								
 								
 								log("");
 								log("Entry[" + roster_pointer + "] with ID: " + roster.getInt("entry_id"));
