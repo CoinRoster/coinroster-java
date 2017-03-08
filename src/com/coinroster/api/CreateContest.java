@@ -208,19 +208,19 @@ public class CreateContest extends Utils
 						
 						String 
 						
-						name = line.getString("name"),
-						odds = line.getString("odds");
+						name = line.getString("name");
+						//odds = line.getString("odds");
 						
 						if (name == "" || name == null)
 							{
 							output.put("error", "Player table row " + (i+1) + ": no name entered");
 	                		break method;
 							}
-						if (odds == "" || odds == null) // consider adding more validation here
+						/*if (odds == "" || odds == null)
 							{
 							output.put("error", "Player table row " + (i+1) + ": no odds entered");
 		            		break method;
-							}
+							}*/
 						
 						int price = line.getInt("price"); // force price to integer
 						line.put("price", price);

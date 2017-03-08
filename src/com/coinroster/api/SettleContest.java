@@ -103,7 +103,7 @@ public class SettleContest extends Utils
 					
 					JSONArray player_scores;
 					
-					Map<Integer, Integer> score_map = new TreeMap<Integer, Integer>();
+					Map<Integer, Double> score_map = new TreeMap<Integer, Double>();
 					Map<Integer, String> raw_score_map = new TreeMap<Integer, String>();
 					
 					boolean raw_scores = true;
@@ -163,8 +163,9 @@ public class SettleContest extends Utils
 								JSONObject player = player_scores.getJSONObject(i);
 								
 								int player_id = player.getInt("id");
+								double score = player.getDouble("score");
 								
-								score_map.put(player_id, player.getInt("score"));
+								score_map.put(player_id, score);
 								
 								if (raw_scores) // default is true
 									{
@@ -196,7 +197,7 @@ public class SettleContest extends Utils
 									break lock;
 									}
 								
-								int score = score_map.get(player_id);
+								double score = score_map.get(player_id);
 								
 								player.put("score", score);
 								
@@ -698,7 +699,8 @@ public class SettleContest extends Utils
 								for (int i=0; i<entry_data.length(); i++)
 									{
 									JSONObject player = entry_data.getJSONObject(i);
-									int player_score = score_map.get(player.getInt("id"));
+									int player_id = player.getInt("id");
+									double player_score = score_map.get(player_id);
 									roster_score = add(roster_score, player_score, 0);
 									}
 								
@@ -1268,10 +1270,12 @@ public class SettleContest extends Utils
 					log("");
 		
 					if (do_update) output.put("status", "1"); 
+					else output.put("error", "SettleContest is in test mode - updates have been turned off");
 					}
 				}
 			catch (Exception e)
 				{
+				output.put("error", e.getMessage());
 				Server.exception(e);
 				}
 			finally
