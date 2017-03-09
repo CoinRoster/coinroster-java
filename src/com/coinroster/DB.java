@@ -303,6 +303,7 @@ public class DB
 			String odds_source = result_set.getString(21);
 			String settled_by = result_set.getString(22);
 			Long settled = result_set.getLong(23);
+			String score_header = result_set.getString(24);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
@@ -327,6 +328,7 @@ public class DB
 			contest.put("odds_source", odds_source);
 			contest.put("settled_by", settled_by);
 			contest.put("settled", settled);
+			contest.put("score_header", score_header);
 			}
 
 		return contest;

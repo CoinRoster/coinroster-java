@@ -81,6 +81,10 @@ public class GetContestDetails extends Utils
 					output.put("option_table", contest.get("option_table"));
 					output.put("entries_per_user", entries_per_user);
 					
+					String score_header = "Raw score";
+					if (!contest.isNull("score_header")) score_header = contest.getString("score_header");
+					output.put("score_header", score_header);
+					
 					if (session.active())
 						{
 						PreparedStatement get_user_amount = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ? and user_id = ?");

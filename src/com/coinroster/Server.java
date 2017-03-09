@@ -332,7 +332,7 @@ public class Server extends Utils
 			
 			pool_size = 20;
 			
-			admin_timeout = 20 * minute;
+			admin_timeout = 60 * minute;
 			
 			host = "https://www.coinroster.com";
 			relay_email_from = "CoinRoster";
@@ -558,9 +558,11 @@ public class Server extends Utils
 
 	public static void send_mail(String to_address, final String to_user, final String subject, final String message_body)
 		{
-		// if runnong on development server, redirect all email to developer:
+		// if running on development server, redirect all email to developer:
 		
 		if (dev_server) to_address = developer_email_address;
+		
+		if (dev_server) return;
 		
 		final String final_to_address = to_address;
 		

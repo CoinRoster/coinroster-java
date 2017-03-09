@@ -41,6 +41,13 @@ public class RosterReport extends Utils
 				output.put("error", "Contest #" + contest_id + " is not a roster contest.");
 				break method;
 				}
+		
+			if (contest.getInt("status") == 1)
+				{
+				output.put("error", "Contest #" + contest_id + " is still open for registration.");
+				break method;
+				}
+					
 			
 			JSONArray entry_report = new JSONArray();
 			

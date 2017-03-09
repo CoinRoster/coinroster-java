@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
@@ -42,9 +43,11 @@ public class ContestReport extends Utils
 			
 			if (!category.equals("") && !sub_category.equals(""))
 				{
-				select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and (status = 1 or status = 2) order by status asc, id desc");
+				Long settled_cutoff = System.currentTimeMillis() - 14 * Server.day;
+				select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?)) order by status asc, id desc");
 				select_contests.setString(1, category);
 				select_contests.setString(2, sub_category);
+				select_contests.setLong(3, settled_cutoff);
 				
 				output.put("category_description", db.get_category_description(category));
 				output.put("sub_category_description", db.get_sub_category_description(sub_category));

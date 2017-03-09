@@ -88,6 +88,7 @@ public class CreateContest extends Utils
 	            int max_users = input.getInt("max_users"); // 0 = unlimited
 	            int entries_per_user = input.getInt("entries_per_user");
 	            int roster_size = input.getInt("roster_size");
+	            String score_header = input.getString("score_header");
 	            JSONArray pay_table = input.getJSONArray("pay_table");
 	            JSONArray pay_table_final = new JSONArray();
 	            
@@ -113,6 +114,12 @@ public class CreateContest extends Utils
 	            	output.put("error", "Invalid value for [entries per user]");
 	        		break method;
 	            	}
+	            
+				if (score_header.equals(""))
+					{
+					output.put("error", "Please choose a score column header");
+					break method;
+					}
 	            
 	            // validate settlement instructions
 	
@@ -256,7 +263,7 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, contest_type);
@@ -276,6 +283,7 @@ public class CreateContest extends Utils
 				create_contest.setString(17, session.user_id());
 				create_contest.setInt(18, roster_size);
 				create_contest.setString(19, odds_source);
+				create_contest.setString(20, score_header);
 				create_contest.executeUpdate();
 	            }
             else if (contest_type.equals("PARI-MUTUEL"))
