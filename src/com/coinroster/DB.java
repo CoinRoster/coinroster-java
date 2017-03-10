@@ -280,7 +280,6 @@ public class DB
 			{
 			contest = new JSONObject();
 			
-			//int contest_id = result_set.getInt(1);
 			Long created = result_set.getLong(2);
 			String created_by = result_set.getString(3);
 			String category = result_set.getString(4);
@@ -304,6 +303,8 @@ public class DB
 			String settled_by = result_set.getString(22);
 			Long settled = result_set.getLong(23);
 			String score_header = result_set.getString(24);
+			Long scores_updated = result_set.getLong(25);
+			String scoring_scheme = result_set.getString(26);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
@@ -329,6 +330,8 @@ public class DB
 			contest.put("settled_by", settled_by);
 			contest.put("settled", settled);
 			contest.put("score_header", score_header);
+			contest.put("scores_updated", scores_updated);
+			contest.put("scoring_scheme", scoring_scheme);
 			}
 
 		return contest;

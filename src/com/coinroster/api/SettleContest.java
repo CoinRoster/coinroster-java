@@ -106,8 +106,6 @@ public class SettleContest extends Utils
 					Map<Integer, Double> score_map = new TreeMap<Integer, Double>();
 					Map<Integer, String> raw_score_map = new TreeMap<Integer, String>();
 					
-					boolean raw_scores = true;
-
 					//--------------------------------------------------------------------------------------------------------------
 				
 					// validate settlement data provided by contest admin
@@ -163,19 +161,11 @@ public class SettleContest extends Utils
 								JSONObject player = player_scores.getJSONObject(i);
 								
 								int player_id = player.getInt("id");
-								double score = player.getDouble("score");
+								double score_normalized = player.getDouble("score_normalized");
+								String score_raw = player.getString("score_raw");
 								
-								score_map.put(player_id, score);
-								
-								if (raw_scores) // default is true
-									{
-									if (!player.has("score_raw"))
-										{
-										raw_scores = false; // override to false before first attempt to process
-										continue;
-										}
-									raw_score_map.put(player_id, player.getString("score_raw"));
-									}
+								score_map.put(player_id, score_normalized);
+								raw_score_map.put(player_id, score_raw);
 								}
 								
 							// loop through system players to make sure all players have been assigned a score
@@ -196,13 +186,9 @@ public class SettleContest extends Utils
 									
 									break lock;
 									}
-								
-								double score = score_map.get(player_id);
-								
-								player.put("score", score);
-								
-								if (raw_scores) player.put("score_raw", raw_score_map.get(player_id));
-								else player.put("score_raw", score);
+
+								player.put("score", score_map.get(player_id));
+								player.put("score_raw", raw_score_map.get(player_id));
 								
 								option_table.put(i, player);
 								}
@@ -1259,11 +1245,33 @@ public class SettleContest extends Utils
 					
 					if (do_update)
 						{
-						PreparedStatement update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ?, settled = ? where id = ?");
-						update_contest.setString(1, contest_admin);
-						update_contest.setString(2, option_table.toString());
-						update_contest.setLong(3, System.currentTimeMillis());
-						update_contest.setInt(4, contest_id);
+						PreparedStatement update_contest = null;
+
+						switch (contest_type)
+							{
+							case "PARI-MUTUEL" :
+								
+								update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ?, settled = ? where id = ?");
+								update_contest.setString(1, contest_admin);
+								update_contest.setString(2, option_table.toString());
+								update_contest.setLong(3, System.currentTimeMillis());
+								update_contest.setInt(4, contest_id);
+								break;
+								
+							case "ROSTER" :
+								
+								String normalization_scheme = input.getString("normalization_scheme");
+								
+								update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ?, settled = ?, scores_updated = ?, scoring_scheme = ? where id = ?");
+								update_contest.setString(1, contest_admin);
+								update_contest.setString(2, option_table.toString());
+								update_contest.setLong(3, System.currentTimeMillis());
+								update_contest.setLong(4, System.currentTimeMillis());
+								update_contest.setString(5, normalization_scheme);
+								update_contest.setInt(6, contest_id);
+								break;
+							}
+
 						update_contest.executeUpdate();
 						}
 

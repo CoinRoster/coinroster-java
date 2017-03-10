@@ -48,7 +48,6 @@ public class RosterReport extends Utils
 				break method;
 				}
 					
-			
 			JSONArray entry_report = new JSONArray();
 			
 			PreparedStatement select_entries = sql_connection.prepareStatement("select * from entry where contest_id = ? order by score desc, payout desc, id desc");

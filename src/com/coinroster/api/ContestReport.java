@@ -61,6 +61,7 @@ public class ContestReport extends Utils
 			while (result_set.next())
 				{
 				int id = result_set.getInt(1);
+				
 				Long created = result_set.getLong(2);
 				String created_by = result_set.getString(3);
 				category = result_set.getString(4);
@@ -81,6 +82,11 @@ public class ContestReport extends Utils
 				int status = result_set.getInt(19);
 				int roster_size = result_set.getInt(20);
 				String odds_source = result_set.getString(21);
+				String settled_by = result_set.getString(22);
+				Long settled = result_set.getLong(23);
+				String score_header = result_set.getString(24);
+				Long scores_updated = result_set.getLong(25);
+				String scoring_scheme = result_set.getString(26);
 				
 				created_by = db.get_username_for_id(created_by);
 				
@@ -119,6 +125,9 @@ public class ContestReport extends Utils
 				contest.put("status", status);
 				contest.put("roster_size", roster_size);
 				contest.put("total_prize_pool", total_prize_pool);
+				contest.put("score_header", score_header);
+				contest.put("scores_updated", scores_updated);
+				contest.put("scoring_scheme", scoring_scheme);
 				
 				contest_report.put(contest);
 				}

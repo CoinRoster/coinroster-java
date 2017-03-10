@@ -80,6 +80,7 @@ public class GetContestDetails extends Utils
 					output.put("number_of_entries", number_of_entries);
 					output.put("option_table", contest.get("option_table"));
 					output.put("entries_per_user", entries_per_user);
+					output.put("scores_updated", contest.get("scores_updated"));
 					
 					String score_header = "Raw score";
 					if (!contest.isNull("score_header")) score_header = contest.getString("score_header");
