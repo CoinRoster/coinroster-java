@@ -562,7 +562,7 @@ public class Server extends Utils
 		
 		if (dev_server) to_address = developer_email_address;
 		
-		if (dev_server) return;
+		//if (dev_server) return;
 		
 		final String final_to_address = to_address;
 		

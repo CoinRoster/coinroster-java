@@ -16,6 +16,7 @@ public class HttpRequest
 	private String 
 	
 	first_line = "",
+	full_url = "",
 	method = "", 
 	url = "", 
 	payload = "";
@@ -62,24 +63,23 @@ public class HttpRequest
 		else return 400;
 
 		method = request[0];
-	
-		String target = request[1];
+		full_url = request[1];
 
-		int query_index = target.indexOf('?');
+		int query_index = full_url.indexOf('?');
 		
 		// no query string:
 
-		if (query_index < 0) url = target;
+		if (query_index < 0) url = full_url;
 		
 		// yes query string:
 		
 		else 
 			{
-			url = URLDecoder.decode(target.substring(0, query_index), "ISO-8859-1");
+			url = URLDecoder.decode(full_url.substring(0, query_index), "ISO-8859-1");
 			
 			// parse query string:
 			
-			String[] query_items = target.substring(query_index + 1).split("&");
+			String[] query_items = full_url.substring(query_index + 1).split("&");
 
 			for (int i=0; i<query_items.length; i++) 
 				{
@@ -169,6 +169,11 @@ public class HttpRequest
 		return method;
 		}
 
+	protected String full_url() 
+		{
+		return full_url;
+		}
+	
 	protected String target_url() 
 		{
 		return url;
