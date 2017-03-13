@@ -137,6 +137,7 @@ public class Server extends Utils
 	static HashMap<String, String> control = new HashMap<String, String>();
 
 	private static ExecutorService worker_pool;
+	public static ExecutorService async_updater;
 	
 	private static ComboPooledDataSource sql_pool;
 
@@ -366,6 +367,7 @@ public class Server extends Utils
 	private static void initialize_pools()
 		{
 		worker_pool = Executors.newFixedThreadPool(pool_size);
+		async_updater = Executors.newFixedThreadPool(2);
 		sql_pool = new ComboPooledDataSource();
 		try {
 			sql_pool.setMinPoolSize(3);
@@ -412,7 +414,7 @@ public class Server extends Utils
 			while (listening)
 				{
 				try {
-					worker_pool.submit(new ServerWorker(proxy_gateway.accept()));
+					worker_pool.execute(new ServerWorker(proxy_gateway.accept()));
 					}
 				catch (SocketException e) 
 					{

@@ -94,11 +94,11 @@ public class Session
 					Long.toString(System.currentTimeMillis())
 					}
 				);
-			new Thread() 
+			Server.async_updater.execute(new Runnable() 
 				{
-				public void run() 
-					{
-					Connection sql_connection = null;
+			    public void run() 
+			    	{
+			    	Connection sql_connection = null;
 					try {
 						sql_connection = Server.sql_connection();
 						PreparedStatement update_last_active = sql_connection.prepareStatement("update user set last_active = ? where id = ?");
@@ -118,8 +118,8 @@ public class Session
 							catch (SQLException ignore) {}
 							}
 						}
-					}
-				}.start();
+			    	}
+				});
 			return true;
 			}
 		else return false;

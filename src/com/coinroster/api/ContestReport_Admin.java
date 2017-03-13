@@ -9,15 +9,14 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
-public class ContestReport extends Utils
+public class ContestReport_Admin extends Utils
 	{
-	public static String method_level = "guest";
+	public static String method_level = "admin";
 	@SuppressWarnings("unused")
-	public ContestReport(MethodInstance method) throws Exception 
+	public ContestReport_Admin(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -38,26 +37,12 @@ public class ContestReport extends Utils
 			
 			category = input.getString("category"),
 			sub_category = input.getString("sub_category");
-			
-			PreparedStatement select_contests = null;
-			
-			if (!category.equals("") && !sub_category.equals(""))
-				{
-				Long settled_cutoff = System.currentTimeMillis() - 14 * Server.day;
-				select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?)) order by status asc, id desc");
-				select_contests.setString(1, category);
-				select_contests.setString(2, sub_category);
-				select_contests.setLong(3, settled_cutoff);
-				
-				output.put("category_description", db.get_category_description(category));
-				output.put("sub_category_description", db.get_sub_category_description(sub_category));
-				}
-			else select_contests = sql_connection.prepareStatement("select * from contest order by status asc, id desc");
-			
-			JSONArray contest_report = new JSONArray();
-			
+
+			PreparedStatement select_contests = sql_connection.prepareStatement("select * from contest order by status asc, id desc");
 			ResultSet result_set = select_contests.executeQuery();
 
+			JSONArray contest_report = new JSONArray();
+			
 			while (result_set.next())
 				{
 				int id = result_set.getInt(1);
@@ -87,20 +72,11 @@ public class ContestReport extends Utils
 				String score_header = result_set.getString(24);
 				Long scores_updated = result_set.getLong(25);
 				String scoring_scheme = result_set.getString(26);
-				
+		
 				created_by = db.get_username_for_id(created_by);
 				
 				JSONObject contest = new JSONObject();
-				
-				if (session.active())
-					{
-					if (session.user_level().equals("1")) // only admins can see the following:
-						{
-						contest.put("odds_source", odds_source);
-						contest.put("created_by", created_by);
-						}
-					}
-			
+
 				double total_prize_pool = db.get_contest_prize_pool(id);
 				int current_users = db.get_contest_current_users(id);
 					
@@ -128,6 +104,8 @@ public class ContestReport extends Utils
 				contest.put("score_header", score_header);
 				contest.put("scores_updated", scores_updated);
 				contest.put("scoring_scheme", scoring_scheme);
+				contest.put("odds_source", odds_source);
+				contest.put("created_by", created_by);
 				
 				contest_report.put(contest);
 				}

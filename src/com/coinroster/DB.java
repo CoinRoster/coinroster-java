@@ -83,6 +83,8 @@ public class DB
 			String referrer = result_set.getString(15);
 			int ext_address_secure_flag = result_set.getInt(16);
 			int free_play = result_set.getInt(17);
+			Long last_active = result_set.getLong(18);
+			int contest_status = result_set.getInt(19);
 
 			if (ext_address == null) ext_address = "";
 			if (email_address == null) email_address = "";
@@ -105,6 +107,8 @@ public class DB
 			user.put("referrer", referrer);
 			user.put("ext_address_secure_flag", ext_address_secure_flag);
 			user.put("free_play", free_play);
+			user.put("last_active", last_active);
+			user.put("contest_status", contest_status);
 			}
 
 		return user;

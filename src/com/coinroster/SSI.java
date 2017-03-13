@@ -44,6 +44,7 @@ public class SSI extends Utils
 						session_properties.put("username", session.username());
 						session_properties.put("btc_balance", user.getDouble("btc_balance"));
 						session_properties.put("rc_balance", user.getDouble("rc_balance"));
+						session_properties.put("contest_status", user.getInt("contest_status"));
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}

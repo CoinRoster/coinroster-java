@@ -12,12 +12,13 @@ import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UpdateUserContestStatus;
 
-public class MyContestsReport extends Utils
+public class ContestReport_MyContests extends Utils
 	{
-	public static String method_level = "guest";
+	public static String method_level = "standard";
 	@SuppressWarnings("unused")
-	public MyContestsReport(MethodInstance method) throws Exception 
+	public ContestReport_MyContests(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -43,8 +44,13 @@ public class MyContestsReport extends Utils
 			
 			String user_id = session.user_id();
 			
-			PreparedStatement get_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status < 4 order by contest.status asc, entry.id desc");
+			int contest_status = input.getInt("contest_status");
+			
+			new UpdateUserContestStatus(user_id, contest_status);
+	
+			PreparedStatement get_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status = ? order by contest.status asc, entry.id desc");
 			get_contest_ids.setString(1, user_id);
+			get_contest_ids.setInt(2, contest_status);
 			ResultSet contest_id_rs = get_contest_ids.executeQuery();
 
 			JSONArray user_contest_report = new JSONArray();
