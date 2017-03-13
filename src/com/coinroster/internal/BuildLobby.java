@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.json.JSONObject;
+
 import com.coinroster.Server;
 import com.coinroster.Utils;
 
@@ -30,6 +32,8 @@ public class BuildLobby extends Utils
 	    	PreparedStatement select_categories = sql_connection.prepareStatement("select * from category order by position asc");
 			ResultSet category_rs = select_categories.executeQuery();
 			
+			JSONObject contest_counts = new JSONObject();
+			
 			boolean visible_categories = false;
 
 			while (category_rs.next())
@@ -52,16 +56,25 @@ public class BuildLobby extends Utils
 					String sub_category_description = sub_category_rs.getString(4);
 					int active_flag = sub_category_rs.getInt(5);
 					String image_name = sub_category_rs.getString(6);
+
+					Long settled_cutoff = System.currentTimeMillis() - 14 * Server.day;
 					
-					PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(*) from contest where category = ? and sub_category = ? group by status");
+					PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(*) from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?))  group by status");
 					count_contests.setString(1, category_code);
 					count_contests.setString(2, sub_category_code);
+					count_contests.setLong(3, settled_cutoff);
 					ResultSet count_contests_rs = count_contests.executeQuery();
 
 					int 
 					
 					open_contests = 0,
 					in_play_contests = 0;
+					
+					JSONObject sub_category_counts = new JSONObject();
+
+					sub_category_counts.put("open", 0);
+					sub_category_counts.put("in_play", 0);
+					sub_category_counts.put("settled", 0);
 					
 					while (count_contests_rs.next())
 						{
@@ -74,12 +87,19 @@ public class BuildLobby extends Utils
 			                {
 			                case 1: // Reg open
 			                	open_contests = number_of_contests;
+			                	sub_category_counts.put("open", number_of_contests);
 			                    break;
 			                case 2: // In play
 			                	in_play_contests = number_of_contests;
+			                	sub_category_counts.put("in_play", number_of_contests);
+			                    break;
+			                case 3: // Settled
+			                	sub_category_counts.put("settled", number_of_contests);
 			                    break;
 			                }
 						}
+					
+					contest_counts.put(category_code + "_" + sub_category_code, sub_category_counts);
 					
 					if (active_flag == 0) continue;
 					
@@ -121,6 +141,7 @@ public class BuildLobby extends Utils
 			String lobby_html = lobby_builder.toString();
 			
 	        Utils.write_to_string(domain_directory + "/lobby.html", lobby_template.replace("<!-- factory:lobby_html -->", lobby_html));
+	        Utils.write_to_string(domain_directory + "/js/contest_counts.js",  "<script>window.contest_counts = " + contest_counts.toString() + ";</script>");
 			}
 		catch (Exception e)
 			{

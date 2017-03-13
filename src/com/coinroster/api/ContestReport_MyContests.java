@@ -47,11 +47,24 @@ public class ContestReport_MyContests extends Utils
 			int contest_status = input.getInt("contest_status");
 			
 			new UpdateUserContestStatus(user_id, contest_status);
-	
-			PreparedStatement get_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status = ? order by contest.status asc, entry.id desc");
-			get_contest_ids.setString(1, user_id);
-			get_contest_ids.setInt(2, contest_status);
-			ResultSet contest_id_rs = get_contest_ids.executeQuery();
+			
+			PreparedStatement select_contest_ids = null;
+			switch (contest_status)
+				{
+				case 1 : // open
+					select_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status = 1 order by contest.registration_deadline asc");
+					select_contest_ids.setString(1, user_id);
+					break;
+				case 2 : // in play
+					select_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status = 2 order by contest.registration_deadline asc");
+					select_contest_ids.setString(1, user_id);
+					break;
+				case 3 : // settled
+					select_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status = 3 order by contest.settled desc");
+					select_contest_ids.setString(1, user_id);
+					break;
+				}
+			ResultSet contest_id_rs = select_contest_ids.executeQuery();
 
 			JSONArray user_contest_report = new JSONArray();
 			
@@ -70,15 +83,24 @@ public class ContestReport_MyContests extends Utils
 				Long registration_deadline = contest.getLong("registration_deadline");
 				int status = contest.getInt("status");
 				
-				PreparedStatement get_user_entry_stats = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ? and user_id = ?");
-				get_user_entry_stats.setInt(1, contest_id);
-				get_user_entry_stats.setString(2, user_id);
-				ResultSet user_entry_stats_rs = get_user_entry_stats.executeQuery();
-				user_entry_stats_rs.next();
+				PreparedStatement get_user_wagers = sql_connection.prepareStatement("select sum(amount) from transaction where contest_id = ? and from_account = ? and (trans_type = 'BTC-CONTEST-ENTRY' or trans_type = 'RC-CONTEST-ENTRY' or trans_type = 'BTC-ADJUSTMENT')");
+				get_user_wagers.setInt(1, contest_id);
+				get_user_wagers.setString(2, user_id);
+				ResultSet user_wagers_rs = get_user_wagers.executeQuery();
+				user_wagers_rs.next();
+
+				PreparedStatement get_user_winnings = sql_connection.prepareStatement("select sum(amount) from transaction where contest_id = ? and to_account = ? and (trans_type = 'BTC-CONTEST-WINNINGS' or trans_type = 'BTC-ADJUSTMENT')");
+				get_user_winnings.setInt(1, contest_id);
+				get_user_winnings.setString(2, user_id);
+				ResultSet user_winnings_rs = get_user_winnings.executeQuery();
+				user_winnings_rs.next();
 				
-				double user_entries_value = user_entry_stats_rs.getDouble(1);
+				double 
 				
-				BigDecimal _user_entries_count = BigDecimal.valueOf(user_entries_value).divide(BigDecimal.valueOf(cost_per_entry));
+				user_wagers = user_wagers_rs.getDouble(1),
+				user_winnings = user_winnings_rs.getDouble(1);
+				
+				BigDecimal _user_entries_count = BigDecimal.valueOf(user_wagers).divide(BigDecimal.valueOf(cost_per_entry));
 				
 				double user_entries_count = _user_entries_count.doubleValue();
 				
@@ -95,7 +117,8 @@ public class ContestReport_MyContests extends Utils
 				contest_item.put("cost_per_entry", cost_per_entry);
 				contest_item.put("registration_deadline", registration_deadline);
 				contest_item.put("user_entries_count", user_entries_count);
-				contest_item.put("user_entries_value", user_entries_value);
+				contest_item.put("user_wagers", user_wagers);
+				contest_item.put("user_winnings", user_winnings);
 				contest_item.put("status", status);
 				
 				user_contest_report.put(contest_item);

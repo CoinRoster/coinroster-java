@@ -12,7 +12,6 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
-import com.coinroster.internal.UpdateUserContestStatus;
 
 public class ContestReport_Lobby extends Utils
 	{
@@ -47,34 +46,37 @@ public class ContestReport_Lobby extends Utils
 			
 			boolean session_active = session.active();
 			
-			if (session_active)
+			/*if (session_active)
 				{
 				String user_id = session.user_id();
 				new UpdateUserContestStatus(user_id, contest_status);
-				}
-			
-			Long settled_cutoff = System.currentTimeMillis() - 14 * Server.day;
+				}*/
 			
 			PreparedStatement select_contests = null;
+			switch (contest_status)
+				{
+				case 1 : // open
+					select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = 1 order by registration_deadline asc");
+					select_contests.setString(1, category);
+					select_contests.setString(2, sub_category);
+					break;
+				case 2 : // in play
+					select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = 2 order by registration_deadline asc");
+					select_contests.setString(1, category);
+					select_contests.setString(2, sub_category);
+					break;
+				case 3 : // settled
+					Long settled_cutoff = System.currentTimeMillis() - 14 * Server.day;
+					select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = 3 and settled > ? order by settled desc");
+					select_contests.setString(1, category);
+					select_contests.setString(2, sub_category);
+					select_contests.setLong(3, settled_cutoff);
+					break;
+				}
+			ResultSet result_set = select_contests.executeQuery();
 			
-			if (contest_status == 3)
-				{
-				select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = 3 and settled > ? order by status asc, id desc");
-				select_contests.setString(1, category);
-				select_contests.setString(2, sub_category);
-				select_contests.setLong(3, settled_cutoff);
-				}
-			else
-				{
-				select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = ? order by status asc, id desc");
-				select_contests.setString(1, category);
-				select_contests.setString(2, sub_category);
-				select_contests.setInt(3, contest_status);
-				}
 			JSONArray contest_report = new JSONArray();
 			
-			ResultSet result_set = select_contests.executeQuery();
-
 			while (result_set.next())
 				{
 				int id = result_set.getInt(1);

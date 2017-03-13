@@ -2,6 +2,7 @@ package com.coinroster;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Calendar;
 import com.coinroster.internal.*;
 
@@ -53,6 +54,7 @@ public class Cron
 	private void day() throws Exception
 		{
 		PurgePasswordResetTable();
+		TriggerBuildLobby();
 		}
 
 //------------------------------------------------------------------------------------
@@ -92,20 +94,52 @@ public class Cron
 	
 	private void PurgePasswordResetTable()
 		{
+    	Connection sql_connection = null;
 		try {
-			Long expiry_cutoff = System.currentTimeMillis() - Server.hour;
+			sql_connection = Server.sql_connection();
 			
-			Connection sql_connection = Server.sql_connection();
+			Long expiry_cutoff = System.currentTimeMillis() - Server.hour;
 			
 			PreparedStatement delete_password_reset = sql_connection.prepareStatement("delete from password_reset where created < ?");
 			delete_password_reset.setLong(1, expiry_cutoff);
 			delete_password_reset.executeUpdate();
-			
-			sql_connection.close();
-			}
-		catch (Exception e)
+			} 
+		catch (Exception e) 
 			{
 			Server.exception(e);
+			} 
+		finally
+			{
+			if (sql_connection != null)
+				{
+				try {sql_connection.close();} 
+				catch (SQLException ignore) {}
+				}
+			}
+		}
+	
+//------------------------------------------------------------------------------------
+
+	// trigger BuildLobby (called daily)
+	
+	private void TriggerBuildLobby()
+		{
+    	Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			new BuildLobby(sql_connection);
+			} 
+		catch (Exception e) 
+			{
+			Server.exception(e);
+			} 
+		finally
+			{
+			if (sql_connection != null)
+				{
+				try {sql_connection.close();} 
+				catch (SQLException ignore) {}
+				}
 			}
 		}	
 	

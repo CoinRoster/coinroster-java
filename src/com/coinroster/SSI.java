@@ -3,6 +3,8 @@ package com.coinroster;
 import java.io.ByteArrayInputStream;
 import java.io.OutputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.json.JSONObject;
@@ -31,15 +33,14 @@ public class SSI extends Utils
 				if (session_active)
 					{
 					Connection sql_connection = null;
-
-					JSONObject session_properties = new JSONObject();
-					
 					try {
 						sql_connection = Server.sql_connection();
 						
 						DB db = new DB(sql_connection);
 						
 						JSONObject user = db.select_user("id", session.user_id());
+
+						JSONObject session_properties = new JSONObject();
 						
 						session_properties.put("username", session.username());
 						session_properties.put("btc_balance", user.getDouble("btc_balance"));
@@ -72,6 +73,65 @@ public class SSI extends Utils
 					response_data = response_data.replace("<!--ssi:username-->", session.username());
 					if (session.user_level().equals("1")) response_data = response_data.replaceAll("ssi_header_admin_wrapper", "");
 					}
+				} break;
+			case "my_contests_count" :
+				{
+				if (session_active)
+					{
+					Connection sql_connection = null;
+					try {
+						sql_connection = Server.sql_connection();
+
+						PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(distinct(contest.id)) from contest inner join entry on entry.contest_id = contest.id where entry.user_id = ? group by contest.status order by contest.status asc");
+						count_contests.setString(1, session.user_id());
+
+						ResultSet result_set = count_contests.executeQuery();
+						
+						JSONObject contest_counts = new JSONObject();
+
+						// initialize all counts to 0 since result_set will only contain statuses with positive counts
+						
+						contest_counts.put("open", 0);
+						contest_counts.put("in_play", 0);
+						contest_counts.put("settled", 0);
+						
+						while (result_set.next())
+							{
+							int 
+							
+							contest_status = result_set.getInt(1),
+							contest_count = result_set.getInt(2);
+							
+							switch (contest_status)
+								{
+								case 1 :
+									contest_counts.put("open", contest_count);
+									break;
+								case 2 :
+									contest_counts.put("in_play", contest_count);
+									break;
+								case 3 :
+									contest_counts.put("settled", contest_count);
+									break;
+								}
+							}
+						
+						response_data = "<script>window.contest_counts = " + contest_counts.toString() + ";</script>";
+						}
+					catch (Exception e)
+						{
+						Server.exception(e);
+						}
+					finally
+						{
+						if (sql_connection != null)
+							{
+							try {sql_connection.close();} 
+							catch (SQLException ignore) {}
+							}
+						}
+					}
+				else response_data = " ";
 				} break;
 			}
 

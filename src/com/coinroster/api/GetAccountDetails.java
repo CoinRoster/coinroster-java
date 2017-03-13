@@ -54,7 +54,6 @@ public class GetAccountDetails extends Utils
 				output.put("newsletter_flag", user.get("newsletter_flag"));
 				output.put("ext_address_secure_flag", user.get("ext_address_secure_flag"));
 				
-				
 				output.put("status", "1");
 				}
 			
