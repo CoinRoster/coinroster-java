@@ -42,9 +42,16 @@ public class SSI extends Utils
 
 						JSONObject session_properties = new JSONObject();
 						
+						double
+						
+						btc_balance = user.getDouble("btc_balance"),
+						rc_balance = user.getDouble("rc_balance"),
+						available_balance = add(btc_balance, rc_balance, 0);
+						
 						session_properties.put("username", session.username());
-						session_properties.put("btc_balance", user.getDouble("btc_balance"));
-						session_properties.put("rc_balance", user.getDouble("rc_balance"));
+						session_properties.put("btc_balance", btc_balance);
+						session_properties.put("rc_balance", rc_balance);
+						session_properties.put("available_balance", available_balance);
 						session_properties.put("contest_status", user.getInt("contest_status"));
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
@@ -72,6 +79,15 @@ public class SSI extends Utils
 					response_data = Utils.read_to_string(ssi_directory + "nav_active.html");
 					response_data = response_data.replace("<!--ssi:username-->", session.username());
 					if (session.user_level().equals("1")) response_data = response_data.replaceAll("ssi_header_admin_wrapper", "");
+					}
+				} break;
+			case "nav_admin" :
+				{
+				if (session_active)
+					{
+					response_data = Utils.read_to_string(ssi_directory + "nav_admin.html");
+					response_data = response_data.replace("<!--ssi:username-->", session.username());
+					response_data = response_data.replaceAll("ssi_header_admin_wrapper", "");
 					}
 				} break;
 			case "my_contests_count" :
