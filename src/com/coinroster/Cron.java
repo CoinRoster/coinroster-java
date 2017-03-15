@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Map.Entry;
+
 import com.coinroster.internal.*;
 
 public class Cron 
@@ -64,9 +66,11 @@ public class Cron
 	private void SessionExpiry()
 		{
 		try {
-			for (String key : Server.session_map.keySet()) 
+			for (Entry<String, String[]> entry : Server.session_map.entrySet()) 
 				{
-				String[] session_vars = Server.session_map.get(key);
+				String session_token = entry.getKey();
+				
+				String[] session_vars = Server.session_map.get(session_token);
 				
 				String
 				
@@ -77,7 +81,7 @@ public class Cron
 				if (user_level.equals("1"))
 					{
 					Long last_active = Long.parseLong(session_vars[3]);
-					if (System.currentTimeMillis() - last_active >= Server.admin_timeout) Server.session_map.remove(key);
+					if (System.currentTimeMillis() - last_active >= Server.admin_timeout) Server.kill_session(session_token);
 					}
 				}
 			}
