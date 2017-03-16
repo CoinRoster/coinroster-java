@@ -34,7 +34,10 @@ public class BuildLobby extends Utils
 			
 			JSONObject contest_counts = new JSONObject();
 			
-			boolean visible_categories = false;
+			boolean 
+			
+			visible_categories = false,
+			kill_section_header_padding = false; 
 
 			while (category_rs.next())
 				{
@@ -44,7 +47,11 @@ public class BuildLobby extends Utils
 				String category_description = category_rs.getString(2);
 				
 				StringBuilder category_html = new StringBuilder();
-				category_html.append(category_template.replace("<!-- factory:category_description -->", category_description));
+				
+				String temp_category_html = category_template;
+				if (kill_section_header_padding) temp_category_html = temp_category_html.replace("section_header", "section_header no_padding_top");
+				
+				category_html.append(temp_category_html.replace("<!-- factory:category_description -->", category_description));
 				
 				PreparedStatement select_sub_categories = sql_connection.prepareStatement("select * from sub_category where category = ? order by created asc");
 				select_sub_categories.setString(1, category_code);
@@ -127,6 +134,7 @@ public class BuildLobby extends Utils
 					{
 					lobby_builder.append(category_html);
 					visible_categories = true;
+					kill_section_header_padding = true;
 					}
 				}
 			

@@ -66,8 +66,20 @@ public class UpsertSubCategory extends Utils
             
             if (rs.next())
             	{
-            	String image_name = null;
-            	Long created = System.currentTimeMillis();
+        		PreparedStatement select_sub_category = sql_connection.prepareStatement("select created, image_name from sub_category where id = ?");
+        		select_sub_category.setString(1, id);
+                ResultSet sub_category_rs = select_sub_category.executeQuery();
+                
+                boolean sub_category_exists = sub_category_rs.next();
+
+                Long created = System.currentTimeMillis();
+                String image_name = null;
+                
+                if (sub_category_exists) // if sub_category exists we want to preserve created timestamp and image_name
+	            	{
+	            	created = sub_category_rs.getLong(1);
+	            	image_name = sub_category_rs.getString(2);
+	            	}
             	
             	if (!image_extension.equals("")) // an image has been provided - we save image to disk and will write image_name to DB
             		{
@@ -75,25 +87,12 @@ public class UpsertSubCategory extends Utils
             		String image_path = Server.html_path + "/img/lobby_tiles/" + image_name;
             		write_bytes(image_path, base64_to_bytearray(image_base64));
             		}
-            	
-            	else // no image has been provided - we can only move forward if the sub_category already has image_name
-            		{
-            		PreparedStatement select_sub_category = sql_connection.prepareStatement("select image_name, created from sub_category where id = ?");
-            		select_sub_category.setString(1, id);
-                    ResultSet sub_category_rs = select_sub_category.executeQuery();
-                    
-                    if (sub_category_rs.next()) 
-                    	{
-                    	image_name = sub_category_rs.getString(1);
-                    	created = sub_category_rs.getLong(2);
-                    	}
-                    else // we are in "create mode" and require an image
-                    	{
-                    	output.put("error", "You must provide an image");
-                    	break method;
-                    	}
-            		}
- 
+            	else if (!sub_category_exists) // no image has been provided - we can only move forward if the sub_category already exists / has an image
+	            	{
+	            	output.put("error", "You must provide an image");
+	            	break method;
+	            	}
+
     			PreparedStatement create_sub_category = sql_connection.prepareStatement("replace into sub_category(id, category, code, description, active_flag, image_name, created) values(?, ?, ?, ?, ?, ?, ?)");
     			create_sub_category.setString(1, id);
     			create_sub_category.setString(2, category);
