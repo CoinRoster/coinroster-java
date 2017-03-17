@@ -58,6 +58,8 @@ public class UserReport extends Utils
 				int ext_address_secure_flag = result_set.getInt(16);
 				int free_play = result_set.getInt(17);
 				Long last_active = result_set.getLong(18);
+				int contest_status = result_set.getInt(19);
+				String currency = result_set.getString(20);
 				
 				String referrer_username = "";
 				
@@ -80,6 +82,7 @@ public class UserReport extends Utils
 				user.put("referrer_username", referrer_username);
 				user.put("free_play", free_play);
 				user.put("last_active", last_active);
+				user.put("currency", currency);
 				
 				user_report.put(user);
 				}

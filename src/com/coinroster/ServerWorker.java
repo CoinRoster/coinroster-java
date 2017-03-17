@@ -18,8 +18,6 @@ public class ServerWorker extends Utils implements Runnable
 		try {
 			HttpRequest request = new HttpRequest(socket);
 
-			log("---");
-
 			if (request.status() == 200) // well-formed HTTP request
 				{
 				switch (request.header("handler"))

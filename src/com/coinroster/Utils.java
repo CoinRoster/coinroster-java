@@ -1,13 +1,16 @@
 package com.coinroster;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,10 +18,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -120,7 +126,41 @@ public class Utils
 
 		return buffer.toByteArray();
 		}
+	
+	public static List<String> get_page(String https_url) 
+		{
+		URL url;
+		
+		try {
+			url = new URL(https_url);
+			HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
 
+			con.setRequestProperty("Accept", "text/html");
+			con.setRequestProperty("Accept-Language", "en-US,en;");
+			con.setRequestProperty("User-Agent", "CoinRoster.com - We respect your API and make requests once per minute");
+
+			if (con != null) 
+				{
+				BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+				List<String> page = new ArrayList<String>();
+
+				String line;
+
+				while ((line = br.readLine()) != null) page.add(line);
+
+				br.close();
+				
+				return page;
+				}
+			} 
+		catch (Exception e) 
+			{
+			Server.exception(e);
+			}
+		
+		return null;
+		}
+	
 	final static int MAX_PRECISION = 8;
 	public static double multiply(double in1, double in2, int max_precision)
 		{

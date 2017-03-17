@@ -33,8 +33,6 @@ public class MethodCall extends Utils
 			
 			if (authorized)
 				{
-				log("Authorized method call: " + method_name);
-				
 				sql_connection = Server.sql_connection();
 
 				MethodInstance method = new MethodInstance();

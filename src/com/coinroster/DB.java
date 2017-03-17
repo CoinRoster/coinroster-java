@@ -3,6 +3,7 @@ package com.coinroster;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -85,6 +86,7 @@ public class DB
 			int free_play = result_set.getInt(17);
 			Long last_active = result_set.getLong(18);
 			int contest_status = result_set.getInt(19);
+			String currency = result_set.getString(20);
 
 			if (ext_address == null) ext_address = "";
 			if (email_address == null) email_address = "";
@@ -109,6 +111,7 @@ public class DB
 			user.put("free_play", free_play);
 			user.put("last_active", last_active);
 			user.put("contest_status", contest_status);
+			user.put("currency", currency);
 			}
 
 		return user;
@@ -593,5 +596,83 @@ public class DB
 		update_entry.setDouble(1, payout);
 		update_entry.setInt(2, entry_id);
 		update_entry.executeUpdate();
+		}	
+	
+//------------------------------------------------------------------------------------
+
+	// SELECT FX RECORD
+	
+	public JSONObject select_currency(String symbol) throws Exception
+		{
+		JSONObject currency = null;
+
+		PreparedStatement get_last_price = sql_connection.prepareStatement("select * from fx where symbol = ?");
+		get_last_price.setString(1, symbol);
+		ResultSet result_set = get_last_price.executeQuery();
+
+		if (result_set.next()) 
+			{
+			//String symbol = result_set.getString(1);
+			String source = result_set.getString(2);
+			double last_price = result_set.getDouble(3);
+			long last_updated = result_set.getLong(4);
+			String description = result_set.getString(5);
+			
+			currency = new JSONObject();
+			
+			currency.put("symbol", symbol);
+			currency.put("source", source);
+			currency.put("last_price", last_price);
+			currency.put("last_updated", last_updated);
+			currency.put("description", description);
+			}
+
+		return currency;
 		}
+	
+	// SELECT JUST THE LAST PRICE
+	
+	public double get_last_price(String symbol) throws SQLException
+		{
+		double last_price = 0;
+
+		PreparedStatement get_last_price = sql_connection.prepareStatement("select last_price from fx where symbol = ?");
+		get_last_price.setString(1, symbol);
+		ResultSet result_set = get_last_price.executeQuery();
+
+		if (result_set.next()) last_price = result_set.getDouble(1);
+
+		return last_price;
+		}
+
+	// SELECT JUST THE DESCRIPTION
+	
+	public String get_currency_description(String symbol) throws SQLException
+		{
+		String description = null;
+	
+		PreparedStatement get_currency_description = sql_connection.prepareStatement("select description from fx where symbol = ?");
+		get_currency_description.setString(1, symbol);
+		ResultSet result_set = get_currency_description.executeQuery();
+	
+		if (result_set.next()) description = result_set.getString(1);
+	
+		return description;
+		}
+	
+//------------------------------------------------------------------------------------
+
+	// UPDATE FX RECORD
+	
+	public void update_fx(String symbol, double last_price, String source, String description) throws Exception
+		{
+		PreparedStatement update_fx = sql_connection.prepareStatement("replace into fx(symbol, source, last_price, last_updated, description) values(?, ?, ?, ?, ?)");
+		update_fx.setString(1, symbol);
+		update_fx.setString(2, source);
+		update_fx.setDouble(3, last_price);
+		update_fx.setLong(4, System.currentTimeMillis());
+		update_fx.setString(5, description);
+		update_fx.executeUpdate();
+		}
+		
 	}
