@@ -124,9 +124,9 @@ public class BuildLobby extends Utils
 					String open_contests_string = " open";
 					sub_category_html = sub_category_html.replace("<!-- factory:open_contests -->", open_contests + open_contests_string);
 					if (open_contests > 0) sub_category_html = sub_category_html.replace("open_contests_class", "green");
-					
-					if (in_play_contests > 0) sub_category_html = sub_category_html.replace("<!-- factory:in_play_contests -->", in_play_contests + " in play");
-					else sub_category_html = sub_category_html.replace("in_play_detail", "hidden");
+
+					sub_category_html = sub_category_html.replace("<!-- factory:in_play_contests -->", in_play_contests + " in play");
+					if (in_play_contests > 0) sub_category_html = sub_category_html.replace("in_play_detail", "in_play_detail orange");
 					
 					category_html.append(sub_category_html);
 					}
