@@ -118,14 +118,15 @@ public class BuildLobby extends Utils
 					sub_category_html = sub_category_html.replace("factory:image_path", "/img/lobby_tiles/" + image_name);
 					sub_category_html = sub_category_html.replace("<!-- factory:sub_category_description -->", sub_category_description);
 					
-					String open_contests_string = " open contests";
-					if (open_contests == 1) open_contests_string = " open contest";
-					sub_category_html = sub_category_html.replace("<!-- factory:open_contests -->", open_contests + open_contests_string);
-					if (open_contests > 0) sub_category_html = sub_category_html.replace("open_contests_class", "orange");
+					//String open_contests_string = " open contests";
+					//if (open_contests == 1) open_contests_string = " open contest";
 					
-					String in_play_contests_string = "";
-					if (in_play_contests > 0) in_play_contests_string = in_play_contests + " in play";
-					sub_category_html = sub_category_html.replace("<!-- factory:in_play_contests -->", in_play_contests_string);
+					String open_contests_string = " open";
+					sub_category_html = sub_category_html.replace("<!-- factory:open_contests -->", open_contests + open_contests_string);
+					if (open_contests > 0) sub_category_html = sub_category_html.replace("open_contests_class", "green");
+					
+					if (in_play_contests > 0) sub_category_html = sub_category_html.replace("<!-- factory:in_play_contests -->", in_play_contests + " in play");
+					else sub_category_html = sub_category_html.replace("in_play_detail", "hidden");
 					
 					category_html.append(sub_category_html);
 					}
