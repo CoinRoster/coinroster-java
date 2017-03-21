@@ -12,6 +12,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UpdateUserContestStatus;
 import com.coinroster.internal.UserMail;
 
 public class CreateEntryPariMutuel extends Utils
@@ -310,6 +311,8 @@ public class CreateEntryPariMutuel extends Utils
 				
 				new UserMail(user, subject, message_body);
 
+				new UpdateUserContestStatus(user_id, 1); // front end will redirect to My Contests -> we need to show the Open tab
+				
 				output.put("status", "1");
 				}
 			

@@ -40,12 +40,14 @@ public class GetCurrencyOptions extends Utils
 			while (result_set.next())
 				{
 				String symbol = result_set.getString(1);
+				double last_price = result_set.getDouble(3);
 				String description = result_set.getString(5);
 				
 				JSONObject currency = new JSONObject();
 				
 				currency.put("symbol", symbol);
 				currency.put("description", description);
+				currency.put("last_price", last_price);
 				
 				currency_options.put(currency);
 				}
