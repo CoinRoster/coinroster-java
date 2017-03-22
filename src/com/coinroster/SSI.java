@@ -159,6 +159,11 @@ public class SSI extends Utils
 					}
 				else response_data = " ";
 				} break;
+			case "lobby_inactive" :
+				{
+				if (!session_active) response_data = Utils.read_to_string(ssi_directory + "lobby_inactive.html");
+				else response_data = " ";
+				} break;
 			}
 
 		if (response_data != null)

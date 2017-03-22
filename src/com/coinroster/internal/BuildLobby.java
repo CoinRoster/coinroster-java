@@ -25,6 +25,7 @@ public class BuildLobby extends Utils
 	    	
 	    	lobby_template = Utils.read_to_string(factory_path + "lobby_template.html"),
 	    	category_template = Utils.read_to_string(factory_path + "category_template.html"),
+	    	sub_category_wrapper_template = Utils.read_to_string(factory_path + "sub_category_wrapper_template.html"),
 	    	sub_category_template = Utils.read_to_string(factory_path + "sub_category_template.html");
 	    	
 	    	StringBuilder lobby_builder = new StringBuilder();
@@ -48,10 +49,9 @@ public class BuildLobby extends Utils
 				
 				StringBuilder category_html = new StringBuilder();
 				
-				String temp_category_html = category_template;
-				if (kill_section_header_padding) temp_category_html = temp_category_html.replace("section_header", "section_header no_padding_top");
-				
-				category_html.append(temp_category_html.replace("<!-- factory:category_description -->", category_description));
+				String category_description_html = category_template;
+				if (kill_section_header_padding) category_description_html = category_description_html.replace("section_header", "section_header no_padding_top");
+				category_description_html = category_description_html.replace("<!-- factory:category_description -->", category_description);
 				
 				PreparedStatement select_sub_categories = sql_connection.prepareStatement("select * from sub_category where category = ? order by created asc");
 				select_sub_categories.setString(1, category_code);
@@ -133,7 +133,11 @@ public class BuildLobby extends Utils
 				
 				if (visible_sub_categories) 
 					{
-					lobby_builder.append(category_html);
+					String final_category_html = sub_category_wrapper_template.replace("<!-- factory:sub_categories -->", category_html.toString());
+					lobby_builder.append(category_description_html);
+					lobby_builder.append("\n");
+					lobby_builder.append(final_category_html);
+					lobby_builder.append("\n");
 					visible_categories = true;
 					kill_section_header_padding = true;
 					}
