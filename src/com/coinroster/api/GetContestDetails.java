@@ -43,10 +43,16 @@ public class GetContestDetails extends Utils
 				{
 				JSONArray entries = db.select_contest_entries(contest_id);
 				
-				String contest_type = contest.getString("contest_type");
+				String 
 				
-				output.put("category", db.get_category_description(contest.getString("category")));
-				output.put("sub_category", db.get_sub_category_description(contest.getString("sub_category")));
+				contest_type = contest.getString("contest_type"),
+				category = contest.getString("category"),
+				sub_category = contest.getString("sub_category");
+
+				output.put("category", category);
+				output.put("sub_category", sub_category);
+				output.put("category_description", db.get_category_description(category));
+				output.put("sub_category_description", db.get_sub_category_description(sub_category));
 				output.put("contest_type", contest_type);
 				output.put("title", contest.get("title"));
 				output.put("description", contest.get("description"));
