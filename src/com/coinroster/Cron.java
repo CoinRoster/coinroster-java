@@ -388,7 +388,7 @@ public class Cron
 		{"Trinidad and Tobago Dollar","TTD","USDTTD=X"},
 		{"Turkish Lira","TRY","USDTRY=X"},
 		{"Ukrainian Hryvnia","UAH","USDUAH=X"},
-		{"United States Dollar","USD","USDUSD=X"},
+		{"US Dollar","USD","USDUSD=X"},
 		{"Uruguayan Peso","UYU","USDUYU=X"},
 		{"Uzbekistani Som","UZS","USDUZS=X"},
 		{"Venezuelan Bolivar","VEF","USDVEF=X"},

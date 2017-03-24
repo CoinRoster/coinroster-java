@@ -39,8 +39,6 @@ public class SSI extends Utils
 						DB db = new DB(sql_connection);
 						
 						JSONObject user = db.select_user("id", session.user_id());
-
-						JSONObject session_properties = new JSONObject();
 						
 						String currency = user.getString("currency");
 						
@@ -53,6 +51,8 @@ public class SSI extends Utils
 						currency_last_price = db.get_last_price(currency);
 						
 						String currency_description = db.get_currency_description(currency);
+						
+						JSONObject session_properties = new JSONObject();
 						
 						session_properties.put("username", session.username());
 						session_properties.put("btc_balance", btc_balance);
@@ -79,7 +79,44 @@ public class SSI extends Utils
 							}
 						}
 					}
-				else response_data = " ";
+				else 
+					{
+					Connection sql_connection = null;
+					try {
+						sql_connection = Server.sql_connection();
+						
+						DB db = new DB(sql_connection);
+		
+						String currency = "USD";
+						
+						double
+						
+						btcusd_last_price = db.get_last_price("BTCUSD"),
+						currency_last_price = db.get_last_price(currency);
+						String currency_description = db.get_currency_description(currency);
+						
+						JSONObject inactive_properties = new JSONObject();
+						
+						inactive_properties.put("currency", currency);
+						inactive_properties.put("btcusd_last_price", btcusd_last_price);
+						inactive_properties.put("currency_last_price", currency_last_price);
+						inactive_properties.put("currency_description", currency_description);
+						
+						response_data = "<script>window.inactive_session = " + inactive_properties.toString() + ";</script>";
+						}
+					catch (Exception e)
+						{
+						Server.exception(e);
+						}
+					finally
+						{
+						if (sql_connection != null)
+							{
+							try {sql_connection.close();} 
+							catch (SQLException ignore) {}
+							}
+						}
+					}
 				} break;
 			case "nav" :
 				{
