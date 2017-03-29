@@ -1,6 +1,5 @@
 package com.coinroster.api;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -98,11 +97,8 @@ public class ContestReport_MyContests extends Utils
 				double 
 				
 				user_wagers = user_wagers_rs.getDouble(1),
-				user_winnings = user_winnings_rs.getDouble(1);
-				
-				BigDecimal _user_entries_count = BigDecimal.valueOf(user_wagers).divide(BigDecimal.valueOf(cost_per_entry));
-				
-				double user_entries_count = _user_entries_count.doubleValue();
+				user_winnings = user_winnings_rs.getDouble(1),
+				user_entries_count = divide(user_wagers, cost_per_entry, 0);
 				
 				JSONObject contest_item = new JSONObject();
 				
