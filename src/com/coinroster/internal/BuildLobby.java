@@ -35,6 +35,8 @@ public class BuildLobby extends Utils
 			
 			JSONObject contest_counts = new JSONObject();
 			
+			StringBuilder uncategorized_lobby = new StringBuilder();
+			
 			boolean 
 			
 			visible_categories = false,
@@ -129,6 +131,7 @@ public class BuildLobby extends Utils
 					if (in_play_contests > 0) sub_category_html = sub_category_html.replace("in_play_detail", "in_play_detail orange");
 					
 					category_html.append(sub_category_html);
+					uncategorized_lobby.append(sub_category_html);
 					}
 				
 				if (visible_sub_categories) 
@@ -151,7 +154,9 @@ public class BuildLobby extends Utils
 			
 			// ---------------------------------------------------------------------------------------
 	    	
-			String lobby_html = lobby_builder.toString();
+			//String lobby_html = lobby_builder.toString();
+			
+			String lobby_html = sub_category_wrapper_template.replace("<!-- factory:sub_categories -->", uncategorized_lobby.toString());
 			
 	        Utils.write_to_string(domain_directory + "/lobby.html", lobby_template.replace("<!-- factory:lobby_html -->", lobby_html));
 	        Utils.write_to_string(domain_directory + "/js/contest_counts.js",  "<script>window.contest_counts = " + contest_counts.toString() + ";</script>");
