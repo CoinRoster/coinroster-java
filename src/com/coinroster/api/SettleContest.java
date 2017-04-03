@@ -569,86 +569,92 @@ public class SettleContest extends Utils
 							
 							amount_rs.next();
 							
-							double 
+							double winning_outcome_total = amount_rs.getDouble(1);
 							
-							winning_outcome_total = amount_rs.getDouble(1),
-							payout_ratio = divide(user_winnings_total, winning_outcome_total, 0);
-							
-							log("Winning selection: " + winning_outcome);
-							log("Total wagered on winning outcome: " + winning_outcome_total);
-							log("Payout ratio: " + payout_ratio);
-
-							// select all winning wagers summed by user_id
-							
-							PreparedStatement select_entries = sql_connection.prepareStatement("select user_id, sum(amount) from entry where contest_id = ? and entry_data = ? group by user_id");
-							select_entries.setInt(1, contest_id);
-							select_entries.setInt(2, winning_outcome);
-							ResultSet entry_rs = select_entries.executeQuery();
-							
-							while (entry_rs.next())
+							if (winning_outcome_total == 0) // nobody picked the winning outcome
 								{
-								String user_id = entry_rs.getString(1);
+								// TODO - progressive
+								}
+							else // at least one wager was placed on the winning outcome
+								{
+								double payout_ratio = divide(user_winnings_total, winning_outcome_total, 0);
 								
-								JSONObject user = db.select_user("id", user_id);
+								log("Winning selection: " + winning_outcome);
+								log("Total wagered on winning outcome: " + winning_outcome_total);
+								log("Payout ratio: " + payout_ratio);
+	
+								// select all winning wagers summed by user_id
 								
-								double 
+								PreparedStatement select_entries = sql_connection.prepareStatement("select user_id, sum(amount) from entry where contest_id = ? and entry_data = ? group by user_id");
+								select_entries.setInt(1, contest_id);
+								select_entries.setInt(2, winning_outcome);
+								ResultSet entry_rs = select_entries.executeQuery();
 								
-								user_wager = entry_rs.getDouble(2),
-								user_btc_balance = user.getDouble("btc_balance"),
-								user_winnings = multiply(user_wager, payout_ratio, 0);
-								
-								log("");
-								log("User: " + user_id);
-								log("Wager: " + user_wager);
-								log("Winnings: " + user_winnings);
-								
-								user_btc_balance = add(user_btc_balance, user_winnings, 0);
-								
-								actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
-								
-								if (do_update)
+								while (entry_rs.next())
 									{
-									db.update_btc_balance(user_id, user_btc_balance);
-				
-									String 
+									String user_id = entry_rs.getString(1);
 									
-									transaction_type = "BTC-CONTEST-WINNINGS",
-									from_account = contest_account_id,
-									to_account = user_id,
-									from_currency = "BTC",
-									to_currency = "BTC",
-									memo = "Winnings (BTC) from contest #" + contest_id;
+									JSONObject user = db.select_user("id", user_id);
 									
-									PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-									create_transaction.setLong(1, System.currentTimeMillis());
-									create_transaction.setString(2, contest_admin);
-									create_transaction.setString(3, transaction_type);
-									create_transaction.setString(4, from_account);
-									create_transaction.setString(5, to_account);
-									create_transaction.setDouble(6, user_winnings);
-									create_transaction.setString(7, from_currency);
-									create_transaction.setString(8, to_currency);
-									create_transaction.setString(9, memo);
-									create_transaction.setInt(10, contest_id);
-									create_transaction.executeUpdate();
+									double 
 									
-									String
+									user_wager = entry_rs.getDouble(2),
+									user_btc_balance = user.getDouble("btc_balance"),
+									user_winnings = multiply(user_wager, payout_ratio, 0);
 									
-									subject = "You picked the correct outcome in contest #" + contest_id, 
-									message_body = "";
+									log("");
+									log("User: " + user_id);
+									log("Wager: " + user_wager);
+									log("Winnings: " + user_winnings);
 									
-									message_body += "You picked the correct outcome in contest #" + contest_id + " - <b>" + contest_title + "</b>";
-									message_body += "<br/>";
-									message_body += "<br/>";
-									message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
-									message_body += "<br/>";
-									message_body += "<br/>";
-									message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
-									message_body += "<br/>";
-									message_body += "<br/>";
-									message_body += "Please do not reply to this email.";
+									user_btc_balance = add(user_btc_balance, user_winnings, 0);
 									
-									new UserMail(user, subject, message_body);
+									actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
+									
+									if (do_update)
+										{
+										db.update_btc_balance(user_id, user_btc_balance);
+					
+										String 
+										
+										transaction_type = "BTC-CONTEST-WINNINGS",
+										from_account = contest_account_id,
+										to_account = user_id,
+										from_currency = "BTC",
+										to_currency = "BTC",
+										memo = "Winnings (BTC) from contest #" + contest_id;
+										
+										PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+										create_transaction.setLong(1, System.currentTimeMillis());
+										create_transaction.setString(2, contest_admin);
+										create_transaction.setString(3, transaction_type);
+										create_transaction.setString(4, from_account);
+										create_transaction.setString(5, to_account);
+										create_transaction.setDouble(6, user_winnings);
+										create_transaction.setString(7, from_currency);
+										create_transaction.setString(8, to_currency);
+										create_transaction.setString(9, memo);
+										create_transaction.setInt(10, contest_id);
+										create_transaction.executeUpdate();
+										
+										String
+										
+										subject = "You picked the correct outcome in contest #" + contest_id, 
+										message_body = "";
+										
+										message_body += "You picked the correct outcome in contest #" + contest_id + " - <b>" + contest_title + "</b>";
+										message_body += "<br/>";
+										message_body += "<br/>";
+										message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
+										message_body += "<br/>";
+										message_body += "<br/>";
+										message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
+										message_body += "<br/>";
+										message_body += "<br/>";
+										message_body += "Please do not reply to this email.";
+										
+										new UserMail(user, subject, message_body);
+										}
 									}
 								}
 							} break;
