@@ -385,18 +385,11 @@ public class SettleContest extends Utils
 							
 							// process referral payout if applicable
 							
-							double referrer_payout = 0;
+							double 
 							
-							switch (user.getInt("referral_program"))
-								{
-								case 1 : // perpetual 50% of rake
-									{
-									double affiliate_multiple = 0.5;
-									referrer_payout = multiply(user_raked_amount, affiliate_multiple, 0);
-									break;
-									}
-								}
-							
+							referral_program = user.getDouble("referral_program"),
+							referrer_payout = multiply(user_raked_amount, referral_program, 0);
+
 							actual_rake_amount = subtract(actual_rake_amount, referrer_payout, 0);
 							total_referrer_payout = add(total_referrer_payout, referrer_payout, 0);
 							

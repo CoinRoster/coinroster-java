@@ -35,10 +35,8 @@ public class SendReferral extends Utils
 			
 			referrer_provided_name = input.getString("referrer"),
 			referrer_id = session.user_id(),
-			referrer_username = db.get_username_for_id(referrer_id),
 
 			referral_key = Server.generate_key(referrer_id),
-			referral_program = input.getString("referral_program"),
 
 			// should do a referral program lookup else break method
 			
@@ -51,14 +49,23 @@ public class SendReferral extends Utils
 				break method;
 				}
 			
-			PreparedStatement create_user = sql_connection.prepareStatement("insert into referral(referral_key, referrer_id, referrer_username, email_address, referral_program, created) values(?, ?, ?, ?, ?, ?)");				
-			create_user.setString(1, referral_key);
-			create_user.setString(2, referrer_id);
-			create_user.setString(3, referrer_username);
-			create_user.setString(4, email_address);
-			create_user.setInt(5, Integer.parseInt(referral_program));
-			create_user.setLong(6, System.currentTimeMillis());
-			create_user.executeUpdate();
+			JSONObject referrer = db.select_user("id", referrer_id);
+			
+			String referrer_username = referrer.getString("username");
+			
+			double 
+			
+			referral_offer = referrer.getDouble("referral_offer"),
+			referral_program = referral_offer; // referring user's referral_offer becomes the referral_program of the referred user
+			
+			PreparedStatement create_referral = sql_connection.prepareStatement("insert into referral(referral_key, referrer_id, referrer_username, email_address, referral_program, created) values(?, ?, ?, ?, ?, ?)");				
+			create_referral.setString(1, referral_key);
+			create_referral.setString(2, referrer_id);
+			create_referral.setString(3, referrer_username);
+			create_referral.setString(4, email_address);
+			create_referral.setDouble(5, referral_program);
+			create_referral.setLong(6, System.currentTimeMillis());
+			create_referral.executeUpdate();
 			
 			String
 

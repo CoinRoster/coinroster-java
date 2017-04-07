@@ -46,10 +46,14 @@ public class CreateUser extends Utils
 			
 			referral_key = no_whitespace(input.getString("referral_key")),
 			referrer_id = null,
-			email_address = null,
-			referral_program = null;
+			email_address = null;
+			
+			double 
+			
+			default_referral_offer = Double.parseDouble(Server.control.get("default_referral_offer")),
+			referral_program = 0;
 					
-			String[] referral = null;
+			JSONObject referral = null;
 			
 			if (referral_key.length() > 0)
 				{
@@ -62,9 +66,9 @@ public class CreateUser extends Utils
 					}
 				else
 					{
-					referrer_id = referral[0];
-					email_address = referral[2];
-					referral_program = referral[3];
+					referrer_id = referral.getString("referrer_id");
+					email_address = referral.getString("email_address");
+					referral_program = referral.getDouble("referral_program");
 					user_level = 0;
 					email_ver_flag = 1;
 					}
@@ -120,14 +124,14 @@ public class CreateUser extends Utils
 	
 					if (referral == null) 
 						{
-						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key) values(?, ?, ?, ?, ?, ?, ?, ?)");
-						create_user.setString(8, email_ver_key);
+						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, referral_offer, email_ver_key) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						create_user.setString(9, email_ver_key);
 						}
 					else
 						{		
-						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
-						create_user.setInt(8, Integer.parseInt(referral_program));
-						create_user.setString(9, referrer_id);
+						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, referral_offer, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						create_user.setDouble(9, referral_program);
+						create_user.setString(10, referrer_id);
 						}
 					
 					create_user.setString(1, new_user_id);
@@ -137,6 +141,7 @@ public class CreateUser extends Utils
 					create_user.setLong(5, System.currentTimeMillis());
 					create_user.setString(6, email_address);
 					create_user.setInt(7, email_ver_flag);
+					create_user.setDouble(8, default_referral_offer);
 					
 					create_user.executeUpdate();
 					

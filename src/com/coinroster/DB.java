@@ -80,13 +80,14 @@ public class DB
 			String email_ver_key = result_set.getString(11);
 			int email_ver_flag = result_set.getInt(12);
 			int newsletter_flag = result_set.getInt(13);
-			int referral_program = result_set.getInt(14);
+			double referral_program = result_set.getDouble(14);
 			String referrer = result_set.getString(15);
 			int ext_address_secure_flag = result_set.getInt(16);
 			int free_play = result_set.getInt(17);
 			Long last_active = result_set.getLong(18);
 			int contest_status = result_set.getInt(19);
 			String currency = result_set.getString(20);
+			double referral_offer = result_set.getDouble(21);
 
 			if (ext_address == null) ext_address = "";
 			if (email_address == null) email_address = "";
@@ -112,6 +113,7 @@ public class DB
 			user.put("last_active", last_active);
 			user.put("contest_status", contest_status);
 			user.put("currency", currency);
+			user.put("referral_offer", referral_offer);
 			}
 
 		return user;
@@ -466,9 +468,9 @@ public class DB
 	
 	// SELECT REFERRAL
 
-	public String[] select_referral(String referral_key) throws Exception
+	public JSONObject select_referral(String referral_key) throws Exception
 		{
-		String[] referral = null;
+		JSONObject referral = null;
 
 		PreparedStatement select_referral = sql_connection.prepareStatement("select * from referral where referral_key = ?");
 		select_referral.setString(1, referral_key);
@@ -476,22 +478,19 @@ public class DB
 
 		if (result_set.next())
 			{
-			String 
+			String referrer_id = result_set.getString(2);
+			String referrer_username = result_set.getString(3);
+			String email_address = result_set.getString(4);
+			double referral_program = result_set.getDouble(5);
+			Long created = result_set.getLong(6);
 			
-			referrer_id = result_set.getString(2),
-			referrer_username = result_set.getString(3),
-			email_address = result_set.getString(4),
-			referral_program = result_set.getString(5),
-			created = result_set.getString(6);
+			referral = new JSONObject();
 			
-			referral = new String[]
-				{
-				referrer_id,
-				referrer_username,
-				email_address,
-				referral_program,
-				created
-				};
+			referral.put("referrer_id", referrer_id);
+			referral.put("referrer_username", referrer_username);
+			referral.put("email_address", email_address);
+			referral.put("referral_program", referral_program);
+			referral.put("created", created);
 			}
 
 		return referral;

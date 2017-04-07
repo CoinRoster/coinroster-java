@@ -41,6 +41,7 @@ public class SSI extends Utils
 						JSONObject user = db.select_user("id", session.user_id());
 						
 						String currency = user.getString("currency");
+						double referral_offer = user.getDouble("referral_offer");
 						
 						double
 						
@@ -55,6 +56,7 @@ public class SSI extends Utils
 						JSONObject session_properties = new JSONObject();
 						
 						session_properties.put("username", session.username());
+						session_properties.put("referral_offer", referral_offer);
 						session_properties.put("btc_balance", btc_balance);
 						session_properties.put("rc_balance", rc_balance);
 						session_properties.put("available_balance", available_balance);
