@@ -2,13 +2,6 @@ package com.coinroster;
 
 /*
 
-ALTER TABLE `user` CHANGE `referral_program` `referral_program` DECIMAL(3,2) DEFAULT "0";
-ALTER TABLE `referral` CHANGE `referral_program` `referral_program` DECIMAL(3,2) DEFAULT "0";
-update user set referral_program = 0.5 where referral_program = 1.0;
-update referral set referral_program = 0.5 where referral_program = 1.0;
-alter table user add referral_offer DECIMAL(3,2) default 0.5;
-insert into control(name, value) values('default_referral_offer','0.5');
-
 To-do:
 
 SQL - build indexes on IDs
