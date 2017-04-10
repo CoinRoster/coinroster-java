@@ -51,30 +51,55 @@ public class SendReferral extends Utils
 			
 			JSONObject referrer = db.select_user("id", referrer_id);
 			
-			String referrer_username = referrer.getString("username");
+			String 
+			
+			referrer_username = referrer.getString("username"),
+			promo_code = null;
+			
+			if (!referrer.isNull("referral_promo_code")) promo_code = referrer.getString("referral_promo_code");
 			
 			double 
 			
 			referral_offer = referrer.getDouble("referral_offer"),
 			referral_program = referral_offer; // referring user's referral_offer becomes the referral_program of the referred user
 			
-			PreparedStatement create_referral = sql_connection.prepareStatement("insert into referral(referral_key, referrer_id, referrer_username, email_address, referral_program, created) values(?, ?, ?, ?, ?, ?)");				
+			PreparedStatement create_referral = sql_connection.prepareStatement("insert into referral(referral_key, referrer_id, referrer_username, email_address, referral_program, created, promo_code) values(?, ?, ?, ?, ?, ?, ?)");				
 			create_referral.setString(1, referral_key);
 			create_referral.setString(2, referrer_id);
 			create_referral.setString(3, referrer_username);
 			create_referral.setString(4, email_address);
 			create_referral.setDouble(5, referral_program);
 			create_referral.setLong(6, System.currentTimeMillis());
+			create_referral.setString(7, promo_code);
 			create_referral.executeUpdate();
 			
 			String
-
-			subject = "CoinRoster invitation from " + referrer_provided_name,
 			
-			message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster.";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "Please <a href='" + Server.host + "/signup.html?" + referral_key + "'>click here</a> to create an account.";
+			subject = null,
+			message_body = null;
+			
+			if (promo_code == null)
+				{
+				subject = "CoinRoster invitation from " + referrer_provided_name;
+				
+				message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Please <a href='" + Server.host + "/signup.html?" + referral_key + "'>click here</a> to create an account.";
+				}
+			else // referrer has a promo code
+				{
+				JSONObject promo = db.select_promo(promo_code);
+				
+				String promo_description = promo.getString("description");
+				
+				subject = "Get " + promo_description + " on CoinRoster";
+				
+				message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Please <a href='" + Server.host + "/signup.html?" + referral_key + "'>click here</a> to get " + promo_description + " on CoinRoster";
+				}
 
 			Server.send_mail(email_address, email_contact_name, subject, message_body);
 

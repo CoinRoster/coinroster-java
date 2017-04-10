@@ -122,6 +122,12 @@ public class CreateEntryPariMutuel extends Utils
 	
 					user = db.select_user("id", user_id);
 					
+					if (user.getInt("level") == 3)
+						{
+						output.put("error", "You must verify your email in order to enter this contest.");
+						break lock;
+						}
+					
 					double 
 					
 					btc_balance = user.getDouble("btc_balance"),

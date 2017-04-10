@@ -88,7 +88,12 @@ public class DB
 			int contest_status = result_set.getInt(19);
 			String currency = result_set.getString(20);
 			double referral_offer = result_set.getDouble(21);
-
+			String promo_code = result_set.getString(22);
+			String referral_promo_code = result_set.getString(23);
+			int withdrawal_locked = result_set.getInt(24);
+			double rollover_quota = result_set.getDouble(25);
+			double rollover_progress = result_set.getDouble(26);
+			
 			if (ext_address == null) ext_address = "";
 			if (email_address == null) email_address = "";
 			if (referrer == null) referrer = "";
@@ -114,6 +119,11 @@ public class DB
 			user.put("contest_status", contest_status);
 			user.put("currency", currency);
 			user.put("referral_offer", referral_offer);
+			user.put("promo_code", promo_code);
+			user.put("referral_promo_code", referral_promo_code);
+			user.put("withdrawal_locked", withdrawal_locked);
+			user.put("rollover_quota", rollover_quota);
+			user.put("rollover_progress", rollover_progress);
 			}
 
 		return user;
@@ -483,6 +493,7 @@ public class DB
 			String email_address = result_set.getString(4);
 			double referral_program = result_set.getDouble(5);
 			Long created = result_set.getLong(6);
+			String promo_code = result_set.getString(7);
 			
 			referral = new JSONObject();
 			
@@ -491,6 +502,7 @@ public class DB
 			referral.put("email_address", email_address);
 			referral.put("referral_program", referral_program);
 			referral.put("created", created);
+			referral.put("promo_code", promo_code);
 			}
 
 		return referral;
@@ -605,9 +617,9 @@ public class DB
 		{
 		JSONObject currency = null;
 
-		PreparedStatement get_last_price = sql_connection.prepareStatement("select * from fx where symbol = ?");
-		get_last_price.setString(1, symbol);
-		ResultSet result_set = get_last_price.executeQuery();
+		PreparedStatement select_currency = sql_connection.prepareStatement("select * from fx where symbol = ?");
+		select_currency.setString(1, symbol);
+		ResultSet result_set = select_currency.executeQuery();
 
 		if (result_set.next()) 
 			{
@@ -673,5 +685,51 @@ public class DB
 		update_fx.setString(5, description);
 		update_fx.executeUpdate();
 		}
-		
+	
+//------------------------------------------------------------------------------------
+
+	// SELECT PROMO RECORD
+	
+	public JSONObject select_promo(String promo_code) throws Exception
+		{
+		JSONObject promo = null;
+
+		PreparedStatement select_promo = sql_connection.prepareStatement("select * from promo where promo_code = ?");
+		select_promo.setString(1, promo_code);
+		ResultSet result_set = select_promo.executeQuery();
+
+		if (result_set.next()) 
+			{
+			int id = result_set.getInt(1);
+			long created = result_set.getLong(2);
+			long expires = result_set.getLong(3);
+			long cancelled = result_set.getLong(4);
+			String approved_by = result_set.getString(5);
+			String cancelled_by = result_set.getString(6);
+			//String promo_code = result_set.getString(7);
+			String description = result_set.getString(8);
+			String referrer = result_set.getString(9);
+			double free_play_amount = result_set.getDouble(10);
+			double rollover_multiple = result_set.getDouble(11);
+			String cancelled_reason = result_set.getString(12);
+			
+			promo = new JSONObject();
+			
+			promo.put("id", id);
+			promo.put("created", created);
+			promo.put("expires", expires);
+			promo.put("cancelled", cancelled);
+			promo.put("approved_by", approved_by);
+			promo.put("cancelled_by", cancelled_by);
+			promo.put("promo_code", promo_code);
+			promo.put("description", description);
+			promo.put("referrer", referrer);
+			promo.put("free_play_amount", free_play_amount);
+			promo.put("rollover_multiple", rollover_multiple);
+			promo.put("cancelled_reason", cancelled_reason);
+			}
+
+		return promo;
+		}
+	
 	}

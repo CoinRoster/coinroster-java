@@ -41,25 +41,39 @@ public class SSI extends Utils
 						JSONObject user = db.select_user("id", session.user_id());
 						
 						String currency = user.getString("currency");
-						double referral_offer = user.getDouble("referral_offer");
+						
+						int withdrawal_locked = user.getInt("withdrawal_locked");
 						
 						double
 						
 						btc_balance = user.getDouble("btc_balance"),
 						rc_balance = user.getDouble("rc_balance"),
 						available_balance = add(btc_balance, rc_balance, 0),
+						referral_offer = user.getDouble("referral_offer"),
+						rollover_quota = user.getInt("rollover_quota"),
+						rollover_progress = user.getInt("rollover_progress"),
 						btcusd_last_price = db.get_last_price("BTCUSD"),
 						currency_last_price = db.get_last_price(currency);
 						
 						String currency_description = db.get_currency_description(currency);
 						
 						JSONObject session_properties = new JSONObject();
+
+						if (!user.isNull("referral_promo_code"))
+							{
+							String referral_promo_code = user.getString("referral_promo_code");
+							session_properties.put("referral_promo_code", referral_promo_code);
+							}
 						
 						session_properties.put("username", session.username());
+						session_properties.put("user_level", session.user_level());
 						session_properties.put("referral_offer", referral_offer);
 						session_properties.put("btc_balance", btc_balance);
 						session_properties.put("rc_balance", rc_balance);
 						session_properties.put("available_balance", available_balance);
+						session_properties.put("withdrawal_locked", withdrawal_locked);
+						session_properties.put("rollover_quota", rollover_quota);
+						session_properties.put("rollover_progress", rollover_progress);
 						session_properties.put("contest_status", user.getInt("contest_status"));
 						session_properties.put("currency", currency);
 						session_properties.put("btcusd_last_price", btcusd_last_price);

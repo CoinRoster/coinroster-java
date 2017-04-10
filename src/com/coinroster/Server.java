@@ -2,6 +2,29 @@ package com.coinroster;
 
 /*
 
+alter table user add promo_code varchar(100);
+alter table user add referral_promo_code varchar(100);
+alter table user add withdrawal_locked int default 0;
+alter table user add rollover_multiple DECIMAL(16,8) DEFAULT 0;
+alter table user add rollover_progress DECIMAL(16,8) DEFAULT 0;
+
+create table if not exists promo (
+id INT PRIMARY KEY NOT NULL AUTO_INCREMENT, 
+created BIGINT NOT NULL, 
+expires BIGINT default 0, 
+cancelled BIGINT default 0, 
+approved_by VARCHAR(40) NOT NULL, 
+cancelled_by VARCHAR(40), 
+promo_code VARCHAR(20) NOT NULL, 
+description VARCHAR(50) NOT NULL,
+referrer VARCHAR(40), 
+free_play_amount DECIMAL(16,8) not null,
+rollover_multiple int not null,
+cancelled_reason VARCHAR(200)
+);
+
+alter table referral add promo_code varchar(100);
+
 To-do:
 
 SQL - build indexes on IDs
