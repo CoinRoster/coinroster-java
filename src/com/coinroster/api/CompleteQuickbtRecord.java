@@ -59,18 +59,14 @@ public class CompleteQuickbtRecord extends Utils
 			String
 			
 			subject = "We are processing your deposit", 
-			
-			message_body = "Hi <b><!--USERNAME--></b>,";
+
+			message_body = "Hi <b><!--USERNAME--></b>";
 			message_body += "<br/>";
 			message_body += "<br/>";
-			message_body += "We have received your request to deposit funds to CoinRoster. We will credit your account as soon as the funds arrive. You will receive an email when the deposit has been completed";
+			message_body = "We have received your request to deposit funds to CoinRoster. We will credit your account as soon as the funds arrive. You will receive an email when the deposit has been completed";
 			message_body += "<br/>";
 			message_body += "<br/>";
 			message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "Please do not reply to this email.";
 			
 			new UserMail(user, subject, message_body);
 

@@ -82,7 +82,7 @@ public class CreateEntryPariMutuel extends Utils
 					
 					if (contest.getInt("status") != 1)
 						{
-						output.put("error", "Contest #" + contest_id + " is not open for registration");
+						output.put("error", "This contest is not open for registration");
 						break lock;
 						}
 					
@@ -122,7 +122,7 @@ public class CreateEntryPariMutuel extends Utils
 	
 					user = db.select_user("id", user_id);
 					
-					if (user.getInt("level") == 3)
+					if (user.getInt("user_level") == 3)
 						{
 						output.put("error", "You must verify your email in order to enter this contest.");
 						break lock;
@@ -257,7 +257,7 @@ public class CreateEntryPariMutuel extends Utils
 					to_account = contest_account_id,
 					from_currency = "RC",
 					to_currency = "RC",
-					memo = "Entry fees (RC) for contest #" + contest_id;
+					memo = "Entry fees (RC) for: " + contest_title;
 					
 					PreparedStatement rc_contest_entry = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 					rc_contest_entry.setLong(1, System.currentTimeMillis());
@@ -284,7 +284,7 @@ public class CreateEntryPariMutuel extends Utils
 					to_account = contest_account_id,
 					from_currency = "BTC",
 					to_currency = "BTC",
-					memo = "Entry fees (BTC) for contest #" + contest_id;
+					memo = "Entry fees (BTC) for: " + contest_title;
 					
 					PreparedStatement btc_contest_entry = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 					btc_contest_entry.setLong(1, System.currentTimeMillis());
@@ -304,16 +304,13 @@ public class CreateEntryPariMutuel extends Utils
 				
 				String
 				
-				subject = "Entry confirmation for contest #" + contest_id, 
+				subject = "Entry confirmation for: " + contest_title, 
 				message_body = "";
 				
-				message_body += "You have successfully entered <b>" + number_of_user_wagers + " wager" + (number_of_user_wagers > 1 ? "s" : "") + "</b> for contest #" + contest_id + " - <b>" + contest_title + "</b>";
+				message_body += "You have successfully entered <b>" + number_of_user_wagers + " wager" + (number_of_user_wagers > 1 ? "s" : "") + "</b> into: <b>" + contest_title + "</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "You may view your wagers <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>here</a>.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
 				
 				new UserMail(user, subject, message_body);
 

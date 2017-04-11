@@ -25,6 +25,17 @@ cancelled_reason VARCHAR(200)
 
 alter table referral add promo_code varchar(100);
 
+create table if not exists promo_request(
+id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+created BIGINT NOT NULL,
+created_by VARCHAR(40) NOT NULL,
+requested_code VARCHAR(20),
+approved int default 0,
+denied int default 0,
+denied_reason varchar(200) default null,
+denied_by varchar(40) default null
+);
+
 To-do:
 
 SQL - build indexes on IDs
@@ -73,6 +84,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -81,6 +94,7 @@ import java.security.MessageDigest;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
+import javax.mail.BodyPart;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
@@ -88,7 +102,10 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.util.ByteArrayDataSource;
 
 public class Server extends Utils
 	{
@@ -581,15 +598,33 @@ public class Server extends Utils
 	
 	// send email
 
-	public static void send_mail(String to_address, final String to_user, final String subject, final String message_body)
+	public static void send_mail(String to_address, final String to_user, final String subject, String message_body)
 		{
+		final String 
+		
+		logo_cid = generate_key("logo_cid"),
+		domain_directory = Server.html_path,
+		factory_path = domain_directory + "/factory/";
+		
+		try {
+			String email_template = Utils.read_to_string(factory_path + "email_template.html");
+			email_template = email_template.replace("logo_cid", logo_cid);
+			message_body = email_template.replace("<!-- factory:message_body -->", message_body);
+			}
+		catch (Exception e)
+			{
+			exception(e);
+			}
+
+		final String message_body_final = message_body;
+		
 		// if running on development server, redirect all email to developer:
 		
 		if (dev_server) to_address = developer_email_address;
 		
 		//if (dev_server) return;
 		
-		final String final_to_address = to_address;
+		final String to_address_final = to_address;
 		
 		new Thread() 
 			{
@@ -611,11 +646,34 @@ public class Server extends Utils
 					});
 		
 				try {
+					// set up message
+					
 					Message msg = new MimeMessage(session);
 					msg.setFrom(new InternetAddress(relay_email_address, relay_email_from));
-					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(final_to_address, to_user));
+					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(to_address_final, to_user));
 					msg.setSubject(subject);
-					msg.setContent(message_body, "text/html");
+					
+					// add message body
+					
+					MimeMultipart multipart = new MimeMultipart("related");
+			        BodyPart part = new MimeBodyPart();
+			        part.setContent(message_body_final, "text/html");
+			        multipart.addBodyPart(part);
+			        
+			        // add logo to email
+			        
+					part = new MimeBodyPart();
+					FileInputStream in = new FileInputStream(new File(domain_directory + "/img/CoinRoster.png"));
+		            DataSource fds = new ByteArrayDataSource(inputstream_to_bytearray(in), "image/gif");
+		            part.setDataHandler(new DataHandler(fds));
+		            part.setHeader("Content-Disposition","inline");
+		            part.setHeader("Content-ID","<" + logo_cid + ">");
+		            multipart.addBodyPart(part);
+		            in.close();
+		            
+		            // set message content and send
+		            
+		            msg.setContent(multipart);
 					Transport.send(msg);
 					} 
 				catch (AddressException e) 

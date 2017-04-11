@@ -30,7 +30,13 @@ public class SendPasswordReset extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			String email_address = no_whitespace(input.getString("email_address"));
+			String email_address = to_valid_email(input.getString("email_address"));
+			
+			if (email_address == null)
+				{
+				output.put("error", "Invalid email address");
+				break method;
+				}
 			
 			PreparedStatement select_user = sql_connection.prepareStatement("select * from user where email_address = ? and email_ver_flag = ?");
 			select_user.setString(1, email_address);

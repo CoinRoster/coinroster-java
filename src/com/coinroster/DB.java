@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.coinroster.internal.UserMail;
+
 public class DB 
 	{
 	Connection sql_connection;
@@ -540,7 +542,7 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// STORE VERIFIED EMAIL ADDRESS
+	// SEND EMAIL VERIFICATION
 
 	public void send_verification_email(String username, String email_address, String email_ver_key) throws Exception
 		{
@@ -564,7 +566,23 @@ public class DB
 		store_verified_email.setLong(3, System.currentTimeMillis());
 		store_verified_email.executeUpdate();
 		}
+	
+//------------------------------------------------------------------------------------
 
+	// CHECK IF EMAIL IS IN USE
+
+	public boolean email_in_use(String email_address) throws Exception
+		{
+		PreparedStatement check_email_address = sql_connection.prepareStatement("select * from verified_email where email_address = ?");
+		check_email_address.setString(1, email_address);
+		ResultSet result_set = check_email_address.executeQuery();
+		
+		if (result_set.next()) return true;
+		
+		return false;
+		}
+	
+	
 //------------------------------------------------------------------------------------
 	
 	// UPDATE BTC BALANCE
@@ -690,12 +708,25 @@ public class DB
 
 	// SELECT PROMO RECORD
 	
-	public JSONObject select_promo(String promo_code) throws Exception
+	public JSONObject select_promo(Object selector) throws Exception
 		{
 		JSONObject promo = null;
+		
+		PreparedStatement select_promo = null;
+				
+		if (selector instanceof String) // selecting by promo code
+			{
+			String promo_code = (String) selector;
+			select_promo = sql_connection.prepareStatement("select * from promo where promo_code = ?");
+			select_promo.setString(1, promo_code);
+			}
+		else // selecting by promo ID
+			{
+			int promo_id = (int) selector;
+			select_promo = sql_connection.prepareStatement("select * from promo where id = ?");
+			select_promo.setInt(1, promo_id);
+			}
 
-		PreparedStatement select_promo = sql_connection.prepareStatement("select * from promo where promo_code = ?");
-		select_promo.setString(1, promo_code);
 		ResultSet result_set = select_promo.executeQuery();
 
 		if (result_set.next()) 
@@ -706,11 +737,11 @@ public class DB
 			long cancelled = result_set.getLong(4);
 			String approved_by = result_set.getString(5);
 			String cancelled_by = result_set.getString(6);
-			//String promo_code = result_set.getString(7);
+			String promo_code = result_set.getString(7);
 			String description = result_set.getString(8);
 			String referrer = result_set.getString(9);
 			double free_play_amount = result_set.getDouble(10);
-			double rollover_multiple = result_set.getDouble(11);
+			int rollover_multiple = result_set.getInt(11);
 			String cancelled_reason = result_set.getString(12);
 			
 			promo = new JSONObject();
@@ -731,5 +762,102 @@ public class DB
 
 		return promo;
 		}
+
+//------------------------------------------------------------------------------------
+
+	// SELECT PROMO REQUEST
 	
+	public JSONObject select_promo_request(int request_id) throws Exception
+		{
+		JSONObject promo_request = null;
+
+		PreparedStatement select_promo_request = sql_connection.prepareStatement("select * from promo_request where id = ?");
+		select_promo_request.setInt(1, request_id);
+		ResultSet result_set = select_promo_request.executeQuery();
+
+		if (result_set.next()) 
+			{
+			int id = result_set.getInt(1);
+			long created = result_set.getLong(2);
+			String created_by = result_set.getString(3);
+			String requested_code = result_set.getString(4);
+			int approved = result_set.getInt(5);
+			int denied = result_set.getInt(6);
+			String denied_reason = result_set.getString(7);
+			String denied_by = result_set.getString(8);
+			
+			promo_request = new JSONObject();
+			
+			promo_request.put("id", id);
+			promo_request.put("created", created);
+			promo_request.put("created_by", created_by);
+			promo_request.put("requested_code", requested_code);
+			promo_request.put("approved", approved);
+			promo_request.put("denied", denied);
+			promo_request.put("denied_reason", denied_reason);
+			promo_request.put("denied_by", denied_by);
+			}
+
+		return promo_request;
+		}
+
+//------------------------------------------------------------------------------------
+
+	// CREDIT / DEBIT ROLLOVER
+	
+	public void credit_user_rollover_progress(JSONObject user, double wager_amount) throws Exception
+		{
+		String user_id = user.getString("user_id");
+		
+		double 
+		
+		rollover_progress = user.getDouble("rollover_progress"),
+		rollover_quota = user.getDouble("rollover_quota");
+		
+		rollover_progress = Utils.add(rollover_progress, wager_amount, 0);
+		
+		if (rollover_progress < rollover_quota) // user is still locked
+			{
+			PreparedStatement update_rollover_progress = sql_connection.prepareStatement("update user set rollover_progress = ? where id = ?");
+			update_rollover_progress.setDouble(1, rollover_progress);
+			update_rollover_progress.setString(2, user_id);
+			update_rollover_progress.executeUpdate();
+			}
+		else // user has met their rollover quota - unlock
+			{
+			PreparedStatement update_rollover_progress = sql_connection.prepareStatement("update user set rollover_progress = ?, withdrawal_locked = 0 where id = ?");
+			update_rollover_progress.setDouble(1, rollover_progress);
+			update_rollover_progress.setString(2, user_id);
+			update_rollover_progress.executeUpdate();
+			
+			String
+			
+			subject = "You have met your Free Play playing requirement!",
+			message_body = "";
+			
+			message_body += "Congratulations <b><!--USERNAME--></b>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "You have met your Free Play playing requirement!";
+			message_body += "<br/>";
+			message_body += "<br/>";
+			message_body += "You are now free to withdraw funds from your account.";
+			
+			new UserMail(user, subject, message_body);
+			}
+		}
+
+	public void debit_user_rollover_progress(JSONObject user, double amount) throws Exception
+		{
+		String user_id = user.getString("user_id");
+		
+		double rollover_progress = user.getDouble("rollover_progress");
+		rollover_progress = Utils.subtract(rollover_progress, amount, 0);
+
+		PreparedStatement update_rollover_progress = sql_connection.prepareStatement("update user set rollover_progress = ? where id = ?");
+		update_rollover_progress.setDouble(1, rollover_progress);
+		update_rollover_progress.setString(2, user_id);
+		update_rollover_progress.executeUpdate();
+		}
 	}

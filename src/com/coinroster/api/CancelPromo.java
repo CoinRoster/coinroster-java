@@ -72,15 +72,15 @@ public class CancelPromo extends Utils
 				update_user.setString(2, referrer_id);
 				update_user.executeUpdate();
 				
-				String subject = "You promo code " + promo_code + " has been deactivated",
-				
-				message_body = "Hello <b><!--USERNAME--></b>";
+				String subject = "Your promo code " + promo_code + " has been deactivated",
+
+				message_body = "Hi <b><!--USERNAME--></b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
-				message_body += "Your promo code " + promo_code + " has been deactivated.";
+				message_body += "Your promo code <b>" + promo_code + "</b> has been deactivated for the following reason:";
 				message_body += "<br/>";
 				message_body += "<br/>";
-				message_body += "Reason: <b>" + reason + "</b>";
+				message_body += "<b>" + reason + "</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "If this is unexpected or you disagree with this action, please reply to this email";
@@ -88,10 +88,11 @@ public class CancelPromo extends Utils
 				new UserMail(referrer, subject, message_body);
 				}
 			
-			PreparedStatement update_promo = sql_connection.prepareStatement("update promo set cancelled = 1, cancelled_by = ?, cancelled_reason = ? where promo_code = ?");
-			update_promo.setString(1, session.user_id());
-			update_promo.setString(2, reason);
-			update_promo.setString(3, promo_code);
+			PreparedStatement update_promo = sql_connection.prepareStatement("update promo set cancelled = ?, cancelled_by = ?, cancelled_reason = ? where promo_code = ?");
+			update_promo.setLong(1, System.currentTimeMillis());
+			update_promo.setString(2, session.user_id());
+			update_promo.setString(3, reason);
+			update_promo.setString(4, promo_code);
 			update_promo.executeUpdate();
 			
 			output.put("status", "1");

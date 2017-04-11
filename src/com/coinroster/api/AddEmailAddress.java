@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 
 import org.json.JSONObject;
 
+import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
@@ -24,6 +25,8 @@ public class AddEmailAddress extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
+		DB db = new DB(sql_connection);
+
 		method : {
 			
 //------------------------------------------------------------------------------------
@@ -31,12 +34,17 @@ public class AddEmailAddress extends Utils
 			String 
 			
 			user_id = session.user_id(),
-			email_address = no_whitespace(input.getString("email_address")),
+			email_address = to_valid_email(input.getString("email_address")),
 			new_email_ver_key = Server.generate_key(email_address);
 
-			if (!is_valid_email(email_address))
+			if (email_address == null)
 				{
-				output.put("error_message", "Invalid email address");
+				output.put("error", "Invalid email address");
+				break method;
+				}
+			if (!db.email_in_use(email_address))
+				{
+				output.put("error", "Email is in use by another user");
 				break method;
 				}
 			

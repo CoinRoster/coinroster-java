@@ -42,7 +42,7 @@ public class CreateUser extends Utils
 
 			if (username.length() < 4 || username.length() > 40 || password.length() < 8)
 				{
-				output.put("error_message", "Invalid credentials");
+				output.put("error", "Invalid credentials");
 				break method;
 				}
 			
@@ -71,7 +71,7 @@ public class CreateUser extends Utils
 			
 			if (promo_code.length() > 100)
 				{
-				output.put("error_message", "Promo code is too long");
+				output.put("error", "Promo code is too long");
 				break method;
 				}
 			
@@ -86,7 +86,7 @@ public class CreateUser extends Utils
 				
 				if (referral == null)
 					{
-					output.put("error_message", "Invalid referrer key");
+					output.put("error", "Invalid referrer key");
 					break method;
 					}
 				else
@@ -103,11 +103,17 @@ public class CreateUser extends Utils
 				}
 			else
 				{
-				email_address = no_whitespace(input.getString("email_address"));
+				email_address = to_valid_email(input.getString("email_address"));
 				
-				if (!is_valid_email(email_address))
+				if (email_address == null)
 					{
-					output.put("error_message", "Invalid email address");
+					output.put("error", "Invalid email address");
+					break method;
+					}
+				
+				if (db.email_in_use(email_address))
+					{
+					output.put("error", "Email is in use");
 					break method;
 					}
 				}
@@ -121,7 +127,7 @@ public class CreateUser extends Utils
 				
 				if (promo == null) // user-supplied code does not match a record
 					{
-					output.put("error_message", "Invalid promo code");
+					output.put("error", "Invalid promo code");
 					break method;
 					}
 				
@@ -132,7 +138,7 @@ public class CreateUser extends Utils
 					
 					if (referrer_id == null) 
 						{
-						output.put("error_message", "This promo code has been cancelled");
+						output.put("error", "This promo code has been cancelled");
 						break method;
 						}
 					else promo = null;
@@ -157,7 +163,7 @@ public class CreateUser extends Utils
 
 					if (db.select_user("username", username) != null) // must be in lock clause to be contiguous with account creation
 						{
-						output.put("error_message", "Username is taken");
+						output.put("error", "Username is taken");
 						break lock;
 						}
 	
@@ -195,7 +201,7 @@ public class CreateUser extends Utils
 						double free_play_amount = promo.getDouble("free_play_amount");
 						int rollover_multiple = promo.getInt("rollover_multiple");
 						double rollover_quota = multiply(free_play_amount, rollover_multiple, 0);
-						
+
 						PreparedStatement update_user = sql_connection.prepareStatement("update user set promo_code = ?, withdrawal_locked = 1, rollover_quota = ?, btc_balance = ? where id = ?");
 						update_user.setString(1, promo_code);
 						update_user.setDouble(2, rollover_quota);
@@ -212,8 +218,8 @@ public class CreateUser extends Utils
 						db.update_btc_balance(liability_account_id, new_btc_liability_balance);
 						
 						Long transaction_timestamp = System.currentTimeMillis();
-						String transaction_type = "BTC-DEPOSIT-PROMO";
-						String memo = promo_code;
+						String transaction_type = "BTC-PROMO-DEPOSIT";
+						String memo = "Promo code: " + promo_code;
 						
 						PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 						new_transaction.setLong(1, transaction_timestamp);
@@ -251,7 +257,7 @@ public class CreateUser extends Utils
 					
 					subject = null,
 					message_body = null,
-					income_message = "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake from this account.";
+					income_message = "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake from this account once their playing requirement has been met..";
 					
 					if (referral != null)
 						{

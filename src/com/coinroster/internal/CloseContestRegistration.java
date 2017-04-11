@@ -24,25 +24,24 @@ public class CloseContestRegistration extends Utils
 			
 			DB db = new DB(sql_connection);
 			
-			PreparedStatement select_contest = sql_connection.prepareStatement("select id, registration_deadline, min_users, title from contest where status = 1");
-			ResultSet contest = select_contest.executeQuery();
+			PreparedStatement select_contest = sql_connection.prepareStatement("select id from contest where status = 1");
+			ResultSet result_set = select_contest.executeQuery();
 			
 			// loop through all contests with open registration
 
-			while (contest.next())
+			while (result_set.next())
 				{
 				try {
-					Long registration_deadline = contest.getLong(2);
+					int contest_id = result_set.getInt(1);
+					
+					JSONObject contest = db.select_contest(contest_id);
+					
+					Long registration_deadline = contest.getLong("registration_deadline");
 					
 					// process any contests where registration should be closed
 					
 					if (System.currentTimeMillis() >= registration_deadline)
 						{
-						int 
-						
-						contest_id = contest.getInt(1),
-						min_users = contest.getInt(3);
-						
 						Server.log("Closing registration for contest #" + contest_id);
 						
 						// first set contest to in-play to lock out additional registrations
@@ -67,26 +66,31 @@ public class CloseContestRegistration extends Utils
 						
 						String
 						
-						contest_title = contest.getString(4),
+						contest_title = contest.getString("title"),
+						contest_type = contest.getString("contest_type"),
 						
 						subject = null,
 						message_body = null;
-												
+
+						int min_users = contest.getInt("min_users");
+										
 						if (users.size() >= min_users) // contest is adequately subscribed
 							{
 							Server.log("Contest #" + contest_id + " is in play");
 							
 							// notify users that contest is in play
 							
-							subject = "Contest #" + contest_id + " is in play!";
+							subject = contest_title + " is now in play!";
 							
-							message_body = "Hello <b><!--USERNAME--></b>,";
+							message_body = "Hi <b><!--USERNAME--></b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
-							message_body += "Contest #" + contest_id + " is in play - " + contest_title;
+							message_body += "<b>" + contest_title + "</b> is now in play!";
 							message_body += "<br/>";
 							message_body += "<br/>";
-							message_body += "You will receive a notification when the contest has been settled.";
+							
+							if (contest_type.equals("ROSTER")) message_body += "<a href='" + Server.host + "/rosters.html?contest_id=" + contest_id + "'>Click here</a> to view the current Leaderboard";
+							else if (contest_type.equals("PARI-MUTUEL")) message_body += "<a href='" + Server.host + "/account/entries.html?contest_id=" + contest_id + "'>Click here</a> to view your wagers.";
 							}
 						else // contest is under-subscribed
 							{
@@ -126,7 +130,7 @@ public class CloseContestRegistration extends Utils
 									from_account = contest_account_id; // now we invert the transaction (to_account is assigned in loop)
 
 									String created_by = contest_account_id;
-									String memo = "Contest #" + contest_id + " was under-subscribed.";
+									String memo = "Not enough users entered: " + contest_title;
 									
 									if (trans_type.endsWith("CONTEST-ENTRY"))
 										{
@@ -134,10 +138,10 @@ public class CloseContestRegistration extends Utils
 										
 										if (!users.contains(user_id)) users.add(user_id);
 										
-										// select user and update balance
-										
 										JSONObject user = db.select_user("id", user_id);
-									
+
+										// update balance
+										
 										if (from_currency.equals("BTC")) 
 											{
 											double user_btc_balance = user.getDouble("btc_balance");
@@ -189,12 +193,12 @@ public class CloseContestRegistration extends Utils
 								statement.execute("unlock tables");
 								}
 							
-							subject = "Contest #" + contest_id + " is under-subscribed";
+							subject = contest_title + " has been cancelled";
 							
-							message_body = "Hello <b><!--USERNAME--></b>,";
+							message_body = "Hi <b><!--USERNAME--></b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
-							message_body += "Not enough users entered contest #" + contest_id + " - " + contest_title + "";
+							message_body += "Not enough users entered: <b>" + contest_title + "</b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
 							message_body += "The contest has been cancelled and your entry fees have been credited back to your account.";

@@ -88,7 +88,7 @@ public class UserDeposit extends Utils
 			
 			subject = "Deposit instructions",
 			
-			message_body = "Hi <b>" + username + "</b>,";
+			message_body = "Hi <b><!--USERNAME--></b>";
 			message_body += "<br/>";
 			message_body += "<br/>";
 			message_body += "We have received your request to deposit Bitcoins into your CoinRoster account. Please follow the transfer instructions below. We will credit your account as soon as we receive your deposit.";
@@ -104,10 +104,6 @@ public class UserDeposit extends Utils
 			message_body += "<br/>";
 			message_body += "<br/>";
 			message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "<br/>";
-			message_body += "Please do not reply to this email.";
 			
 			new UserMail(user, subject, message_body);
 			

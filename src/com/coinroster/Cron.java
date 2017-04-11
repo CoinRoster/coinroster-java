@@ -58,6 +58,7 @@ public class Cron
 	private void hour() throws Exception
 		{
 		new CloseContestRegistration();
+		new ExpirePromos();
 		if (!Server.dev_server) UpdateCurrencies();
 		}
 	

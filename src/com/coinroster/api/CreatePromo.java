@@ -3,6 +3,8 @@ package com.coinroster.api;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.json.JSONObject;
 
@@ -122,17 +124,24 @@ public class CreatePromo extends Utils
 			
 			if (referrer != null)
 				{
+				// write referral_promo_code to user record
+				
 				PreparedStatement update_user = sql_connection.prepareStatement("update user set referral_promo_code = ? where id = ?");
 				update_user.setString(1, promo_code);
 				update_user.setString(2, referrer_id);
 				update_user.executeUpdate();
 				
+				// approve user's open promo_request if applicable
+				
+				PreparedStatement approve_promo_request = sql_connection.prepareStatement("update promo_request set approved = 1 where approved = 0 and denied = 0 and created_by = ?");
+				approve_promo_request.setString(1, referrer_id);
+				approve_promo_request.executeUpdate();
+				
 				String
 				
-				subject = "You have been approved for a CoinRoster promo code", 
-				message_body = "";
+				subject = "You have been approved for an Affiliate promo code", 
 				
-				message_body += "Hello <b><!--USERNAME--></b>";
+				message_body = "Hi <b><!--USERNAME--></b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "You have been approved for a CoinRoster promo code!";
@@ -142,13 +151,22 @@ public class CreatePromo extends Utils
 				message_body += "<br/>";
 				message_body += "Free play amount: <b>" + format_btc(free_play_amount) + " BTC</b>";
 				message_body += "<br/>";
-				message_body += "Rollover requirement: <b>" + rollover_multiple + "x</b>";
+				message_body += "Playing requirement: <b>" + rollover_multiple + "x</b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
-				message_body += "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake on any account that uses this promo code.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
+				message_body += "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake on any account that uses this promo code once their playing requirement has been met.";
+				
+				if (expires > 0)
+					{
+					String
+					
+					date = new SimpleDateFormat("dd/MM/yyyy").format(new Date(expires)),
+					time = new SimpleDateFormat("HH:mm:ss").format(new Date(expires));
+					
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "This code expires on <b>" + date + "</b> at <b>" + time + " EST</b>";
+					}
 				
 				new UserMail(referrer, subject, message_body);
 				}

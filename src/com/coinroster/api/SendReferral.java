@@ -41,11 +41,17 @@ public class SendReferral extends Utils
 			// should do a referral program lookup else break method
 			
 			email_contact_name = "Referral",
-			email_address = no_whitespace(input.getString("email_address"));
+			email_address = to_valid_email(input.getString("email_address"));
 			
-			if (!is_valid_email(email_address))
+			if (email_address == null)
 				{
-				output.put("error_message", "Invalid email address");
+				output.put("error", "Invalid email address");
+				break method;
+				}
+
+			if (db.email_in_use(email_address))
+				{
+				output.put("error", "Email is in use");
 				break method;
 				}
 			
@@ -76,16 +82,15 @@ public class SendReferral extends Utils
 			String
 			
 			subject = null,
-			message_body = null;
+			
+			message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster - the leading Bitcoin Fantasy Sports community!";
+			message_body += "<br/>";
+			message_body += "<br/>";
 			
 			if (promo_code == null)
 				{
-				subject = "CoinRoster invitation from " + referrer_provided_name;
-				
-				message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please <a href='" + Server.host + "/signup.html?" + referral_key + "'>click here</a> to create an account.";
+				subject = "CoinRoster invitation from " + referrer_provided_name + "!";
+				message_body += "<a href='" + Server.host + "/signup.html?" + referral_key + "'>Click here</a> to create an account.";
 				}
 			else // referrer has a promo code
 				{
@@ -93,12 +98,8 @@ public class SendReferral extends Utils
 				
 				String promo_description = promo.getString("description");
 				
-				subject = "Get " + promo_description + " on CoinRoster";
-				
-				message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please <a href='" + Server.host + "/signup.html?" + referral_key + "'>click here</a> to get " + promo_description + " on CoinRoster";
+				subject = "Claim your " + promo_description + " on CoinRoster!";
+				message_body += "<a href='" + Server.host + "/signup.html?" + referral_key + "'>Click here</a> to claim your <b>" + promo_description + "</b>";
 				}
 
 			Server.send_mail(email_address, email_contact_name, subject, message_body);

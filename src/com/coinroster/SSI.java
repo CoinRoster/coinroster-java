@@ -50,8 +50,8 @@ public class SSI extends Utils
 						rc_balance = user.getDouble("rc_balance"),
 						available_balance = add(btc_balance, rc_balance, 0),
 						referral_offer = user.getDouble("referral_offer"),
-						rollover_quota = user.getInt("rollover_quota"),
-						rollover_progress = user.getInt("rollover_progress"),
+						rollover_quota = user.getDouble("rollover_quota"),
+						rollover_progress = user.getDouble("rollover_progress"),
 						btcusd_last_price = db.get_last_price("BTCUSD"),
 						currency_last_price = db.get_last_price(currency);
 						

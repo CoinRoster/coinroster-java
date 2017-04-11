@@ -81,7 +81,7 @@ public class SettleContest extends Utils
 					
 					if (contest.getInt("status") != 2)
 						{
-						String error = "Contest " + contest_id + " is not in play";
+						String error = "This contest is not in play";
 						
 						log(error);
 						output.put("error", error);
@@ -327,6 +327,11 @@ public class SettleContest extends Utils
 						String user_id = entry.getString("user_id");
 
 						JSONObject user = db.select_user("id", user_id);
+						
+						int 
+						
+						free_play = user.getInt("free_play"),
+						withdrawal_locked = user.getInt("withdrawal_locked");
 	
 						double 
 						
@@ -339,8 +344,6 @@ public class SettleContest extends Utils
 						log("User ID: " + user_id);
 						log("Amount: " + entry_amount);
 						log("Raked amount: " + user_raked_amount);
-						
-						int free_play = user.getInt("free_play");
 						
 						if (free_play == 1)
 							{
@@ -361,7 +364,7 @@ public class SettleContest extends Utils
 								to_account = user_id,
 								from_currency = "BTC",
 								to_currency = "BTC",
-								memo = "Rake credit (BTC) from contest #" + contest_id;
+								memo = "Rake credit (BTC) from: " + contest_title;
 								
 								PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 								create_transaction.setLong(1, System.currentTimeMillis());
@@ -377,7 +380,7 @@ public class SettleContest extends Utils
 								create_transaction.executeUpdate();
 								}
 							}
-						else // this has to be an else, otherwise we could end up crediting more than the raked amount
+						else if (withdrawal_locked == 0) // affiliates only earn on accounts that have met playing requirement
 							{
 							String referrer = user.getString("referrer");
 							
@@ -402,6 +405,7 @@ public class SettleContest extends Utils
 								}
 							else referrer_map.put(referrer, referrer_payout);
 							}
+						else if (withdrawal_locked == 1) db.credit_user_rollover_progress(user, entry_amount);
 						}
 					
 					log("");
@@ -506,7 +510,7 @@ public class SettleContest extends Utils
 							to_account = user_id,
 							from_currency = "RC",
 							to_currency = "RC",
-							memo = "Referral revenue (RC) from contest #" + contest_id;
+							memo = "Referral revenue (RC) from: " + contest_title;
 							
 							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 							create_transaction.setLong(1, System.currentTimeMillis());
@@ -523,16 +527,13 @@ public class SettleContest extends Utils
 							
 							String
 							
-							subject = "Referral revenue for contest #" + contest_id, 
+							subject = "Referral revenue from: " + contest_title, 
 							message_body = "";
 							
-							message_body += "You earned <b>" + format_btc(referrer_payout) + " RC</b> in referral revenue from contest #" + contest_id + " - <b>" + contest_title + "</b>";
+							message_body += "You earned <b>" + format_btc(referrer_payout) + " RC</b> in referral revenue from: <b>" + contest_title + "</b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
-							message_body += "You may view your transactions <a href='" + Server.host + "/account/'>here</a>.";
-							message_body += "<br/>";
-							message_body += "<br/>";
-							message_body += "Please do not reply to this email.";
+							message_body += "<a href='" + Server.host + "/account/transactions.html'>Click here</a> to view your transactions.";
 							
 							new UserMail(user, subject, message_body);
 							}
@@ -615,7 +616,7 @@ public class SettleContest extends Utils
 										to_account = user_id,
 										from_currency = "BTC",
 										to_currency = "BTC",
-										memo = "Winnings (BTC) from contest #" + contest_id;
+										memo = "Winnings (BTC) from: " + contest_title;
 										
 										PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 										create_transaction.setLong(1, System.currentTimeMillis());
@@ -632,19 +633,16 @@ public class SettleContest extends Utils
 										
 										String
 										
-										subject = "You picked the correct outcome in contest #" + contest_id, 
+										subject = "You picked the correct outcome in: " + contest_title, 
 										message_body = "";
 										
-										message_body += "You picked the correct outcome in contest #" + contest_id + " - <b>" + contest_title + "</b>";
+										message_body += "You picked the correct outcome in: <b>" + contest_title + "</b>";
 										message_body += "<br/>";
 										message_body += "<br/>";
 										message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 										message_body += "<br/>";
 										message_body += "<br/>";
-										message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
-										message_body += "<br/>";
-										message_body += "<br/>";
-										message_body += "Please do not reply to this email.";
+										message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> for detailed results.";
 										
 										new UserMail(user, subject, message_body);
 										}
@@ -815,7 +813,7 @@ public class SettleContest extends Utils
 											to_account = user_id,
 											from_currency = "BTC",
 											to_currency = "BTC",
-											memo = "Winnings (BTC) from contest #" + contest_id;
+											memo = "Winnings (BTC) from: " + contest_title;
 											
 											PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 											create_transaction.setLong(1, System.currentTimeMillis());
@@ -832,19 +830,16 @@ public class SettleContest extends Utils
 											
 											String
 											
-											subject = "You " + (outright_win ? "had" : "tied") + " the highest-scoring roster in contest #" + contest_id, 
+											subject = "You " + (outright_win ? "had" : "tied") + " the highest-scoring roster in: " + contest_title, 
 											message_body = "";
 											
-											message_body += "You " + (outright_win ? "had" : "tied") + " the highest-scoring roster in contest #" + contest_id + " - <b>" + contest_title + "</b>";
+											message_body += "You " + (outright_win ? "had" : "tied") + " the highest-scoring roster in: <b>" + contest_title + "</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
 											message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
-											message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
-											message_body += "<br/>";
-											message_body += "<br/>";
-											message_body += "Please do not reply to this email.";
+											message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> for detailed results.";
 											
 											new UserMail(user, subject, message_body);
 											}
@@ -976,7 +971,7 @@ public class SettleContest extends Utils
 											to_account = user_id,
 											from_currency = "BTC",
 											to_currency = "BTC",
-											memo = "Winnings (BTC) from contest #" + contest_id;
+											memo = "Winnings (BTC) from: " + contest_title;
 											
 											PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 											create_transaction.setLong(1, System.currentTimeMillis());
@@ -993,10 +988,10 @@ public class SettleContest extends Utils
 											
 											String
 											
-											subject = "You had rosters above the payline in contest #" + contest_id, 
+											subject = "You had rosters above the payline in: " + contest_title, 
 											message_body = "";
 											
-											message_body += "You had rosters above the payline in contest #" + contest_id + " - <b>" + contest_title + "</b>";
+											message_body += "You had rosters above the payline in: <b>" + contest_title + "</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
 											
@@ -1010,10 +1005,7 @@ public class SettleContest extends Utils
 											message_body += "Total payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
-											message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
-											message_body += "<br/>";
-											message_body += "<br/>";
-											message_body += "Please do not reply to this email.";
+											message_body += "<a href='" + Server.host + "/rosters.html?contest_id=" + contest_id + "'>Click here</a> to view the final Leaderboard.";
 											
 											new UserMail(user, subject, message_body);
 											}
@@ -1148,7 +1140,7 @@ public class SettleContest extends Utils
 											to_account = user_id,
 											from_currency = "BTC",
 											to_currency = "BTC",
-											memo = "Winnings (BTC) from contest #" + contest_id;
+											memo = "Winnings (BTC) from: " + contest_title;
 											
 											PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 											create_transaction.setLong(1, System.currentTimeMillis());
@@ -1165,19 +1157,16 @@ public class SettleContest extends Utils
 											
 											String
 											
-											subject = "You had ranking rosters in contest #" + contest_id, 
+											subject = "You had ranking rosters in: " + contest_id, 
 											message_body = "";
 											
-											message_body += "You had ranking rosters in contest #" + contest_id + " - <b>" + contest_title + "</b>";
+											message_body += "You had ranking rosters in: <b>" + contest_title + "</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
 											message_body += "Total payout: <b>" + format_btc(user_winnings) + " BTC</b>";
 											message_body += "<br/>";
 											message_body += "<br/>";
-											message_body += "For detailed results <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>click here</a>.";
-											message_body += "<br/>";
-											message_body += "<br/>";
-											message_body += "Please do not reply to this email.";
+											message_body += "<a href='" + Server.host + "/rosters.html?contest_id=" + contest_id + "'>Click here</a> to view the final Leaderboard.";
 											
 											new UserMail(user, subject, message_body);
 											}

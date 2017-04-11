@@ -74,6 +74,12 @@ public class UserWithdrawal extends Utils
 				
 					user = db.select_user("id", user_id);
 					
+					if (user.getInt("withdrawal_locked") == 1)
+						{
+						output.put("error", "You cannot withdraw funds until you meet a playing requirement");
+						break lock;
+						}
+					
 					JSONObject btc_liability = db.select_user("id", btc_liability_id);
 					
 					// get account balances:
@@ -87,7 +93,7 @@ public class UserWithdrawal extends Utils
 					
 					if (amount_to_withdraw > user_btc_balance) 
 						{
-						output.put("error", "User has insufficient funds");
+						output.put("error", "Insufficient funds");
 						break lock;
 						}
 	
@@ -152,7 +158,7 @@ public class UserWithdrawal extends Utils
 	
 				subject = "Withdrawal request confirmation", 
 				
-				message_body = "Hi <b>" + username + "</b>,";
+				message_body = "Hi <b><!--USERNAME--></b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "We have received your request to withdraw funds. One of our administrators will process your request shortly. You will receive another confirmation email when the funds have been sent";
@@ -170,10 +176,6 @@ public class UserWithdrawal extends Utils
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
 					
 				new UserMail(user, subject, message_body);
 	
@@ -184,7 +186,7 @@ public class UserWithdrawal extends Utils
 				String 
 				
 				cash_register_email_address = cash_register.getString("email_address"),
-				cash_register_admin = "Cash Register Admin";
+				cash_register_admin = "CoinRoster Admin";
 				
 				subject = "New withdrawal request";
 				

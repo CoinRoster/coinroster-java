@@ -141,7 +141,7 @@ public class FinalizeQuickbtDeposit extends Utils
 				
 				subject = "Deposit confirmation", 
 				
-				message_body = "Hi <b><!--USERNAME--></b>,";
+				message_body = "Hi <b><!--USERNAME--></b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "We have received your deposit and have credited your account!";
@@ -153,10 +153,6 @@ public class FinalizeQuickbtDeposit extends Utils
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
 				
 				new UserMail(user, subject, message_body);
 				

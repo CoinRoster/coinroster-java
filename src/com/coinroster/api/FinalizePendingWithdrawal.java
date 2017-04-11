@@ -65,7 +65,7 @@ public class FinalizePendingWithdrawal extends Utils
 				
 				subject = "Your withdrawal has been processed", 
 				
-				message_body = "Hi <b><!--USERNAME--></b>,";
+				message_body = "Hi <b><!--USERNAME--></b>";
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "One of our administrators has processed your withdrawal. The funds should arrive in your Bitcoin wallet soon.";
@@ -83,10 +83,6 @@ public class FinalizePendingWithdrawal extends Utils
 				message_body += "<br/>";
 				message_body += "<br/>";
 				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Please do not reply to this email.";
 
 				new UserMail(user, subject, message_body);
 				}

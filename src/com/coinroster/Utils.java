@@ -31,6 +31,15 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 public class Utils 
 	{
+	public static String to_valid_email(String email_address) throws Exception
+		{
+		email_address = no_whitespace(email_address).toLowerCase();
+
+		if (is_valid_email(email_address)) return email_address;
+		
+		return null;
+		}
+	
 	public static boolean is_valid_email(String email_address)
 		{
 		String email_regex = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
@@ -57,7 +66,7 @@ public class Utils
 		return digest;
 		}
 
-	protected String no_whitespace(String string) throws Exception
+	protected static String no_whitespace(String string) throws Exception
 		{
 		string = string.replaceAll("\\s","");
 		return string;
