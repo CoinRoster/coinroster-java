@@ -134,9 +134,14 @@ public class SSI extends Utils
 						}
 					}
 				} break;
+			case "lobby_nav" :
 			case "nav" :
 				{
-				if (!session_active) response_data = Utils.read_to_string(ssi_directory + "nav_inactive.html");
+				if (!session_active) 
+					{
+					if (target_object.equals("lobby_nav")) response_data = "<!-- PLACEHOLDER -->";
+					else response_data = Utils.read_to_string(ssi_directory + "nav_inactive.html");
+					}
 				else 
 					{
 					response_data = Utils.read_to_string(ssi_directory + "nav_active.html");
@@ -215,7 +220,7 @@ public class SSI extends Utils
 			case "lobby_header" :
 				{
 				if (!session_active) response_data = Utils.read_to_string(ssi_directory + "lobby_inactive.html");
-				else response_data = Utils.read_to_string(ssi_directory + "lobby_active.html");
+				else response_data = "<!-- PLACEHOLDER -->";
 				} break;
 			}
 
