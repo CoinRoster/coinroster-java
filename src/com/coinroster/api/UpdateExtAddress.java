@@ -70,14 +70,14 @@ public class UpdateExtAddress extends Utils
 				int ext_address_secure_flag = user.getInt("ext_address_secure_flag");
 				
 				double user_btc_balance = user.getDouble("btc_balance");
-				
+			
 				// a user can change their ext_address ...
 				
 				// 1) if current_ext_address has never been set before
 				// 2) if security has been disabled
 				// 3) if btc balance is 0.0
 			
-				if (current_ext_address == null || ext_address_secure_flag == 0 || user_btc_balance == 0.0) do_update = true;
+				if (current_ext_address.equals("") || ext_address_secure_flag == 0 || user_btc_balance == 0.0) do_update = true;
 				}
 				
 			if (do_update)
@@ -90,9 +90,9 @@ public class UpdateExtAddress extends Utils
 				update_ext_address.setString(1, ext_address);
 				update_ext_address.setString(2, user_id);
 				update_ext_address.executeUpdate();
+				
+				output.put("status", "1");
 				}
-			
-			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------
 

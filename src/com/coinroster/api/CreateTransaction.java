@@ -83,7 +83,10 @@ public class CreateTransaction extends Utils
 
 			JSONObject user = null;
 			
-			boolean success = false;
+			boolean 
+			
+			success = false,
+			deposit_bonus_activated = false;
 		
 			try {
 				lock : {
@@ -136,6 +139,10 @@ public class CreateTransaction extends Utils
 							Double new_user_btc_balance = add(user_btc_balance, transaction_amount, 0);
 		
 							db.update_btc_balance(user_id, new_user_btc_balance);
+
+							// activate deposit bonus (if applicable)
+							
+							deposit_bonus_activated = db.enable_deposit_bonus(user, transaction_amount);
 							
 							break;
 							}
@@ -278,25 +285,50 @@ public class CreateTransaction extends Utils
 				calendar.setTimeInMillis(transaction_timestamp);
 				
 				String
-	
-				subject = "Transaction Notification", 
-				message_body = "";
 				
-				message_body += "Transaction notification for <b><!--USERNAME--></b>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Type: <b>" + transaction_type + "</b>";
-				message_body += "<br/>";
-				message_body += "Date and time: <b>" + formatter.format(calendar.getTime()) + "</b>";
-				message_body += "<br/>";
-				message_body += "Amount: <b>" + format_btc(transaction_amount) + "</b>";
-				message_body += "<br/>";
-				message_body += "Currency: <b>" + from_currency + "</b>";
-				message_body += "<br/>";
-				message_body += "Memo: <b>" + memo + "</b>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+				subject = null,
+				message_body = null;
+				
+				if (deposit_bonus_activated)
+					{
+					subject = "Claim your deposit bonus!";
+					
+					message_body += "Transaction notification for <b><!--USERNAME--></b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "Type: <b>" + transaction_type + "</b>";
+					message_body += "<br/>";
+					message_body += "Date and time: <b>" + formatter.format(calendar.getTime()) + "</b>";
+					message_body += "<br/>";
+					message_body += "Amount: <b>" + format_btc(transaction_amount) + "</b>";
+					message_body += "<br/>";
+					message_body += "Currency: <b>" + from_currency + "</b>";
+					message_body += "<br/>";
+					message_body += "Memo: <b>" + memo + "</b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "<a href='" + Server.host + "/account/deposit_bonus.html'>Click here</a> to claim your deposit bonus!";
+					}
+				else
+					{
+					subject = "Transaction Notification";
+					
+					message_body += "Transaction notification for <b><!--USERNAME--></b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "Type: <b>" + transaction_type + "</b>";
+					message_body += "<br/>";
+					message_body += "Date and time: <b>" + formatter.format(calendar.getTime()) + "</b>";
+					message_body += "<br/>";
+					message_body += "Amount: <b>" + format_btc(transaction_amount) + "</b>";
+					message_body += "<br/>";
+					message_body += "Currency: <b>" + from_currency + "</b>";
+					message_body += "<br/>";
+					message_body += "Memo: <b>" + memo + "</b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+					}
 				
 				new UserMail(user, subject, message_body);
 					

@@ -42,7 +42,11 @@ public class SSI extends Utils
 						
 						String currency = user.getString("currency");
 						
-						int withdrawal_locked = user.getInt("withdrawal_locked");
+						int 
+						
+						withdrawal_locked = user.getInt("withdrawal_locked"),
+						deposit_bonus_claimed = user.getInt("deposit_bonus_claimed"),
+						deposit_bonus_rollover_multiple = user.getInt("deposit_bonus_rollover_multiple");
 						
 						double
 						
@@ -52,6 +56,8 @@ public class SSI extends Utils
 						referral_offer = user.getDouble("referral_offer"),
 						rollover_quota = user.getDouble("rollover_quota"),
 						rollover_progress = user.getDouble("rollover_progress"),
+						first_deposit = user.getDouble("first_deposit"),
+						deposit_bonus_cap = user.getDouble("deposit_bonus_cap"),
 						btcusd_last_price = db.get_last_price("BTCUSD"),
 						currency_last_price = db.get_last_price(currency);
 						
@@ -72,6 +78,10 @@ public class SSI extends Utils
 						session_properties.put("rc_balance", rc_balance);
 						session_properties.put("available_balance", available_balance);
 						session_properties.put("withdrawal_locked", withdrawal_locked);
+						session_properties.put("first_deposit", first_deposit);
+						session_properties.put("deposit_bonus_claimed", deposit_bonus_claimed);
+						session_properties.put("deposit_bonus_cap", deposit_bonus_cap);
+						session_properties.put("deposit_bonus_rollover_multiple", deposit_bonus_rollover_multiple);
 						session_properties.put("rollover_quota", rollover_quota);
 						session_properties.put("rollover_progress", rollover_progress);
 						session_properties.put("contest_status", user.getInt("contest_status"));

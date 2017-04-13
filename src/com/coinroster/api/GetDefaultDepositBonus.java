@@ -1,22 +1,19 @@
 package com.coinroster.api;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
-public class ReferralReport extends Utils
+public class GetDefaultDepositBonus extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "guest";
 	@SuppressWarnings("unused")
-	public ReferralReport(MethodInstance method) throws Exception 
+	public GetDefaultDepositBonus(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -33,21 +30,12 @@ public class ReferralReport extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			JSONArray referral_report = new JSONArray();
+			double deposit_bonus_cap = Double.parseDouble(Server.control.get("deposit_bonus_cap"));
 			
-			PreparedStatement select_referrals = sql_connection.prepareStatement("select referral_key from referral");
-			ResultSet result_set = select_referrals.executeQuery();
-	  
-			while (result_set.next())
-				{
-				String referral_key = result_set.getString(1);
-				
-				JSONObject referral = db.select_referral(referral_key);
+			int deposit_bonus_rollover_multiple = Integer.parseInt(Server.control.get("deposit_bonus_rollover_multiple"));
 
-				referral_report.put(referral);
-				}
-			
-			output.put("referral_report", referral_report);
+			output.put("deposit_bonus_cap", deposit_bonus_cap);
+			output.put("deposit_bonus_rollover_multiple", deposit_bonus_rollover_multiple);
 			
 			output.put("status", "1");
 			

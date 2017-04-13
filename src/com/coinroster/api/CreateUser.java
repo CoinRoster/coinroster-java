@@ -125,7 +125,7 @@ public class CreateUser extends Utils
 				{
 				promo = db.select_promo(promo_code);
 				
-				if (promo == null) // user-supplied code does not match a record
+				if (promo == null) // user-supplied code does not bonus a record
 					{
 					output.put("error", "Invalid promo code");
 					break method;
@@ -173,15 +173,17 @@ public class CreateUser extends Utils
 					
 					PreparedStatement create_user;
 	
-					if (referrer_id == null) create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					if (referrer_id == null) create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 					else // we have referrer_id & referral_program from a referral link or promo code
 						{		
-						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-						create_user.setDouble(11, referral_program);
-						create_user.setString(12, referrer_id);
+						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						create_user.setDouble(13, referral_program);
+						create_user.setString(14, referrer_id);
 						}
 
 					double default_referral_offer = Double.parseDouble(Server.control.get("default_referral_offer"));
+					double deposit_bonus_cap = Double.parseDouble(Server.control.get("deposit_bonus_cap"));
+					int deposit_bonus_rollover_multiple = Integer.parseInt(Server.control.get("deposit_bonus_rollover_multiple"));
 							
 					create_user.setString(1, new_user_id);
 					create_user.setString(2, username);
@@ -193,6 +195,8 @@ public class CreateUser extends Utils
 					create_user.setString(8, email_ver_key);
 					create_user.setDouble(9, default_referral_offer);
 					create_user.setString(10, promo_code);
+					create_user.setDouble(11, deposit_bonus_cap);
+					create_user.setInt(12, deposit_bonus_rollover_multiple);
 					
 					create_user.executeUpdate();
 					
@@ -257,7 +261,7 @@ public class CreateUser extends Utils
 					
 					subject = null,
 					message_body = null,
-					income_message = "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake from this account once their playing requirement has been met..";
+					income_message = "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake from this account once their playing requirement has been met.";
 					
 					if (referral != null)
 						{
@@ -270,12 +274,18 @@ public class CreateUser extends Utils
 						db.store_verified_email(new_user_id, email_address);
 						
 						subject = "Successful referral!";
-						message_body = "<b>" + email_address + "</b> has signed up to CoinRoster! " + income_message;
+						message_body = "<b>" + email_address + "</b> has signed up to CoinRoster!";
+						message_body += "<br/>";
+						message_body += "<br/>";
+						message_body += income_message;
 						}
 					else if (promo != null)
 						{
 						subject = "Someone used your promo code!";
-						message_body = "A new user has signed up to CoinRoster using your promo code! " + income_message;
+						message_body = "<b>" + username + "</b> has signed up to CoinRoster using your promo code!";
+						message_body += "<br/>";
+						message_body += "<br/>";
+						message_body += income_message;
 						}
 					
 					new UserMail(referrer, subject, message_body);
@@ -291,7 +301,11 @@ public class CreateUser extends Utils
 						String promo_description = promo.getString("description"),
 						
 						subject = "Claim your " + promo_description + "!",
-						message_body = "Please <a href='" + Server.host + "/verify.html?" + email_ver_key + "'>click here</a> to verify your e-mail address and claim your " + promo_description + "!";
+
+						message_body = "Welcome to CoinRoster <b>" + username + "</b>!";
+						message_body += "<br/>";
+						message_body += "<br/>";
+						message_body += "Please <a href='" + Server.host + "/verify.html?" + email_ver_key + "'>click here</a> to verify your e-mail address and claim your " + promo_description + "!";
 
 						Server.send_mail(email_address, username, subject, message_body);
 						}

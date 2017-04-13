@@ -55,7 +55,7 @@ public class ContestReport_MyContests extends Utils
 					select_contest_ids.setString(1, user_id);
 					break;
 				case 2 : // in play
-					select_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status = 2 order by contest.registration_deadline asc");
+					select_contest_ids = sql_connection.prepareStatement("select distinct(contest_id) from entry inner join contest on entry.contest_id = contest.id where entry.user_id = ? and contest.status = 2 order by contest.registration_deadline desc");
 					select_contest_ids.setString(1, user_id);
 					break;
 				case 3 : // settled

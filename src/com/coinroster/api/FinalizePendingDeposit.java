@@ -50,7 +50,10 @@ public class FinalizePendingDeposit extends Utils
 
 			JSONObject user = null;
 					
-			boolean success = false;
+			boolean 
+			
+			success = false,
+			deposit_bonus_activated = false;
 			
 			try {
 				lock : {
@@ -86,6 +89,10 @@ public class FinalizePendingDeposit extends Utils
 					Double new_btc_liability_balance = subtract(btc_liability_balance, received_amount, 0);
 					
 					db.update_btc_balance(btc_liability_id, new_btc_liability_balance);
+					
+					// activate deposit bonus (if applicable)
+					
+					deposit_bonus_activated = db.enable_deposit_bonus(user, received_amount);
 
 					success = true;
 					}
@@ -108,23 +115,46 @@ public class FinalizePendingDeposit extends Utils
 				update_transaction.executeUpdate();
 				
 				// communications
-	
+				
 				String
 				
-				subject = "Deposit confirmation", 
+				subject = null,
+				message_body = null;
 				
-				message_body = "Hi <b><!--USERNAME--></b>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "We have received your deposit and have credited your account!";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "Transaction ID: <b>" + transaction_id + "</b>";
-				message_body += "<br/>";
-				message_body += "Amount received: <b>" + format_btc(received_amount) + " BTC</b>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+				if (deposit_bonus_activated)
+					{
+					subject = "Claim your Deposit Bonus!";
+					
+					message_body = "Hi <b><!--USERNAME--></b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "We have received your first deposit and have credited to your account.";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+					message_body += "<br/>";
+					message_body += "Amount received: <b>" + format_btc(received_amount) + " BTC</b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "<a href='" + Server.host + "/account/deposit_bonus.html'>Click here</a> to claim your deposit bonus!";
+					}
+				else
+					{
+					subject = "Deposit confirmation";
+					
+					message_body = "Hi <b><!--USERNAME--></b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "We have received your deposit and have credited to your account.";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+					message_body += "<br/>";
+					message_body += "Amount received: <b>" + format_btc(received_amount) + " BTC</b>";
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+					}
 				
 				new UserMail(user, subject, message_body);
 				

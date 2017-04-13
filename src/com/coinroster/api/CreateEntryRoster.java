@@ -91,7 +91,7 @@ public class CreateEntryRoster extends Utils
 				
 					if (number_of_entries <= 0)
 						{
-						output.put("error", "Number of entries cannot be " + number_of_entries);
+						output.put("error", "Number of entries must be greater than 0");
 						break lock;
 						}
 					

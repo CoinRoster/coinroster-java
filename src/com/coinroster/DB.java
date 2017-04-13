@@ -95,6 +95,10 @@ public class DB
 			int withdrawal_locked = result_set.getInt(24);
 			double rollover_quota = result_set.getDouble(25);
 			double rollover_progress = result_set.getDouble(26);
+			double first_deposit = result_set.getDouble(27);
+			int deposit_bonus_claimed = result_set.getInt(28);
+			double deposit_bonus_cap = result_set.getDouble(29);
+			int deposit_bonus_rollover_multiple = result_set.getInt(30);
 			
 			if (ext_address == null) ext_address = "";
 			if (email_address == null) email_address = "";
@@ -126,6 +130,10 @@ public class DB
 			user.put("withdrawal_locked", withdrawal_locked);
 			user.put("rollover_quota", rollover_quota);
 			user.put("rollover_progress", rollover_progress);
+			user.put("first_deposit", first_deposit);
+			user.put("deposit_bonus_claimed", deposit_bonus_claimed);
+			user.put("deposit_bonus_cap", deposit_bonus_cap);
+			user.put("deposit_bonus_rollover_multiple", deposit_bonus_rollover_multiple);
 			}
 
 		return user;
@@ -490,6 +498,7 @@ public class DB
 
 		if (result_set.next())
 			{
+			// String referral_key = result_set.getString(1);
 			String referrer_id = result_set.getString(2);
 			String referrer_username = result_set.getString(3);
 			String email_address = result_set.getString(4);
@@ -498,7 +507,8 @@ public class DB
 			String promo_code = result_set.getString(7);
 			
 			referral = new JSONObject();
-			
+
+			referral.put("referral_key", referral_key);
 			referral.put("referrer_id", referrer_id);
 			referral.put("referrer_username", referrer_username);
 			referral.put("email_address", email_address);
@@ -549,7 +559,11 @@ public class DB
 		String
 		
 		subject = "Verify your e-mail address",
-		message_body = "Please <a href='" + Server.host + "/verify.html?" + email_ver_key + "'>click here</a> to verify your e-mail address.";
+
+		message_body = "Welcome to CoinRoster <b>" + username + "</b>!";
+		message_body += "<br/>";
+		message_body += "<br/>";
+		message_body += "Please <a href='" + Server.host + "/verify.html?" + email_ver_key + "'>click here</a> to verify your e-mail address.";
 
 		Server.send_mail(email_address, username, subject, message_body);
 		}
@@ -581,7 +595,6 @@ public class DB
 		
 		return false;
 		}
-	
 	
 //------------------------------------------------------------------------------------
 	
@@ -860,4 +873,28 @@ public class DB
 		update_rollover_progress.setString(2, user_id);
 		update_rollover_progress.executeUpdate();
 		}
+
+//------------------------------------------------------------------------------------
+
+	// ACTIVATE DEPOSIT MATCH (IF APPLICABLE)
+	
+	public boolean enable_deposit_bonus(JSONObject user, double deposit_amount) throws Exception
+		{
+		double first_deposit = user.getDouble("first_deposit");
+		
+		if (first_deposit > 0) return false;
+
+		String user_id = user.getString("user_id");
+		
+		PreparedStatement update_user = sql_connection.prepareStatement("update user set first_deposit = ? where id = ?");
+		update_user.setDouble(1, deposit_amount);
+		update_user.setString(2, user_id);
+		update_user.executeUpdate();
+
+		return true;
+		}
+
+	//------------------------------------------------------------------------------------
+
 	}
+
