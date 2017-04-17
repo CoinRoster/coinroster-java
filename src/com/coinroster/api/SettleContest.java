@@ -81,7 +81,7 @@ public class SettleContest extends Utils
 					
 					if (contest.getInt("status") != 2)
 						{
-						String error = "This contest is not in play";
+						String error = "Contest " + contest_id + " is not in play";
 						
 						log(error);
 						output.put("error", error);
