@@ -222,7 +222,7 @@ public class CreateUser extends Utils
 						db.update_btc_balance(liability_account_id, new_btc_liability_balance);
 						
 						Long transaction_timestamp = System.currentTimeMillis();
-						String transaction_type = "BTC-PROMO-DEPOSIT";
+						String transaction_type = "BTC-PROMO-FREEPLAY";
 						String memo = "Promo code: " + promo_code;
 						
 						PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
