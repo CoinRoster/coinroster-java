@@ -47,7 +47,7 @@ public class PromoReport extends Utils
 			while (result_set.next())
 				{
 				String promo_code = result_set.getString(1);
-				
+
 				JSONObject promo = db.select_promo(promo_code);
 				
 				String approved_by = promo.getString("approved_by");

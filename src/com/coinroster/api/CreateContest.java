@@ -215,10 +215,10 @@ public class CreateContest extends Utils
 						
 						String 
 						
-						name = line.getString("name");
+						name = line.getString("name").trim();
 						//odds = line.getString("odds");
 						
-						if (name == "" || name == null)
+						if (name.equals("") || name == null)
 							{
 							output.put("error", "Player table row " + (i+1) + ": no name entered");
 	                		break method;
@@ -230,7 +230,6 @@ public class CreateContest extends Utils
 							}*/
 						
 						int price = line.getInt("price"); // force price to integer
-						line.put("price", price);
 						
 						if (price == 0)
 							{
@@ -242,6 +241,9 @@ public class CreateContest extends Utils
 							output.put("error", "Player table row " + (i+1) + ": price cannot be greater than salary cap");
 		            		break method;
 							}
+
+						line.put("name", name);
+						line.put("price", price);
 						
 						option_table.put(i, line);
 						}

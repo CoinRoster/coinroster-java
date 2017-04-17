@@ -168,7 +168,8 @@ public class Server extends Utils
 
 	guest_user_methods = new HashSet<String>(),
 	standard_user_methods = new HashSet<String>(),
-	admin_user_methods = new HashSet<String>();
+	admin_user_methods = new HashSet<String>(),
+	score_bot_methods = new HashSet<String>();
 	
 	private static ServerSocket proxy_gateway;
 
@@ -286,6 +287,10 @@ public class Server extends Utils
 							break;
 						case "admin":
 							admin_user_methods.add(method_name);
+							break;
+						case "score_bot":
+							admin_user_methods.add(method_name);
+							score_bot_methods.add(method_name);
 							break;
 						}
 					}

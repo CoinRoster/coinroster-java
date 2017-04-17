@@ -24,7 +24,7 @@ import com.coinroster.internal.UserMail;
 
 public class SettleContest extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "score_bot";
 	@SuppressWarnings("unused")
 	public SettleContest(MethodInstance method) throws Exception 
 		{
@@ -1157,7 +1157,7 @@ public class SettleContest extends Utils
 											
 											String
 											
-											subject = "You had ranking rosters in: " + contest_id, 
+											subject = "You had ranking rosters in: " + contest_title, 
 											message_body = "";
 											
 											message_body += "You had ranking rosters in: <b>" + contest_title + "</b>";

@@ -17,7 +17,7 @@ import com.coinroster.Utils;
 
 public class UpdateScores extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "score_bot";
 	@SuppressWarnings("unused")
 	public UpdateScores(MethodInstance method) throws Exception 
 		{

@@ -28,6 +28,7 @@ public class MethodCall extends Utils
 			if (Server.guest_user_methods.contains(method_name)) authorized = true;
 			else if (Server.standard_user_methods.contains(method_name) && session_active) authorized = true;
 			else if (Server.admin_user_methods.contains(method_name) && session_active && session.user_level().equals("1")) authorized = true;
+			else if (Server.score_bot_methods.contains(method_name) && session_active && session.user_level().equals("4")) authorized = true;
 
 			JSONObject output = new JSONObject("{\"status\":\"0\"}");
 			
