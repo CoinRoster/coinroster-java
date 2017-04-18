@@ -47,9 +47,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class LiveScoring_HOCKEY2 extends Application
     {
-	boolean has_initialized = false;
+	static boolean 
 	
-	static boolean all_games_have_ended = false;
+	running = true;
+
+	boolean has_initialized = false;
 	
 	static String cookie_string = null;
 			
@@ -67,11 +69,10 @@ public class LiveScoring_HOCKEY2 extends Application
 	static ConcurrentHashMap<String, Integer> teams_tonight = new ConcurrentHashMap<String, Integer>();
 	static ConcurrentHashMap<String, Integer> player_map = new ConcurrentHashMap<String, Integer>();
 	static ConcurrentHashMap<Integer, Integer> player_scores = new ConcurrentHashMap<Integer, Integer>();
+	static ConcurrentHashMap<Integer, Integer> player_scores_stored = new ConcurrentHashMap<Integer, Integer>();
 	static ConcurrentHashMap<String, Integer> out_of_contest_player_scores = new ConcurrentHashMap<String, Integer>();
-	static ConcurrentHashMap<String, Boolean> game_thread_control = new ConcurrentHashMap<String, Boolean>();
 	static ConcurrentHashMap<String, String> event_summary_urls = new ConcurrentHashMap<String, String>();
-	static ConcurrentHashMap<String, String> team_1_map = new ConcurrentHashMap<String, String>();
-	static ConcurrentHashMap<String, String> team_2_map = new ConcurrentHashMap<String, String>();
+	static ConcurrentHashMap<String, String[]> team_map = new ConcurrentHashMap<String, String[]>();
 	static ConcurrentHashMap<String, Boolean> game_ended_flags = new ConcurrentHashMap<String, Boolean>();
 	
     public static void main(String[] args) throws Exception
@@ -134,17 +135,15 @@ public class LiveScoring_HOCKEY2 extends Application
 			team_acronym = player_name_parts[number_of_name_parts-1],
 			team_motif = team_motifs.getString(team_acronym).toUpperCase();
 			
-			if (!teams_tonight.containsKey(team_motif)) 
-				{
-				teams_tonight.put(team_motif, 0);
-				game_ended_flags.put(team_motif, false);
-				}
+			if (!teams_tonight.containsKey(team_motif)) teams_tonight.put(team_motif, 0);
 
 			if (player_map.containsKey(player_key)) log("!!!!!!!! Collision: " + player_key);
 			
 			player_map.put(player_key, player_id);
 			player_scores.put(player_id, 0);
 			}
+		
+		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
 
 		log("");
 		log("Starting NHL live scoring");
@@ -657,296 +656,229 @@ public class LiveScoring_HOCKEY2 extends Application
     public void start(Stage stage) throws Exception
         {    	
     	System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    	
         WebView webview = new WebView();
+        
         final WebEngine webengine = webview.getEngine();
-        
-        new Thread() 
-			{
-	    	@Override
-			public void run() 
-	        	{
-				while (!all_games_have_ended)
-					{
-					try {
-						Platform.runLater(new Runnable()
-							{
-							@Override
-							public void run() 
-								{
-								if (webengine.getDocument() != null && webengine.getDocument().getDocumentElement() != null)
-									{
-									NodeList divs = webengine.getDocument().getElementsByTagName("div");
-									List<HTMLElement> game_cards = new ArrayList<HTMLElement>();
-									
-									for (int i=0, limit=divs.getLength(); i<limit; i++) 
-										{
-										Node div_node = divs.item(i);
-										HTMLElement div_html = (HTMLElement) div_node;
-										String class_name = div_html.getClassName();
-										if (class_name != null && class_name.contains("nhl-scores__game")) game_cards.add(div_html);
-										}
-									
-									if (game_cards.size() == 0)
-										{
-										if (has_initialized) 
-											{
-											has_initialized = false;
-											webengine.reload();
-											}
-										}
-									else // there are game cards
-										{
-										has_initialized = true;
-										
-										for (HTMLElement game_card : game_cards)
-											{
-											game_card : 
-												{
-												final String game_id = game_card.getAttribute("id");
-											
-												String[] teams = new String[2];
-												int[] scores = new int[2];
-												
-												int 
-												
-												team_ctr = 0,
-												scores_found = 0;
-												
-												NodeList gamecard_spans = game_card.getElementsByTagName("span");
-												
-												boolean game_has_ended = false;
-												
-												for (int i=0, limit=gamecard_spans.getLength(); i<limit; i++) 
-													{
-													Node node = gamecard_spans.item(i);
-													HTMLElement node_html = (HTMLElement) node;
-													
-													String 
-													
-													class_name = node_html.getClassName(),
-													text_content = node.getTextContent().trim();
-													
-													if (class_name != null)
-														{
-														if (class_name.contains("nhl-scores__team-name")) 
-															{
-															String team_motif = text_content.toUpperCase();
-															if (teams_tonight.containsKey(team_motif)) 
-																{
-																team_ctr++;
-																teams[team_ctr-1] = team_motif;
-																}
-															}
-														else if (class_name.contains("nhl-scores__team-score")) 
-															{
-															if (team_ctr > 0)
-																{
-																try {
-																	int score = Integer.parseInt(text_content);
-																	scores[team_ctr-1] = score;
-																	scores_found++;
-																	}
-																catch (Exception e)
-																	{
-																	e.printStackTrace();
-																	}
-																}
-															else break game_card;
-															}
-														else if (class_name.contains("nhl-scores__status-state-label")) 
-															{
-															if (text_content.toUpperCase().contains("FINAL")) game_has_ended = true;
-															}
-														}
-													}
-												
-												if (scores_found == 2)
-													{
-													if (!game_thread_control.containsKey(game_id)) 
-														{
-														game_thread_control.put(game_id, false);
-														
-														team_1_map.put(game_id, teams[0]);
-														team_2_map.put(game_id, teams[1]);
-														
-												    	String game_page = get_formatted_page("https://www.nhl.com/gamecenter/" + game_id).replaceAll(" +", "");
-												    	
-												    	int 
-												    	
-												    	index_of_season = game_page.indexOf("\"season\":") + 10,
-												    	index_of_closing_quote = game_page.indexOf("\"", index_of_season);
-												    	
-												    	String
-												    	
-												    	season = game_page.substring(index_of_season, index_of_closing_quote),
-												    	event_summary_id = "ES" + game_id.substring(4, game_id.length()) + ".HTM",
-												    	event_summary_url = "http://www.nhl.com/scores/htmlreports/" + season + "/" + event_summary_id;
-												    	
-												    	event_summary_urls.put(game_id, event_summary_url);
-														}
-
-													game_ended_flags.put(teams[0], game_has_ended);
-													game_ended_flags.put(teams[1], game_has_ended);
-													
-													boolean process_game = false;
-													
-													for (int i=0; i<2; i++)
-														{
-														String team_motif = teams[i];
-														
-														int 
-														
-														score_now = scores[i],
-														score_stored = teams_tonight.get(team_motif);
-			
-														if (score_now != score_stored)
-															{
-															log(team_motif + " | " + score_stored + " -> " + score_now);
-															teams_tonight.put(team_motif, score_now);
-															process_game = true;
-															}
-														}
-													
-													if (process_game) 
-														{
-														log("");
-															
-														if (game_thread_control.get(game_id) == false)
-															{
-															game_thread_control.put(game_id, true);
-															
-															new Thread() 
-																{
-														    	@Override
-																public void run() 
-														        	{
-														    		try {
-																		boolean 
-																		
-																		wait_for_sync = true,
-																		update_scores = process_game(game_id, wait_for_sync);
-																		
-																		game_thread_control.put(game_id, false);
-																		
-																		if (update_scores) call_CoinRoster("UpdateScores");
-															    		}
-														    		catch (Exception e)
-														    			{
-														    			game_thread_control.put(game_id, false);
-														    			e.printStackTrace();
-														    			}
-														    		
-														    		// timed confirmation pass in case assists are shuffled around
-																	
-																	new Thread() 
-																		{
-																    	@Override
-																		public void run() 
-																        	{
-																    		try {
-																	    		Thread.sleep(60000);
-																	    		
-																				boolean 
-																				
-																				wait_for_sync = false,
-																	    		update_scores = process_game(game_id, wait_for_sync);
-																				
-																	    		if (update_scores) call_CoinRoster("UpdateScores");
-																	    		}
-																    		catch (Exception e)
-																    			{
-																    			e.printStackTrace();
-																    			}
-																        	}
-																		}.start();
-														        	}
-																}.start();
-															}
-														}
-													}
-												}
-											}
-										
-										all_games_have_ended = true;
-										
-										for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
-											{
-										    boolean game_has_ended = entry.getValue();
-										    
-										    if (!game_has_ended)
-										    	{
-										    	all_games_have_ended = false;
-										    	break;
-										    	}
-											}
-										
-										if (all_games_have_ended)
-											{
-											new Thread() 
-												{
-										    	@Override
-												public void run() 
-										        	{
-										    		try {
-										    			log("");
-														log("2 min grace period before settling");
-														
-														Thread.sleep(120000);
-														
-														log("");
-														log("Re-scanning Event Summaries");
-														log("");
-														
-														for (Entry<String, Boolean> entry : game_thread_control.entrySet()) 
-															{
-														    String game_id = entry.getKey();
-														    
-														    boolean 
-															
-															wait_for_sync = false,
-															update_scores = process_game(game_id, wait_for_sync);
-															
-															if (update_scores) call_CoinRoster("UpdateScores");
-															}
-														
-														call_CoinRoster("SettleContest");
-														
-														System.exit(0);
-											    		}
-										    		catch (Exception e)
-										    			{
-										    			e.printStackTrace();
-										    			}
-										        	}
-												}.start();
-											}
-										}
-									}
-								}
-							});
-						Thread.sleep(1000);
-						}
-					catch (Exception e) 
-						{
-						e.printStackTrace();
-			            }
-			        }
-				}
-			}.start();
-        
+ 
         webengine.setUserAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
         webengine.load(score_board_url);
         
         stage.setScene(new Scene(webview, 800, 1200));
         stage.show();
+        
+        // main iterative loop
+
+        new Thread() 
+			{
+	    	@Override
+			public void run() 
+	        	{
+	    		while (running)
+		    		{
+		    		try {
+		    			Thread.sleep(1000);
+		    			
+						if (!player_scores.equals(player_scores_stored))
+			    			{
+				    		call_CoinRoster("UpdateScores");
+				    		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
+			    			}
+						
+						scan_scoreboard(webengine);
+						
+						boolean done = exit_if_games_ended();
+						
+						if (done) System.exit(0);
+			    		}
+		    		catch (Exception e)
+		    			{
+		    			e.printStackTrace();
+		    			}
+		    		}
+	        	}
+			}.start();
         }
+
+    private void scan_scoreboard(final WebEngine webengine)
+    	{
+		Platform.runLater(new Runnable()
+			{
+			@Override
+			public void run() 
+				{
+				if (webengine.getDocument() == null || webengine.getDocument().getDocumentElement() == null) return;
+					
+				NodeList divs = webengine.getDocument().getElementsByTagName("div");
+				List<HTMLElement> game_cards = new ArrayList<HTMLElement>();
+				
+				for (int i=0, limit=divs.getLength(); i<limit; i++) 
+					{
+					Node div_node = divs.item(i);
+					HTMLElement div_html = (HTMLElement) div_node;
+					String class_name = div_html.getClassName();
+					if (class_name != null && class_name.contains("nhl-scores__game")) game_cards.add(div_html);
+					}
+				
+				if (game_cards.size() == 0)
+					{
+					if (has_initialized) 
+						{
+						has_initialized = false;
+						webengine.reload();
+						}
+					}
+				else // there are game cards
+					{
+					has_initialized = true;
+					
+					for (HTMLElement game_card : game_cards)
+						{
+						game_card : 
+							{
+							final String game_id = game_card.getAttribute("id");
+
+							boolean game_has_ended = false;
+							
+							String[] teams = new String[2];
+							int[] scores = new int[2];
+							
+							int 
+							
+							team_ctr = 0,
+							scores_found = 0;
+							
+							NodeList gamecard_spans = game_card.getElementsByTagName("span");
+							
+							for (int i=0, limit=gamecard_spans.getLength(); i<limit; i++) 
+								{
+								Node node = gamecard_spans.item(i);
+								HTMLElement node_html = (HTMLElement) node;
+								
+								String 
+								
+								class_name = node_html.getClassName(),
+								text_content = node.getTextContent().trim();
+								
+								if (class_name == null || text_content == null) continue;
+								
+								if (class_name.contains("nhl-scores__team-name")) 
+									{
+									String team_motif = text_content.toUpperCase();
+									if (teams_tonight.containsKey(team_motif)) 
+										{
+										team_ctr++;
+										teams[team_ctr-1] = team_motif;
+										}
+									}
+								else if (class_name.contains("nhl-scores__team-score")) 
+									{
+									if (team_ctr > 0)
+										{
+										try {
+											int score = Integer.parseInt(text_content);
+											scores[team_ctr-1] = score;
+											scores_found++;
+											}
+										catch (Exception e)
+											{
+											e.printStackTrace();
+											}
+										}
+									else break game_card;
+									}
+								else if (class_name.contains("nhl-scores__status-state-label")) 
+									{
+									if (text_content.toUpperCase().contains("FINAL")) game_has_ended = true;
+									}
+								}
+							
+							if (scores_found == 2)
+								{
+								// initialize game if not yet initialized:
+								
+								if (!team_map.containsKey(game_id))
+									{
+									team_map.put(game_id, teams);
+							    	prepare_event_summary_link(game_id);
+									}
+								
+								game_ended_flags.put(game_id, game_has_ended);
+								
+								boolean process_game = false;
+								
+								for (int i=0; i<2; i++)
+									{
+									String team_motif = teams[i];
+
+									int 
+									
+									score_now = scores[i],
+									score_stored = teams_tonight.get(team_motif);
+
+									if (score_now != score_stored)
+										{
+										log(team_motif + " | " + score_stored + " -> " + score_now);
+										teams_tonight.put(team_motif, score_now);
+										process_game = true;
+										}
+									}
+								
+								if (process_game) 
+									{
+									log("");
+									
+									new Thread() 
+										{
+								    	@Override
+										public void run() 
+								        	{
+								    		try {
+												boolean wait_for_sync = true;
+												
+												process_game(game_id, wait_for_sync);
+									    		}
+								    		catch (Exception e)
+								    			{
+								    			e.printStackTrace();
+								    			}
+								        	}
+										}.start();
+									}
+								}
+							}
+						}
+					}
+				}
+			});
+    	}
     
+	private void prepare_event_summary_link(String game_id) 
+		{
+		String game_page = get_formatted_page("https://www.nhl.com/gamecenter/" + game_id).replaceAll(" +", "");
+    	
+    	int 
+    	
+    	index_of_season = game_page.indexOf("\"season\":") + 10,
+    	index_of_closing_quote = game_page.indexOf("\"", index_of_season);
+    	
+    	String
+    	
+    	season = game_page.substring(index_of_season, index_of_closing_quote),
+    	event_summary_id = "ES" + game_id.substring(4, game_id.length()) + ".HTM",
+    	event_summary_url = "http://www.nhl.com/scores/htmlreports/" + season + "/" + event_summary_id;
+    	
+    	event_summary_urls.put(game_id, event_summary_url);
+		}
+	
     static boolean process_game(String game_id, boolean wait_for_sync)
     	{
-    	String 
+    	String[] teams = team_map.get(game_id);
+
+    	String
     	
-    	team_1 = team_1_map.get(game_id), 
-    	team_2 = team_2_map.get(game_id);
+    	team_1 = teams[0],
+    	team_2 = teams[1];
     	
     	int 
     	
@@ -1048,7 +980,7 @@ public class LiveScoring_HOCKEY2 extends Application
 					
 					if (score_raw != null)
 						{
-						log(player_key + " | " + score_new);
+						//log(player_key + " | " + score_new);
 						
 						if (player_map.containsKey(player_key))
 							{
@@ -1111,6 +1043,48 @@ public class LiveScoring_HOCKEY2 extends Application
 		last_name = player_name_parts[number_of_name_parts-1];
 		
 		return last_name + "," + first_letter;
+    	}
+    
+    static boolean exit_if_games_ended()
+    	{
+    	if (game_ended_flags.isEmpty()) return false;
+    	
+		for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
+			{
+		    boolean game_has_ended = entry.getValue();
+		    if (!game_has_ended) return false;
+			}
+	
+		log("");
+		log("All games have ended - 2 min wait");
+		
+		running = false;
+		
+		try {
+			//Thread.sleep(120000);
+			Thread.sleep(5000);
+			} 
+		catch (InterruptedException e) 
+			{
+			e.printStackTrace();
+			}
+		
+		log("");
+		log("Re-scanning Event Summaries");
+		log("");
+		
+		for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
+			{
+		    String game_id = entry.getKey();
+		    
+		    boolean wait_for_sync = false;
+		    
+			process_game(game_id, wait_for_sync);
+			}
+		
+		call_CoinRoster("SettleContest");
+		
+		return true;
     	}
     
     static void call_CoinRoster(String method)
