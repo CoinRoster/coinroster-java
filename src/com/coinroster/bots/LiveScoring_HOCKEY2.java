@@ -390,6 +390,8 @@ public class LiveScoring_HOCKEY2 extends Application
 				if (game_cards.size() == 0 && has_initialized) // catch appearance of "Error" message where game cards previously loaded
 					{
 					has_initialized = false;
+					log("");
+					log("Reloading...");
 					webengine.reload();
 					}
 				else // there are game cards
