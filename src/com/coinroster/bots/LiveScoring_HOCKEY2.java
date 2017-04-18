@@ -1,8 +1,6 @@
 package com.coinroster.bots;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -10,8 +8,6 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -47,119 +43,36 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class LiveScoring_HOCKEY2 extends Application
     {
-	static boolean 
-	
-	running = true;
-
-	boolean has_initialized = false;
-	
-	static String cookie_string = null;
-			
 	static int contest_id = 79;
 	
-	static String score_board_url = "https://www.nhl.com/scores";
+	static boolean 
 	
+	running = true,
+	has_initialized = false;
+	
+	static String 
+	
+	cookie_string = null,
+	score_board_url = "https://www.nhl.com/scores";
+			
+	static ConcurrentHashMap<String, Integer> teams_tonight = new ConcurrentHashMap<String, Integer>();
+	static ConcurrentHashMap<String, Integer> players_in_contest = new ConcurrentHashMap<String, Integer>();
+
+	static ConcurrentHashMap<String, String> event_summary_urls = new ConcurrentHashMap<String, String>();
+	
+	static ConcurrentHashMap<Integer, Integer> player_scores = new ConcurrentHashMap<Integer, Integer>();
+	static ConcurrentHashMap<Integer, Integer> player_scores_stored = new ConcurrentHashMap<Integer, Integer>();
+	static ConcurrentHashMap<String, Integer> out_of_contest_player_scores = new ConcurrentHashMap<String, Integer>();
+	
+	static ConcurrentHashMap<String, Boolean> game_ended_flags = new ConcurrentHashMap<String, Boolean>();
+
 	static JSONObject 
 	
 	contest_details = null,
 	
     team_cities = new JSONObject(),
     team_motifs = new JSONObject();
-
-	static ConcurrentHashMap<String, Integer> teams_tonight = new ConcurrentHashMap<String, Integer>();
-	static ConcurrentHashMap<String, Integer> player_map = new ConcurrentHashMap<String, Integer>();
-	static ConcurrentHashMap<Integer, Integer> player_scores = new ConcurrentHashMap<Integer, Integer>();
-	static ConcurrentHashMap<Integer, Integer> player_scores_stored = new ConcurrentHashMap<Integer, Integer>();
-	static ConcurrentHashMap<String, Integer> out_of_contest_player_scores = new ConcurrentHashMap<String, Integer>();
-	static ConcurrentHashMap<String, String> event_summary_urls = new ConcurrentHashMap<String, String>();
-	static ConcurrentHashMap<String, String[]> team_map = new ConcurrentHashMap<String, String[]>();
-	static ConcurrentHashMap<String, Boolean> game_ended_flags = new ConcurrentHashMap<String, Boolean>();
 	
-    public static void main(String[] args) throws Exception
-        {
-        Platform.setImplicitExit(true);
-        
-        log("");
-		log("Getting CoinRoster contest details: ");
-		log("");
-		
-		JSONObject post_data = new JSONObject();
-		
-		post_data.put("username", "score_bot");
-		post_data.put("password", "!cr_score_updater_4/15/2017");
-		
-		new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/Login.api", post_data.toString());
-		
-		post_data = new JSONObject();
-		
-		post_data.put("contest_id", contest_id);
-		
-		List<String> contest_JSON = new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/GetContestDetails.api", post_data.toString());
-		
-		contest_details = new JSONObject(contest_JSON.get(0));
-		
-		String sport = contest_details.getString("sub_category");
-		
-		if (!sport.equals("HOCKEY"))
-			{
-			log("Contest is not a HOCKEY contest!");
-			log("Please use a different live-scoring application or enter the correct contest ID");
-			System.exit(0);
-			}
-		
-        populate_teams();
-        
-		JSONArray option_table = new JSONArray(contest_details.getString("option_table"));
-		
-		int number_of_players = option_table.length();
-				
-		for (int i=0; i<number_of_players; i++)
-			{
-			JSONObject player = option_table.getJSONObject(i);
-			
-			int player_id = player.getInt("id");
-			
-			String 
-			
-			player_name_raw = player.getString("name").replaceAll(" +", " "),
-			player_name = player_name_raw.substring(0, player_name_raw.lastIndexOf(" ")),
-			player_key = get_player_key(player_name);
-			
-			log(player_key);
-			
-			String[] player_name_parts = player_name_raw.split(" ");
-			int number_of_name_parts = player_name_parts.length; // get rid of team
-			
-			String 
-			
-			team_acronym = player_name_parts[number_of_name_parts-1],
-			team_motif = team_motifs.getString(team_acronym).toUpperCase();
-			
-			if (!teams_tonight.containsKey(team_motif)) teams_tonight.put(team_motif, 0);
-
-			if (player_map.containsKey(player_key)) log("!!!!!!!! Collision: " + player_key);
-			
-			player_map.put(player_key, player_id);
-			player_scores.put(player_id, 0);
-			}
-		
-		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
-
-		log("");
-		log("Starting NHL live scoring");
-		log("");
-		
-		try{
-			launch(args);
-			}
-		catch (Exception e)
-			{
-			e.printStackTrace();
-			}
-        }
-
-//-----------------------------------------------------------------------------------------------------   
-          
     static void populate_teams() throws JSONException
     	{
     	team_cities.put("ANA", "Anaheim");
@@ -252,32 +165,561 @@ public class LiveScoring_HOCKEY2 extends Application
         team_cities.put("WPG", "Winnipeg");
         team_motifs.put("WPG", "Jets");
     	}
-    
-	static String get_formatted_page(String url)
-		{
-		List<String> page = new LiveScoring_HOCKEY2().get_page(url);
-		
-		StringBuilder builder = new StringBuilder();
-		
-		for (int i=0; i<page.size(); i++) builder.append(page.get(i));
-
-		String page_string = builder.toString();
-
-		page_string = page_string.replaceAll("\n", " ");
-		page_string = page_string.replaceAll("\t", " ");
-		page_string = page_string.replaceAll(" +", " ");
-		page_string = page_string.replaceAll("> ", ">");
-		page_string = page_string.replaceAll(" <", "<");
-        
-        return page_string;
-		}
 	
+	static int[] scan_schedule = new int[]{
+		15,
+		10,
+		5,
+		2,
+		2,
+		2,
+		2,
+		2,
+		2,
+		2,
+		2,
+		2,
+		2,
+		5,
+		5,
+		10,
+		10,
+		10,
+		20,
+		20,
+		20,
+		30
+	};
+
+    public static void main(String[] args) throws Exception
+        {
+        Platform.setImplicitExit(true);
+        
+        log("");
+		log("Getting CoinRoster contest details: ");
+		log("");
+		
+		JSONObject post_data = new JSONObject();
+		
+		post_data.put("username", "score_bot");
+		post_data.put("password", "!cr_score_updater_4/15/2017");
+		
+		new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/Login.api", post_data.toString());
+		
+		post_data = new JSONObject();
+		post_data.put("contest_id", contest_id);
+		
+		List<String> contest_JSON = new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/GetContestDetails.api", post_data.toString());
+		
+		contest_details = new JSONObject(contest_JSON.get(0));
+		
+		String sport = contest_details.getString("sub_category");
+		
+		if (!sport.equals("HOCKEY"))
+			{
+			log("Contest is not a HOCKEY contest!");
+			log("Please use a different live-scoring application or enter the correct contest ID");
+			System.exit(0);
+			}
+		
+        populate_teams();
+        
+		JSONArray option_table = new JSONArray(contest_details.getString("option_table"));
+		
+		int number_of_players = option_table.length();
+				
+		for (int i=0; i<number_of_players; i++)
+			{
+			JSONObject player = option_table.getJSONObject(i);
+			
+			int player_id = player.getInt("id");
+			
+			String 
+			
+			player_name_raw = player.getString("name").replaceAll(" +", " "),
+			player_name = player_name_raw.substring(0, player_name_raw.lastIndexOf(" ")),
+			player_key = get_player_key(player_name);
+			
+			log(player_key);
+			
+			String[] player_name_parts = player_name_raw.split(" ");
+			int number_of_name_parts = player_name_parts.length; // get rid of team
+			
+			String 
+			
+			team_acronym = player_name_parts[number_of_name_parts-1],
+			team_motif = team_motifs.getString(team_acronym).toUpperCase();
+			
+			if (!teams_tonight.containsKey(team_motif)) teams_tonight.put(team_motif, 0);
+
+			if (players_in_contest.containsKey(player_key)) log("!!!!!!!! Collision: " + player_key);
+			
+			players_in_contest.put(player_key, player_id);
+			player_scores.put(player_id, 0);
+			}
+		
+		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
+
+		log("");
+		log("Starting NHL live scoring");
+		log("");
+		
+		launch(args);
+        }
+
+//-----------------------------------------------------------------------------------------------------   
+    	
+    // CONVERT PLAYER NAME INTO KEY WITH FORMAT    LASTNAME,F    (F = first letter of first name)
+    
+    static String get_player_key(String player_name)
+    	{
+      	player_name = player_name.toUpperCase();
+      	
+      	String[] player_name_parts = player_name.split(" ");
+  		int number_of_name_parts = player_name_parts.length;
+  		
+  		String 
+  		
+  		first_name = player_name_parts[0],
+  		first_letter = first_name.substring(0, 1),
+  		last_name = player_name_parts[number_of_name_parts-1];
+  		
+  		return last_name + "," + first_letter;
+      	}
+
+//-----------------------------------------------------------------------------------------------------   
+       
+    // FETCH AND STORE EVENT SUMMARY LINK FOR EACH GAME - ONLY CALLED ONCE PER GAME
+    
+  	private void prepare_event_summary_link(String game_id) 
+  		{
+  		String game_page = get_formatted_page("https://www.nhl.com/gamecenter/" + game_id).replaceAll(" +", "");
+      	
+      	int 
+      	
+      	index_of_season = game_page.indexOf("\"season\":") + 10,
+      	index_of_closing_quote = game_page.indexOf("\"", index_of_season);
+      	
+      	String
+      	
+      	season = game_page.substring(index_of_season, index_of_closing_quote),
+      	
+      	event_summary_id = "ES" + game_id.substring(4, game_id.length()) + ".HTM",
+      	event_summary_url = "http://www.nhl.com/scores/htmlreports/" + season + "/" + event_summary_id;
+      	
+      	event_summary_urls.put(game_id, event_summary_url);
+  		}
+
+//-----------------------------------------------------------------------------------------------------   
+         
+    // MAIN ITERATIVE LOOP
+    
+    @Override
+    public void start(Stage stage) throws Exception
+        {    	
+    	System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    	
+        WebView webview = new WebView();
+        
+        final WebEngine webengine = webview.getEngine();
+ 
+        webengine.setUserAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
+        webengine.load(score_board_url);
+        
+        stage.setScene(new Scene(webview, 800, 1200));
+        stage.show();
+        
+        // main iterative loop
+
+        new Thread() 
+			{
+	    	@Override
+			public void run() 
+	        	{
+	    		while (running)
+		    		{
+		    		try {
+		    			Thread.sleep(1000);
+		    			
+						if (!player_scores.equals(player_scores_stored))
+			    			{
+				    		call_CoinRoster("UpdateScores");
+				    		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
+			    			}
+						
+						scan_scoreboard(webengine);
+						
+						boolean done = exit_if_games_ended();
+						
+						if (done) System.exit(0);
+			    		}
+		    		catch (Exception e)
+		    			{
+		    			e.printStackTrace();
+		    			}
+		    		}
+	        	}
+			}.start();
+        }
+
+//-----------------------------------------------------------------------------------------------------   
+     
+    // SCAN SCOREBOARD, TRIGGER process_game() WHEN SCORES UPDATE
+    
+    private void scan_scoreboard(final WebEngine webengine)
+    	{
+		Platform.runLater(new Runnable()
+			{
+			@Override
+			public void run() 
+				{
+				if (webengine.getDocument() == null || webengine.getDocument().getDocumentElement() == null) return;
+					
+				List<HTMLElement> game_cards = new ArrayList<HTMLElement>();
+
+				NodeList divs = webengine.getDocument().getElementsByTagName("div");
+				
+				for (int i=0, limit=divs.getLength(); i<limit; i++) 
+					{
+					Node div_node = divs.item(i);
+					HTMLElement div_html = (HTMLElement) div_node;
+					String class_name = div_html.getClassName();
+					if (class_name != null && class_name.contains("nhl-scores__game")) game_cards.add(div_html);
+					}
+				
+				if (game_cards.size() == 0 && has_initialized) // catch appearance of "Error" message where game cards previously loaded
+					{
+					has_initialized = false;
+					webengine.reload();
+					}
+				else // there are game cards
+					{
+					has_initialized = true;
+					
+					for (HTMLElement game_card : game_cards)
+						{
+						game_card : 
+							{
+							final String game_id = game_card.getAttribute("id");
+
+							boolean game_has_ended = false;
+							
+							String[] teams = new String[2];
+							int[] scores = new int[2];
+							
+							int 
+							
+							team_ctr = 0,
+							scores_found = 0;
+							
+							NodeList gamecard_spans = game_card.getElementsByTagName("span");
+							
+							for (int i=0, limit=gamecard_spans.getLength(); i<limit; i++) 
+								{
+								Node node = gamecard_spans.item(i);
+								HTMLElement node_html = (HTMLElement) node;
+								
+								String 
+								
+								class_name = node_html.getClassName(),
+								text_content = node.getTextContent().trim();
+								
+								if (class_name == null || text_content == null) continue;
+								
+								if (class_name.contains("nhl-scores__team-name")) 
+									{
+									String team_motif = text_content.toUpperCase();
+									
+									if (teams_tonight.containsKey(team_motif)) 
+										{
+										team_ctr++;
+										teams[team_ctr-1] = team_motif;
+										}
+									}
+								else if (class_name.contains("nhl-scores__team-score")) 
+									{
+									if (team_ctr > 0)
+										{
+										try {
+											int score = Integer.parseInt(text_content);
+											scores[team_ctr-1] = score;
+											scores_found++;
+											}
+										catch (Exception e)
+											{
+											e.printStackTrace();
+											}
+										}
+									else break game_card;
+									}
+								else if (class_name.contains("nhl-scores__status-state-label")) 
+									{
+									if (text_content.toUpperCase().contains("FINAL")) game_has_ended = true;
+									}
+								}
+							
+							if (scores_found == 2)
+								{
+								if (!event_summary_urls.containsKey(game_id)) prepare_event_summary_link(game_id);
+
+								game_ended_flags.put(game_id, game_has_ended);
+								
+								boolean process_game = false;
+								
+								for (int i=0; i<2; i++)
+									{
+									String team_motif = teams[i];
+
+									int 
+									
+									score_now = scores[i],
+									score_stored = teams_tonight.get(team_motif);
+
+									if (score_now != score_stored)
+										{
+										log(team_motif + " | " + score_stored + " -> " + score_now);
+										
+										teams_tonight.put(team_motif, score_now);
+										
+										process_game = true;
+										}
+									}
+								
+								if (process_game) 
+									{
+									new Thread() 
+										{
+								    	@Override
+										public void run() 
+								        	{
+								    		try {
+												boolean full_scan_schedule = true;
+												
+												scan_event_summary(game_id, full_scan_schedule);
+									    		}
+								    		catch (Exception e)
+								    			{
+								    			e.printStackTrace();
+								    			}
+								        	}
+										}.start();
+									}
+								}
+							}
+						}
+					}
+				}
+			});
+    	}
+
+//-----------------------------------------------------------------------------------------------------   
+	   
+    // SCAN EVENT SUMMARY PAGE
+    
+    static void scan_event_summary(String game_id, boolean full_scan_schedule)
+    	{
+    	String event_summary_url = event_summary_urls.get(game_id);
+    	
+    	for (int secs : scan_schedule)
+    		{
+    		try {
+		    	String event_summary = get_formatted_page(event_summary_url);
+
+		    	Pattern tr_open = Pattern.compile("(<tr)");
+				Matcher tr_match = tr_open.matcher(event_summary);
+				
+				while (tr_match.find()) 
+					{
+					int 
+					
+					row_start = tr_match.start(),
+					row_end = event_summary.indexOf("</tr>", row_start);
+					
+					String row = event_summary.substring(row_start, row_end + 5);
+					
+					List<String> row_data = get_row_data(row);
+			
+					if (row_data.size() != 25) continue;
+					
+					String player_name_cell = row_data.get(2);
+					
+					if (!player_name_cell.contains(",")) continue;
+					
+					String[] player_name_parts = player_name_cell.split(", ");
+					
+					String 
+					
+					last_name = player_name_parts[0],
+					first_name = player_name_parts[1],
+					
+					player_name = first_name + " " + last_name,
+			    	player_key = get_player_key(player_name),
+			    	
+			    	score_raw = row_data.get(5);
+					
+					int score_new = 0;
+					
+					try {
+						score_new = score_raw == null ? 0 : Integer.parseInt(score_raw);
+						}
+					catch (Exception e)
+						{
+						log("!!!!!! error for " + player_key + " with score_raw: " + score_raw);
+						continue;
+						}
+					
+					if (score_raw != null)
+						{
+						//log(player_key + " | " + score_new);
+						
+						if (players_in_contest.containsKey(player_key))
+							{
+							int 
+							
+							player_id = players_in_contest.get(player_key),
+							score_old = player_scores.get(player_id);
+							
+							if (score_old != score_new) log("IN: " + player_key + " | " + score_old + " -> " + score_new);
+	
+							player_scores.put(player_id, score_new);
+							}
+						else // player is not in contest
+							{
+							if (out_of_contest_player_scores.containsKey(player_key))
+								{
+								int score_old = out_of_contest_player_scores.get(player_key);
+								
+								if (score_old != score_new) log("OUT: " + player_key + " | " + score_old + " -> " + score_new);
+								}
+							else log("OUT: " + player_key + " | " + 0 + " -> " + score_new);
+
+							out_of_contest_player_scores.put(player_key, score_new);
+							}
+						}
+					}
+		    	}
+	    	catch (Exception e)
+	    		{
+	    		e.printStackTrace();
+	    		}
+    		finally
+    			{
+    	    	if (!full_scan_schedule) return;
+    	    	
+		    	try {
+					Thread.sleep(secs * 1000);
+					} 
+		    	catch (InterruptedException e) 
+		    		{
+					e.printStackTrace();
+		    		}
+    			}
+    		}
+    	}
+
+//-----------------------------------------------------------------------------------------------------   
+      
+    // DUAL-USE API CALL: UpdateScores and SettleContest
+    
+    static void call_CoinRoster(String method)
+    	{
+    	try {
+			log("");
+	    	log(method);
+			log("");
+			
+	    	JSONArray scores = new JSONArray();
+	    	
+	    	for (Entry<Integer, Integer> entry : player_scores.entrySet())
+				{
+			    int
+			    
+			    player_id = entry.getKey(),
+			    player_score = entry.getValue();
+
+			    JSONObject player_item = new JSONObject();
+			    
+			    player_item.put("id", player_id);
+			    player_item.put("score_normalized", player_score);
+			    player_item.put("score_raw", Integer.toString(player_score));
+
+			    scores.put(player_item);
+				}
+
+			JSONObject args = new JSONObject();
+	    	
+	    	args.put("contest_id", contest_id);
+	    	args.put("normalization_scheme", "INTEGER");
+	    	args.put("player_scores", scores);
+				 
+			List<String> response = new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/" + method + ".api", args.toString());
+			
+			JSONObject response_JSON = new JSONObject(response.get(0));
+
+			if (response_JSON.getString("status").equals("1")) log(method + ": OK");
+			else log("!!!!! " + response_JSON.getString("error"));
+	    	}
+    	catch (Exception e)
+    		{
+    		e.printStackTrace();
+    		}
+    	}
+
+//-----------------------------------------------------------------------------------------------------   
+      	 
+    // CODE BLOCK THAT GETS RUN IF ALL IN-CONTEST GAMES HAVE ENDED
+    
+    static boolean exit_if_games_ended()
+      	{
+      	if (game_ended_flags.isEmpty()) return false;
+      	
+  		for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
+  			{
+  		    boolean game_has_ended = entry.getValue();
+  		    if (!game_has_ended) return false;
+  			}
+  	
+  		log("");
+  		log("All games have ended - 2 min wait");
+  		
+  		running = false;
+  		
+  		try {
+  			Thread.sleep(120000);
+  			} 
+  		catch (InterruptedException e) 
+  			{
+  			e.printStackTrace();
+  			}
+  		
+  		log("");
+  		log("Re-scanning Event Summaries");
+  		log("");
+  		
+  		for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
+  			{
+  		    String game_id = entry.getKey();
+  		    
+  		    boolean full_scan_schedule = false;
+  		    
+  			scan_event_summary(game_id, full_scan_schedule);
+  			}
+  		
+  		call_CoinRoster("SettleContest");
+  		
+  		return true;
+      	}
+
+//-----------------------------------------------------------------------------------------------------     
+// HELPER FUNCTIONS BELOW 
+//-----------------------------------------------------------------------------------------------------   
+
+    // EVERYTHING TO DO WITH HTTP(S) GET/POST REQUESTS
+    
 	List<String> get_page(String url_string) 
 		{
-		URL url;
-		
 		try {
-			url = new URL(url_string);
+			URL url = new URL(url_string);
 			
 			if (url_string.startsWith("https://")) 
 				{
@@ -304,7 +746,7 @@ public class LiveScoring_HOCKEY2 extends Application
 					return page;
 					}
 				}
-			else // regular htp
+			else // regular http
 				{
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				
@@ -403,54 +845,17 @@ public class LiveScoring_HOCKEY2 extends Application
 		
 		return null;
 		}
-	
-	/*private static String full_encode(String in)
-		{
-		in = in.replace(" ", "%20");
-		in = in.replace("!", "%21");
-		in = in.replace("\"", "%22");
-		in = in.replace("#", "%23");
-		in = in.replace("$", "%24");
-		in = in.replace("%", "%25");
-		in = in.replace("&", "%26");
-		in = in.replace("'", "%27");
-		in = in.replace("\\(", "%28");
-		in = in.replace("\\)", "%29");
-		in = in.replace("\\*", "%2A");
-		in = in.replace("\\+", "%2B");
-		in = in.replace(",", "%2C");
-		in = in.replace("-", "%2D");
-		in = in.replace("\\.", "%2E");
-		in = in.replace("/", "%2F");
-		in = in.replace(":", "%3A");
-		in = in.replace(";", "%3B");
-		in = in.replace("<", "%3C");
-		in = in.replace("=", "%3D");
-		in = in.replace(">", "%3E");
-		in = in.replace("\\?", "%3F");
-		in = in.replace("@", "%40");
-		in = in.replace("\\[", "%5B");
-		in = in.replace("\\\\", "%5C");
-		in = in.replace("\\]", "%5D");
-		in = in.replace("^", "%5E");
-		in = in.replace("_", "%5F");
-		in = in.replace("`", "%60");
-		in = in.replace("\\{", "%7B");
-		in = in.replace("|", "%7C");
-		in = in.replace("\\}", "%7D");
-		in = in.replace("~", "%7E");
-		in = in.replace("`", "%80");
-		
-		return in;
-		}*/
 
-	private void print_https_cert(HttpsURLConnection con) {
-		if (con != null) {
+	private void print_https_cert(HttpsURLConnection con) 
+		{
+		if (con != null)
+			{
 			try {
 				con.getResponseCode();
 				con.getCipherSuite();
 				Certificate[] certs = con.getServerCertificates();
-				for (@SuppressWarnings("unused") Certificate cert : certs) {
+				for (@SuppressWarnings("unused") Certificate cert : certs) 
+					{
 					// System.out.println("Cert Type : " + cert.getType());
 					// System.out.println("Cert Hash Code : " +
 					// cert.hashCode());
@@ -459,107 +864,44 @@ public class LiveScoring_HOCKEY2 extends Application
 					// System.out.println("Cert Public Key Format : "
 					// + cert.getPublicKey().getFormat());
 					// System.out.println("\n");
+					}
+				} 
+			catch (SSLPeerUnverifiedException e) 
+				{
+				e.printStackTrace();
+				} 
+			catch (IOException e) 
+				{
+				e.printStackTrace();
 				}
-			} catch (SSLPeerUnverifiedException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
-	}
 
-	@SuppressWarnings("unused")
-	private static int time_string_to_seconds(String time_string)
+	static String get_formatted_page(String url)
 		{
-		String[] components = time_string.split(":");
+		List<String> page = new LiveScoring_HOCKEY2().get_page(url);
 		
-		int
+		StringBuilder builder = new StringBuilder();
 		
-		hours = 0,
-		mins = 0,
-		secs = 0;
-		
-		if (components.length == 2) // minutes:seconds
-			{
-			mins = Integer.parseInt(components[0]);
-			secs = Integer.parseInt(components[1]);
-			}
-		else if (components.length == 3) // hours:minutes:seconds
-			{
-			hours = Integer.parseInt(components[0]);
-			mins = Integer.parseInt(components[1]);
-			secs = Integer.parseInt(components[2]);
-			}
-		
-		int total_seconds = hours * 3600 + mins * 60 + secs;
-		
-		return total_seconds;
+		for (int i=0; i<page.size(); i++) builder.append(page.get(i));
+
+		String page_string = builder.toString();
+
+		page_string = page_string.replaceAll("\n", " ");
+		page_string = page_string.replaceAll("\t", " ");
+		page_string = page_string.replaceAll(" +", " ");
+		page_string = page_string.replaceAll("> ", ">");
+		page_string = page_string.replaceAll(" >", ">");
+		page_string = page_string.replaceAll("< ", "<");
+		page_string = page_string.replaceAll(" <", "<");
+        
+        return page_string;
 		}
+    
+//-----------------------------------------------------------------------------------------------------   
+
+	// CONVERT ROW STRING TO LIST<STRING> OF CELL CONTENTS
 	
-	@SuppressWarnings("unused")
-	private static int count_occurrences(String str, String findStr)
-		{
-		int count = 0;
-		int lastIndex = 0;
-
-		while(lastIndex != -1)
-			{
-		    lastIndex = str.indexOf(findStr,lastIndex);
-
-		    if(lastIndex != -1)
-		    	{
-		        count ++;
-		        lastIndex += findStr.length();
-		    	}
-			}
-		
-		return count;
-		}
-	
-	@SuppressWarnings("unused")
-	private static String get_row(String html, int search_index)
-       {
-       String row = null;
-       int
-      
-       tr_open_index = -1,
-       tr_close_index = -1;
-      
-       for (int i=search_index; i >=0; i--)
-           {
-           if (
-               String.valueOf(html.charAt(i)).equals("r") &&
-               String.valueOf(html.charAt(i-1)).equals("t") &&
-               String.valueOf(html.charAt(i-2)).equals("<")
-               )
-               {
-               tr_open_index = i-2;
-               break;
-               }
-           }
-      
-       int html_length = html.length();
-      
-       for (int i=search_index; i <=html_length; i++)
-           {
-           if (
-               String.valueOf(html.charAt(i)).equals("<") &&
-               String.valueOf(html.charAt(i+1)).equals("/") &&
-               String.valueOf(html.charAt(i+2)).equals("t") &&
-               String.valueOf(html.charAt(i+3)).equals("r") &&
-               String.valueOf(html.charAt(i+4)).equals(">")
-               )
-               {
-               tr_close_index = i+5;
-               break;
-               }
-           }
-
-       if (tr_open_index != -1 && tr_close_index != -1) row = html.substring(tr_open_index, tr_close_index);
-
-       return row;           
-       }
-
 	private static List<String> get_row_data(String row) throws Exception
 		{
 		Pattern td_open = Pattern.compile("(<td)");
@@ -606,535 +948,15 @@ public class LiveScoring_HOCKEY2 extends Application
 		
 		return cell_data;
    		}
-	
-	@SuppressWarnings("unused")
-	private static String get_attribute(String line, String attribute)
-		{
-		attribute += "=\"";
-		
-		line = line.substring(line.indexOf(attribute) + attribute.length(), line.length());
-		line = line.substring(0,line.indexOf("\""));
-		
-		return line;
-		}
+    
+//-----------------------------------------------------------------------------------------------------   
 
-	final static int MAX_PRECISION = 8;
-	public static double multiply(double in1, double in2, int max_precision)
-		{
-		if (max_precision == 0) max_precision = MAX_PRECISION;
-		BigDecimal out = BigDecimal.valueOf(in1).multiply(BigDecimal.valueOf(in2));
-		out = out.setScale(max_precision, RoundingMode.HALF_UP);
-		return out.doubleValue();
-		}
-	public static double divide(double in1, double in2, int max_precision) // requires rounding in the actual divide function
-		{
-		if (max_precision == 0) max_precision = MAX_PRECISION;
-		BigDecimal out = BigDecimal.valueOf(in1).divide(BigDecimal.valueOf(in2), max_precision, RoundingMode.HALF_UP);
-		return out.doubleValue();
-		}
-	public static double add(double in1, double in2, int max_precision)
-		{
-		if (max_precision == 0) max_precision = MAX_PRECISION;
-		BigDecimal out = BigDecimal.valueOf(in1).add(BigDecimal.valueOf(in2));
-		out = out.setScale(max_precision, RoundingMode.HALF_UP);
-		return out.doubleValue();
-		}
-	public static double subtract(double in1, double in2, int max_precision)
-		{
-		if (max_precision == 0) max_precision = MAX_PRECISION;
-		BigDecimal out = BigDecimal.valueOf(in1).subtract(BigDecimal.valueOf(in2));
-		out = out.setScale(max_precision, RoundingMode.HALF_UP);
-		return out.doubleValue();
-		}
-	
 	static void log(Object msg)
 		{
 		System.out.println(new SimpleDateFormat("MMM d h:mm:ss a").format(new Date()) + " : " + String.valueOf(msg));
 		}
-   
-    @Override
-    public void start(Stage stage) throws Exception
-        {    	
-    	System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-    	
-        WebView webview = new WebView();
-        
-        final WebEngine webengine = webview.getEngine();
- 
-        webengine.setUserAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
-        webengine.load(score_board_url);
-        
-        stage.setScene(new Scene(webview, 800, 1200));
-        stage.show();
-        
-        // main iterative loop
-
-        new Thread() 
-			{
-	    	@Override
-			public void run() 
-	        	{
-	    		while (running)
-		    		{
-		    		try {
-		    			Thread.sleep(1000);
-		    			
-						if (!player_scores.equals(player_scores_stored))
-			    			{
-				    		call_CoinRoster("UpdateScores");
-				    		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
-			    			}
-						
-						scan_scoreboard(webengine);
-						
-						boolean done = exit_if_games_ended();
-						
-						if (done) System.exit(0);
-			    		}
-		    		catch (Exception e)
-		    			{
-		    			e.printStackTrace();
-		    			}
-		    		}
-	        	}
-			}.start();
-        }
-
-    private void scan_scoreboard(final WebEngine webengine)
-    	{
-		Platform.runLater(new Runnable()
-			{
-			@Override
-			public void run() 
-				{
-				if (webengine.getDocument() == null || webengine.getDocument().getDocumentElement() == null) return;
-					
-				NodeList divs = webengine.getDocument().getElementsByTagName("div");
-				List<HTMLElement> game_cards = new ArrayList<HTMLElement>();
-				
-				for (int i=0, limit=divs.getLength(); i<limit; i++) 
-					{
-					Node div_node = divs.item(i);
-					HTMLElement div_html = (HTMLElement) div_node;
-					String class_name = div_html.getClassName();
-					if (class_name != null && class_name.contains("nhl-scores__game")) game_cards.add(div_html);
-					}
-				
-				if (game_cards.size() == 0)
-					{
-					if (has_initialized) 
-						{
-						has_initialized = false;
-						webengine.reload();
-						}
-					}
-				else // there are game cards
-					{
-					has_initialized = true;
-					
-					for (HTMLElement game_card : game_cards)
-						{
-						game_card : 
-							{
-							final String game_id = game_card.getAttribute("id");
-
-							boolean game_has_ended = false;
-							
-							String[] teams = new String[2];
-							int[] scores = new int[2];
-							
-							int 
-							
-							team_ctr = 0,
-							scores_found = 0;
-							
-							NodeList gamecard_spans = game_card.getElementsByTagName("span");
-							
-							for (int i=0, limit=gamecard_spans.getLength(); i<limit; i++) 
-								{
-								Node node = gamecard_spans.item(i);
-								HTMLElement node_html = (HTMLElement) node;
-								
-								String 
-								
-								class_name = node_html.getClassName(),
-								text_content = node.getTextContent().trim();
-								
-								if (class_name == null || text_content == null) continue;
-								
-								if (class_name.contains("nhl-scores__team-name")) 
-									{
-									String team_motif = text_content.toUpperCase();
-									if (teams_tonight.containsKey(team_motif)) 
-										{
-										team_ctr++;
-										teams[team_ctr-1] = team_motif;
-										}
-									}
-								else if (class_name.contains("nhl-scores__team-score")) 
-									{
-									if (team_ctr > 0)
-										{
-										try {
-											int score = Integer.parseInt(text_content);
-											scores[team_ctr-1] = score;
-											scores_found++;
-											}
-										catch (Exception e)
-											{
-											e.printStackTrace();
-											}
-										}
-									else break game_card;
-									}
-								else if (class_name.contains("nhl-scores__status-state-label")) 
-									{
-									if (text_content.toUpperCase().contains("FINAL")) game_has_ended = true;
-									}
-								}
-							
-							if (scores_found == 2)
-								{
-								// initialize game if not yet initialized:
-								
-								if (!team_map.containsKey(game_id))
-									{
-									team_map.put(game_id, teams);
-							    	prepare_event_summary_link(game_id);
-									}
-								
-								game_ended_flags.put(game_id, game_has_ended);
-								
-								boolean process_game = false;
-								
-								for (int i=0; i<2; i++)
-									{
-									String team_motif = teams[i];
-
-									int 
-									
-									score_now = scores[i],
-									score_stored = teams_tonight.get(team_motif);
-
-									if (score_now != score_stored)
-										{
-										log(team_motif + " | " + score_stored + " -> " + score_now);
-										teams_tonight.put(team_motif, score_now);
-										process_game = true;
-										}
-									}
-								
-								if (process_game) 
-									{
-									log("");
-									
-									new Thread() 
-										{
-								    	@Override
-										public void run() 
-								        	{
-								    		try {
-												boolean wait_for_sync = true;
-												
-												process_game(game_id, wait_for_sync);
-									    		}
-								    		catch (Exception e)
-								    			{
-								    			e.printStackTrace();
-								    			}
-								        	}
-										}.start();
-									}
-								}
-							}
-						}
-					}
-				}
-			});
-    	}
     
-	private void prepare_event_summary_link(String game_id) 
-		{
-		String game_page = get_formatted_page("https://www.nhl.com/gamecenter/" + game_id).replaceAll(" +", "");
-    	
-    	int 
-    	
-    	index_of_season = game_page.indexOf("\"season\":") + 10,
-    	index_of_closing_quote = game_page.indexOf("\"", index_of_season);
-    	
-    	String
-    	
-    	season = game_page.substring(index_of_season, index_of_closing_quote),
-    	event_summary_id = "ES" + game_id.substring(4, game_id.length()) + ".HTM",
-    	event_summary_url = "http://www.nhl.com/scores/htmlreports/" + season + "/" + event_summary_id;
-    	
-    	event_summary_urls.put(game_id, event_summary_url);
-		}
-	
-    static boolean process_game(String game_id, boolean wait_for_sync)
-    	{
-    	String[] teams = team_map.get(game_id);
+//-----------------------------------------------------------------------------------------------------   
 
-    	String
-    	
-    	team_1 = teams[0],
-    	team_2 = teams[1];
-    	
-    	int 
-    	
-    	team_1_score = teams_tonight.get(team_1),
-    	team_2_score = teams_tonight.get(team_2),
-    	
-    	team_1_ES_score = 0,
-    	team_2_ES_score = 0;
-    	
-    	boolean something_changed = false;
-    	
-    	String event_summary_url = event_summary_urls.get(game_id);
-    	
-    	while (team_1_ES_score != team_1_score || team_2_ES_score != team_2_score || something_changed == false)
-	    	{
-	    	try {
-		    	String event_summary = get_formatted_page(event_summary_url);
-
-		    	try {
-			    	int
-			    	
-			    	body_open = event_summary.indexOf("<div"),
-			    	body_close = event_summary.lastIndexOf("</div>") + 6;
-			    	
-			    	event_summary = "<body>" + event_summary.substring(body_open, body_close) + "</body>";
-			    	
-			    	org.jsoup.nodes.Document doc = Jsoup.parse(event_summary);
-			    	
-			    	Element 
-			    	
-			    	home_table = doc.select("table#Home").first(),
-			    	visitor_table = doc.select("table#Visitor").first();
-			    	
-			    	String
-			    	
-			    	home_string = home_table.text(),
-			    	visitor_string = visitor_table.text();
-			    	
-			    	String[]
-			    	
-			    	home_data = home_string.split(" "),
-					vistor_data = visitor_string.split(" ");
-			    	
-			    	if (home_string.contains(team_1) && visitor_string.contains(team_2))
-			    		{
-			    		team_1_ES_score = Integer.parseInt(home_data[1]);
-			    		team_2_ES_score = Integer.parseInt(vistor_data[1]);
-			    		}
-			    	else if (visitor_string.contains(team_1) && home_string.contains(team_2))
-			    		{
-			    		team_1_ES_score = Integer.parseInt(vistor_data[1]);
-			    		team_2_ES_score = Integer.parseInt(home_data[1]);
-			    		}
-			    	}
-		    	catch (Exception e)
-		    		{
-		    		e.printStackTrace();
-		    		}
-		    	
-		    	Pattern tr_open = Pattern.compile("(<tr)");
-				Matcher tr_match = tr_open.matcher(event_summary);
-				
-				while (tr_match.find()) 
-					{
-					int row_start = tr_match.start();
-					int row_end = event_summary.indexOf("</tr>", row_start);
-					String row = event_summary.substring(row_start, row_end + 5);
-					
-					List<String> row_data = get_row_data(row);
-					
-					int number_of_cells = row_data.size();
-					
-					if (number_of_cells != 25) continue;
-					
-					String player_name_cell = row_data.get(2);
-					
-					if (!player_name_cell.contains(",")) continue;
-					
-					String[] player_name_parts = player_name_cell.split(", ");
-					
-					String 
-					
-					last_name = player_name_parts[0],
-					first_name = player_name_parts[1],
-					player_name = first_name + " " + last_name,
-			    	player_key = get_player_key(player_name),
-			    	score_raw = row_data.get(5);
-					
-					int score_new = 0;
-					
-					try {
-						score_new = score_raw == null ? 0 : Integer.parseInt(score_raw);
-						}
-					catch (Exception e)
-						{
-						log("!!!!!! error for " + player_key + " with score_raw: " + score_raw);
-						continue;
-						}
-					
-					if (score_raw != null)
-						{
-						//log(player_key + " | " + score_new);
-						
-						if (player_map.containsKey(player_key))
-							{
-							int 
-							
-							player_id = player_map.get(player_key),
-							score_old = player_scores.get(player_id);
-							
-							if (score_old != score_new) 
-								{
-								something_changed = true;
-								log("IN: " + player_key + " | " + score_old + " -> " + score_new);
-								player_scores.put(player_id, score_new);
-								}
-							}
-						else if (out_of_contest_player_scores.containsKey(player_key))
-							{
-							int score_old = out_of_contest_player_scores.get(player_key);
-							
-							if (score_old != score_new) 
-								{
-								something_changed = true;
-								log("OUT: " + player_key + " | " + score_old + " -> " + score_new);
-								out_of_contest_player_scores.put(player_key, score_new);
-								}
-							}
-						else 
-							{
-							something_changed = true;
-							log("OUT: " + player_key + " | " + 0 + " -> " + score_new);
-							out_of_contest_player_scores.put(player_key, score_new);
-							}
-						}
-					}
-				
-		    	if (wait_for_sync && (team_1_ES_score != team_1_score || team_2_ES_score != team_2_score || something_changed == false)) Thread.sleep(3000);
-		    	}
-	    	catch (Exception e)
-	    		{
-	    		e.printStackTrace();
-	    		}
-	    	
-	    	if (!wait_for_sync) break;
-	    	}
-
-    	return something_changed;
-    	}
-    
-    static String get_player_key(String player_name)
-    	{
-    	player_name = player_name.toUpperCase();
-    	
-    	String[] player_name_parts = player_name.split(" ");
-		int number_of_name_parts = player_name_parts.length;
-		
-		String 
-		
-		first_name = player_name_parts[0],
-		first_letter = first_name.substring(0, 1),
-		last_name = player_name_parts[number_of_name_parts-1];
-		
-		return last_name + "," + first_letter;
-    	}
-    
-    static boolean exit_if_games_ended()
-    	{
-    	if (game_ended_flags.isEmpty()) return false;
-    	
-		for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
-			{
-		    boolean game_has_ended = entry.getValue();
-		    if (!game_has_ended) return false;
-			}
-	
-		log("");
-		log("All games have ended - 2 min wait");
-		
-		running = false;
-		
-		try {
-			//Thread.sleep(120000);
-			Thread.sleep(5000);
-			} 
-		catch (InterruptedException e) 
-			{
-			e.printStackTrace();
-			}
-		
-		log("");
-		log("Re-scanning Event Summaries");
-		log("");
-		
-		for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
-			{
-		    String game_id = entry.getKey();
-		    
-		    boolean wait_for_sync = false;
-		    
-			process_game(game_id, wait_for_sync);
-			}
-		
-		call_CoinRoster("SettleContest");
-		
-		return true;
-    	}
-    
-    static void call_CoinRoster(String method)
-    	{
-    	try {
-			log("");
-	    	log(method);
-			log("");
-			
-			JSONObject args = new JSONObject();
-	    	
-	    	args.put("contest_id", contest_id);
-	    	args.put("normalization_scheme", "INTEGER");
-	    	
-	    	JSONArray scores = new JSONArray();
-	    	
-	    	for (Entry<Integer, Integer> entry : player_scores.entrySet())
-				{
-			    int
-			    
-			    player_id = entry.getKey(),
-			    player_score = entry.getValue();
-			    
-			    /*String
-			    
-			    first_name = player_first_names.get(player_id),
-			    last_name = player_last_names.get(player_id);*/
-			    
-			    JSONObject player_item = new JSONObject();
-			    
-			    player_item.put("id", player_id);
-			    player_item.put("score_normalized", player_score);
-			    player_item.put("score_raw", Integer.toString(player_score));
-
-			    scores.put(player_item);
-				}
-
-	    	args.put("player_scores", scores);
-				 
-			List<String> response = new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/" + method + ".api", args.toString());
-			
-			JSONObject response_JSON = new JSONObject(response.get(0));
-
-			if (response_JSON.getString("status").equals("1")) log(method + ": OK");
-			else log("!!!!! " + response_JSON.getString("error"));
-	    	}
-    	catch (Exception e)
-    		{
-    		e.printStackTrace();
-    		}
-    	}
     }
 
