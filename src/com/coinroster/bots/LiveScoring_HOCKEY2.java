@@ -134,7 +134,11 @@ public class LiveScoring_HOCKEY2 extends Application
 			team_acronym = player_name_parts[number_of_name_parts-1],
 			team_motif = team_motifs.getString(team_acronym).toUpperCase();
 			
-			if (!teams_tonight.containsKey(team_motif)) teams_tonight.put(team_motif, 0);
+			if (!teams_tonight.containsKey(team_motif)) 
+				{
+				teams_tonight.put(team_motif, 0);
+				game_ended_flags.put(team_motif, false);
+				}
 
 			if (player_map.containsKey(player_key)) log("!!!!!!!! Collision: " + player_key);
 			
@@ -781,7 +785,8 @@ public class LiveScoring_HOCKEY2 extends Application
 												    	event_summary_urls.put(game_id, event_summary_url);
 														}
 
-													game_ended_flags.put(game_id, game_has_ended);
+													game_ended_flags.put(teams[0], game_has_ended);
+													game_ended_flags.put(teams[1], game_has_ended);
 													
 													boolean process_game = false;
 													
@@ -892,7 +897,7 @@ public class LiveScoring_HOCKEY2 extends Application
 														log("Re-scanning Event Summaries");
 														log("");
 														
-														for (Entry<String, Boolean> entry : game_ended_flags.entrySet()) 
+														for (Entry<String, Boolean> entry : game_thread_control.entrySet()) 
 															{
 														    String game_id = entry.getKey();
 														    
