@@ -118,49 +118,54 @@ public class CreateUser extends Utils
 					}
 				}
 			
-			JSONObject promo = null;
-	
-			if (promo_code.equals("")) promo_code = null;
-			else // we have a promo code from referral link or user-supplied code
-				{
-				promo = db.select_promo(promo_code);
-				
-				if (promo == null) // user-supplied code does not bonus a record
-					{
-					output.put("error", "Invalid promo code");
-					break method;
-					}
-				
-				if (promo.getInt("cancelled") > 0)
-					{
-					// we only show an error if the user actively supplied a cancelled code
-					// if the cancelled code came from a referral link, we process the signup without the promo
-					
-					if (referrer_id == null) 
-						{
-						output.put("error", "This promo code has been cancelled");
-						break method;
-						}
-					else promo = null;
-					}
-				else if (referrer_id == null && !promo.isNull("referrer")) // only gets here if promo has not been cancelled
-					{
-					referrer_id = promo.getString("referrer");
-					referrer = db.select_user("id", referrer_id);
-					referral_program = referrer.getDouble("referral_program");
-					}
-				}
-			
 			// at this point we should have our referrer_id, referral_program, and promo object where applicable
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, transaction write");
+			statement.execute("lock tables user write, transaction write, promo write");
+			
+			JSONObject promo = null;
+			
+			int 
+			
+			promo_max_use = 0, 
+			promo_times_used = 0;
 			
 			boolean success = false;
 
 			try {
 				lock : {
-
+				
+					if (promo_code.equals("")) promo_code = null;
+					else // we have a promo code from referral link or user-supplied code
+						{
+						promo = db.select_promo(promo_code);
+						
+						if (promo == null)
+							{
+							output.put("error", "Invalid promo code");
+							break method;
+							}
+						
+						if (promo.getLong("cancelled") != 0)
+							{
+							// we only show an error if the user actively supplied a cancelled code
+							// if the cancelled code came from a referral link, we process the signup without the promo
+							
+							if (referrer_id == null) 
+								{
+								output.put("error", "Promo code has expired");
+								break method;
+								}
+							else promo = null;
+							}
+						else if (referrer_id == null && !promo.isNull("referrer")) 
+							{
+							referrer_id = promo.getString("referrer");
+							referrer = db.select_user("id", referrer_id);
+							referral_program = referrer.getDouble("referral_program");
+							}
+						}
+					
 					if (db.select_user("username", username) != null) // must be in lock clause to be contiguous with account creation
 						{
 						output.put("error", "Username is taken");
@@ -236,6 +241,41 @@ public class CreateUser extends Utils
 						new_transaction.setString(8, "BTC");
 						new_transaction.setString(9, memo);
 						new_transaction.executeUpdate();
+
+						promo_max_use = promo.getInt("max_use");
+						promo_times_used = promo.getInt("times_used");
+						
+						if (promo_max_use > 0)
+							{
+							promo_times_used++;
+							
+							PreparedStatement update_promo = null;
+									
+							if (promo_times_used < promo_max_use)
+								{
+								update_promo = sql_connection.prepareStatement("update promo set times_used = ? where promo_code = ?");
+								update_promo.setInt(1, promo_times_used);
+								update_promo.setString(2, promo_code);
+								}
+							else
+								{
+								update_promo = sql_connection.prepareStatement("update promo set times_used = ?, cancelled = ?, cancelled_reason = ? where promo_code = ?");
+								update_promo.setInt(1, promo_times_used);
+								update_promo.setLong(2, System.currentTimeMillis());
+								update_promo.setString(3, promo_times_used + "/" + promo_max_use + " used");
+								update_promo.setString(4, promo_code);
+								
+								if (referrer_id != null)
+									{
+									PreparedStatement update_referral_promo_code = sql_connection.prepareStatement("update user set referral_promo_code = ? where id = ?");
+									update_referral_promo_code.setString(1, null);
+									update_referral_promo_code.setString(2, referrer_id);
+									update_referral_promo_code.executeUpdate();
+									}
+								}
+							
+							update_promo.executeUpdate();
+							}
 						}
 					
 					success = true;
@@ -286,6 +326,16 @@ public class CreateUser extends Utils
 						message_body += "<br/>";
 						message_body += "<br/>";
 						message_body += income_message;
+						
+						if (promo_max_use > 0)
+							{
+							message_body += "<br/>";
+							message_body += "<br/>";
+							message_body += "Your code has been used <b>" + promo_times_used + "/" + promo_max_use + "</b> times";
+							
+							if (promo_times_used == promo_max_use) message_body += " and has now expired.";
+							else message_body += ".";
+							}
 						}
 					
 					new UserMail(referrer, subject, message_body);

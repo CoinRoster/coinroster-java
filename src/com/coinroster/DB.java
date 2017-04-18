@@ -756,6 +756,8 @@ public class DB
 			double free_play_amount = result_set.getDouble(10);
 			int rollover_multiple = result_set.getInt(11);
 			String cancelled_reason = result_set.getString(12);
+			int max_use = result_set.getInt(13);
+			int times_used = result_set.getInt(14);
 			
 			promo = new JSONObject();
 			
@@ -771,6 +773,8 @@ public class DB
 			promo.put("free_play_amount", free_play_amount);
 			promo.put("rollover_multiple", rollover_multiple);
 			promo.put("cancelled_reason", cancelled_reason);
+			promo.put("max_use", max_use);
+			promo.put("times_used", times_used);
 			}
 
 		return promo;

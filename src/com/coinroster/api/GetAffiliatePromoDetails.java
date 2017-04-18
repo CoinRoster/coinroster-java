@@ -39,7 +39,9 @@ public class GetAffiliatePromoDetails extends Utils
 				String referral_promo_code = user.getString("referral_promo_code");
 				
 				JSONObject promo = db.select_promo(referral_promo_code);
-				
+
+				output.put("max_use", promo.get("max_use"));
+				output.put("times_used", promo.get("times_used"));
 				output.put("expires", promo.get("expires"));
 				output.put("promo_code", referral_promo_code);
 				output.put("description", promo.get("description"));

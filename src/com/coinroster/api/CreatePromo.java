@@ -42,7 +42,10 @@ public class CreatePromo extends Utils
 			
 			double free_play_amount = input.getDouble("free_play_amount");
 			
-			int rollover_multiple = input.getInt("rollover_multiple");
+			int 
+			
+			rollover_multiple = input.getInt("rollover_multiple"),
+			max_use = input.getInt("max_use");
 			
 			Long expires = input.getLong("expires");
 			
@@ -84,6 +87,12 @@ public class CreatePromo extends Utils
 	            output.put("error", "Rollover multiple cannot be <= 0");
 	            break method;
 	        	}
+
+			if (max_use < 0)
+	        	{
+	            output.put("error", "Max use cannot be < 0");
+	            break method;
+	        	}
 			
 			JSONObject referrer = null;
 			
@@ -111,7 +120,7 @@ public class CreatePromo extends Utils
 					}
 				}
 			
-			PreparedStatement create_promo = sql_connection.prepareStatement("insert into promo(created, expires, approved_by, promo_code, description, referrer, free_play_amount, rollover_multiple) values(?, ?, ?, ?, ?, ?, ?, ?)");
+			PreparedStatement create_promo = sql_connection.prepareStatement("insert into promo(created, expires, approved_by, promo_code, description, referrer, free_play_amount, rollover_multiple, max_use) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			create_promo.setLong(1, System.currentTimeMillis());
 			create_promo.setLong(2, expires);
 			create_promo.setString(3, session.user_id());
@@ -120,6 +129,7 @@ public class CreatePromo extends Utils
 			create_promo.setString(6, referrer_id);
 			create_promo.setDouble(7, free_play_amount);
 			create_promo.setDouble(8, rollover_multiple);
+			create_promo.setInt(9, max_use);
 			create_promo.executeUpdate();
 			
 			if (referrer != null)
@@ -152,9 +162,6 @@ public class CreatePromo extends Utils
 				message_body += "Free play amount: <b>" + format_btc(free_play_amount) + " BTC</b>";
 				message_body += "<br/>";
 				message_body += "Playing requirement: <b>" + rollover_multiple + "x</b>";
-				message_body += "<br/>";
-				message_body += "<br/>";
-				message_body += "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake on any account that uses this promo code once their playing requirement has been met.";
 				
 				if (expires > 0)
 					{
@@ -167,6 +174,17 @@ public class CreatePromo extends Utils
 					message_body += "<br/>";
 					message_body += "This code expires on <b>" + date + "</b> at <b>" + time + " EST</b>";
 					}
+
+				if (max_use > 0)
+					{
+					message_body += "<br/>";
+					message_body += "<br/>";
+					message_body += "This code can be used <b>" + max_use + "</b> times.";
+					}
+				
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake on any account that uses this promo code once their playing requirement has been met.";
 				
 				new UserMail(referrer, subject, message_body);
 				}
