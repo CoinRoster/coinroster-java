@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
@@ -25,6 +26,8 @@ public class CreateContest extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
+		DB db = new DB(sql_connection);
+		
 		method : {
 			
 //------------------------------------------------------------------------------------
@@ -34,6 +37,7 @@ public class CreateContest extends Utils
 			String category = input.getString("category");
 			String sub_category = input.getString("sub_category");
 			String contest_type = input.getString("contest_type");
+			String progressive_code = input.getString("progressive");
 			String title = input.getString("title");
 			String description = input.getString("description");
             double rake = input.getDouble("rake");
@@ -68,11 +72,30 @@ public class CreateContest extends Utils
             	output.put("error", "Cost per entry cannot be 0");
                 break method;
             	}
+            
+            if (progressive_code.equals("")) progressive_code = null; // default value
+            else
+            	{
+            	JSONObject progressive = db.select_progressive(progressive_code);
+            	
+            	if (progressive == null)
+            		{
+            		output.put("error", "Invalid Progressive");
+                    break method;
+            		}
+            	
+            	if (!progressive.getString("category").equals(category) || !progressive.getString("sub_category").equals(sub_category))
+            		{
+            		output.put("error", "Progressive belongs to a different category");
+                    break method;
+            		}
+            	}
 
             log("Contest parameters:");
             
             log("category: " + category);
             log("sub_category: " + sub_category);
+            log("progressive: " + progressive_code);
             log("contest_type: " + contest_type);
             log("title: " + title);
             log("description: " + description);
@@ -265,27 +288,28 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
-				create_contest.setString(3, contest_type);
-				create_contest.setString(4, title);
-				create_contest.setString(5, description);
-				create_contest.setLong(6, registration_deadline);
-				create_contest.setDouble(7, rake);
-				create_contest.setDouble(8, cost_per_entry);
-				create_contest.setString(9, settlement_type);
-				create_contest.setInt(10, min_users);
-				create_contest.setInt(11, max_users);
-				create_contest.setInt(12, entries_per_user);
-				create_contest.setString(13, pay_table_final.toString());
-				create_contest.setDouble(14, salary_cap);
-				create_contest.setString(15, option_table.toString());
-				create_contest.setLong(16, System.currentTimeMillis());
-				create_contest.setString(17, session.user_id());
-				create_contest.setInt(18, roster_size);
-				create_contest.setString(19, odds_source);
-				create_contest.setString(20, score_header);
+				create_contest.setString(3, progressive_code);
+				create_contest.setString(4, contest_type);
+				create_contest.setString(5, title);
+				create_contest.setString(6, description);
+				create_contest.setLong(7, registration_deadline);
+				create_contest.setDouble(8, rake);
+				create_contest.setDouble(9, cost_per_entry);
+				create_contest.setString(10, settlement_type);
+				create_contest.setInt(11, min_users);
+				create_contest.setInt(12, max_users);
+				create_contest.setInt(13, entries_per_user);
+				create_contest.setString(14, pay_table_final.toString());
+				create_contest.setDouble(15, salary_cap);
+				create_contest.setString(16, option_table.toString());
+				create_contest.setLong(17, System.currentTimeMillis());
+				create_contest.setString(18, session.user_id());
+				create_contest.setInt(19, roster_size);
+				create_contest.setString(20, odds_source);
+				create_contest.setString(21, score_header);
 				create_contest.executeUpdate();
 	            }
             else if (contest_type.equals("PARI-MUTUEL"))
@@ -325,19 +349,20 @@ public class CreateContest extends Utils
             	
             	String settlement_type = "PARI-MUTUEL";
             	
-            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
-				create_contest.setString(3, contest_type);
-				create_contest.setString(4, title);
-				create_contest.setString(5, description);
-				create_contest.setLong(6, registration_deadline);
-				create_contest.setDouble(7, rake);
-				create_contest.setDouble(8, cost_per_entry);
-				create_contest.setString(9, settlement_type);
-				create_contest.setString(10, option_table.toString());
-				create_contest.setLong(11, System.currentTimeMillis());
-				create_contest.setString(12, session.user_id());
+				create_contest.setString(3, progressive_code);
+				create_contest.setString(4, contest_type);
+				create_contest.setString(5, title);
+				create_contest.setString(6, description);
+				create_contest.setLong(7, registration_deadline);
+				create_contest.setDouble(8, rake);
+				create_contest.setDouble(9, cost_per_entry);
+				create_contest.setString(10, settlement_type);
+				create_contest.setString(11, option_table.toString());
+				create_contest.setLong(12, System.currentTimeMillis());
+				create_contest.setString(13, session.user_id());
 				create_contest.executeUpdate();
             	}
 

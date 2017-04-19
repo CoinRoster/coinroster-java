@@ -334,6 +334,8 @@ public class DB
 			String score_header = result_set.getString(24);
 			Long scores_updated = result_set.getLong(25);
 			String scoring_scheme = result_set.getString(26);
+			String progressive = result_set.getString(27);
+			double progressive_paid = result_set.getDouble(28);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
@@ -361,6 +363,8 @@ public class DB
 			contest.put("score_header", score_header);
 			contest.put("scores_updated", scores_updated);
 			contest.put("scoring_scheme", scoring_scheme);
+			contest.put("progressive", progressive);
+			contest.put("progressive_paid", progressive_paid);
 			}
 
 		return contest;
@@ -898,7 +902,57 @@ public class DB
 		return true;
 		}
 
-	//------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+	public JSONObject select_progressive(Object selector) throws Exception
+		{
+		JSONObject progressive = null;
+		
+		PreparedStatement select_progressive = null;
+		
+		if (selector instanceof String) // selecting by code
+			{
+			String code = (String) selector;
+			select_progressive = sql_connection.prepareStatement("select * from progressive where code = ?");
+			select_progressive.setString(1, code);
+			}
+		else // selecting by ID
+			{
+			int id = (int) selector;
+			select_progressive = sql_connection.prepareStatement("select * from progressive where id = ?");
+			select_progressive.setInt(1, id);
+			}
+
+		ResultSet result_set = select_progressive.executeQuery();
+
+		if (result_set.next()) 
+			{
+			int id = result_set.getInt(1);
+			long created = result_set.getLong(2);
+			String created_by = result_set.getString(3);
+			String category = result_set.getString(4);
+			String sub_category = result_set.getString(5);
+			String code = result_set.getString(6);
+			String payout_info = result_set.getString(7);
+			double balance = result_set.getDouble(8);
+			
+			progressive = new JSONObject();
+			
+			progressive.put("id", id);
+			progressive.put("created", created);
+			progressive.put("created_by", created_by);
+			progressive.put("category", category);
+			progressive.put("sub_category", sub_category);
+			progressive.put("code", code);
+			progressive.put("payout_info", payout_info);
+			progressive.put("balance", balance);
+			}
+
+		return progressive;
+		}
+
+	
+//------------------------------------------------------------------------------------
 
 	}
 

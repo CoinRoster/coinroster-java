@@ -72,6 +72,7 @@ public class ContestReport_Admin extends Utils
 				String score_header = result_set.getString(24);
 				Long scores_updated = result_set.getLong(25);
 				String scoring_scheme = result_set.getString(26);
+				String progressive = result_set.getString(27);
 		
 				created_by = db.get_username_for_id(created_by);
 				
@@ -106,6 +107,7 @@ public class ContestReport_Admin extends Utils
 				contest.put("scoring_scheme", scoring_scheme);
 				contest.put("odds_source", odds_source);
 				contest.put("created_by", created_by);
+				contest.put("progressive", progressive);
 				
 				contest_report.put(contest);
 				}

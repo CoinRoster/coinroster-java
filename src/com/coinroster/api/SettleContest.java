@@ -52,7 +52,7 @@ public class SettleContest extends Utils
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write, transaction write");
+			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write");
 
 			try {
 				lock : {
@@ -298,9 +298,9 @@ public class SettleContest extends Utils
 					rake = contest.getDouble("rake"), // e.g. 0.01 if rake is 1%
 					rake_amount = multiply(rake, total_from_transactions, 0),
 					actual_rake_amount = total_from_transactions, // gets decremented every time something is paid out; remainder -> internal_asset
-					
+					progressive_paid = 0,							
 					user_winnings_total = subtract(total_from_transactions, rake_amount, 0);
-
+					
 					log("Pool: " + total_from_transactions);
 					log("Rake: " + rake);
 					log("Rake amount: " + rake_amount);
@@ -567,10 +567,109 @@ public class SettleContest extends Utils
 							
 							if (winning_outcome_total == 0) // nobody picked the winning outcome
 								{
-								// TODO - progressive
+								if (!contest.isNull("progressive"))
+									{
+									String progressive_code = contest.getString("progressive");
+									
+									JSONObject 
+
+									progressive = db.select_progressive(progressive_code),
+									internal_progressive = db.select_user("username", "internal_progressive");
+									
+									String internal_progressive_id = internal_progressive.getString("user_id");
+									
+									double 
+									
+									progressive_balance = progressive.getDouble("balance"),
+									internal_progressive_balance = internal_progressive.getDouble("btc_balance");
+
+									progressive_balance = add(progressive_balance, user_winnings_total, 0);
+									internal_progressive_balance = add(internal_progressive_balance, user_winnings_total, 0);
+									actual_rake_amount = subtract(actual_rake_amount, user_winnings_total, 0);
+									
+									db.update_btc_balance(internal_progressive_id, internal_progressive_balance);
+									
+									String 
+									
+									transaction_type = "BTC-PROGRESSIVE-HOLD",
+									from_account = contest_account_id,
+									to_account = internal_progressive_id,
+									from_currency = "BTC",
+									to_currency = "BTC",
+									memo = "Progressive hold for contest #" + contest_id;
+									
+									PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+									create_transaction.setLong(1, System.currentTimeMillis());
+									create_transaction.setString(2, contest_admin);
+									create_transaction.setString(3, transaction_type);
+									create_transaction.setString(4, from_account);
+									create_transaction.setString(5, to_account);
+									create_transaction.setDouble(6, user_winnings_total);
+									create_transaction.setString(7, from_currency);
+									create_transaction.setString(8, to_currency);
+									create_transaction.setString(9, memo);
+									create_transaction.setInt(10, contest_id);
+									create_transaction.executeUpdate();
+									
+									PreparedStatement update_progressive = sql_connection.prepareStatement("update progressive set balance = ? where code = ?");
+									update_progressive.setDouble(1, progressive_balance);
+									update_progressive.setString(2, progressive_code);
+									update_progressive.executeUpdate();
+									}
 								}
 							else // at least one wager was placed on the winning outcome
 								{
+								if (!contest.isNull("progressive"))
+									{
+									String progressive_code = contest.getString("progressive");
+									
+									JSONObject 
+
+									progressive = db.select_progressive(progressive_code),
+									internal_progressive = db.select_user("username", "internal_progressive");
+									
+									String internal_progressive_id = internal_progressive.getString("user_id");
+									
+									double 
+									
+									progressive_balance = progressive.getDouble("balance"),
+									internal_progressive_balance = internal_progressive.getDouble("btc_balance");
+
+									internal_progressive_balance = subtract(internal_progressive_balance, progressive_balance, 0);
+									user_winnings_total = add(user_winnings_total, progressive_balance, 0);
+									actual_rake_amount = add(actual_rake_amount, progressive_balance, 0); // will get decremented back down
+									progressive_paid = progressive_balance;
+									progressive_balance = 0;
+									
+									db.update_btc_balance(internal_progressive_id, internal_progressive_balance);
+									
+									String 
+									
+									transaction_type = "BTC-PROGRESSIVE-DISBURSEMENT",
+									from_account = internal_progressive_id,
+									to_account = contest_account_id,
+									from_currency = "BTC",
+									to_currency = "BTC",
+									memo = "Progressive disbursement for contest #" + contest_id;
+									
+									PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+									create_transaction.setLong(1, System.currentTimeMillis());
+									create_transaction.setString(2, contest_admin);
+									create_transaction.setString(3, transaction_type);
+									create_transaction.setString(4, from_account);
+									create_transaction.setString(5, to_account);
+									create_transaction.setDouble(6, user_winnings_total);
+									create_transaction.setString(7, from_currency);
+									create_transaction.setString(8, to_currency);
+									create_transaction.setString(9, memo);
+									create_transaction.setInt(10, contest_id);
+									create_transaction.executeUpdate();
+									
+									PreparedStatement update_progressive = sql_connection.prepareStatement("update progressive set balance = 0 where code = ?");
+									update_progressive.setString(1, progressive_code);
+									update_progressive.executeUpdate();
+									}
+
 								double payout_ratio = divide(user_winnings_total, winning_outcome_total, 0);
 								
 								log("Winning selection: " + winning_outcome);
@@ -1239,24 +1338,26 @@ public class SettleContest extends Utils
 							{
 							case "PARI-MUTUEL" :
 								
-								update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ?, settled = ? where id = ?");
+								update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ?, settled = ?, progressive_paid = ? where id = ?");
 								update_contest.setString(1, contest_admin);
 								update_contest.setString(2, option_table.toString());
 								update_contest.setLong(3, System.currentTimeMillis());
-								update_contest.setInt(4, contest_id);
+								update_contest.setDouble(4, progressive_paid);
+								update_contest.setInt(5, contest_id);
 								break;
 								
 							case "ROSTER" :
 								
 								String normalization_scheme = input.getString("normalization_scheme");
 								
-								update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ?, settled = ?, scores_updated = ?, scoring_scheme = ? where id = ?");
+								update_contest = sql_connection.prepareStatement("update contest set status = 3, settled_by = ?, option_table = ?, settled = ?, progressive_paid = ?, scores_updated = ?, scoring_scheme = ? where id = ?");
 								update_contest.setString(1, contest_admin);
 								update_contest.setString(2, option_table.toString());
 								update_contest.setLong(3, System.currentTimeMillis());
-								update_contest.setLong(4, System.currentTimeMillis());
-								update_contest.setString(5, normalization_scheme);
-								update_contest.setInt(6, contest_id);
+								update_contest.setDouble(4, progressive_paid);
+								update_contest.setLong(5, System.currentTimeMillis());
+								update_contest.setString(6, normalization_scheme);
+								update_contest.setInt(7, contest_id);
 								break;
 							}
 

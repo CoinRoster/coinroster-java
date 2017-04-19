@@ -47,7 +47,20 @@ public class GetContestDetails extends Utils
 				
 				contest_type = contest.getString("contest_type"),
 				category = contest.getString("category"),
-				sub_category = contest.getString("sub_category");
+				sub_category = contest.getString("sub_category");;
+				
+				if (!contest.isNull("progressive"))
+					{
+					String progressive_code = contest.getString("progressive");
+					
+					JSONObject progressive = db.select_progressive(progressive_code);
+					
+					output.put("progressive_code", progressive_code);
+					output.put("progressive_payout_info", progressive.getString("payout_info"));
+					output.put("progressive_balance", progressive.getDouble("balance"));
+					output.put("progressive_paid", contest.getDouble("progressive_paid"));
+					}
+				else output.put("progressive_code", "");
 
 				output.put("category", category);
 				output.put("sub_category", sub_category);

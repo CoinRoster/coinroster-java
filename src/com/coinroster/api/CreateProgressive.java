@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 
 import org.json.JSONObject;
 
+import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
@@ -24,6 +25,8 @@ public class CreateProgressive extends Utils
 		
 		Connection sql_connection = method.sql_connection;
 
+		DB db = new DB(sql_connection);
+		
 		method : {
 			
 //------------------------------------------------------------------------------------
@@ -33,7 +36,7 @@ public class CreateProgressive extends Utils
             category = input.getString("category"),
             sub_category = input.getString("sub_category"),
             code = input.getString("code"),
-            description = input.getString("description");
+            payout_info = input.getString("payout_info");
            
             if (code.equals("")) 
             	{
@@ -47,15 +50,21 @@ public class CreateProgressive extends Utils
             	break method;
             	}
             
-            if (description.equals("")) 
+            if (db.select_progressive(code) != null)
+            	{
+                output.put("error", "Code has already been used");
+            	break method;
+            	}
+            
+            if (payout_info.equals("")) 
 	        	{
-	            output.put("error", "Description cannot be empty");
+	            output.put("error", "Payout info cannot be empty");
 	        	break method;
 	        	}
 
-            if (description.length() > 40) 
+            if (payout_info.length() > 500) 
 	        	{
-	            output.put("error", "Description cannot be more than 40 chars");
+	            output.put("error", "Payout info cannot be more than 500 chars");
 	        	break method;
 	        	}
             
@@ -79,13 +88,13 @@ public class CreateProgressive extends Utils
 	        	break method;
             	}
 
-            PreparedStatement create_progressive = sql_connection.prepareStatement("insert into progressive(created, created_by, category, sub_category, code, description) values(?, ?, ?, ?, ?, ?)");
+            PreparedStatement create_progressive = sql_connection.prepareStatement("insert into progressive(created, created_by, category, sub_category, code, payout_info) values(?, ?, ?, ?, ?, ?)");
 			create_progressive.setLong(1, System.currentTimeMillis());
 			create_progressive.setString(2, session.user_id());
 			create_progressive.setString(3, category);
 			create_progressive.setString(4, sub_category);
 			create_progressive.setString(5, code);
-			create_progressive.setString(6, description);
+			create_progressive.setString(6, payout_info);
 			create_progressive.executeUpdate();
             
             output.put("status", "1");

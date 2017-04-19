@@ -106,6 +106,8 @@ public class ContestReport_Lobby extends Utils
 				String score_header = result_set.getString(24);
 				Long scores_updated = result_set.getLong(25);
 				String scoring_scheme = result_set.getString(26);
+				String progressive_code = result_set.getString(27);
+				double progressive_paid = result_set.getDouble(28);
 				
 				if (contest_status != 0 && status != contest_status) continue;
 				
@@ -115,6 +117,18 @@ public class ContestReport_Lobby extends Utils
 				
 				double total_prize_pool = db.get_contest_prize_pool(id);
 				int current_users = db.get_contest_current_users(id);
+				
+				if (status < 3)
+					{
+					JSONObject progressive = db.select_progressive(progressive_code);
+					
+					if (progressive != null)
+						{
+						double progressive_balance = progressive.getDouble("balance");
+						total_prize_pool = add(total_prize_pool, progressive_balance, 0);
+						}
+					}
+				else if (progressive_paid > 0) total_prize_pool = add(total_prize_pool, progressive_paid, 0);
 					
 				contest.put("id", id);
 				contest.put("created", created);
