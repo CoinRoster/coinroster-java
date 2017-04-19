@@ -120,10 +120,9 @@ public class ContestReport_Lobby extends Utils
 				
 				if (status < 3)
 					{
-					JSONObject progressive = db.select_progressive(progressive_code);
-					
-					if (progressive != null)
+					if (progressive_code != null)
 						{
+						JSONObject progressive = db.select_progressive(progressive_code);
 						double progressive_balance = progressive.getDouble("balance");
 						total_prize_pool = add(total_prize_pool, progressive_balance, 0);
 						}
