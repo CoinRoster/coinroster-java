@@ -462,7 +462,11 @@ public class LiveScoring_HOCKEY2 extends Application
 							
 							if (scores_found == 2)
 								{
-								if (!event_summary_urls.containsKey(game_id)) prepare_event_summary_link(game_id);
+								if (!event_summary_urls.containsKey(game_id)) 
+									{
+									log("Game " + game_id + " has started: " + teams[0] + " vs " + teams[1]);
+									prepare_event_summary_link(game_id);
+									}
 
 								game_ended_flags.put(game_id, game_has_ended);
 								

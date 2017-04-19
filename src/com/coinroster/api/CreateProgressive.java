@@ -1,0 +1,97 @@
+package com.coinroster.api;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import org.json.JSONObject;
+
+import com.coinroster.MethodInstance;
+import com.coinroster.Session;
+import com.coinroster.Utils;
+
+public class CreateProgressive extends Utils
+	{
+	public static String method_level = "admin";
+	public CreateProgressive(MethodInstance method) throws Exception 
+		{
+		JSONObject 
+		
+		input = method.input,
+		output = method.output;
+		
+		Session session = method.session;
+		
+		Connection sql_connection = method.sql_connection;
+
+		method : {
+			
+//------------------------------------------------------------------------------------
+		
+            String
+            
+            category = input.getString("category"),
+            sub_category = input.getString("sub_category"),
+            code = input.getString("code"),
+            description = input.getString("description");
+           
+            if (code.equals("")) 
+            	{
+                output.put("error", "Code cannot be empty");
+            	break method;
+            	}
+
+            if (code.length() > 20) 
+            	{
+                output.put("error", "Code cannot be more than 20 chars");
+            	break method;
+            	}
+            
+            if (description.equals("")) 
+	        	{
+	            output.put("error", "Description cannot be empty");
+	        	break method;
+	        	}
+
+            if (description.length() > 40) 
+	        	{
+	            output.put("error", "Description cannot be more than 40 chars");
+	        	break method;
+	        	}
+            
+            PreparedStatement select_category = sql_connection.prepareStatement("select * from category where code = ?");
+            select_category.setString(1, category);
+            ResultSet category_rs = select_category.executeQuery();
+
+            if (!category_rs.next())
+            	{
+	            output.put("error", "Invalid category");
+	        	break method;
+            	}
+
+            PreparedStatement select_sub_category = sql_connection.prepareStatement("select * from sub_category where code = ?");
+            select_sub_category.setString(1, sub_category);
+            ResultSet sub_category_rs = select_sub_category.executeQuery();
+
+            if (!sub_category_rs.next())
+            	{
+	            output.put("error", "Invalid sub-category");
+	        	break method;
+            	}
+
+            PreparedStatement create_progressive = sql_connection.prepareStatement("insert into progressive(created, created_by, category, sub_category, code, description) values(?, ?, ?, ?, ?, ?)");
+			create_progressive.setLong(1, System.currentTimeMillis());
+			create_progressive.setString(2, session.user_id());
+			create_progressive.setString(3, category);
+			create_progressive.setString(4, sub_category);
+			create_progressive.setString(5, code);
+			create_progressive.setString(6, description);
+			create_progressive.executeUpdate();
+            
+            output.put("status", "1");
+			
+//------------------------------------------------------------------------------------
+
+			} method.response.send(output);
+		}
+	}
