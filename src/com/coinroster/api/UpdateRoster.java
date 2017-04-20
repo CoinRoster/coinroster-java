@@ -2,6 +2,7 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.TreeMap;
 
 import org.json.JSONArray;
@@ -9,8 +10,10 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UpdateDraftStatistics;
 
 public class UpdateRoster extends Utils
 	{
@@ -138,6 +141,23 @@ public class UpdateRoster extends Utils
 			create_entry.setString(1, roster.toString());
 			create_entry.setInt(2, entry_id);
 			create_entry.executeUpdate();
+			
+			// lock tables for draft statistics update
+			
+			Statement statement = sql_connection.createStatement();
+			statement.execute("lock tables contest write, entry write");
+		
+			try {
+				new UpdateDraftStatistics(sql_connection, contest_id);
+				}
+			catch (Exception e)
+				{
+				Server.exception(e);
+				}
+			finally
+				{
+				statement.execute("unlock tables");
+				}
 			
 			output.put("status", "1");
 			

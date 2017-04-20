@@ -41,8 +41,6 @@ public class GetContestDetails extends Utils
 			
 			if (contest != null)
 				{
-				JSONArray entries = db.select_contest_entries(contest_id);
-				
 				String 
 				
 				contest_type = contest.getString("contest_type"),
@@ -79,19 +77,37 @@ public class GetContestDetails extends Utils
 				total_prize_pool = db.get_contest_prize_pool(contest_id),
 				cost_per_entry = contest.getDouble("cost_per_entry");
 
-				int current_users = db.get_contest_current_users(contest_id);
+				int 
+				
+				current_users = db.get_contest_current_users(contest_id),
+				min_users = contest.getInt("min_users");
 				
 				output.put("total_prize_pool", total_prize_pool);
 				output.put("cost_per_entry", cost_per_entry);
 				output.put("rake", contest.getDouble("rake"));
 				output.put("current_users", current_users);
-				output.put("min_users", contest.get("min_users"));
+				output.put("min_users", min_users);
 				output.put("max_users", contest.get("max_users"));
 				
 				if (contest_type.equals("ROSTER"))
 					{
 					int number_of_entries = (int) divide(total_prize_pool, cost_per_entry, 0);
 					double entries_per_user = contest.getDouble("entries_per_user");
+					
+					if (current_users < min_users)
+						{
+						JSONArray option_table = new JSONArray(contest.getString("option_table"));
+						
+						for (int i=0, limit=option_table.length(); i<limit; i++)
+							{
+							JSONObject player = option_table.getJSONObject(i);
+							player.put("count", 0);
+							option_table.put(i, player);
+							}
+						
+						output.put("option_table", option_table.toString());
+						}
+					else output.put("option_table", contest.get("option_table"));
 					
 					output.put("pay_table", contest.get("pay_table"));
 					output.put("salary_cap", contest.get("salary_cap"));
