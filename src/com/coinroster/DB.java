@@ -91,14 +91,13 @@ public class DB
 			String currency = result_set.getString(20);
 			double referral_offer = result_set.getDouble(21);
 			String promo_code = result_set.getString(22);
-			String referral_promo_code = result_set.getString(23);
-			int withdrawal_locked = result_set.getInt(24);
-			double rollover_quota = result_set.getDouble(25);
-			double rollover_progress = result_set.getDouble(26);
-			double first_deposit = result_set.getDouble(27);
-			int deposit_bonus_claimed = result_set.getInt(28);
-			double deposit_bonus_cap = result_set.getDouble(29);
-			int deposit_bonus_rollover_multiple = result_set.getInt(30);
+			int withdrawal_locked = result_set.getInt(23);
+			double rollover_quota = result_set.getDouble(24);
+			double rollover_progress = result_set.getDouble(25);
+			double first_deposit = result_set.getDouble(26);
+			int deposit_bonus_claimed = result_set.getInt(27);
+			double deposit_bonus_cap = result_set.getDouble(28);
+			int deposit_bonus_rollover_multiple = result_set.getInt(29);
 			
 			if (ext_address == null) ext_address = "";
 			if (email_address == null) email_address = "";
@@ -126,7 +125,6 @@ public class DB
 			user.put("currency", currency);
 			user.put("referral_offer", referral_offer);
 			user.put("promo_code", promo_code);
-			user.put("referral_promo_code", referral_promo_code);
 			user.put("withdrawal_locked", withdrawal_locked);
 			user.put("rollover_quota", rollover_quota);
 			user.put("rollover_progress", rollover_progress);

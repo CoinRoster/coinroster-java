@@ -41,8 +41,17 @@ public class SendReferral extends Utils
 			// should do a referral program lookup else break method
 			
 			email_contact_name = "Referral",
-			email_address = to_valid_email(input.getString("email_address"));
+			email_address = to_valid_email(input.getString("email_address")),
 			
+			referral_code = input.getString("referral_code");
+
+			if (referral_code.equals("")) referral_code = null;
+			else if (db.select_promo(referral_code) == null)
+				{
+				output.put("error", "Invalid affiliate code");
+				break method;
+				}
+
 			if (email_address == null)
 				{
 				output.put("error", "Invalid email address");
@@ -57,13 +66,8 @@ public class SendReferral extends Utils
 			
 			JSONObject referrer = db.select_user("id", referrer_id);
 			
-			String 
-			
-			referrer_username = referrer.getString("username"),
-			promo_code = null;
-			
-			if (!referrer.isNull("referral_promo_code")) promo_code = referrer.getString("referral_promo_code");
-			
+			String referrer_username = referrer.getString("username");
+						
 			double 
 			
 			referral_offer = referrer.getDouble("referral_offer"),
@@ -76,7 +80,7 @@ public class SendReferral extends Utils
 			create_referral.setString(4, email_address);
 			create_referral.setDouble(5, referral_program);
 			create_referral.setLong(6, System.currentTimeMillis());
-			create_referral.setString(7, promo_code);
+			create_referral.setString(7, referral_code);
 			create_referral.executeUpdate();
 			
 			String
@@ -87,14 +91,14 @@ public class SendReferral extends Utils
 			message_body += "<br/>";
 			message_body += "<br/>";
 			
-			if (promo_code == null)
+			if (referral_code == null)
 				{
 				subject = "CoinRoster invitation from " + referrer_provided_name + "!";
 				message_body += "<a href='" + Server.host + "/signup.html?" + referral_key + "'>Click here</a> to create an account.";
 				}
 			else // referrer has a promo code
 				{
-				JSONObject promo = db.select_promo(promo_code);
+				JSONObject promo = db.select_promo(referral_code);
 				
 				String promo_description = promo.getString("description");
 				

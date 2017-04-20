@@ -67,11 +67,6 @@ public class CancelPromo extends Utils
 				
 				JSONObject referrer = db.select_user("id", referrer_id);
 				
-				PreparedStatement update_user = sql_connection.prepareStatement("update user set referral_promo_code = ? where id = ?");
-				update_user.setString(1, null);
-				update_user.setString(2, referrer_id);
-				update_user.executeUpdate();
-				
 				String subject = "Your promo code " + promo_code + " has been deactivated",
 
 				message_body = "Hi <b><!--USERNAME--></b>";

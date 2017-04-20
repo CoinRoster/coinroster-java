@@ -264,14 +264,6 @@ public class CreateUser extends Utils
 								update_promo.setLong(2, System.currentTimeMillis());
 								update_promo.setString(3, promo_times_used + "/" + promo_max_use + " used");
 								update_promo.setString(4, promo_code);
-								
-								if (referrer_id != null)
-									{
-									PreparedStatement update_referral_promo_code = sql_connection.prepareStatement("update user set referral_promo_code = ? where id = ?");
-									update_referral_promo_code.setString(1, null);
-									update_referral_promo_code.setString(2, referrer_id);
-									update_referral_promo_code.executeUpdate();
-									}
 								}
 							
 							update_promo.executeUpdate();

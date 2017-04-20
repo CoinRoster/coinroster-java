@@ -43,7 +43,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class LiveScoring_HOCKEY2 extends Application
     {
-	static int contest_id = 79;
+	static int contest_id = 82;
 	
 	static boolean 
 	
@@ -62,7 +62,9 @@ public class LiveScoring_HOCKEY2 extends Application
 	
 	static ConcurrentHashMap<Integer, Integer> player_scores = new ConcurrentHashMap<Integer, Integer>();
 	static ConcurrentHashMap<Integer, Integer> player_scores_stored = new ConcurrentHashMap<Integer, Integer>();
+	
 	static ConcurrentHashMap<String, Integer> out_of_contest_player_scores = new ConcurrentHashMap<String, Integer>();
+	static ConcurrentHashMap<String, Integer> out_of_contest_player_scores_stored = new ConcurrentHashMap<String, Integer>();
 	
 	static ConcurrentHashMap<String, Boolean> game_ended_flags = new ConcurrentHashMap<String, Boolean>();
 
@@ -167,28 +169,21 @@ public class LiveScoring_HOCKEY2 extends Application
     	}
 	
 	static int[] scan_schedule = new int[]{
-		15,
+		20,
 		10,
 		5,
-		2,
-		2,
-		2,
-		2,
-		2,
-		2,
-		2,
-		2,
-		2,
-		2,
+		5,
+		5,
+		5,
 		5,
 		5,
 		10,
 		10,
-		10,
 		20,
 		20,
-		20,
-		30
+		30,
+		30,
+		120
 	};
 
     public static void main(String[] args) throws Exception
@@ -259,10 +254,10 @@ public class LiveScoring_HOCKEY2 extends Application
 			}
 		
 		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
+		out_of_contest_player_scores_stored = new ConcurrentHashMap<String, Integer>(out_of_contest_player_scores);
 
 		log("");
 		log("Starting NHL live scoring");
-		log("");
 		
 		launch(args);
         }
@@ -341,10 +336,11 @@ public class LiveScoring_HOCKEY2 extends Application
 		    		try {
 		    			Thread.sleep(1000);
 		    			
-						if (!player_scores.equals(player_scores_stored))
+						if (!player_scores.equals(player_scores_stored) || !out_of_contest_player_scores.equals(out_of_contest_player_scores_stored))
 			    			{
 				    		call_CoinRoster("UpdateScores");
 				    		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
+				    		out_of_contest_player_scores_stored = new ConcurrentHashMap<String, Integer>(out_of_contest_player_scores);
 			    			}
 						
 						scan_scoreboard(webengine);
@@ -464,7 +460,9 @@ public class LiveScoring_HOCKEY2 extends Application
 								{
 								if (!event_summary_urls.containsKey(game_id)) 
 									{
+									log("");
 									log("Game " + game_id + " has started: " + teams[0] + " vs " + teams[1]);
+									log("");
 									prepare_event_summary_link(game_id);
 									}
 
@@ -573,34 +571,31 @@ public class LiveScoring_HOCKEY2 extends Application
 						log("!!!!!! error for " + player_key + " with score_raw: " + score_raw);
 						continue;
 						}
+				
+					//log(player_key + " | " + score_new);
 					
-					if (score_raw != null)
+					if (players_in_contest.containsKey(player_key))
 						{
-						//log(player_key + " | " + score_new);
+						int 
 						
-						if (players_in_contest.containsKey(player_key))
-							{
-							int 
-							
-							player_id = players_in_contest.get(player_key),
-							score_old = player_scores.get(player_id);
-							
-							if (score_old != score_new) log("IN: " + player_key + " | " + score_old + " -> " + score_new);
-	
-							player_scores.put(player_id, score_new);
-							}
-						else // player is not in contest
-							{
-							if (out_of_contest_player_scores.containsKey(player_key))
-								{
-								int score_old = out_of_contest_player_scores.get(player_key);
-								
-								if (score_old != score_new) log("OUT: " + player_key + " | " + score_old + " -> " + score_new);
-								}
-							else log("OUT: " + player_key + " | " + 0 + " -> " + score_new);
+						player_id = players_in_contest.get(player_key),
+						score_old = player_scores.get(player_id);
+						
+						if (score_old != score_new) log("IN: " + player_key + " | " + score_old + " -> " + score_new);
 
-							out_of_contest_player_scores.put(player_key, score_new);
+						player_scores.put(player_id, score_new);
+						}
+					else // player is not in contest
+						{
+						if (out_of_contest_player_scores.containsKey(player_key))
+							{
+							int score_old = out_of_contest_player_scores.get(player_key);
+							
+							if (score_old != score_new) log("OUT: " + player_key + " | " + score_old + " -> " + score_new);
 							}
+						else if (score_new > 0) log("OUT: " + player_key + " | " + 0 + " -> " + score_new);
+
+						out_of_contest_player_scores.put(player_key, score_new);
 						}
 					}
 		    	}

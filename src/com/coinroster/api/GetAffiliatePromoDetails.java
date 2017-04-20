@@ -1,7 +1,10 @@
 package com.coinroster.api;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
@@ -32,25 +35,39 @@ public class GetAffiliatePromoDetails extends Utils
 		
 			String user_id = session.user_id();
 			
-			JSONObject user = db.select_user("id", user_id);
+			PreparedStatement select_promo_ids  = sql_connection.prepareStatement("select * from promo where referrer = ? and cancelled = 0");
+			select_promo_ids.setString(1, user_id);
+			ResultSet result_set = select_promo_ids.executeQuery();
 			
-			if (!user.isNull("referral_promo_code"))
-				{
-				String referral_promo_code = user.getString("referral_promo_code");
-				
-				JSONObject promo = db.select_promo(referral_promo_code);
+			JSONArray promos = new JSONArray();
 
-				output.put("max_use", promo.get("max_use"));
-				output.put("times_used", promo.get("times_used"));
-				output.put("expires", promo.get("expires"));
-				output.put("promo_code", referral_promo_code);
-				output.put("description", promo.get("description"));
-				output.put("free_play_amount", promo.get("free_play_amount"));
-				output.put("rollover_multiple", promo.get("rollover_multiple"));
+			while (result_set.next()) 
+				{
+				int id = result_set.getInt(1);
+				long expires = result_set.getLong(3);
+				String promo_code = result_set.getString(7);
+				String description = result_set.getString(8);
+				double free_play_amount = result_set.getDouble(10);
+				int rollover_multiple = result_set.getInt(11);
+				int max_use = result_set.getInt(13);
+				int times_used = result_set.getInt(14);
 				
-				output.put("status", "1");
+				JSONObject promo = new JSONObject();
+				
+				promo.put("id", id);
+				promo.put("expires", expires);
+				promo.put("promo_code", promo_code);
+				promo.put("description", description);
+				promo.put("free_play_amount", free_play_amount);
+				promo.put("rollover_multiple", rollover_multiple);
+				promo.put("max_use", max_use);
+				promo.put("times_used", times_used);
+				
+				promos.put(promo);
 				}
-			else output.put("error", "You have not been approved for an affiliate promo code.");
+
+			output.put("promos", promos);
+			output.put("status", "1");
 			
 //------------------------------------------------------------------------------------
 

@@ -2,7 +2,6 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -100,12 +99,13 @@ public class CreatePromo extends Utils
 			else
 				{
 				referrer = db.select_user("id", referrer_id);
+				
 				if (referrer == null)
 					{
 					output.put("error", "Invalid affiliate");
 		            break method;
 					}
-				else // valid referrer - only allow one promo code at a time
+				/*else // valid referrer - only allow one promo code at a time
 					{
 					PreparedStatement check_for_promo  = sql_connection.prepareStatement("select promo_code from promo where referrer = ? and cancelled = 0");
 					check_for_promo.setString(1, referrer_id);
@@ -117,7 +117,7 @@ public class CreatePromo extends Utils
 						output.put("error", "Affiliate already has an active promo code: " + existing_promo_code);
 			            break method;
 						}
-					}
+					}*/
 				}
 			
 			PreparedStatement create_promo = sql_connection.prepareStatement("insert into promo(created, expires, approved_by, promo_code, description, referrer, free_play_amount, rollover_multiple, max_use) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -134,13 +134,6 @@ public class CreatePromo extends Utils
 			
 			if (referrer != null)
 				{
-				// write referral_promo_code to user record
-				
-				PreparedStatement update_user = sql_connection.prepareStatement("update user set referral_promo_code = ? where id = ?");
-				update_user.setString(1, promo_code);
-				update_user.setString(2, referrer_id);
-				update_user.executeUpdate();
-				
 				// approve user's open promo_request if applicable
 				
 				PreparedStatement approve_promo_request = sql_connection.prepareStatement("update promo_request set approved = 1 where approved = 0 and denied = 0 and created_by = ?");

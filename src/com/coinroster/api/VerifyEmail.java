@@ -56,7 +56,10 @@ public class VerifyEmail extends Utils
 				String email_address = user.getString("email_address");
 				db.store_verified_email(user.getString("user_id"), email_address);
 				
-				if (update_session_user_level) session.update_user_level(user.getString("user_id"), user_level);
+				if (update_session_user_level) 
+					{
+					session.update_user_level(user.getString("user_id"), user_level);
+					}
 
 				output.put("status", "1");
 				}

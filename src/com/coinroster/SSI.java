@@ -38,7 +38,9 @@ public class SSI extends Utils
 						
 						DB db = new DB(sql_connection);
 						
-						JSONObject user = db.select_user("id", session.user_id());
+						String user_id = session.user_id();
+						
+						JSONObject user = db.select_user("id", user_id);
 						
 						String currency = user.getString("currency");
 						
@@ -65,11 +67,16 @@ public class SSI extends Utils
 						
 						JSONObject session_properties = new JSONObject();
 
-						if (!user.isNull("referral_promo_code"))
+						PreparedStatement check_for_promo  = sql_connection.prepareStatement("select count(*) from promo where referrer = ? and cancelled = 0");
+						check_for_promo.setString(1, user_id);
+						ResultSet result_set = check_for_promo.executeQuery();
+
+						if (result_set.next()) 
 							{
-							String referral_promo_code = user.getString("referral_promo_code");
-							session_properties.put("referral_promo_code", referral_promo_code);
+							int referral_code_count = result_set.getInt(1);
+							session_properties.put("referral_code_count", referral_code_count);
 							}
+						else session_properties.put("referral_code_count", 0);
 						
 						session_properties.put("username", session.username());
 						session_properties.put("user_level", session.user_level());
