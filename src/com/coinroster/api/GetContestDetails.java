@@ -40,9 +40,7 @@ public class GetContestDetails extends Utils
 			JSONObject contest = db.select_contest(contest_id);
 			
 			if (contest != null)
-				{
-				JSONArray entries = db.select_contest_entries(contest_id);
-				
+				{				
 				String 
 				
 				contest_type = contest.getString("contest_type"),
@@ -90,12 +88,19 @@ public class GetContestDetails extends Utils
 				
 				if (contest_type.equals("ROSTER"))
 					{
-					int number_of_entries = (int) divide(total_prize_pool, cost_per_entry, 0);
+					JSONArray entries = db.select_contest_entries(contest_id);
+					
+					int 
+					
+					number_of_unique_rosters = entries.length(),
+					number_of_entries = (int) divide(total_prize_pool, cost_per_entry, 0);
+					
 					double entries_per_user = contest.getDouble("entries_per_user");
 					
 					output.put("pay_table", contest.get("pay_table"));
 					output.put("salary_cap", contest.get("salary_cap"));
 					output.put("roster_size", contest.get("roster_size"));
+					output.put("number_of_entries", number_of_entries);
 					output.put("number_of_entries", number_of_entries);
 					output.put("option_table", contest.get("option_table"));
 					output.put("entries_per_user", entries_per_user);
