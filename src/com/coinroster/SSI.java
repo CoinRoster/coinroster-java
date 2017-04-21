@@ -44,27 +44,12 @@ public class SSI extends Utils
 						
 						String currency = user.getString("currency");
 						
-						int 
-						
-						withdrawal_locked = user.getInt("withdrawal_locked"),
-						deposit_bonus_claimed = user.getInt("deposit_bonus_claimed"),
-						deposit_bonus_rollover_multiple = user.getInt("deposit_bonus_rollover_multiple");
-						
 						double
 						
 						btc_balance = user.getDouble("btc_balance"),
 						rc_balance = user.getDouble("rc_balance"),
-						available_balance = add(btc_balance, rc_balance, 0),
-						referral_offer = user.getDouble("referral_offer"),
-						rollover_quota = user.getDouble("rollover_quota"),
-						rollover_progress = user.getDouble("rollover_progress"),
-						first_deposit = user.getDouble("first_deposit"),
-						deposit_bonus_cap = user.getDouble("deposit_bonus_cap"),
-						btcusd_last_price = db.get_last_price("BTCUSD"),
-						currency_last_price = db.get_last_price(currency);
-						
-						String currency_description = db.get_currency_description(currency);
-						
+						available_balance = add(btc_balance, rc_balance, 0);
+					
 						JSONObject session_properties = new JSONObject();
 
 						PreparedStatement check_for_promo  = sql_connection.prepareStatement("select count(*) from promo where referrer = ? and cancelled = 0");
@@ -80,22 +65,23 @@ public class SSI extends Utils
 						
 						session_properties.put("username", session.username());
 						session_properties.put("user_level", session.user_level());
-						session_properties.put("referral_offer", referral_offer);
+						session_properties.put("referral_offer", user.getDouble("referral_offer"));
 						session_properties.put("btc_balance", btc_balance);
 						session_properties.put("rc_balance", rc_balance);
 						session_properties.put("available_balance", available_balance);
-						session_properties.put("withdrawal_locked", withdrawal_locked);
-						session_properties.put("first_deposit", first_deposit);
-						session_properties.put("deposit_bonus_claimed", deposit_bonus_claimed);
-						session_properties.put("deposit_bonus_cap", deposit_bonus_cap);
-						session_properties.put("deposit_bonus_rollover_multiple", deposit_bonus_rollover_multiple);
-						session_properties.put("rollover_quota", rollover_quota);
-						session_properties.put("rollover_progress", rollover_progress);
+						session_properties.put("withdrawal_locked", user.getInt("withdrawal_locked"));
+						session_properties.put("first_deposit", user.getDouble("first_deposit"));
+						session_properties.put("deposit_bonus_claimed", user.getInt("deposit_bonus_claimed"));
+						session_properties.put("deposit_bonus_cap", user.getDouble("deposit_bonus_cap"));
+						session_properties.put("deposit_bonus_rollover_multiple", user.getInt("deposit_bonus_rollover_multiple"));
+						session_properties.put("rollover_quota", user.getDouble("rollover_quota"));
+						session_properties.put("rollover_progress", user.getDouble("rollover_progress"));
 						session_properties.put("contest_status", user.getInt("contest_status"));
 						session_properties.put("currency", currency);
-						session_properties.put("btcusd_last_price", btcusd_last_price);
-						session_properties.put("currency_last_price", currency_last_price);
-						session_properties.put("currency_description", currency_description);
+						session_properties.put("btcusd_last_price", db.get_last_price("BTCUSD"));
+						session_properties.put("currency_last_price", db.get_last_price(currency));
+						session_properties.put("currency_description", db.get_currency_description(currency));
+						session_properties.put("odds_format", user.getString("odds_format"));
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}

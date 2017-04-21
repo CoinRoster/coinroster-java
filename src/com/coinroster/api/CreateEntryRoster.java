@@ -117,9 +117,6 @@ public class CreateEntryRoster extends Utils
 					
 					double total_entry_fees = multiply(cost_per_entry, number_of_entries, 0);
 	
-					log("Available balance: " + available_balance);
-					log("Total entry fees: " + total_entry_fees);
-					
 					if (total_entry_fees > available_balance)
 						{
 						output.put("error", "Insufficient funds");

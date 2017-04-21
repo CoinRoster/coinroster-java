@@ -98,6 +98,7 @@ public class DB
 			int deposit_bonus_claimed = result_set.getInt(27);
 			double deposit_bonus_cap = result_set.getDouble(28);
 			int deposit_bonus_rollover_multiple = result_set.getInt(29);
+			String odds_format = result_set.getString(30);
 			
 			if (ext_address == null) ext_address = "";
 			if (email_address == null) email_address = "";
@@ -132,6 +133,7 @@ public class DB
 			user.put("deposit_bonus_claimed", deposit_bonus_claimed);
 			user.put("deposit_bonus_cap", deposit_bonus_cap);
 			user.put("deposit_bonus_rollover_multiple", deposit_bonus_rollover_multiple);
+			user.put("odds_format", odds_format);
 			}
 
 		return user;
