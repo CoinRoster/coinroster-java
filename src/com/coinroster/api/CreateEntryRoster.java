@@ -14,6 +14,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.UpdateDraftStatistics;
 import com.coinroster.internal.UpdateUserContestStatus;
 import com.coinroster.internal.UserMail;
 
@@ -318,6 +319,8 @@ public class CreateEntryRoster extends Utils
 					create_entry.setDouble(4, total_entry_fees);
 					create_entry.setString(5, roster.toString());
 					create_entry.executeUpdate();
+					
+					new UpdateDraftStatistics(sql_connection, contest_id);
 	
 					success = true;
 					}

@@ -267,6 +267,7 @@ public class CreateContest extends Utils
 
 						line.put("name", name);
 						line.put("price", price);
+						line.put("count", 0);
 						
 						option_table.put(i, line);
 						}
