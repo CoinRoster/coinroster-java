@@ -61,7 +61,7 @@ public class ContestReport_Lobby extends Utils
 					select_contests.setString(2, sub_category);
 					break;
 				case 2 : // in play
-					select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = 2 order by registration_deadline asc");
+					select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = 2 order by registration_deadline desc");
 					select_contests.setString(1, category);
 					select_contests.setString(2, sub_category);
 					break;
