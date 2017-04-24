@@ -14,12 +14,6 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import javafx.application.Platform;
 
@@ -30,17 +24,12 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.io.*;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 public class RosterBot_NHL
     {
@@ -342,12 +331,12 @@ public class RosterBot_NHL
 		log("Average points: " + average_points);
 		log("Average points per 60 mins: " + average_points_per_60);*/
 		
-		double points_per_60_weighting = 0.5;
+		//double points_per_60_weighting = 0.5;
 		
 		for (Map.Entry<Integer, String> entry : player_names.entrySet()) 
 			{
 			int player_id = entry.getKey();
-			String player_name = entry.getValue();
+			//String player_name = entry.getValue();
 			int points = points_map.get(player_id);
 			double points_per_60 = points_per_60_map.get(player_id);
 			double points_index = divide(points, average_points, 0);
@@ -373,7 +362,7 @@ public class RosterBot_NHL
 			hot_streak_rankings.put(hot_streak_index, player_id);
 			}
 		
-		int player_count = 0;
+		//int player_count = 0;
 
 		log("");
 		log("Composite: ");
@@ -908,16 +897,6 @@ public class RosterBot_NHL
 		
 		return row_data;
    		}
-	
-	private static String get_attribute(String line, String attribute)
-		{
-		attribute += "=\"";
-		
-		line = line.substring(line.indexOf(attribute) + attribute.length(), line.length());
-		line = line.substring(0,line.indexOf("\""));
-		
-		return line;
-		}
 
 	final static int MAX_PRECISION = 8;
 	public static double multiply(double in1, double in2, int max_precision)

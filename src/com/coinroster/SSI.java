@@ -39,11 +39,14 @@ public class SSI extends Utils
 				{
 				String promo_code = target_object.trim();
 				
-				response_data = Utils.read_to_string(ssi_directory + "promo_landing.html");
-				
 				JSONObject promo = db.select_promo(promo_code);
 				
-				if (promo == null) log("!!!!! Failed attempt to load promo landing page: " + promo_code);
+				if (promo == null) 
+					{
+					log("!!!!! Failed attempt to load promo landing page: " + promo_code);
+
+					response_data = Utils.read_to_string(root + "/signup.html");
+					}
 				else
 					{
 					JSONObject promo_properties = new JSONObject();
@@ -54,6 +57,7 @@ public class SSI extends Utils
 					promo_properties.put("expires", promo.get("expires"));
 					promo_properties.put("cancelled", promo.get("cancelled"));
 					
+					response_data = Utils.read_to_string(ssi_directory + "promo_landing.html");
 					response_data = response_data.replace("<!--factory:promo_details-->", "<script>window.promo = " + promo_properties.toString() + ";</script>");
 					}
 				
