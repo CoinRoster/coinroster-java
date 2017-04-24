@@ -158,6 +158,11 @@ public class Server extends Utils
 		return sql_pool.getConnection();
 		}
 
+    public static String sql_dump_string() throws SQLException 
+    	{
+    	return "mysqldump --force --opt -u" + sql_username + " -p" + sql_password + " ";
+    	}
+    
 	public static void main (String[] args) throws Exception
 		{
 		cache_and_rerun();

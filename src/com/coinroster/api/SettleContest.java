@@ -19,6 +19,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.Backup;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.UserMail;
 
@@ -49,6 +50,8 @@ public class SettleContest extends Utils
 			
 			String contest_admin = session.user_id();
 			
+			new Backup();
+
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();

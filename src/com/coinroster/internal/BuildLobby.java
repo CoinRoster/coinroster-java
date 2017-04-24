@@ -26,9 +26,15 @@ public class BuildLobby extends Utils
 	    	lobby_template = Utils.read_to_string(factory_path + "lobby_template.html"),
 	    	category_template = Utils.read_to_string(factory_path + "category_template.html"),
 	    	sub_category_wrapper_template = Utils.read_to_string(factory_path + "sub_category_wrapper_template.html"),
-	    	sub_category_template = Utils.read_to_string(factory_path + "sub_category_template.html");
+	    	sub_category_template = Utils.read_to_string(factory_path + "sub_category_template.html"),
 	    	
-	    	StringBuilder lobby_builder = new StringBuilder();
+	    	sitemap_template = Utils.read_to_string(factory_path + "sitemap_template.xml"),
+	    	sitemap_url_template = Utils.read_to_string(factory_path + "sitemap_url_template.xml");
+	    	
+	    	StringBuilder 
+	    	
+	    	lobby_builder = new StringBuilder(),
+	    	sitemap_builder = new StringBuilder();
 	    	
 	    	PreparedStatement select_categories = sql_connection.prepareStatement("select * from category order by position asc");
 			ResultSet category_rs = select_categories.executeQuery();
@@ -114,11 +120,20 @@ public class BuildLobby extends Utils
 					
 					visible_sub_categories = true;
 					
-					String sub_category_html = sub_category_template;
+					String href = "/category.html?main=" + category_code.toLowerCase() + "&amp;sub=" + sub_category_code.toLowerCase(),
 					
-					sub_category_html = sub_category_html.replace("factory:category_href", "/category.html?main=" + category_code + "&amp;sub=" + sub_category_code);
+					sub_category_html = sub_category_template;
+					sub_category_html = sub_category_html.replace("factory:category_href", href);
 					sub_category_html = sub_category_html.replace("factory:image_path", "/img/lobby_tiles/" + image_name);
 					sub_category_html = sub_category_html.replace("<!-- factory:sub_category_description -->", sub_category_description);
+					
+					String sitemap_url = sitemap_url_template;
+					
+					sitemap_url = sitemap_url.replace("<!-- factory:url -->", Server.host + href);
+					sitemap_url = sitemap_url.replace("<!-- factory:changefreq -->", "daily");
+					sitemap_url = sitemap_url.replace("<!-- factory:priority -->", "0.9");
+					
+					sitemap_builder.append(sitemap_url);
 					
 					//String open_contests_string = " open contests";
 					//if (open_contests == 1) open_contests_string = " open contest";
@@ -153,12 +168,36 @@ public class BuildLobby extends Utils
 				}
 			
 			// ---------------------------------------------------------------------------------------
-	    	
-			//String lobby_html = lobby_builder.toString();
+
+			PreparedStatement select_contests = sql_connection.prepareStatement("select id, status from contest");
+			ResultSet result_set = select_contests.executeQuery();
 			
-			String lobby_html = sub_category_wrapper_template.replace("<!-- factory:sub_categories -->", uncategorized_lobby.toString());
+			while (result_set.next())
+				{
+				int 
+				
+				contest_id = result_set.getInt(1),
+				contest_status = result_set.getInt(2);
+				
+				String 
+				
+				changefreq = contest_status < 3 ? "daily" : "monthly",
+				sitemap_url = sitemap_url_template;
+				
+				sitemap_url = sitemap_url.replace("<!-- factory:url -->", Server.host + "/contest.html?id=" + contest_id);
+				sitemap_url = sitemap_url.replace("<!-- factory:changefreq -->", changefreq);
+				sitemap_url = sitemap_url.replace("<!-- factory:priority -->", "0.8");
+				
+				sitemap_builder.append(sitemap_url);
+				}
 			
+			String 
+			
+			lobby_html = sub_category_wrapper_template.replace("<!-- factory:sub_categories -->", uncategorized_lobby.toString()),
+			sitemap_xml = sitemap_template.replace("<!-- factory:urls -->", sitemap_builder.toString());
+						
 	        Utils.write_to_string(domain_directory + "/lobby.html", lobby_template.replace("<!-- factory:lobby_html -->", lobby_html));
+	        Utils.write_to_string(domain_directory + "/sitemap.xml", sitemap_xml);
 	        Utils.write_to_string(domain_directory + "/js/contest_counts.js",  "<script>window.contest_counts = " + contest_counts.toString() + ";</script>");
 			}
 		catch (Exception e)
