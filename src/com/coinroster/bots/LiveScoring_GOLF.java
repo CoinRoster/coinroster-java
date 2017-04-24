@@ -53,7 +53,7 @@ public class LiveScoring_GOLF extends Application
 	static ConcurrentHashMap<String, String> out_of_contest_player_scores = new ConcurrentHashMap<String, String>();
 	static ConcurrentHashMap<String, String> out_of_contest_player_scores_stored = new ConcurrentHashMap<String, String>();
 
-	static JSONObject contest_details = null;
+	static JSONObject contest = null;
 	
     public static void main(String[] args) throws Exception
         {
@@ -75,9 +75,9 @@ public class LiveScoring_GOLF extends Application
 		
 		List<String> contest_JSON = new LiveScoring_GOLF().post_page("https://www.coinroster.com/GetContestDetails.api", post_data.toString());
 		
-		contest_details = new JSONObject(contest_JSON.get(0));
+		contest = new JSONObject(contest_JSON.get(0));
 		
-		String sport = contest_details.getString("sub_category");
+		String sport = contest.getString("sub_category");
 		
 		if (!sport.equals("GOLF"))
 			{
@@ -86,7 +86,7 @@ public class LiveScoring_GOLF extends Application
 			System.exit(0);
 			}
 	
-		JSONArray option_table = new JSONArray(contest_details.getString("option_table"));
+		JSONArray option_table = new JSONArray(contest.getString("option_table"));
 		
 		int number_of_players = option_table.length();
 				
@@ -112,6 +112,10 @@ public class LiveScoring_GOLF extends Application
 		player_scores_stored = new ConcurrentHashMap<Integer, String>(player_scores);
 		out_of_contest_player_scores_stored = new ConcurrentHashMap<String, String>(out_of_contest_player_scores);
 
+		//Long registration_deadline = contest.getLong("registration_deadline");
+		
+		//log(registration_deadline - System.currentTimeMillis());
+				
 		log("");
 		log("Starting GOLF live scoring");
 		
@@ -238,43 +242,34 @@ public class LiveScoring_GOLF extends Application
 						{
 						NodeList cells = player_row.getElementsByTagName("td");
 						
-						int index_of_score = -1;
-						
-						String
-						
-						player_key = null,
-						score_raw = null;
-						
 						for (int i=0, limit=cells.getLength(); i<limit; i++) 
 							{
-							Node node = cells.item(i);
+							String text_content = cells.item(i).getTextContent().trim();
 							
-							String text_content = node.getTextContent().trim();
+							String player_key = get_player_key(text_content);
 							
-							if (index_of_score == -1)
+							if (player_key == null) continue;
+							
+							if (players_in_contest.containsKey(player_key)) 
 								{
-								String potential_player_key = get_player_key(text_content);
-								if (potential_player_key == null) continue;
-								if (players_in_contest.containsKey(potential_player_key)) 
-									{
-									player_key = potential_player_key;
-									index_of_score = i + 1;
-									}
-								}
-							else if (i == index_of_score)
-								{
-								score_raw = text_content;
+								int
+								
+								player_id = players_in_contest.get(player_key),
+								index_of_WD_CUT = i - 3,
+								index_of_score = i + 1;
+								
+								String 
+								
+								score_raw = null,
+								WD_CUT = cells.item(index_of_WD_CUT).getTextContent().trim();
+								
+								if (WD_CUT.equals("CUT") || WD_CUT.equals("WD")) score_raw = WD_CUT;
+								else score_raw = cells.item(index_of_score).getTextContent().trim();
+								
+								player_scores.put(player_id, score_raw);
+								
 								break;
 								}
-							}
-						
-						if (player_key != null)
-							{
-							if (score_raw.equals("E")) score_raw = "0";
-							
-							int player_id = players_in_contest.get(player_key);
-							
-							player_scores.put(player_id, score_raw);
 							}
 						}
 					}
@@ -297,10 +292,14 @@ public class LiveScoring_GOLF extends Application
 			
 			for (Entry<Integer, String> entry : player_scores.entrySet())
 				{
-			    String player_score = entry.getValue();
+			    String score_raw = entry.getValue();
 
 			    try {
-			    	int integer_score = Integer.parseInt(player_score);
+			    	int integer_score = 0;
+			    	
+			    	if (score_raw.equals("E")) integer_score = 0;
+			    	else integer_score = Integer.parseInt(score_raw);
+			    	
 			    	if (integer_score > worst_integer_score) worst_integer_score = integer_score;
 			    	}
 			    catch (Exception ignore)
@@ -321,10 +320,13 @@ public class LiveScoring_GOLF extends Application
 				String score_raw = entry.getValue();
 				
 			    try {
-			    	int integer_score = Integer.parseInt(score_raw);
+			    	int integer_score = 0;
+			    	
+			    	if (score_raw.equals("E")) integer_score = 0;
+			    	else integer_score = Integer.parseInt(score_raw);
 
 			    	// if we get here, the player has an integer score
-			    	// otherwise it's "WD" or "--" and keeps the normalized score of 0 assigned above
+			    	// otherwise it's "WD" or "CUT" or "--" and keeps the normalized score of 0 assigned above
 			    	
 			    	score_normalized = worst_integer_score - integer_score + 1;
 			    	}
@@ -567,4 +569,3 @@ public class LiveScoring_GOLF extends Application
 //-----------------------------------------------------------------------------------------------------   
 
     }
-

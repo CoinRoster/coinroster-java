@@ -53,7 +53,7 @@ public class LiveScoring_HOCKEY extends Application
 	
 	static JSONObject 
 	
-	contest_details = null,
+	contest = null,
     team_cities = new JSONObject(),
     team_motifs = new JSONObject();
 
@@ -82,9 +82,9 @@ public class LiveScoring_HOCKEY extends Application
 		
 		List<String> contest_JSON = new LiveScoring_HOCKEY().post_page("https://www.coinroster.com/GetContestDetails.api", post_data.toString());
 		
-		contest_details = new JSONObject(contest_JSON.get(0));
+		contest = new JSONObject(contest_JSON.get(0));
 		
-		String sport = contest_details.getString("sub_category");
+		String sport = contest.getString("sub_category");
 		
 		if (!sport.equals("HOCKEY"))
 			{
@@ -93,7 +93,7 @@ public class LiveScoring_HOCKEY extends Application
 			System.exit(0);
 			}
 		
-		Date registration_deadline = new Date(contest_details.getLong("registration_deadline"));
+		Date registration_deadline = new Date(contest.getLong("registration_deadline"));
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd"); 
 		score_board_url = "http://www.sportsnet.ca/hockey/nhl/scores/?datepicker-date=" + df.format(registration_deadline);
 		
@@ -102,7 +102,7 @@ public class LiveScoring_HOCKEY extends Application
 		log("Starting NHL live scoring");
 		log("");
 		
-		JSONArray option_table = new JSONArray(contest_details.getString("option_table"));
+		JSONArray option_table = new JSONArray(contest.getString("option_table"));
 		
 		int number_of_players = option_table.length();
 				

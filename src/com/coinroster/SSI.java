@@ -13,31 +13,59 @@ public class SSI extends Utils
 	{
 	protected SSI(HttpRequest request, OutputStream response) throws Exception
 		{
-		String 
-		
-		response_data = null,
-		root = request.header("root"), 				// e.g. /usr/share/nginx/html/coinroster.com
-		ssi_directory = root + "/ssi-java/",  		// e.g. /usr/share/nginx/html/coinroster.com/ssi-java/
-		target_url = request.target_url(), 			// e.g. /ssi-java/nav
-		target_object = request.target_object(); 	// e.g. nav
-
-		String session_token = request.cookie("session_token");
-		Session session = new Session(session_token);
-		
-		boolean session_active = session.active();
-
-		switch (target_object)
-			{
-			case "session" :
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			
+			DB db = new DB(sql_connection);
+			
+			String 
+			
+			response_data = null,
+			root = request.header("root"), 				// e.g. /usr/share/nginx/html/coinroster.com
+			ssi_directory = root + "/ssi-java/",  		// e.g. /usr/share/nginx/html/coinroster.com/ssi-java/
+			target_url = request.target_url(), 			// e.g. /ssi-java/nav
+			target_object = request.target_object(); 	// e.g. nav
+	
+			String session_token = request.cookie("session_token");
+			Session session = new Session(session_token);
+	
+			boolean 
+			
+			session_active = session.active(),
+			add_response_headers = false;
+	
+			if (request.header("promo") != null)
 				{
-				if (session_active)
+				String promo_code = target_object.trim();
+				
+				response_data = Utils.read_to_string(ssi_directory + "promo_landing.html");
+				
+				JSONObject promo = db.select_promo(promo_code);
+				
+				if (promo == null) log("!!!!! Failed attempt to load promo landing page: " + promo_code);
+				else
 					{
-					Connection sql_connection = null;
-					try {
-						sql_connection = Server.sql_connection();
-						
-						DB db = new DB(sql_connection);
-						
+					JSONObject promo_properties = new JSONObject();
+					
+					promo_properties.put("promo_code", promo_code);
+					promo_properties.put("free_play_amount", promo.get("free_play_amount"));
+					promo_properties.put("description", promo.get("description"));
+					promo_properties.put("expires", promo.get("expires"));
+					promo_properties.put("cancelled", promo.get("cancelled"));
+					
+					response_data = response_data.replace("<!--factory:promo_details-->", "<script>window.promo = " + promo_properties.toString() + ";</script>");
+					}
+				
+				add_response_headers = true;
+				}
+			
+			switch (target_object)
+				{
+				case "session" :
+					{
+					if (session_active)
+						{
 						String user_id = session.user_id();
 						
 						JSONObject user = db.select_user("id", user_id);
@@ -51,11 +79,11 @@ public class SSI extends Utils
 						available_balance = add(btc_balance, rc_balance, 0);
 					
 						JSONObject session_properties = new JSONObject();
-
+	
 						PreparedStatement check_for_promo  = sql_connection.prepareStatement("select count(*) from promo where referrer = ? and cancelled = 0");
 						check_for_promo.setString(1, user_id);
 						ResultSet result_set = check_for_promo.executeQuery();
-
+	
 						if (result_set.next()) 
 							{
 							int referral_code_count = result_set.getInt(1);
@@ -85,27 +113,8 @@ public class SSI extends Utils
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}
-					catch (Exception e)
+					else 
 						{
-						Server.exception(e);
-						}
-					finally
-						{
-						if (sql_connection != null)
-							{
-							try {sql_connection.close();} 
-							catch (SQLException ignore) {}
-							}
-						}
-					}
-				else 
-					{
-					Connection sql_connection = null;
-					try {
-						sql_connection = Server.sql_connection();
-						
-						DB db = new DB(sql_connection);
-		
 						String currency = "USD";
 						
 						double
@@ -123,59 +132,42 @@ public class SSI extends Utils
 						
 						response_data = "<script>window.inactive_session = " + inactive_properties.toString() + ";</script>";
 						}
-					catch (Exception e)
+					} break;
+				case "lobby_nav" :
+				case "nav" :
+					{
+					if (!session_active) 
 						{
-						Server.exception(e);
+						if (target_object.equals("lobby_nav")) response_data = "<!-- PLACEHOLDER -->";
+						else response_data = Utils.read_to_string(ssi_directory + "nav_inactive.html");
 						}
-					finally
+					else 
 						{
-						if (sql_connection != null)
-							{
-							try {sql_connection.close();} 
-							catch (SQLException ignore) {}
-							}
+						response_data = Utils.read_to_string(ssi_directory + "nav_active.html");
+						response_data = response_data.replace("<!--ssi:username-->", session.username());
+						if (session.user_level().equals("1")) response_data = response_data.replaceAll("ssi_header_admin_wrapper", "");
 						}
-					}
-				} break;
-			case "lobby_nav" :
-			case "nav" :
-				{
-				if (!session_active) 
+					} break;
+				case "nav_admin" :
 					{
-					if (target_object.equals("lobby_nav")) response_data = "<!-- PLACEHOLDER -->";
-					else response_data = Utils.read_to_string(ssi_directory + "nav_inactive.html");
-					}
-				else 
+					if (session_active)
+						{
+						response_data = Utils.read_to_string(ssi_directory + "nav_admin.html");
+						response_data = response_data.replace("<!--ssi:username-->", session.username());
+						response_data = response_data.replaceAll("ssi_header_admin_wrapper", "");
+						}
+					} break;
+				case "my_contests_count" :
 					{
-					response_data = Utils.read_to_string(ssi_directory + "nav_active.html");
-					response_data = response_data.replace("<!--ssi:username-->", session.username());
-					if (session.user_level().equals("1")) response_data = response_data.replaceAll("ssi_header_admin_wrapper", "");
-					}
-				} break;
-			case "nav_admin" :
-				{
-				if (session_active)
-					{
-					response_data = Utils.read_to_string(ssi_directory + "nav_admin.html");
-					response_data = response_data.replace("<!--ssi:username-->", session.username());
-					response_data = response_data.replaceAll("ssi_header_admin_wrapper", "");
-					}
-				} break;
-			case "my_contests_count" :
-				{
-				if (session_active)
-					{
-					Connection sql_connection = null;
-					try {
-						sql_connection = Server.sql_connection();
-
+					if (session_active)
+						{
 						PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(distinct(contest.id)) from contest inner join entry on entry.contest_id = contest.id where entry.user_id = ? group by contest.status order by contest.status asc");
 						count_contests.setString(1, session.user_id());
-
+	
 						ResultSet result_set = count_contests.executeQuery();
 						
 						JSONObject contest_counts = new JSONObject();
-
+	
 						// initialize all counts to 0 since result_set will only contain statuses with positive counts
 						
 						contest_counts.put("open", 0);
@@ -205,48 +197,66 @@ public class SSI extends Utils
 						
 						response_data = "<script>window.contest_counts = " + contest_counts.toString() + ";</script>";
 						}
-					catch (Exception e)
-						{
-						Server.exception(e);
-						}
-					finally
-						{
-						if (sql_connection != null)
-							{
-							try {sql_connection.close();} 
-							catch (SQLException ignore) {}
-							}
-						}
-					}
-				else response_data = " ";
-				} break;
-			case "lobby_header" :
-				{
-				if (!session_active) response_data = Utils.read_to_string(ssi_directory + "lobby_inactive.html");
-				else response_data = "<!-- PLACEHOLDER -->";
-				} break;
-			}
-
-		if (response_data != null)
-			{
-			ByteArrayInputStream stream = new ByteArrayInputStream(response_data.getBytes(Utils.ENCODING));
-
-			byte[] buffer = new byte[1024];
-
-			for (int n; (n = stream.read(buffer, 0, buffer.length)) != -1;)
-				{
-				response.write(buffer, 0, n);
-				response.flush();
+					else response_data = " ";
+					} break;
+				case "lobby_header" :
+					{
+					if (!session_active) response_data = Utils.read_to_string(ssi_directory + "lobby_inactive.html");
+					else response_data = "<!-- PLACEHOLDER -->";
+					} break;
 				}
 			
-			stream.close();
+			if (response_data != null)
+				{
+				if (add_response_headers)
+					{
+					response.write(new String("HTTP/1.1 200 OK\r\n").getBytes());
+					response.flush();
+					
+					response.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
+					response.flush();
+	
+					response.write(new String("Content-Length: " + String.valueOf(response_data.length()) + "\r\n").getBytes());
+					response.flush();
+					
+					response.write(new String("Content-Type: text/html\r\n").getBytes());
+					response.flush();
+	
+					response.write(new String("\r\n").getBytes());
+					response.flush();
+					}
+				
+				ByteArrayInputStream stream = new ByteArrayInputStream(response_data.getBytes(Utils.ENCODING));
+	
+				byte[] buffer = new byte[1024];
+	
+				for (int n; (n = stream.read(buffer, 0, buffer.length)) != -1;)
+					{
+					response.write(buffer, 0, n);
+					response.flush();
+					}
+				
+				stream.close();
+				}
+			else 
+				{
+				log("!!!!! Unauthorized SSI request: " + target_url);
+				
+				response.write(new String(" ").getBytes());
+				response.flush();
+				}
 			}
-		else 
+		catch (Exception e)
 			{
-			log("!!!!! Unauthorized SSI request: " + target_url);
-			
-			response.write(new String(" ").getBytes());
-			response.flush();
+			Server.exception(e);
+			}
+		finally
+			{
+			if (sql_connection != null)
+				{
+				try {sql_connection.close();} 
+				catch (SQLException ignore) {}
+				}
 			}
 		}
 	}

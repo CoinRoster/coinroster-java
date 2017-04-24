@@ -43,7 +43,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class LiveScoring_HOCKEY2 extends Application
     {
-	static int contest_id = 82;
+	static int contest_id = 88;
 	
 	static boolean 
 	
@@ -61,16 +61,14 @@ public class LiveScoring_HOCKEY2 extends Application
 	static ConcurrentHashMap<String, String> event_summary_urls = new ConcurrentHashMap<String, String>();
 	
 	static ConcurrentHashMap<Integer, Integer> player_scores = new ConcurrentHashMap<Integer, Integer>();
-	static ConcurrentHashMap<Integer, Integer> player_scores_stored = new ConcurrentHashMap<Integer, Integer>();
 	
 	static ConcurrentHashMap<String, Integer> out_of_contest_player_scores = new ConcurrentHashMap<String, Integer>();
-	static ConcurrentHashMap<String, Integer> out_of_contest_player_scores_stored = new ConcurrentHashMap<String, Integer>();
 	
 	static ConcurrentHashMap<String, Boolean> game_ended_flags = new ConcurrentHashMap<String, Boolean>();
 
 	static JSONObject 
 	
-	contest_details = null,
+	contest = null,
 	
     team_cities = new JSONObject(),
     team_motifs = new JSONObject();
@@ -206,9 +204,9 @@ public class LiveScoring_HOCKEY2 extends Application
 		
 		List<String> contest_JSON = new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/GetContestDetails.api", post_data.toString());
 		
-		contest_details = new JSONObject(contest_JSON.get(0));
+		contest = new JSONObject(contest_JSON.get(0));
 		
-		String sport = contest_details.getString("sub_category");
+		String sport = contest.getString("sub_category");
 		
 		if (!sport.equals("HOCKEY"))
 			{
@@ -219,7 +217,7 @@ public class LiveScoring_HOCKEY2 extends Application
 		
         populate_teams();
         
-		JSONArray option_table = new JSONArray(contest_details.getString("option_table"));
+		JSONArray option_table = new JSONArray(contest.getString("option_table"));
 		
 		int number_of_players = option_table.length();
 				
@@ -252,10 +250,17 @@ public class LiveScoring_HOCKEY2 extends Application
 			players_in_contest.put(player_key, player_id);
 			player_scores.put(player_id, 0);
 			}
-		
-		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
-		out_of_contest_player_scores_stored = new ConcurrentHashMap<String, Integer>(out_of_contest_player_scores);
 
+		Long registration_deadline = contest.getLong("registration_deadline");
+		
+		while (System.currentTimeMillis() < registration_deadline)
+			{
+			try {
+				Thread.sleep(60000);
+				}
+			catch (Exception ignore){}
+			}
+				
 		log("");
 		log("Starting NHL live scoring");
 		
@@ -335,14 +340,7 @@ public class LiveScoring_HOCKEY2 extends Application
 		    		{
 		    		try {
 		    			Thread.sleep(1000);
-		    			
-						if (!player_scores.equals(player_scores_stored) || !out_of_contest_player_scores.equals(out_of_contest_player_scores_stored))
-			    			{
-				    		call_CoinRoster("UpdateScores");
-				    		player_scores_stored = new ConcurrentHashMap<Integer, Integer>(player_scores);
-				    		out_of_contest_player_scores_stored = new ConcurrentHashMap<String, Integer>(out_of_contest_player_scores);
-			    			}
-						
+		    							
 						scan_scoreboard(webengine);
 						
 						boolean done = exit_if_games_ended();
@@ -389,6 +387,14 @@ public class LiveScoring_HOCKEY2 extends Application
 					log("");
 					log("Reloading...");
 					webengine.reload();
+
+					try {
+						Thread.sleep(10000);
+						} 
+					catch (InterruptedException e) 
+						{
+						e.printStackTrace();
+						}
 					}
 				else // there are game cards
 					{
@@ -527,6 +533,8 @@ public class LiveScoring_HOCKEY2 extends Application
     	for (int secs : scan_schedule)
     		{
     		try {
+    			boolean scores_changed = false;
+    			
 		    	String event_summary = get_formatted_page(event_summary_url);
 
 		    	Pattern tr_open = Pattern.compile("(<tr)");
@@ -581,7 +589,11 @@ public class LiveScoring_HOCKEY2 extends Application
 						player_id = players_in_contest.get(player_key),
 						score_old = player_scores.get(player_id);
 						
-						if (score_old != score_new) log("IN: " + player_key + " | " + score_old + " -> " + score_new);
+						if (score_old != score_new) 
+							{
+							scores_changed = true;
+							log("IN: " + player_key + " | " + score_old + " -> " + score_new);
+							}
 
 						player_scores.put(player_id, score_new);
 						}
@@ -591,13 +603,23 @@ public class LiveScoring_HOCKEY2 extends Application
 							{
 							int score_old = out_of_contest_player_scores.get(player_key);
 							
-							if (score_old != score_new) log("OUT: " + player_key + " | " + score_old + " -> " + score_new);
+							if (score_old != score_new) 
+								{
+								scores_changed = true;
+								log("OUT: " + player_key + " | " + score_old + " -> " + score_new);
+								}
 							}
-						else if (score_new > 0) log("OUT: " + player_key + " | " + 0 + " -> " + score_new);
+						else if (score_new > 0) 
+							{
+							scores_changed = true;
+							log("OUT: " + player_key + " | " + 0 + " -> " + score_new);
+							}
 
 						out_of_contest_player_scores.put(player_key, score_new);
 						}
 					}
+				
+				if (scores_changed) call_CoinRoster("UpdateScores");
 		    	}
 	    	catch (Exception e)
 	    		{
@@ -960,4 +982,3 @@ public class LiveScoring_HOCKEY2 extends Application
 //-----------------------------------------------------------------------------------------------------   
 
     }
-
