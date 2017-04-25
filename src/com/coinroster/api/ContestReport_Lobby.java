@@ -66,7 +66,7 @@ public class ContestReport_Lobby extends Utils
 					select_contests.setString(2, sub_category);
 					break;
 				case 3 : // settled
-					Long settled_cutoff = System.currentTimeMillis() - 14 * Server.day;
+					Long settled_cutoff = System.currentTimeMillis() - Server.lobby_settled_cutoff;
 					select_contests = sql_connection.prepareStatement("select * from contest where category = ? and sub_category = ? and status = 3 and settled > ? order by settled desc");
 					select_contests.setString(1, category);
 					select_contests.setString(2, sub_category);

@@ -71,8 +71,8 @@ public class BuildLobby extends Utils
 					String sub_category_description = sub_category_rs.getString(4);
 					int active_flag = sub_category_rs.getInt(5);
 					String image_name = sub_category_rs.getString(6);
-
-					Long settled_cutoff = System.currentTimeMillis() - 14 * Server.day;
+					
+					Long settled_cutoff = System.currentTimeMillis() - Server.lobby_settled_cutoff;
 					
 					PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(*) from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?))  group by status");
 					count_contests.setString(1, category_code);

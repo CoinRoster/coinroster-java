@@ -113,15 +113,18 @@ public class Server extends Utils
 	proxy_port = 27038,
 	
 	pool_size,
-	seconds_to_halt = 2,
-	admin_timeout;
+	seconds_to_halt = 2;
 	
-	public static int
+	public static Long
 	
-	second = 1000,
+	second = (long) 1000,
 	minute = second * 60,
 	hour = minute * 60,
-	day = hour * 24;
+	day = hour * 24,
+	
+	admin_timeout,
+	
+	lobby_settled_cutoff = 30 * day;
 
 	static boolean 
 	
