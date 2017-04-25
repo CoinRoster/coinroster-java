@@ -11,7 +11,7 @@ import com.coinroster.Utils;
 
 public class Backup extends Utils
 	{
-	public Backup() // called by hourly cron
+	public Backup()
 		{
 		Connection sql_connection = null;
 		
