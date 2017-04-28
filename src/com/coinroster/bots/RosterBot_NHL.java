@@ -33,7 +33,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 
 public class RosterBot_NHL
     {
-	static int contest_id = 88;
+	static int contest_id = 93;
 	
 	static boolean 
 	
@@ -502,6 +502,8 @@ public class RosterBot_NHL
 
 			index_of_row = gamelog.indexOf(row_open, index_of_row + 1);
 			}
+		
+		if (game_counter < hot_streak_games) return;
 		
 		if (rows_found == 0)
 			{

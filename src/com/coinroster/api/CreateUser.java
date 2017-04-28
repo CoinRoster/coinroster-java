@@ -162,7 +162,7 @@ public class CreateUser extends Utils
 							{
 							referrer_id = promo.getString("referrer");
 							referrer = db.select_user("id", referrer_id);
-							referral_program = referrer.getDouble("referral_program");
+							referral_program = referrer.getDouble("referral_offer");
 							}
 						}
 					
