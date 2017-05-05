@@ -85,7 +85,7 @@ public class SendReferral extends Utils
 			
 			String
 			
-			subject = null,
+			subject = "",
 			
 			message_body = "You have been invited by <b>" + referrer_provided_name + "</b> to join CoinRoster - the leading Bitcoin Fantasy Sports community!";
 			message_body += "<br/>";

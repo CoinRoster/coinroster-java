@@ -118,14 +118,14 @@ public class FinalizePendingDeposit extends Utils
 				
 				String
 				
-				subject = null,
-				message_body = null;
+				subject = "",
+				message_body = "";
 				
 				if (deposit_bonus_activated)
 					{
 					subject = "Claim your Deposit Bonus!";
 					
-					message_body = "Hi <b><!--USERNAME--></b>";
+					message_body  = "Hi <b><!--USERNAME--></b>";
 					message_body += "<br/>";
 					message_body += "<br/>";
 					message_body += "We have received your first deposit and have credited to your account.";
@@ -142,7 +142,7 @@ public class FinalizePendingDeposit extends Utils
 					{
 					subject = "Deposit confirmation";
 					
-					message_body = "Hi <b><!--USERNAME--></b>";
+					message_body  = "Hi <b><!--USERNAME--></b>";
 					message_body += "<br/>";
 					message_body += "<br/>";
 					message_body += "We have received your deposit and have credited to your account.";

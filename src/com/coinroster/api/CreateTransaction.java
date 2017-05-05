@@ -286,14 +286,14 @@ public class CreateTransaction extends Utils
 				
 				String
 				
-				subject = null,
-				message_body = null;
+				subject = "",
+				message_body = "";
 				
 				if (deposit_bonus_activated)
 					{
 					subject = "Claim your deposit bonus!";
 					
-					message_body += "Transaction notification for <b><!--USERNAME--></b>";
+					message_body  = "Transaction notification for <b><!--USERNAME--></b>";
 					message_body += "<br/>";
 					message_body += "<br/>";
 					message_body += "Type: <b>" + transaction_type + "</b>";
@@ -313,7 +313,7 @@ public class CreateTransaction extends Utils
 					{
 					subject = "Transaction Notification";
 					
-					message_body += "Transaction notification for <b><!--USERNAME--></b>";
+					message_body  = "Transaction notification for <b><!--USERNAME--></b>";
 					message_body += "<br/>";
 					message_body += "<br/>";
 					message_body += "Type: <b>" + transaction_type + "</b>";

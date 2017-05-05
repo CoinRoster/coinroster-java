@@ -291,8 +291,8 @@ public class CreateUser extends Utils
 					{
 					String
 					
-					subject = null,
-					message_body = null,
+					subject = "",
+					message_body = "",
 					income_message = "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake from this account once their playing requirement has been met.";
 					
 					if (referral != null)
@@ -306,7 +306,7 @@ public class CreateUser extends Utils
 						db.store_verified_email(new_user_id, email_address);
 						
 						subject = "Successful referral!";
-						message_body = "<b>" + email_address + "</b> has signed up to CoinRoster!";
+						message_body  = "<b>" + email_address + "</b> has signed up to CoinRoster!";
 						message_body += "<br/>";
 						message_body += "<br/>";
 						message_body += income_message;

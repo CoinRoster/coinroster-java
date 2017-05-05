@@ -69,8 +69,8 @@ public class CloseContestRegistration extends Utils
 						contest_title = contest.getString("title"),
 						contest_type = contest.getString("contest_type"),
 						
-						subject = null,
-						message_body = null;
+						subject = "",
+						message_body = "";
 
 						int min_users = contest.getInt("min_users");
 										
@@ -82,7 +82,7 @@ public class CloseContestRegistration extends Utils
 							
 							subject = contest_title + " is now in play!";
 							
-							message_body = "Hi <b><!--USERNAME--></b>";
+							message_body  = "Hi <b><!--USERNAME--></b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
 							message_body += "<b>" + contest_title + "</b> is now in play!";
@@ -195,7 +195,7 @@ public class CloseContestRegistration extends Utils
 							
 							subject = contest_title + " has been cancelled";
 							
-							message_body = "Hi <b><!--USERNAME--></b>";
+							message_body  = "Hi <b><!--USERNAME--></b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
 							message_body += "Not enough users entered: <b>" + contest_title + "</b>";
