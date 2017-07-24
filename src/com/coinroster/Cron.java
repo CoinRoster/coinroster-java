@@ -181,7 +181,7 @@ public class Cron
 					String symbol_string = builder.toString();
 					symbol_string = symbol_string.substring(0,symbol_string.length() - 1);
 					
-					URL obj = new URL("http://finance.yahoo.com/d/quotes.csv?s=" + symbol_string + "&f=l1");
+					URL obj = new URL("http://download.finance.yahoo.com/d/quotes.csv?s=" + symbol_string + "&f=l1");
 					HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 					con.setRequestMethod("GET");
 					con.setRequestProperty("User-Agent", "CoinRoster.com - We respect your API and make requests once per hour");

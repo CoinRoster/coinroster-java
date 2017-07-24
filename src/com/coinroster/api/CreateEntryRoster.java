@@ -59,7 +59,7 @@ public class CreateEntryRoster extends Utils
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write, transaction write");
+			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write");
 			
 			JSONObject user = null;
 			
@@ -87,6 +87,25 @@ public class CreateEntryRoster extends Utils
 						output.put("error", "This contest is not open for registration");
 						break lock;
 						}
+
+					// check for progressive and user deposit:
+
+					user = db.select_user("id", user_id);
+					
+					if (!contest.isNull("progressive"))
+						{
+						String progressive_code = contest.getString("progressive");
+						
+						JSONObject progressive = db.select_progressive(progressive_code);
+						
+						double progressive_balance = progressive.getDouble("balance");
+						
+						if (user.getDouble("first_deposit") == 0 && progressive_balance > 0)
+							{
+							output.put("error", "You must make a deposit to enter contests with progressive jackpots.");
+							break lock;
+							}
+						}
 					
 					// validate number of entries
 				
@@ -98,8 +117,6 @@ public class CreateEntryRoster extends Utils
 					
 					// make sure user can afford entr(ies)
 	
-					user = db.select_user("id", user_id);
-					
 					if (user.getInt("user_level") == 3)
 						{
 						output.put("error", "You must verify your email in order to enter this contest.");
