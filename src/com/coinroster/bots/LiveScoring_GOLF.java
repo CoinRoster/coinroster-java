@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -33,7 +34,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 
 public class LiveScoring_GOLF extends Application
     {
-	static int contest_id = 81;
+	static int contest_id = 237;
 	
 	static boolean 
 	
@@ -63,14 +64,9 @@ public class LiveScoring_GOLF extends Application
 		log("Getting CoinRoster contest details: ");
 		log("");
 		
+		login();
+		
 		JSONObject post_data = new JSONObject();
-		
-		post_data.put("username", "score_bot");
-		post_data.put("password", "!cr_score_updater_4/15/2017");
-		
-		new LiveScoring_GOLF().post_page("https://www.coinroster.com/Login.api", post_data.toString());
-		
-		post_data = new JSONObject();
 		post_data.put("contest_id", contest_id);
 		
 		List<String> contest_JSON = new LiveScoring_GOLF().post_page("https://www.coinroster.com/GetContestDetails.api", post_data.toString());
@@ -112,13 +108,19 @@ public class LiveScoring_GOLF extends Application
 		player_scores_stored = new ConcurrentHashMap<Integer, String>(player_scores);
 		out_of_contest_player_scores_stored = new ConcurrentHashMap<String, String>(out_of_contest_player_scores);
 
-		//Long registration_deadline = contest.getLong("registration_deadline");
+		Long registration_deadline = contest.getLong("registration_deadline");
 		
-		//log(registration_deadline - System.currentTimeMillis());
-				
+		while (System.currentTimeMillis() < registration_deadline)
+			{
+			try {
+				Thread.sleep(60000);
+				}
+			catch (Exception ignore){}
+			}
+
 		log("");
 		log("Starting GOLF live scoring");
-		
+
 		launch(args);
         }
 
@@ -352,7 +354,12 @@ public class LiveScoring_GOLF extends Application
 			JSONObject response_JSON = new JSONObject(response.get(0));
 
 			if (response_JSON.getString("status").equals("1")) log(method + ": OK");
-			else log("!!!!! " + response_JSON.getString("error"));
+			else if (!response_JSON.isNull("error")) log("!!!!! " + response_JSON.getString("error"));
+			else 
+				{
+				log("!!!!! Cannot update scores for some reason - trying login");
+				login();
+				}
 	    	}
     	catch (Exception e)
     		{
@@ -360,6 +367,15 @@ public class LiveScoring_GOLF extends Application
     		}
     	}
 
+    static void login() throws JSONException
+    	{
+    	JSONObject post_data = new JSONObject();
+		
+		post_data.put("username", "score_bot");
+		post_data.put("password", "!cr_score_updater_4/15/2017");
+		
+		new LiveScoring_GOLF().post_page("https://www.coinroster.com/Login.api", post_data.toString());
+    	}
 //-----------------------------------------------------------------------------------------------------   
       	 
     // CODE BLOCK THAT GETS RUN IF THE TOURNAMENT HAS ENDED
@@ -569,3 +585,4 @@ public class LiveScoring_GOLF extends Application
 //-----------------------------------------------------------------------------------------------------   
 
     }
+

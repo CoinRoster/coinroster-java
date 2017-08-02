@@ -1,7 +1,6 @@
 package com.coinroster.bots;
 
 import java.io.IOException;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -44,25 +43,26 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class LiveScoring_HOCKEY2 extends Application
     {
-	static int contest_id = 107;
+	static int contest_id = 183;
 	
 	static int number_of_games = 0;
 	
-	static boolean running = true;
+	static boolean 
+	
+	running = true,
+	has_initialized = false;
+	
+	static WebView webview = null;
+	static WebEngine webengine = null;
 	
 	static String 
 	
 	cookie_string = null,
-	NHL_scoreboard_url = "https://www.nhl.com/scores",
-	ALT_scoreboard_url = "";
+	score_board_url = "https://www.nhl.com/scores";
 	
-	static Long last_update;
+	static Long last_update, last_refresh;
 			
-	static ConcurrentHashMap<String, Integer> 
-	
-	teams_tonight_NHL = new ConcurrentHashMap<String, Integer>(),
-	teams_tonight_ALT = new ConcurrentHashMap<String, Integer>();
-	
+	static ConcurrentHashMap<String, Integer> teams_tonight = new ConcurrentHashMap<String, Integer>();
 	static ConcurrentHashMap<String, Integer> players_in_contest = new ConcurrentHashMap<String, Integer>();
 
 	static ConcurrentHashMap<String, String> event_summary_urls = new ConcurrentHashMap<String, String>();
@@ -190,7 +190,7 @@ public class LiveScoring_HOCKEY2 extends Application
 		30,
 		120
 	};
-	
+
     public static void main(String[] args) throws Exception
         {
         Platform.setImplicitExit(true);
@@ -250,7 +250,7 @@ public class LiveScoring_HOCKEY2 extends Application
 			team_acronym = player_name_parts[number_of_name_parts-1],
 			team_motif = team_motifs.getString(team_acronym).toUpperCase();
 			
-			if (!teams_tonight_NHL.containsKey(team_motif)) teams_tonight_NHL.put(team_motif, 0);
+			if (!teams_tonight.containsKey(team_motif)) teams_tonight.put(team_motif, 0);
 
 			if (players_in_contest.containsKey(player_key)) log("!!!!!!!! Collision: " + player_key);
 			
@@ -258,9 +258,7 @@ public class LiveScoring_HOCKEY2 extends Application
 			player_scores.put(player_id, 0);
 			}
 		
-		teams_tonight_ALT = new ConcurrentHashMap<String, Integer>(teams_tonight_NHL);
-		
-		int number_of_teams = teams_tonight_NHL.size();
+		int number_of_teams = teams_tonight.size();
 		
 		if (number_of_teams % 2 == 1)
 			{
@@ -279,10 +277,7 @@ public class LiveScoring_HOCKEY2 extends Application
 				}
 			catch (Exception ignore){}
 			}
-
-		Date deadline_date = new Date(contest.getLong("registration_deadline"));
-		ALT_scoreboard_url = "http://www.sportsnet.ca/hockey/nhl/scores/?datepicker-date=" + new SimpleDateFormat("yyyy-MM-dd").format(deadline_date);
-		
+				
 		log("");
 		log("Starting NHL live scoring");
 		
@@ -336,89 +331,83 @@ public class LiveScoring_HOCKEY2 extends Application
 
 //-----------------------------------------------------------------------------------------------------   
          
+  	private void webview_init(Stage stage)
+  		{
+  		has_initialized = false;
+  		
+  		if (webengine != null)
+	  		{
+	  		webengine.load(null);
+	  		stage.close();
+	  		}
+  		
+        webview = new WebView();
+        webengine = webview.getEngine();
+        webengine.setUserAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
+        webengine.load(score_board_url);
+
+        stage.setScene(new Scene(webview, 800, 1200));
+        stage.show();
+  		}
+  	
     // MAIN ITERATIVE LOOP
     
     @Override
-    public void start(Stage NHL_stage)
-        {
-    	Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-    		 
-            @Override
-            public void uncaughtException(Thread thread, Throwable t) 
-            	{
-            	System.out.println("There was an exception");
-            	}
-             
-        });
-    	try {
-	    	System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-
-	        Stage ALT_stage = new Stage();
-	        
-	        WebView 
-	        
-	        NHL_webview = new WebView(),
-	        ALT_webview = new WebView();
-	        
-	        final WebEngine 
-	        
-	        NHL_webengine = NHL_webview.getEngine(),
-	        ALT_webengine = ALT_webview.getEngine();
-
-	        NHL_webengine.setUserAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
-	        ALT_webengine.setUserAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
-	        
-	        NHL_webengine.load(NHL_scoreboard_url);
-	        ALT_webengine.load(ALT_scoreboard_url);
-
-	        NHL_stage.setScene(new Scene(NHL_webview, 800, 800));
-	        NHL_stage.show();
-	        
-	        ALT_stage.setScene(new Scene(ALT_webview, 800, 800));
-	        ALT_stage.show();
+    public void start(final Stage stage) throws Exception
+        {    	
+    	System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    	
+    	webview_init(stage);
         
-	        // main iterative loop
-	
-	        new Thread() 
-				{
-		    	@Override
-				public void run() 
-		        	{
-		    		while (running)
-			    		{
-			    		try {
-			    			Thread.sleep(1000);
-			    						
-							scan_NHL_scoreboard(NHL_webengine);
-							scan_ALT_scoreboard(ALT_webengine);
-							
-							boolean done = exit_if_games_ended();
-							
-							if (done) System.exit(0);
-				    		}
-			    		catch (Exception e)
-			    			{
-			    			e.printStackTrace();
-			    			}
-			    		}
-		        	}
-				}.start();
-	    	}
-		catch (Exception e)
-    		{
-			//e.printStackTrace();
-    		}
-		catch (Throwable e)
+        // main iterative loop
+        
+        last_refresh = System.currentTimeMillis();
+
+        new Thread() 
 			{
-			//e.printStackTrace();
-			}
+	    	@Override
+			public void run() 
+	        	{
+	    		while (running)
+		    		{
+		    		try {
+		    			Thread.sleep(1000);
+		    			
+		    			Long now = System.currentTimeMillis();
+		    			if (now - last_refresh > 480000 || (!has_initialized && now - last_refresh > 30000))
+		    				{
+		    				Platform.runLater(new Runnable()
+			    				{
+			    				@Override
+			    				public void run() 
+			    					{
+				    				last_refresh = System.currentTimeMillis();
+				    				log("Reloading");
+				    				webview_init(stage);
+			    					}
+			    				});
+		    				}
+		    							
+						scan_scoreboard(webengine);
+						
+						boolean done = exit_if_games_ended();
+						
+						if (done) System.exit(0);
+			    		}
+		    		catch (Exception e)
+		    			{
+		    			e.printStackTrace();
+		    			}
+		    		}
+	        	}
+			}.start();
         }
 
 //-----------------------------------------------------------------------------------------------------   
      
-    // SCAN NHL SCOREBOARD, TRIGGER process_game() WHEN SCORES UPDATE
+    // SCAN SCOREBOARD, TRIGGER process_game() WHEN SCORES UPDATE
     
-    private void scan_NHL_scoreboard(final WebEngine webengine)
+    private void scan_scoreboard(final WebEngine webengine)
     	{
 		Platform.runLater(new Runnable()
 			{
@@ -441,6 +430,8 @@ public class LiveScoring_HOCKEY2 extends Application
 				
 				if (game_cards.size() > 0)
 					{
+					has_initialized = true;
+					
 					for (HTMLElement game_card : game_cards)
 						{
 						game_card : 
@@ -475,7 +466,7 @@ public class LiveScoring_HOCKEY2 extends Application
 									{
 									String team_motif = text_content.toUpperCase();
 									
-									if (teams_tonight_NHL.containsKey(team_motif)) 
+									if (teams_tonight.containsKey(team_motif)) 
 										{
 										team_ctr++;
 										teams[team_ctr-1] = team_motif;
@@ -524,13 +515,13 @@ public class LiveScoring_HOCKEY2 extends Application
 									int 
 									
 									score_now = scores[i],
-									score_stored = teams_tonight_NHL.get(team_motif);
+									score_stored = teams_tonight.get(team_motif);
 
 									if (score_now != score_stored)
 										{
-										log("NHL: " + team_motif + " | " + score_stored + " -> " + score_now);
+										log(team_motif + " | " + score_stored + " -> " + score_now);
 										
-										teams_tonight_NHL.put(team_motif, score_now);
+										teams_tonight.put(team_motif, score_now);
 										
 										process_game = true;
 										}
@@ -562,87 +553,6 @@ public class LiveScoring_HOCKEY2 extends Application
 				}
 			});
     	}
-
-//-----------------------------------------------------------------------------------------------------   
-       
-    // SCAN NHL SCOREBOARD, TRIGGER process_game() WHEN SCORES UPDATE
-      
-    private void scan_ALT_scoreboard(final WebEngine webengine)
-      	{
-    	Platform.runLater(new Runnable()
-			{
-			@Override
-			public void run() 
-				{
-				if (webengine.getDocument() == null || webengine.getDocument().getDocumentElement() == null) return;
-
-				NodeList divs = webengine.getDocument().getElementsByTagName("div");
-				List<HTMLElement> game_cards = new ArrayList<HTMLElement>();
-				
-				for (int i=0, limit=divs.getLength(); i<limit; i++) 
-					{
-					Node div_node = divs.item(i);
-					HTMLElement div_html = (HTMLElement) div_node;
-					String class_name = div_html.getClassName();
-					if (class_name != null && class_name.equals("game-card-container")) game_cards.add(div_html);
-					}
-				
-				for (HTMLElement game_card : game_cards)
-					{
-					String game_card_content = game_card.getTextContent().replaceAll(" +", " ");
-					
-					String[] lines = game_card_content.split("\n");
-					
-					int team_counter = 0;
-					//boolean game_has_ended = false;
-					
-					String[] teams = new String[2];
-					int[] scores = new int[2];
-					
-					for (String line : lines)
-						{
-						if (line.equals("") || line.equals(" ")) continue;
-						
-						line = line.trim().toUpperCase();
-					
-						if (teams_tonight_NHL.containsKey(line)) 
-							{
-							team_counter++;
-							teams[team_counter - 1] = line;
-							}
-						
-						try {
-							int score = Integer.parseInt(line);
-							scores[team_counter - 1] = score;
-							}
-						catch (Exception ignore) {}
-						
-						//if (line.contains("FINAL")) game_has_ended = true;
-						}
-					
-					if (team_counter == 2)
-						{
-						for (int i=0; i<2; i++)
-							{
-							String team_motif = teams[i];
-							
-							int 
-							
-							score_now = scores[i],
-							score_stored = teams_tonight_ALT.get(team_motif);
-
-							if (score_now != score_stored)
-								{
-								log("ALT: " + team_motif + " | " + score_stored + " -> " + score_now);
-								teams_tonight_ALT.put(team_motif, score_now);
-								}
-							}
-						}
-					else if (team_counter == 1) log("!!!! ERROR !!!! Only one team found in matchup - something is wrong");
-					}
-				}
-			});
-      	}
 
 //-----------------------------------------------------------------------------------------------------   
 	   
@@ -797,12 +707,12 @@ public class LiveScoring_HOCKEY2 extends Application
 	    	args.put("normalization_scheme", "INTEGER");
 	    	args.put("player_scores", scores);
 				 
-			/*List<String> response = new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/" + method + ".api", args.toString());
+			List<String> response = new LiveScoring_HOCKEY2().post_page("https://www.coinroster.com/" + method + ".api", args.toString());
 			
 			JSONObject response_JSON = new JSONObject(response.get(0));
 
 			if (response_JSON.getString("status").equals("1")) log(method + ": OK");
-			else log("!!!!! " + response_JSON.getString("error"));*/
+			else log("!!!!! " + response_JSON.getString("error"));
 	    	}
     	catch (Exception e)
     		{

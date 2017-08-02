@@ -47,7 +47,7 @@ public class LiveScoring_HOCKEY extends Application
     {
 	static String cookie_string = null;
 			
-	static int contest_id = 77;
+	static int contest_id = 127;
 	
 	static String score_board_url = null;
 	
@@ -898,4 +898,5 @@ public class LiveScoring_HOCKEY extends Application
     		}
     	}
     }
+
 
