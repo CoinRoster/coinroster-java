@@ -78,8 +78,8 @@ public class Server extends Utils
 	protected static String 
 	
 	java_path = "/usr/share/java/",
-	java_out_path,
-	java_object_path,
+	java_out_path = "",
+	java_object_path = "",
 	jar_filename = "coinroster.jar",
 	
 	version = "1.4 - finished pari-mutuels",
@@ -87,7 +87,7 @@ public class Server extends Utils
 
 	sql_database = "jdbc:mysql://localhost:3306/coinroster",
 	sql_username = "coinrostersql",
-	sql_password = "crsqlpass",
+	sql_password = "CRDroplet2017!",
 
 	relay_email_from,
 	relay_email_address,
@@ -356,8 +356,8 @@ public class Server extends Utils
 			
 			host = "https://www.coinroster.com";
 			relay_email_from = "CoinRoster";
-			relay_email_address = "management@coinroster.com";
-			relay_email_password = "ywhrea14432e%#";
+			relay_email_address = "";
+			relay_email_password = "";
 			}
 		else if (control.get("production").equals("0"))
 			{
@@ -369,8 +369,8 @@ public class Server extends Utils
 
 			host = "https://coinroster.nlphd.com";
 			relay_email_from = "CoinRoster Dev";
-			relay_email_address = "coinroster@gmail.com";
-			relay_email_password = "hjpoinlfds#$D";
+			relay_email_address = "";
+			relay_email_password = "";
 			}
 		else
 			{
@@ -577,8 +577,11 @@ public class Server extends Utils
 	
 	// send email
 
+	@SuppressWarnings("unused")
 	public static void send_mail(String to_address, final String to_user, final String subject, String message_body)
 		{
+		if (true) return;
+		
 		final String 
 		
 		logo_cid = generate_key("logo_cid"),
