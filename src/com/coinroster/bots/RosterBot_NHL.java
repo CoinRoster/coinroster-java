@@ -33,7 +33,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 
 public class RosterBot_NHL
     {
-	static int contest_id = 97;
+	static int contest_id = 316;
 	
 	static boolean 
 	

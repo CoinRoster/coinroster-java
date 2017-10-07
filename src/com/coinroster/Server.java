@@ -37,8 +37,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -81,13 +83,15 @@ public class Server extends Utils
 	java_out_path = "",
 	java_object_path = "",
 	jar_filename = "coinroster.jar",
-	
+
+	config_path = java_path + "coinroster.config.txt",
+			
 	version = "1.4 - finished pari-mutuels",
 	start_time = new SimpleDateFormat("MMM d h:mm:ss a").format(new Date()),
 
 	sql_database = "jdbc:mysql://localhost:3306/coinroster",
-	sql_username = "coinrostersql",
-	sql_password = "CRDroplet2017!",
+	sql_username,
+	sql_password,
 
 	relay_email_from,
 	relay_email_address,
@@ -141,7 +145,9 @@ public class Server extends Utils
 	score_bot_methods = new HashSet<String>();
 	
 	private static ServerSocket proxy_gateway;
-
+	
+	protected static Map<String, String> config_map = new TreeMap<String, String>();
+	
 	public static ConcurrentHashMap<String, String[]> session_map = new ConcurrentHashMap<String, String[]>();
 	
 	public static HashMap<String, String> control = new HashMap<String, String>();
@@ -175,8 +181,6 @@ public class Server extends Utils
 		set_system_out();
 
 		load_control_variables();
-
-		set_global_variables();
 
 		initialize_pools();
 		
@@ -317,6 +321,56 @@ public class Server extends Utils
 	private static void load_control_variables()
 		{
 		try {
+			List<String> config = Server.read(config_path);
+			
+			for (String line : config)
+				{
+				if (line.contains("::"))
+					{
+					String[] config_item = line.split("::");
+					
+					if (config_item.length == 2)
+						{
+						config_map.put(config_item[0], config_item[1]);
+						continue;
+						}
+					}
+				
+				Server.log("Config ERROR: " + line);
+				}
+			
+			String server_which = config_map.get("server");
+			
+			if (server_which.equals("live"))
+				{
+				live_server = true;
+				
+				pool_size = 20;
+				
+				admin_timeout = 60 * minute;
+				
+				host = host_live;
+				relay_email_from = "CoinRoster";
+				relay_email_address = config_map.get("relay_email_address");
+				relay_email_password = config_map.get("relay_email_password");
+				}
+			else if (server_which.equals("dev"))
+				{
+				dev_server = true;
+				
+				pool_size = 20;
+		
+				admin_timeout = 1440 * minute;
+	
+				host = host_dev;
+				relay_email_from = "CoinRoster Dev";
+				relay_email_address = "";
+				relay_email_password = "";
+				}
+			
+			sql_username = config_map.get("sql_username");
+			sql_password = config_map.get("sql_password");
+			
 			Connection sql_connection = DriverManager.getConnection(sql_database, sql_username, sql_password);
 			PreparedStatement prepared_statement = sql_connection.prepareStatement("select * from control");
 			ResultSet result_set = prepared_statement.executeQuery();
@@ -340,45 +394,6 @@ public class Server extends Utils
 			}
 		}
 
-//------------------------------------------------------------------------------------
-
-	// set global variables for dev / live
-	
-	private static void set_global_variables()
-		{
-		if (control.get("production").equals("1"))
-			{
-			live_server = true;
-			
-			pool_size = 20;
-			
-			admin_timeout = 60 * minute;
-			
-			host = "https://www.coinroster.com";
-			relay_email_from = "CoinRoster";
-			relay_email_address = "";
-			relay_email_password = "";
-			}
-		else if (control.get("production").equals("0"))
-			{
-			dev_server = true;
-			
-			pool_size = 20;
-	
-			admin_timeout = 1440 * minute;
-
-			host = "https://coinroster.nlphd.com";
-			relay_email_from = "CoinRoster Dev";
-			relay_email_address = "";
-			relay_email_password = "";
-			}
-		else
-			{
-			log("No control variable found for 'production'");
-			Server.exit(false);
-			}
-		}
-	
 //------------------------------------------------------------------------------------
 
 	// set up thread and database pools
@@ -577,10 +592,9 @@ public class Server extends Utils
 	
 	// send email
 
-	@SuppressWarnings("unused")
 	public static void send_mail(String to_address, final String to_user, final String subject, String message_body)
 		{
-		if (true) return;
+		if (relay_email_address.equals("")) return;
 		
 		final String 
 		
