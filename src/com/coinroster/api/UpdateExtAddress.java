@@ -48,6 +48,14 @@ public class UpdateExtAddress extends Utils
 			
 			update_for_active_user = input.getBoolean("update_for_active_user"),
 			do_update = false;
+
+			String new_ext_address = no_whitespace(input.getString("ext_address"));
+
+			if (new_ext_address.length() == 0) 
+				{
+				output.put("error", "Invalid address");
+				break method;
+				}
 			
 			if (!update_for_active_user) // update for cash register
 				{
@@ -56,17 +64,29 @@ public class UpdateExtAddress extends Utils
 					user_id = db.get_id_for_username("internal_cash_register");
 					do_update = true;
 					}
-				else break method;
+				else 
+					{
+					output.put("error", "Not authorized");
+					break method;
+					}
 				}
-			
 			else // update for active user
 				{
 				user_id = session.user_id();
 				
 				JSONObject user = db.select_user("id", user_id);
 				
-				String current_ext_address = user.getString("ext_address");
+				String 
+				
+				current_ext_address = user.getString("ext_address"),
+				current_cgs_address = user.getString("cgs_address");
 
+				if (new_ext_address.equals(current_cgs_address))
+					{
+					output.put("error", "You cannot use your deposit address as your withdrawal address");
+					break method;
+					}
+				
 				int ext_address_secure_flag = user.getInt("ext_address_secure_flag");
 				
 				double user_btc_balance = user.getDouble("btc_balance");
@@ -82,12 +102,8 @@ public class UpdateExtAddress extends Utils
 				
 			if (do_update)
 				{
-				String ext_address = no_whitespace(input.getString("ext_address"));
-				
-				if (ext_address.length() == 0) break method;
-				
 				PreparedStatement update_ext_address = sql_connection.prepareStatement("update user set ext_address = ? where id = ?");
-				update_ext_address.setString(1, ext_address);
+				update_ext_address.setString(1, new_ext_address);
 				update_ext_address.setString(2, user_id);
 				update_ext_address.executeUpdate();
 				

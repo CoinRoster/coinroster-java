@@ -125,7 +125,7 @@ public class UserWithdrawal extends Utils
 					
 					double withdrawal_amount_satoshis = btc_to_satoshi(withdrawal_amount);
 					
-					DecimalFormat f = new DecimalFormat("00000000.00000000");
+					DecimalFormat f = new DecimalFormat("0.00000000");
 			        String withdrawal_amount_string = f.format(withdrawal_amount_satoshis);
 			        
 					// CallCGS ----------------------------------------------------------------------------
