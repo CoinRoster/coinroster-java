@@ -198,4 +198,12 @@ public class Utils
 		out = out.setScale(max_precision, RoundingMode.HALF_UP);
 		return out.doubleValue();
 		}
+	public static double btc_to_satoshi(double btc)
+		{
+		return multiply(btc, 100000000, 0);
+		}
+	public static double satoshi_to_btc(double satoshi)
+		{
+		return divide(satoshi, 100000000, 0);
+		}
 	}

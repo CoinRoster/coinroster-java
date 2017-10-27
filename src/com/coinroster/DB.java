@@ -99,8 +99,11 @@ public class DB
 			double deposit_bonus_cap = result_set.getDouble(28);
 			int deposit_bonus_rollover_multiple = result_set.getInt(29);
 			String odds_format = result_set.getString(30);
+			String cgs_address = result_set.getString(31);
+			double cgs_last_balance = result_set.getDouble(32);
 			
 			if (ext_address == null) ext_address = "";
+			if (cgs_address == null) cgs_address = "";
 			if (email_address == null) email_address = "";
 			if (referrer == null) referrer = "";
 			
@@ -134,6 +137,8 @@ public class DB
 			user.put("deposit_bonus_cap", deposit_bonus_cap);
 			user.put("deposit_bonus_rollover_multiple", deposit_bonus_rollover_multiple);
 			user.put("odds_format", odds_format);
+			user.put("cgs_address", cgs_address);
+			user.put("cgs_last_balance", cgs_last_balance);
 			}
 
 		return user;
@@ -623,6 +628,44 @@ public class DB
 		update_rc_balance.setString(2, user_id);
 		update_rc_balance.executeUpdate();
 		}
+
+//------------------------------------------------------------------------------------
+	
+	// UPDATE CGS BALANCE
+	
+	public void update_cgs_balance(String user_id, double new_btc_balance) throws Exception
+		{
+		PreparedStatement update_btc_balance = sql_connection.prepareStatement("update user set cgs_last_balance = ? where id = ?");
+		update_btc_balance.setDouble(1, new_btc_balance);
+		update_btc_balance.setString(2, user_id);
+		update_btc_balance.executeUpdate();
+		}
+
+//------------------------------------------------------------------------------------
+	
+	// RESERVE AND RETURN CGS ADDRESS (CREATE USER)
+	
+	public String reserve_cgs_address(String username) throws Exception
+		{
+		String cgs_address = null;
+		
+		PreparedStatement get_free_cgs_address = sql_connection.prepareStatement("select btc_address from cgs where cr_account is null limit 1");
+		ResultSet result_set = get_free_cgs_address.executeQuery();
+		
+		if (result_set.next()) 
+			{
+			cgs_address = result_set.getString(1);
+
+			PreparedStatement reserve_cgs_address = sql_connection.prepareStatement("update cgs set cr_account = ? where btc_address = ?");
+			reserve_cgs_address.setString(1, username);
+			reserve_cgs_address.setString(2, cgs_address);
+			reserve_cgs_address.executeUpdate();
+			}
+		
+		Server.log("Assigning CGS address: " + cgs_address);
+		
+		return cgs_address;
+		}
 	
 //------------------------------------------------------------------------------------
 
@@ -951,7 +994,25 @@ public class DB
 		return progressive;
 		}
 
-	
+//------------------------------------------------------------------------------------
+
+	// GET CONTEST PRIZE POOL
+
+	public double get_miner_fee() throws Exception
+		{
+		double miner_fee = 0;
+
+		PreparedStatement get_contest_prize_pool = sql_connection.prepareStatement("select value from control where name='miner_fee'");
+		ResultSet result_set = get_contest_prize_pool.executeQuery();
+
+		if (result_set.next()) miner_fee = Double.parseDouble(result_set.getString(1));
+
+		// convert satoshis to btc:
+		
+		miner_fee = Utils.satoshi_to_btc(miner_fee);
+		
+		return miner_fee;
+		}
 //------------------------------------------------------------------------------------
 
 	}

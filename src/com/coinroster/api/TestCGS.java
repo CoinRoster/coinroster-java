@@ -33,21 +33,21 @@ public class TestCGS extends Utils
 		
 			JSONObject rpc_call = new JSONObject();
 			
-			rpc_call.put("jsonrpc", "2.0");
-			rpc_call.put("id", 1);
 			rpc_call.put("method", "newAccount");
 			
 			JSONObject rpc_method_params = new JSONObject();
 			
 			rpc_method_params.put("type", "btc");
+			
 			rpc_call.put("params", rpc_method_params);
 			
 			CallCGS call = new CallCGS(rpc_call);
 			
-			JSONObject response_obj = call.get_response();
+			JSONObject result = call.get_result();		
 			
 			log("Response:");
-			log(response_obj);
+			log(result);
+			log("CGS address: " + result.getString("account"));
 			
 			output.put("message", "Hey!");
 			output.put("status", "1");

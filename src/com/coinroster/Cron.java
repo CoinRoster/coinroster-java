@@ -6,12 +6,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map.Entry;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.coinroster.internal.*;
 
@@ -59,12 +61,14 @@ public class Cron
 		{
 		new CloseContestRegistration();
 		new ExpirePromos();
+		new CheckPendingWithdrawals();
 		if (!Server.dev_server) UpdateCurrencies();
 		}
 	
 	@SuppressWarnings("unused")
 	private void day() throws Exception
 		{
+		GenerateAddresses();
 		PurgePasswordResetTable();
 		TriggerBuildLobby();
 		
@@ -104,6 +108,66 @@ public class Cron
 		catch (Exception e)
 			{
 			Server.exception(e);
+			}
+		}	
+	
+//------------------------------------------------------------------------------------
+
+	// kick off stale sessions
+	
+	private void GenerateAddresses()
+		{
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			
+			PreparedStatement count_free_addresses = sql_connection.prepareStatement("select count(*) from cgs where cr_account is null");
+			ResultSet result_set = count_free_addresses.executeQuery();
+
+			int free_address_count = 0;
+			
+			if (result_set.next()) free_address_count = result_set.getInt(1);
+			
+			int address_shortage = Server.free_address_quota - free_address_count;
+			
+			if (address_shortage == 0) return;
+
+			JSONObject rpc_call = new JSONObject();
+			
+			rpc_call.put("method", "newAccount");
+			
+			JSONObject rpc_method_params = new JSONObject();
+			
+			rpc_method_params.put("type", "btc");
+			
+			rpc_call.put("params", rpc_method_params);
+			
+			while (address_shortage-- > 0)
+				{
+				CallCGS call = new CallCGS(rpc_call);
+				
+				JSONObject error = call.get_error();
+				
+				if (error != null) 
+					{
+					Server.log("ERROR GENERATING ADDRESS");
+					Server.log(error.toString());
+					}
+				
+				Thread.sleep(30000);
+				}
+			} 
+		catch (Exception e) 
+			{
+			Server.exception(e);
+			} 
+		finally
+			{
+			if (sql_connection != null)
+				{
+				try {sql_connection.close();} 
+				catch (SQLException ignore) {}
+				}
 			}
 		}	
 

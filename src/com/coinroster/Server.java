@@ -97,11 +97,11 @@ public class Server extends Utils
 	relay_email_address,
 	relay_email_password,
 
-	host_dev = "https://coinroster.nlphd.com",
+	host_dev = "https://165.227.40.220",
 	host_live = "https://www.coinroster.com",
 	
 	developer_name = "Noah",
-	developer_email_address = "noah@nlphd.com",
+	developer_email_address = "noah@frontierweb.com",
 
 	cipher_name = "AES/CBC/PKCS5PADDING",
 	init_vector = "AAAAAAAAAAAAAAAA";
@@ -115,6 +115,8 @@ public class Server extends Utils
 	static int
 	
 	proxy_port = 27038,
+	
+	free_address_quota = 20,
 	
 	pool_size,
 	seconds_to_halt = 2;
@@ -351,8 +353,6 @@ public class Server extends Utils
 				
 				host = host_live;
 				relay_email_from = "CoinRoster";
-				relay_email_address = config_map.get("relay_email_address");
-				relay_email_password = config_map.get("relay_email_password");
 				}
 			else if (server_which.equals("dev"))
 				{
@@ -364,12 +364,13 @@ public class Server extends Utils
 	
 				host = host_dev;
 				relay_email_from = "CoinRoster Dev";
-				relay_email_address = "";
-				relay_email_password = "";
 				}
 			
 			sql_username = config_map.get("sql_username");
 			sql_password = config_map.get("sql_password");
+			
+			relay_email_address = config_map.get("relay_email_address");
+			relay_email_password = config_map.get("relay_email_password");
 			
 			Connection sql_connection = DriverManager.getConnection(sql_database, sql_username, sql_password);
 			PreparedStatement prepared_statement = sql_connection.prepareStatement("select * from control");
@@ -594,8 +595,6 @@ public class Server extends Utils
 
 	public static void send_mail(String to_address, final String to_user, final String subject, String message_body)
 		{
-		if (relay_email_address.equals("")) return;
-		
 		final String 
 		
 		logo_cid = generate_key("logo_cid"),
@@ -616,7 +615,7 @@ public class Server extends Utils
 		
 		// if running on development server, redirect all email to developer:
 		
-		if (dev_server) to_address = developer_email_address;
+		//if (dev_server) to_address = developer_email_address;
 		
 		//if (dev_server) return;
 		

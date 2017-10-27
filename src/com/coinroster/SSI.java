@@ -76,12 +76,20 @@ public class SSI extends Utils
 						
 						String currency = user.getString("currency");
 						
+						int deposit_bonus_claimed = user.getInt("deposit_bonus_claimed");
+						
 						double
 						
 						btc_balance = user.getDouble("btc_balance"),
 						rc_balance = user.getDouble("rc_balance"),
-						available_balance = add(btc_balance, rc_balance, 0);
-					
+						available_balance = add(btc_balance, rc_balance, 0),
+						miner_fee = db.get_miner_fee(),
+						first_deposit = user.getDouble("first_deposit"),
+						deposit_bonus_cap = user.getDouble("deposit_bonus_cap"),
+						deposit_bonus_available = Math.min(first_deposit, deposit_bonus_cap);
+
+						if (btc_balance < deposit_bonus_available) deposit_bonus_available = btc_balance;
+						
 						JSONObject session_properties = new JSONObject();
 	
 						PreparedStatement check_for_promo  = sql_connection.prepareStatement("select count(*) from promo where referrer = ? and cancelled = 0");
@@ -102,10 +110,11 @@ public class SSI extends Utils
 						session_properties.put("rc_balance", rc_balance);
 						session_properties.put("available_balance", available_balance);
 						session_properties.put("withdrawal_locked", user.getInt("withdrawal_locked"));
-						session_properties.put("first_deposit", user.getDouble("first_deposit"));
-						session_properties.put("deposit_bonus_claimed", user.getInt("deposit_bonus_claimed"));
-						session_properties.put("deposit_bonus_cap", user.getDouble("deposit_bonus_cap"));
+						session_properties.put("first_deposit", first_deposit);
+						session_properties.put("deposit_bonus_claimed", deposit_bonus_claimed);
+						session_properties.put("deposit_bonus_cap", deposit_bonus_cap);
 						session_properties.put("deposit_bonus_rollover_multiple", user.getInt("deposit_bonus_rollover_multiple"));
+						session_properties.put("deposit_bonus_available", deposit_bonus_available);
 						session_properties.put("rollover_quota", user.getDouble("rollover_quota"));
 						session_properties.put("rollover_progress", user.getDouble("rollover_progress"));
 						session_properties.put("contest_status", user.getInt("contest_status"));
@@ -114,6 +123,8 @@ public class SSI extends Utils
 						session_properties.put("currency_last_price", db.get_last_price(currency));
 						session_properties.put("currency_description", db.get_currency_description(currency));
 						session_properties.put("odds_format", user.getString("odds_format"));
+						session_properties.put("cgs_address", user.getString("cgs_address"));
+						session_properties.put("miner_fee", miner_fee);
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}

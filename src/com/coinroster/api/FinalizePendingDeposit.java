@@ -43,7 +43,7 @@ public class FinalizePendingDeposit extends Utils
 			
 			double received_amount = input.getDouble("received_amount");
 
-			// start using SQL | lock user_xref table so that balance lookups and adjustments are contiguous:
+			// start using SQL
 			
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write");

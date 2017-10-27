@@ -41,7 +41,7 @@ public class ClaimDepositBonus extends Utils
 			
 			JSONObject user = null;
 			
-			double actual_bonus = 0;
+			double deposit_bonus_available = 0;
 			
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write, transaction write");
@@ -53,7 +53,10 @@ public class ClaimDepositBonus extends Utils
 
 					user = db.select_user("id", user_id);
 
-					double first_deposit = user.getDouble("first_deposit");
+					double 
+					
+					first_deposit = user.getDouble("first_deposit"),
+					btc_balance = user.getDouble("btc_balance");					
 					
 					if (first_deposit == 0)
 						{
@@ -68,8 +71,24 @@ public class ClaimDepositBonus extends Utils
 						output.put("error", "You have already claimed your deposit bonus.");
 						break lock;
 						}
+					
+					double 
+					
+					deposit_bonus_cap = user.getDouble("deposit_bonus_cap"),
+					deposit_bonus_rollover_multiple = user.getInt("deposit_bonus_rollover_multiple"),
+					current_rollover_quota = user.getDouble("rollover_quota");
 
-					// if we get here, user can claim a deposit bonus
+					// calculations
+
+					deposit_bonus_available = Math.min(first_deposit, deposit_bonus_cap);
+
+					if (btc_balance < deposit_bonus_available) deposit_bonus_available = btc_balance;
+					
+					if (deposit_bonus_available == 0)
+						{
+						output.put("error", "You have insufficient funds in your account to claim the deposit bonus.");
+						break lock;
+						}
 
 					// select liability account
 					
@@ -77,26 +96,15 @@ public class ClaimDepositBonus extends Utils
 					btc_liability_id = liability_account.getString("user_id");
 					
 					double 
-					
-					deposit_bonus_cap = user.getDouble("deposit_bonus_cap"),
-					deposit_bonus_rollover_multiple = user.getInt("deposit_bonus_rollover_multiple"),
-					current_rollover_quota = user.getDouble("rollover_quota"),
-					user_btc_balance = user.getDouble("btc_balance");
 
-					// calculations
-					
-					actual_bonus = Math.min(first_deposit, deposit_bonus_cap);
-					
-					double 
-
-		            additional_playing_requirement = multiply(actual_bonus, deposit_bonus_rollover_multiple, 0),
+		            additional_playing_requirement = multiply(deposit_bonus_available, deposit_bonus_rollover_multiple, 0),
 		            new_rollover_quota = add(current_rollover_quota, additional_playing_requirement, 0),
-					new_btc_balance = add(user_btc_balance, actual_bonus, 0),
+					new_btc_balance = add(btc_balance, deposit_bonus_available, 0),
 
 					// calculate and update liability balance
 					
 					btc_liability_balance = liability_account.getDouble("btc_balance"),
-					new_btc_liability_balance = subtract(btc_liability_balance, actual_bonus, 0);
+					new_btc_liability_balance = subtract(btc_liability_balance, deposit_bonus_available, 0);
 
 					db.update_btc_balance(btc_liability_id, new_btc_liability_balance);
 					
@@ -139,7 +147,7 @@ public class ClaimDepositBonus extends Utils
 				new_transaction.setString(3, transaction_type);
 				new_transaction.setString(4, from_account);
 				new_transaction.setString(5, to_account);
-				new_transaction.setDouble(6, actual_bonus);
+				new_transaction.setDouble(6, deposit_bonus_available);
 				new_transaction.setString(7, from_currency);
 				new_transaction.setString(8, to_currency);
 				new_transaction.setString(9, memo);

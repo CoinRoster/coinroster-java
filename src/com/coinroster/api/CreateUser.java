@@ -11,6 +11,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.CallCGS;
 import com.coinroster.internal.UserMail;
 
 public class CreateUser extends Utils
@@ -121,7 +122,7 @@ public class CreateUser extends Utils
 			// at this point we should have our referrer_id, referral_program, and promo object where applicable
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, transaction write, promo write");
+			statement.execute("lock tables user write, transaction write, promo write, cgs write");
 			
 			JSONObject promo = null;
 			
@@ -143,7 +144,7 @@ public class CreateUser extends Utils
 						if (promo == null)
 							{
 							output.put("error", "Invalid promo code");
-							break method;
+							break lock;
 							}
 						
 						if (promo.getLong("cancelled") != 0)
@@ -154,7 +155,7 @@ public class CreateUser extends Utils
 							if (referrer_id == null) 
 								{
 								output.put("error", "Promo code has expired");
-								break method;
+								break lock;
 								}
 							else promo = null;
 							}
@@ -172,18 +173,47 @@ public class CreateUser extends Utils
 						break lock;
 						}
 	
-					// username is available - create user
+					// username is available - create user --------------------------------------------------------------------------
 					
-					String new_password_hash = Server.SHA1(password + new_user_id);
+					String 
+					
+					new_password_hash = Server.SHA1(password + new_user_id),
+					cgs_address = db.reserve_cgs_address(username);
+					
+					if (cgs_address == null)
+						{
+						// get CGS address:
+
+						JSONObject rpc_call = new JSONObject();
+						
+						rpc_call.put("method", "newAccount");
+						
+						JSONObject rpc_method_params = new JSONObject();
+						
+						rpc_method_params.put("type", "btc");
+						
+						rpc_call.put("params", rpc_method_params);
+						
+						CallCGS call = new CallCGS(rpc_call);
+						
+						JSONObject result = call.get_result();
+						
+						if (result != null) cgs_address = result.getString("account");
+						else
+							{
+							output.put("error", "Could not generate bitcoin wallet. Please try again shortly.");
+							break lock;
+							}
+						}
 					
 					PreparedStatement create_user;
 	
-					if (referrer_id == null) create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					if (referrer_id == null) create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple, cgs_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 					else // we have referrer_id & referral_program from a referral link or promo code
 						{		
-						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-						create_user.setDouble(13, referral_program);
-						create_user.setString(14, referrer_id);
+						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple, cgs_address, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						create_user.setDouble(14, referral_program);
+						create_user.setString(15, referrer_id);
 						}
 
 					double default_referral_offer = Double.parseDouble(Server.control.get("default_referral_offer"));
@@ -202,6 +232,7 @@ public class CreateUser extends Utils
 					create_user.setString(10, promo_code);
 					create_user.setDouble(11, deposit_bonus_cap);
 					create_user.setInt(12, deposit_bonus_rollover_multiple);
+					create_user.setString(13, cgs_address);
 					
 					create_user.executeUpdate();
 					

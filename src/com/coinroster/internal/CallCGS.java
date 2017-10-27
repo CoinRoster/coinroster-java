@@ -14,16 +14,27 @@ import com.coinroster.Utils;
 
 public class CallCGS extends Utils
 	{
-	String post_response;
+	JSONObject 
 	
-	public JSONObject get_response() throws JSONException
+	result = null,
+	error = null;
+	
+	public JSONObject get_result() throws JSONException
 		{
-		return new JSONObject(post_response);
+		return result;
+		}
+
+	public JSONObject get_error() throws JSONException
+		{
+		return error;
 		}
 	
 	public CallCGS(JSONObject post_JSON)
 		{
 		try {
+			post_JSON.put("jsonrpc", "2.0");
+			post_JSON.put("id", 1);
+			
 			String post_content = post_JSON.toString();
 			
 			log("Submitting:");
@@ -53,7 +64,10 @@ public class CallCGS extends Utils
 			reader.close();
 			connection.disconnect();
 			
-			post_response = response.toString().trim();
+			JSONObject response_obj = new JSONObject(response.toString().trim());
+			
+			if (!response_obj.isNull("result")) result = response_obj.getJSONObject("result");	
+			if (!response_obj.isNull("error")) result = response_obj.getJSONObject("error");	
 			}
 		catch (Exception e)
 			{
