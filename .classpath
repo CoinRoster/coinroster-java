@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jars/org.json-20120521.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jars/mysql-connector-java-5.1.37-bin.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jars/commons-codec-1.10.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jars/javax.mail.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jars/c3p0-0.9.5.2.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jars/mchange-commons-java-0.2.11.jar"/>
-	<classpathentry kind="lib" path="C:/Program Files/Java/jars/jsoup-1.10.2.jar"/>
+	<classpathentry kind="lib" path="/Users/ColeFisher/git/coinroster-java/dependencies/org.json-20120521.jar"/>
+	<classpathentry kind="lib" path="/Users/ColeFisher/git/coinroster-java/dependencies/mysql-connector-java-5.1.37-bin.jar"/>
+	<classpathentry kind="lib" path="/Users/ColeFisher/git/coinroster-java/dependencies/commons-codec-1.10.jar"/>
+	<classpathentry kind="lib" path="/Users/ColeFisher/git/coinroster-java/dependencies/javax.mail.jar"/>
+	<classpathentry kind="lib" path="/Users/ColeFisher/git/coinroster-java/dependencies/c3p0-0.9.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/ColeFisher/git/coinroster-java/dependencies/mchange-commons-java-0.2.11.jar"/>
+	<classpathentry kind="lib" path="/Users/ColeFisher/git/coinroster-java/dependencies/jsoup-1.10.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
