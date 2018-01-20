@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.coinroster.api.SavePlayers;
 import com.coinroster.internal.*;
 
 public class Cron 
@@ -50,20 +51,27 @@ public class Cron
 		}
 	
 	@SuppressWarnings("unused")
-	private void minute() throws Exception
-		{ 
+	private void minute() throws Exception{ 
 		SessionExpiry();
 		if (!Server.dev_server) UpdateBTCUSD();
-		}
+		
+	}
+	
 	
 	@SuppressWarnings("unused")
 	private void hour() throws Exception
-		{
+	{
 		new CloseContestRegistration();
 		new ExpirePromos();
 		new CheckPendingWithdrawals();
 		if (!Server.dev_server) UpdateCurrencies();
+		if (Server.dev_server){
+			if(hour==6){
+				System.out.println("6AM player table load");
+				new SavePlayers();
+			}
 		}
+	}
 	
 	@SuppressWarnings("unused")
 	private void day() throws Exception
@@ -370,7 +378,7 @@ public class Cron
 		{"Belarusian Ruble","BYN","USDBYN=X"},
 		{"Belize Dollar","BZD","USDBZD=X"},
 		{"Bermudian Dollar","BMD","USDBMD=X"},
-		{"Bolivian Bolíviano","BOB","USDBOB=X"},
+		{"Bolivian Bolï¿½viano","BOB","USDBOB=X"},
 		{"Bosnia and Herzegovina Convertible Marka","BAM","USDBAM=X"},
 		{"Botswana Pula","BWP","USDBWP=X"},
 		{"Bulgarian Lev","BGN","USDBGN=X"},
