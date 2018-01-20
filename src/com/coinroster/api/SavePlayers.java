@@ -25,12 +25,12 @@ public class SavePlayers extends Utils{
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
+			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player");
+			delete_old_rows.executeUpdate();
+			System.out.println("deleted players from old contests");
+
 			for(Player player : contest_data.values()){
 				
-				PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player");
-				delete_old_rows.executeQuery();
-				System.out.println("deleted players from old contests");
-
 				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, team_abr, salary, bioJSON) values(?, ?, ?, ?, ?, ?)");				
 				save_player.setInt(1, player.getEPSN_ID());
 				save_player.setString(2, player.getName());

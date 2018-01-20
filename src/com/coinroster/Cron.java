@@ -54,7 +54,6 @@ public class Cron
 	private void minute() throws Exception{ 
 		SessionExpiry();
 		if (!Server.dev_server) UpdateBTCUSD();
-		
 	}
 	
 	

@@ -19,6 +19,8 @@ import org.jsoup.select.Elements;
 
 public class BasketballContest extends Utils {
 	
+	
+	
 //	public static void main(String[] args) throws IOException, JSONException, SQLException {
 //				
 //		int contest_id = 001;
@@ -53,6 +55,9 @@ public class BasketballContest extends Utils {
 //		
 //		test_contest.scrape();
 //	}
+	
+	
+	public static String method_level = "admin";
 
 	// instance variables
 	private int ID;
@@ -185,6 +190,7 @@ public class BasketballContest extends Utils {
 	}
 
 	class Player {
+		public static final String method_level = "admin";
 		private String name;
 		private String team_abr;
 		private int ESPN_ID;
