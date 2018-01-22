@@ -304,13 +304,18 @@ public class CreateContest extends Utils
 				create_contest.setInt(12, max_users);
 				create_contest.setInt(13, entries_per_user);
 				create_contest.setString(14, pay_table_final.toString());
+				log(pay_table_final.toString());
 				create_contest.setDouble(15, salary_cap);
 				create_contest.setString(16, option_table.toString());
+				log(option_table.toString());
+
 				create_contest.setLong(17, System.currentTimeMillis());
 				create_contest.setString(18, session.user_id());
 				create_contest.setInt(19, roster_size);
 				create_contest.setString(20, odds_source);
+				log(odds_source);
 				create_contest.setString(21, score_header);
+				log(score_header);
 				create_contest.executeUpdate();
 	            }
             else if (contest_type.equals("PARI-MUTUEL"))

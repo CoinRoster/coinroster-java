@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.coinroster.api.SavePlayers;
+import com.coinroster.api.PlayersList;
 import com.coinroster.internal.*;
 
 public class Cron 
@@ -54,6 +54,7 @@ public class Cron
 	private void minute() throws Exception{ 
 		SessionExpiry();
 		if (!Server.dev_server) UpdateBTCUSD();
+		
 	}
 	
 	
@@ -67,9 +68,31 @@ public class Cron
 		if (Server.dev_server){
 			if(hour==6){
 				System.out.println("6AM player table load");
-				new SavePlayers();
+				PlayersList bball = new PlayersList("BASKETBALL");
+				
+				// parameters for contest
+				String category = "FANTASYSPORTS";
+				String contest_type = "ROSTER";
+				String progressive_code = "";
+				String title = "COLE TEST";
+				String desc = "description";
+	            double rake = 5.0;
+	            double cost_per_entry = 0.0001;
+	            String settlement_type = "JACKPOT";
+	            int salary_cap = 1000;
+	            int min_users = 3;
+	            int max_users = 0; // 0 = unlimited
+	            int entries_per_user = 0;
+	            int roster_size = 8;
+	            String score_header = "Points";
+	            String odds_source = "n/a";
+	            double[] payouts = {0.6, 0.2, 0.15, 0.05};
+	            
+				bball.autoCreateContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts);
+				
 			}
 		}
+		
 	}
 	
 	@SuppressWarnings("unused")

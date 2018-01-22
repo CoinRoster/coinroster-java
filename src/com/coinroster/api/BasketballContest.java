@@ -1,14 +1,15 @@
 package com.coinroster.api;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 import com.coinroster.Utils;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -64,7 +65,8 @@ public class BasketballContest extends Utils {
 	private ArrayList<String> game_IDs;
 	private Map<Integer, Player> players_list;
 	private boolean contest_ended = false;
-	
+	private long earliest_game;
+
 	// constructor
 	public BasketballContest(int id) throws Exception{
 		this.ID = id;
@@ -76,18 +78,40 @@ public class BasketballContest extends Utils {
 	public int getContestID(){
 		return ID;
 	}
+	public long getEarliestGame(){
+		return earliest_game;
+	}
 	public void getGameIDs() throws IOException, JSONException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
-		for(int i=0; i < events.length(); i++){
-			JSONArray links = events.getJSONObject(i).getJSONArray("links");
-			String href = links.getJSONObject(0).getString("href");
-			String gameID = href.split("=")[1];
-			gameIDs.add(gameID.toString());
-			this.game_IDs = gameIDs;
+		if(events.length() == 0){
+			System.out.println("No games");
+			this.game_IDs = null;
+		}
+		else{
+			String earliest_date = events.getJSONObject(0).getString("date");
+	        SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
+	        try {
+	            Date date = formatter1.parse(earliest_date.replaceAll("Z$", "+0000"));
+	            System.out.println(date);
+	            long milli = date.getTime();
+	            this.earliest_game = milli;
+	        } 
+	        catch (ParseException e) {
+	            e.printStackTrace();
+	        }
+
+			for(int i=0; i < events.length(); i++){
+				
+				JSONArray links = events.getJSONObject(i).getJSONArray("links");
+				String href = links.getJSONObject(0).getString("href");
+				String gameID = href.split("=")[1];
+				gameIDs.add(gameID.toString());
+				this.game_IDs = gameIDs;
+			}
 		}
 	}
 	
@@ -275,12 +299,11 @@ public class BasketballContest extends Utils {
 			return weight;
 		}
 		public void set_ppg_salary(double pts){
-			this.ppg = pts;
 			if(pts < 5.0){
 				this.salary = 50.0;
 			}
 			else{
-				this.salary = Math.round(ppg * 10.0) / 1.0;
+				this.salary = Math.round(ppg * 10.0);
 			}
 		}
 		public void createBio() throws JSONException{
