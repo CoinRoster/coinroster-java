@@ -8,14 +8,17 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.coinroster.api.PlayersList;
+import com.coinroster.api.BasketballBot;
 import com.coinroster.internal.*;
 
 public class Cron 
@@ -30,7 +33,7 @@ public class Cron
 	hour,
 	minute,
 	second;
-	
+
 	protected Cron(String freq, Calendar cal) throws Exception
 		{
 		year = cal.get(Calendar.YEAR);
@@ -55,8 +58,16 @@ public class Cron
 		SessionExpiry();
 		if (!Server.dev_server) UpdateBTCUSD();
 		
+		if(Server.dev_server){
+			if((hour > 19) && ((minute%30)==0)){
+				BasketballBot ball_bot = new BasketballBot();
+				System.out.println("Past 7pm, and 30 min have passed");
+				ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
+				ball_bot.scrape(gameIDs);
+			}
+		}
 	}
-	
+			 
 	
 	@SuppressWarnings("unused")
 	private void hour() throws Exception
@@ -65,16 +76,21 @@ public class Cron
 		new ExpirePromos();
 		new CheckPendingWithdrawals();
 		if (!Server.dev_server) UpdateCurrencies();
-		if (Server.dev_server){
+		
+		if(Server.dev_server){
 			if(hour==6){
-				System.out.println("6AM player table load");
-				PlayersList bball = new PlayersList("BASKETBALL");
 				
+				System.out.println("6AM player table load");	
+				BasketballBot ball_bot = new BasketballBot();
+				ball_bot.scrapeGameIDs();
+				ball_bot.setup();
+				ball_bot.savePlayers();
+
 				// parameters for contest
 				String category = "FANTASYSPORTS";
 				String contest_type = "ROSTER";
 				String progressive_code = "";
-				String title = "COLE TEST";
+				String title = "COLE TEST NEW NEW";
 				String desc = "description";
 	            double rake = 5.0;
 	            double cost_per_entry = 0.0001;
@@ -87,27 +103,31 @@ public class Cron
 	            String score_header = "Points";
 	            String odds_source = "n/a";
 	            double[] payouts = {0.6, 0.2, 0.15, 0.05};
-	            
-				bball.autoCreateContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts);
-				
+	            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
+	            Long deadline = ball_bot.getEarliestGame();
+	            BasketballBot.createContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts, playerIDs, deadline);
+			
 			}
 		}
-		
 	}
 	
 	@SuppressWarnings("unused")
 	private void day() throws Exception
-		{
+	{
 		GenerateAddresses();
 		PurgePasswordResetTable();
 		TriggerBuildLobby();
 		
 		if (Server.dev_server)
-			{
+		{
 			UpdateBTCUSD();
 			UpdateCurrencies();
-			}
+			
 		}
+					
+		
+	}
+	
 
 //------------------------------------------------------------------------------------
 
@@ -492,4 +512,12 @@ public class Cron
 		
 	};
 	
+	
+	public static void log(Object msg)
+	{
+	System.out.println(new SimpleDateFormat("MMM d h:mm:ss a").format(new Date()) + " : " + String.valueOf(msg));
 	}
+
+	
+	
+}

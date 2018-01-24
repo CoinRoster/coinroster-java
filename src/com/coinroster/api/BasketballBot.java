@@ -1,5 +1,8 @@
 package com.coinroster.api;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -9,7 +12,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.coinroster.DB;
+import com.coinroster.Server;
 import com.coinroster.Utils;
+import com.coinroster.internal.BuildLobby;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -18,70 +26,32 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class BasketballContest extends Utils {
-	
-	
-	
-//	public static void main(String[] args) throws IOException, JSONException, SQLException {
-//				
-//		int contest_id = 001;
-//		Basketball_Contest test_contest = new Basketball_Contest(contest_id);
-//		
-//		//call ESPN API to get gameIDs
-//		test_contest.getGameIDs();
-//	
-//		// setup() returns a list of all players that should be available in the contest, and each player has
-//		// attributes above such as name, ESPN_ID, team_abr, ppg, salary 
-//		// setup() only needs to be run once per contest creation
-//		Map<Integer, Player> contest_data = test_contest.setup();
-//		
-//		for(Player p : contest_data.values()){
-//			System.out.println(p.getName() + ", " + p.getTeam() +  " - " + p.getEPSN_ID() + " - " + p.getSalary() + " - " + p.getHeight());
-//			System.out.println("Last Game Played PPG:");
-//			System.out.println(p.getGameLogs().getJSONObject(0).get("PTS"));
-//			if(p.getGameLogs() != null)
-//				System.out.println(p.getGameLogs().toString());
-//			if(p.getYearStats() != null)
-//				System.out.println(p.getYearStats().toString());
-//			
-//		}
-//		
-//		// scrape() method should be run every minute or so
-//		// it scrapes all the boxscores for the gameIDs per contest, and then it updates the player's points 
-//		test_contest.scrape();
-//	
-//		for(Player p : test_contest.getPlayerHashMap().values()){
-//			System.out.println(p.getName() + " - " + p.getPoints());
-//		}
-//		
-//		test_contest.scrape();
-//	}
-	
+public class BasketballBot extends Utils {
 	
 	public static String method_level = "admin";
 
 	// instance variables
-	private int ID;
-	private ArrayList<String> game_IDs;
+	protected ArrayList<String> game_IDs;
 	private Map<Integer, Player> players_list;
 	private boolean contest_ended = false;
 	private long earliest_game;
+	private String sport = "BASKETBALL";
 
 	// constructor
-	public BasketballContest(int id) throws Exception{
-		this.ID = id;
+	public BasketballBot() throws IOException, JSONException{
 	}
 	// methods
 	public void set_contest_ended_flag(boolean flag){
 		this.contest_ended = flag;
 	}
-	public int getContestID(){
-		return ID;
+	public ArrayList<String> getGameIDs(){
+		return game_IDs;
 	}
+	
 	public long getEarliestGame(){
 		return earliest_game;
 	}
-	public void getGameIDs() throws IOException, JSONException{
+	public void scrapeGameIDs() throws IOException, JSONException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
@@ -108,7 +78,7 @@ public class BasketballContest extends Utils {
 				
 				JSONArray links = events.getJSONObject(i).getJSONArray("links");
 				String href = links.getJSONObject(0).getString("href");
-				String gameID = href.split("=")[1];
+				String gameID = href.split("=")[1].replace("&sourceLang", "");
 				gameIDs.add(gameID.toString());
 				this.game_IDs = gameIDs;
 			}
@@ -122,7 +92,262 @@ public class BasketballContest extends Utils {
 		return players_list;
 	}
 	
+	public static ResultSet getAllPlayerIDs(){
+		Connection sql_connection = null;
+		ResultSet result_set = null;
+		try {
+			sql_connection = Server.sql_connection();
+			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
+			get_players.setString(1, "BASKETBALL");
+			result_set = get_players.executeQuery();
+			
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return result_set;
+	}
 	
+	public ArrayList<String> getAllGameIDsDB() throws SQLException{
+		Connection sql_connection = null;
+		ResultSet result_set = null;
+		ArrayList<String> gameIDs = new ArrayList<String>();
+		try {
+			sql_connection = Server.sql_connection();
+			PreparedStatement get_games = sql_connection.prepareStatement("select distinct gameID from player where sport_type=?");
+			get_games.setString(1, "BASKETBALL");
+			result_set = get_games.executeQuery();
+			
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		while(result_set.next()){
+			gameIDs.add(result_set.getString(1));	
+		}
+		return gameIDs;
+	}
+	
+	public void savePlayers(){
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
+			delete_old_rows.setString(1, this.sport);
+			delete_old_rows.executeUpdate();
+			System.out.println("deleted " + this.sport + " players from old contests");
+
+			for(Player player : this.getPlayerHashMap().values()){
+				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
+				save_player.setInt(1, player.getESPN_ID());
+				save_player.setString(2, player.getName());
+				save_player.setString(3, sport);
+				save_player.setString(4, player.getGameID());
+				save_player.setString(5, player.getTeam());
+				save_player.setDouble(6, player.getSalary());
+				save_player.setDouble(7, player.getPoints());
+				save_player.setString(8, player.getBio().toString());
+				save_player.executeUpdate();	
+			}
+			
+			System.out.println("added " + sport + " players to DB");
+		}
+		catch (Exception e) {
+			Server.exception(e);
+		} 
+		finally {
+			if (sql_connection != null){
+				try {sql_connection.close();} 
+				catch (SQLException ignore) {}
+			}
+		}
+	}
+	
+	public static int createContest(String category, String contest_type, String progressive_code, 
+			String title, String desc, double rake, double cost_per_entry, String settlement_type, 
+			int salary_cap, int min_users, int max_users, int entries_per_user, int roster_size, 
+			String odds_source, String score_header, double[] payouts, ResultSet playerIDs, Long deadline) throws Exception{
+
+	
+		Connection sql_connection = Server.sql_connection();
+		DB db = new DB(sql_connection);
+
+		if (title.length() > 255)
+		{
+			log("Title is too long");
+			return 1;
+		}
+
+		if (deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
+		{
+			log( "Registration deadline must be at least 1 hour from now");
+			return 1;
+		}
+
+		if (rake < 0 || rake >= 100)
+		{
+			log("Rake cannot be < 0 or > 100");
+			return 1;
+		}
+
+		rake = divide(rake, 100, 0); // convert to %
+
+		if (cost_per_entry == 0)
+		{
+			log("Cost per entry cannot be 0");
+			return 1;
+		}
+
+		if (progressive_code.equals("")) progressive_code = null; // default value
+		else
+		{
+			JSONObject progressive = db.select_progressive(progressive_code);
+
+			if (progressive == null)
+			{
+				log("Invalid Progressive");
+				return 1;
+			}
+
+			if (!progressive.getString("category").equals(category) || !progressive.getString("sub_category").equals("BASKETBALL"))
+			{
+				log("Progressive belongs to a different category");
+				return 1;
+			}
+		}
+
+		log("Contest parameters:");
+
+		log("category: " + category);
+		log("sub_category: BASKETBALL");
+		log("progressive: " + progressive_code);
+		log("contest_type: " + contest_type);
+		log("title: " + title);
+		log("description: " + desc);
+		log("registration_deadline: " + deadline);
+		log("rake: " + rake);
+		log("cost_per_entry: " + cost_per_entry);
+
+		if(contest_type.equals("ROSTER")){
+			if (min_users < 2)
+			{
+				log( "Invalid value for [min users]");
+				return 1;
+			}
+			if (max_users < min_users && max_users != 0) // 0 = unlimited
+			{
+				log( "Invalid value for [max users]");
+				return 1;
+			}
+
+			if (roster_size < 0)
+			{
+				log("Roster size cannobe be negative");
+				return 1;
+			}
+
+			if (entries_per_user < 0)
+			{
+				log("Invalid value for [entries per user]");
+				return 1;
+			}
+
+			if (score_header.equals(""))
+			{
+				log("Please choose a score column header");
+				return 1;
+			}
+
+			JSONArray option_table = new JSONArray();
+			while(playerIDs.next()){
+				PreparedStatement get_player = sql_connection.prepareStatement("select name, team_abr, salary from player where id = ?");
+				get_player.setInt(1, playerIDs.getInt(1));
+				ResultSet player_data = get_player.executeQuery();
+				if(player_data.next()){
+					JSONObject player = new JSONObject();
+					player.put("name", player_data.getString(1) + " " + player_data.getString(2));
+					player.put("price", player_data.getDouble(3));
+					player.put("count", 0);
+					player.put("id", playerIDs.getInt(1));
+					option_table.put(player);
+				}
+			}
+							
+			switch (settlement_type)
+			{
+			case "HEADS-UP":
+
+				if (min_users != 2 || max_users != 2)
+				{
+					log("Invalid value(s) for number of users");
+					return 1;
+				}
+				break;
+
+			case "DOUBLE-UP": break;
+
+			case "JACKPOT": break;
+
+			default:
+
+				log("Invalid value for [settlement type]");
+				return 1;
+
+			}
+			JSONArray pay_table = new JSONArray();
+			for(int i=0; i < payouts.length; i++){
+				JSONObject line = new JSONObject();
+				line.put("payout", payouts[i]);
+				line.put("rank", i+1);
+				pay_table.put(line);
+			}
+			
+			try{
+				
+				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				create_contest.setString(1, category);
+				create_contest.setString(2, "BASKETBALL");
+				create_contest.setString(3, progressive_code);
+				create_contest.setString(4, contest_type);
+				create_contest.setString(5, title);
+				create_contest.setString(6, desc);
+				create_contest.setLong(7, deadline);
+				create_contest.setDouble(8, rake);
+				create_contest.setDouble(9, cost_per_entry);
+				create_contest.setString(10, settlement_type);
+				create_contest.setInt(11, min_users);
+				create_contest.setInt(12, max_users);
+				create_contest.setInt(13, entries_per_user);
+				create_contest.setString(14, pay_table.toString());
+				create_contest.setDouble(15, salary_cap);
+				create_contest.setString(16, option_table.toString());	
+				create_contest.setLong(17, System.currentTimeMillis());
+				create_contest.setString(18, "ColeFisher");
+				create_contest.setInt(19, roster_size);
+				create_contest.setString(20, odds_source);
+				log(odds_source);
+				create_contest.setString(21, score_header);
+				create_contest.executeUpdate();
+				log("added contest to db");
+				new BuildLobby(sql_connection);
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+        }
+	return 0;
+	}
+	
+	public static void editPoints(double pts, Connection sql_connection, int id) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ?");
+		update_points.setDouble(1, pts);
+		update_points.setInt(2, id);
+		update_points.executeUpdate();
+//		this.fantasy_points = pts;
+
+	}
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
 	public Map<Integer, Player> setup() throws IOException, JSONException, SQLException{
 		Map<Integer, Player> players = new HashMap<Integer,Player>();
@@ -145,9 +370,10 @@ public class BasketballContest extends Utils {
 						int ESPN_id = Integer.parseInt(cols.get(1).select("a").attr("href").split("/")[7]);
 						// create a player object, save it to the hashmap
 						Player p = new Player(ESPN_id, name, team_name);
-						System.out.println(p.getName() + " - " + p.getEPSN_ID());
+						System.out.println(p.getName() + " - " + p.getESPN_ID());
 						p.scrape_info();
 						p.setPPG();
+						p.gameID = this.game_IDs.get(i);
 						p.set_ppg_salary(p.getPPG());
 						p.createBio();		
 						players.put(ESPN_id, p);
@@ -161,17 +387,19 @@ public class BasketballContest extends Utils {
 	
 	// scrape() method gets points from ESPN boxscores. 
 	// meant to run every minute or so. Updates the Contest's player hashmap
-	public void scrape() throws IOException{
+	public void scrape(ArrayList<String> gameIDs) throws IOException, SQLException{
 		
-		if(this.get_contest_ended_flag()){
-			System.out.println("CONTEST ENDED");
-			//CONTEST HAS ENDED
-			return;
-		}
-		int games_ended = 0;
+		Connection sql_connection = Server.sql_connection();
+
+//		if(this.get_contest_ended_flag()){
+//			System.out.println("CONTEST ENDED");
+//			//CONTEST HAS ENDED
+//			return;
+//		}
+//		int games_ended = 0;
 		
-		for(int i=0; i < this.game_IDs.size(); i++){
-			Document page = Jsoup.connect("http://www.espn.com/nba/boxscore?gameId="+this.game_IDs.get(i)).timeout(6000).get();
+		for(int i=0; i < gameIDs.size(); i++){
+			Document page = Jsoup.connect("http://www.espn.com/nba/boxscore?gameId="+gameIDs.get(i)).timeout(6000).get();
 			Elements tables = page.getElementsByClass("mod-data");
 			for (Element table : tables){
 				Elements rows = table.getElementsByTag("tr");
@@ -183,17 +411,17 @@ public class BasketballContest extends Utils {
 							int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);
 							if(spans.size() == 2){
 								String points_string = row.getElementsByClass("pts").text();
-								int pts;
+								double pts;
 								// if player played, get their points
 								if(!points_string.isEmpty() && !points_string.contains("--")){
-									pts = Integer.parseInt(points_string);		
+									pts = Double.parseDouble(points_string);		
 								}
 								// if player did not play, set pts=0
 								else{
-									pts = 0;
+									pts = 0.0;
 								}
-								// look up player in HashMap with ESPN_ID, update his points
-								this.players_list.get(espn_ID).editPoints(pts);
+								// look up player in HashMap with ESPN_ID, update his points in DB
+								editPoints(pts, sql_connection, espn_ID);
 							}			
 						}			
 					}
@@ -203,22 +431,22 @@ public class BasketballContest extends Utils {
 			}
 			
 			// check to see if contest is finished - if all games are deemed final
-			String time_left = page.getElementsByClass("status-detail").first().text();
-			if(time_left.equals("Final")){
-				games_ended += 1;
-			}
-			if(games_ended == this.game_IDs.size()){
-				this.set_contest_ended_flag(true);
-			}
+//			String time_left = page.getElementsByClass("status-detail").first().text();
+//			if(time_left.equals("Final")){
+//				games_ended += 1;
+//			}
+//			if(games_ended == this.game_IDs.size()){
+//				this.set_contest_ended_flag(true);
+//			}
 		}
 	}
 
 	class Player {
-		public static final String method_level = "admin";
+		public String method_level = "admin";
 		private String name;
 		private String team_abr;
 		private int ESPN_ID;
-		private int fantasy_points = 0;
+		private double fantasy_points = 0;
 		private double ppg;
 		private double salary;
 		private String birthString;
@@ -229,6 +457,7 @@ public class BasketballContest extends Utils {
 		private JSONObject career_stats;
 		private JSONObject year_stats;
 		private JSONObject bio;
+		private String gameID;
 		
 		// constructor
 		public Player(int id, String n, String team){
@@ -238,14 +467,15 @@ public class BasketballContest extends Utils {
 		}
 		
 		// methods
-		public void editPoints(int pts){
-			this.fantasy_points = pts;
-		}
-		public int getPoints(){
+	
+		public double getPoints(){
 			return fantasy_points;
 		}
-		public int getEPSN_ID(){
+		public int getESPN_ID(){
 			return ESPN_ID;
+		}
+		public String getGameID(){
+			return gameID;
 		}
 		public void setPPG() throws JSONException{
 			try{
@@ -324,7 +554,7 @@ public class BasketballContest extends Utils {
 		
 		public void scrape_info() throws IOException, JSONException{
 			
-			Document page = Jsoup.connect("http://www.espn.com/nba/player/_/id/"+Integer.toString(this.getEPSN_ID())).timeout(6000).get();
+			Document page = Jsoup.connect("http://www.espn.com/nba/player/_/id/"+Integer.toString(this.getESPN_ID())).timeout(6000).get();
 			Elements bio_divs = page.getElementsByClass("player-bio");
 			
 			// parse bio-bio div to get pos, weight, height, birthString
