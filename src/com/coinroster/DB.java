@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -282,6 +283,46 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	
+	// GET FANTASY POINTS FROM PLAYER TABLE
+	public double get_fantasy_points(int player_id, String sub_category) throws Exception
+	{
+		
+	double points = 0;
+	PreparedStatement get_points = sql_connection.prepareStatement("select points from player where id = ? and sport_type = ?");
+	get_points.setInt(1, player_id);
+	get_points.setString(2, sub_category);
+	
+	ResultSet result_set = get_points.executeQuery();
+
+	if (result_set.next()) points = result_set.getDouble(1);
+	
+	return points;
+	}
+
+//------------------------------------------------------------------------------------
+
+	
+	// CHECK IF CONTESTS ARE IN PLAY
+
+	public ArrayList<Integer> check_if_in_play(String category, String sub_category, String contest_type) throws Exception
+	{
+		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
+		get_live_contests.setString(1, category);
+		get_live_contests.setString(2, sub_category);
+		get_live_contests.setString(3, contest_type);
+	
+		ResultSet result_set = get_live_contests.executeQuery();
+		
+		while (result_set.next()){
+			contest_ids.add(result_set.getInt(1));
+		}
+		return contest_ids;
+	}
+
+//------------------------------------------------------------------------------------
+
 	// GET WAGER TOTAL FOR PARI-MUTUEL OPTION
 
 	public double get_option_wager_total(int contest_id, int option_id) throws Exception
@@ -375,6 +416,8 @@ public class DB
 		return contest;
 		}
 
+	
+	
 //------------------------------------------------------------------------------------
 
 	// SELECT CONTEST ENTRY 

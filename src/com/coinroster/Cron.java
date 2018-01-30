@@ -9,6 +9,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,13 +62,30 @@ public class Cron
 		if (!Server.dev_server) UpdateBTCUSD();
 		
 		if(Server.dev_server){
-			if((hour > 19) && ((minute%30)==0)){
-				BasketballBot ball_bot = new BasketballBot();
-				System.out.println("Past 7pm, and 30 min have passed");
-				ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
-				ball_bot.scrape(gameIDs);
+			if((minute%20)==0){
+				//see if ANY basketball contests are in play (status=2)
+				Connection sql_connection = Server.sql_connection();
+				DB db_connection = new DB(sql_connection);
+				ArrayList<Integer> contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
+				if(!contest_ids.isEmpty()){
+					BasketballBot ball_bot = new BasketballBot();
+					log("Contest is in play and minute is multiple of 20");
+					ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
+					boolean games_ended;
+					games_ended = ball_bot.scrape(gameIDs);
+					for(Integer contest_id : contest_ids ){
+						ball_bot.updateScores(contest_id, sql_connection);
+					}
+					if(games_ended){
+						log("games have ended");
+						for(Integer contest_id : contest_ids){
+							ball_bot.settleContest(contest_id, sql_connection);
+						}
+					}
+				}
 			}
 		}
+		
 	}
 			 
 	
@@ -74,7 +94,7 @@ public class Cron
 	{
 		new CloseContestRegistration();
 		new ExpirePromos();
-		new CheckPendingWithdrawals();
+//		new CheckPendingWithdrawals();
 		if (!Server.dev_server) UpdateCurrencies();
 		
 		if(Server.dev_server){
@@ -89,8 +109,11 @@ public class Cron
 				// parameters for contest
 				String category = "FANTASYSPORTS";
 				String contest_type = "ROSTER";
+				Long deadline = ball_bot.getEarliestGame();
+	            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
+	            log("deadline for contest: " + date);
 				String progressive_code = "";
-				String title = "COLE TEST NEW NEW";
+				String title = "NBA Jackpot Contest | " + date.toString(); 
 				String desc = "description";
 	            double rake = 5.0;
 	            double cost_per_entry = 0.0001;
@@ -104,7 +127,6 @@ public class Cron
 	            String odds_source = "n/a";
 	            double[] payouts = {0.6, 0.2, 0.15, 0.05};
 	            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
-	            Long deadline = ball_bot.getEarliestGame();
 	            BasketballBot.createContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts, playerIDs, deadline);
 			
 			}
