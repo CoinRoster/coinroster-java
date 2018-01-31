@@ -13,11 +13,6 @@ public class ServerWorker extends Utils implements Callable<Integer>
 		this.socket = socket;
 		}
 	
-	public int get_int()
-		{
-		return 1;
-		}
-
 	public Integer call() 
 		{
 		try {
