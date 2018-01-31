@@ -408,7 +408,7 @@ public class Server extends Utils
 	private static void initialize_pools()
 		{
 		worker_pool = Executors.newFixedThreadPool(pool_size);
-		cron_pool = Executors.newFixedThreadPool(pool_size);
+		cron_pool = Executors.newFixedThreadPool(3);
 		async_updater = Executors.newFixedThreadPool(2);
 		
 		sql_pool = new ComboPooledDataSource();
