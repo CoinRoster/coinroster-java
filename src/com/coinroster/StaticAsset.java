@@ -1,13 +1,11 @@
 package com.coinroster;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.OutputStream;
 import java.net.URLEncoder;
 
 public class StaticAsset extends Utils
 	{
-	protected StaticAsset(HttpRequest request, OutputStream response) throws Exception
+	protected StaticAsset(HttpRequest request, HttpResponse response) throws Exception
 		{
 		// we handle authentication first - this is primarily to redirect unauthorized
 		// admin panel requests to '/' as NGINX would for any other non-existent asset
@@ -27,13 +25,13 @@ public class StaticAsset extends Utils
 				else // non-admin user is trying to access admin - likely a hacking attempt
 					{
 					log("!!!!! Unauthorized attempt to access admin panel: " + session.username());
-					redirect(response, "/");
+					response.redirect("/");
 					return;
 					}
 				}
 			else if (session.user_level().equals("3")) // unverified user - all requests are answered with welcome.html
 				{
-				redirect(response, "/welcome.html");
+				response.redirect("/welcome.html");
 				return;
 				}
 			else authenticated = true; // standard user
@@ -67,61 +65,19 @@ public class StaticAsset extends Utils
 		if (!file.exists()) 
 			{
 			log("!!!!! Unauthorized file request: " + response_path);
-			redirect(response, "/");
+			response.redirect("/");
 			return;
 			}
 
 		// if we get here, we serve the file if authenticated ; if not authenticated, serve login.html with redirect
 		
-		if (authenticated) // user is allowed to request the file in question
-			{
-			int response_length = (int) file.length();
-			
-			response.write(new String("HTTP/1.1 200 OK\r\n").getBytes());
-			response.flush();
-			
-			response.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
-			response.flush();
-
-			response.write(new String("Content-Length: " + String.valueOf(response_length) + "\r\n").getBytes());
-			response.flush();
-			
-			response.write(new String("Content-Type: " + get_mime_type(target_object) + "\r\n").getBytes());
-			response.flush();
-
-			response.write(new String("\r\n").getBytes());
-			response.flush();
-
-			FileInputStream stream = new FileInputStream(response_path);
-			
-			byte[] buffer = new byte[1024];
-
-			for (int n; (n = stream.read(buffer, 0, buffer.length)) != -1;)
-				{
-				response.write(buffer, 0, n);
-				response.flush();
-				}
-			
-			stream.close();
-			}
+		if (authenticated) response.send(file, get_mime_type(target_object));
 		else // user is not authenticated - redirect to login
 			{
 			String redirect_url = "/login.html#redirect=" + URLEncoder.encode(Server.host + full_url, "UTF-8");
-			redirect(response, redirect_url);
+			response.redirect(redirect_url);
 			return;
 			}
-		}
-	
-	private void redirect(OutputStream response, String redirect_url) throws Exception
-		{
-		response.write(new String("HTTP/1.1 302 Found\r\n").getBytes());
-		response.flush();
-		
-		response.write(new String("Location: " + redirect_url + "\r\n").getBytes());
-		response.flush();
-		
-		response.write(new String("\r\n").getBytes());
-		response.flush();
 		}
 
 	private String get_mime_type(String target_object)

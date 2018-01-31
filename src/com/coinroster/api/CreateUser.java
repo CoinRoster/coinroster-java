@@ -387,8 +387,8 @@ public class CreateUser extends Utils
 				// log the new user in:
 	
 				String new_session_token = session.create_session(sql_connection, session, username, new_user_id, user_level);
-	
-				method.response.new_session_token = new_session_token;
+
+				method.response.set_cookie("session_token", new_session_token);
 				
 				output.put("status", "1");
 				}

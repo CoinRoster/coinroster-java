@@ -43,8 +43,12 @@ public class BasketballBot extends Utils {
 	private long earliest_game;
 	private String sport = "BASKETBALL";
 
+	private static Connection sql_connection = null;
+	
 	// constructor
-	public BasketballBot() throws IOException, JSONException{
+
+	public BasketballBot(Connection sql_connection) throws IOException, JSONException{
+		BasketballBot.sql_connection = sql_connection;
 	}
 	// methods
 	public ArrayList<String> getGameIDs(){
@@ -93,10 +97,8 @@ public class BasketballBot extends Utils {
 	}
 	
 	public static ResultSet getAllPlayerIDs(){
-		Connection sql_connection = null;
 		ResultSet result_set = null;
 		try {
-			sql_connection = Server.sql_connection();
 			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
 			get_players.setString(1, "BASKETBALL");
 			result_set = get_players.executeQuery();
@@ -110,11 +112,9 @@ public class BasketballBot extends Utils {
 	}
 	
 	public ArrayList<String> getAllGameIDsDB() throws SQLException{
-		Connection sql_connection = null;
 		ResultSet result_set = null;
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		try {
-			sql_connection = Server.sql_connection();
 			PreparedStatement get_games = sql_connection.prepareStatement("select distinct gameID from player where sport_type=?");
 			get_games.setString(1, "BASKETBALL");
 			result_set = get_games.executeQuery();
@@ -130,9 +130,7 @@ public class BasketballBot extends Utils {
 	}
 	
 	public void savePlayers(){
-		Connection sql_connection = null;
 		try {
-			sql_connection = Server.sql_connection();
 			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
 			delete_old_rows.setString(1, this.sport);
 			delete_old_rows.executeUpdate();
@@ -156,12 +154,6 @@ public class BasketballBot extends Utils {
 		}
 		catch (Exception e) {
 			Server.exception(e);
-		} 
-		finally {
-			if (sql_connection != null){
-				try {sql_connection.close();} 
-				catch (SQLException ignore) {}
-			}
 		}
 	}
 	
@@ -170,8 +162,6 @@ public class BasketballBot extends Utils {
 			int salary_cap, int min_users, int max_users, int entries_per_user, int roster_size, 
 			String odds_source, String score_header, double[] payouts, ResultSet playerIDs, Long deadline) throws Exception{
 
-	
-		Connection sql_connection = Server.sql_connection();
 		DB db = new DB(sql_connection);
 
 		if (title.length() > 255)
@@ -1791,7 +1781,6 @@ public class BasketballBot extends Utils {
 	// meant to run every minute or so. Updates the Contest's player hashmap
 	public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException{
 		
-		Connection sql_connection = Server.sql_connection();
 		int games_ended = 0;
 		
 		for(int i=0; i < gameIDs.size(); i++){

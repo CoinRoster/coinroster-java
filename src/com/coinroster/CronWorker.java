@@ -2,29 +2,32 @@ package com.coinroster;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.api.BasketballBot;
-import com.coinroster.internal.*;
+import com.coinroster.internal.BuildLobby;
+import com.coinroster.internal.CallCGS;
+import com.coinroster.internal.CloseContestRegistration;
+import com.coinroster.internal.ExpirePromos;
 
-public class Cron 
+public class CronWorker extends Utils implements Callable<Integer> 
 	{
 	@SuppressWarnings("unused")
 	private static int
@@ -36,8 +39,17 @@ public class Cron
 	hour,
 	minute,
 	second;
+	
+	private String freq;
+	private Calendar cal;
+	
+	public CronWorker(String freq, Calendar cal) 
+		{
+		this.freq = freq;
+		this.cal = cal;
+		}
 
-	protected Cron(String freq, Calendar cal) throws Exception
+	public Integer call() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
 		{
 		year = cal.get(Calendar.YEAR);
 		month = cal.get(Calendar.MONTH);
@@ -48,45 +60,26 @@ public class Cron
 		second = cal.get(Calendar.SECOND);
 		
 		this.getClass().getDeclaredMethod(freq).invoke(this);
+		
+		return 1;
 		}
 
+//------------------------------------------------------------------------------------
+
 	@SuppressWarnings("unused")
-	private void second() throws Exception
-		{ 
-		
-		}
-	
-	@SuppressWarnings("unused")
-	private void minute() throws Exception{ 
+	private void minute() throws Exception
+	{ 
 		SessionExpiry();
 		if (!Server.dev_server) UpdateBTCUSD();
 		
 		if(Server.dev_server){
 			if((minute%20)==0){
 				//see if ANY basketball contests are in play (status=2)
-				Connection sql_connection = Server.sql_connection();
-				DB db_connection = new DB(sql_connection);
-				ArrayList<Integer> contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
-				if(!contest_ids.isEmpty()){
-					BasketballBot ball_bot = new BasketballBot();
-					log("Contest is in play and minute is multiple of 20");
-					ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
-					boolean games_ended;
-					games_ended = ball_bot.scrape(gameIDs);
-					for(Integer contest_id : contest_ids ){
-						ball_bot.updateScores(contest_id, sql_connection);
-					}
-					if(games_ended){
-						log("games have ended");
-						for(Integer contest_id : contest_ids){
-							ball_bot.settleContest(contest_id, sql_connection);
-						}
-					}
+				CheckInPlayBasketballContests();
 				}
 			}
+
 		}
-		
-	}
 			 
 	
 	@SuppressWarnings("unused")
@@ -95,40 +88,11 @@ public class Cron
 		new CloseContestRegistration();
 		new ExpirePromos();
 //		new CheckPendingWithdrawals();
-		if (!Server.dev_server) UpdateCurrencies();
+		//if (!Server.dev_server) UpdateCurrencies();
 		
 		if(Server.dev_server){
 			if(hour==6){
-				
-				System.out.println("6AM player table load");	
-				BasketballBot ball_bot = new BasketballBot();
-				ball_bot.scrapeGameIDs();
-				ball_bot.setup();
-				ball_bot.savePlayers();
-
-				// parameters for contest
-				String category = "FANTASYSPORTS";
-				String contest_type = "ROSTER";
-				Long deadline = ball_bot.getEarliestGame();
-	            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
-	            log("deadline for contest: " + date);
-				String progressive_code = "";
-				String title = "NBA Jackpot Contest | " + date.toString(); 
-				String desc = "description";
-	            double rake = 5.0;
-	            double cost_per_entry = 0.0001;
-	            String settlement_type = "JACKPOT";
-	            int salary_cap = 1000;
-	            int min_users = 3;
-	            int max_users = 0; // 0 = unlimited
-	            int entries_per_user = 0;
-	            int roster_size = 8;
-	            String score_header = "Points";
-	            String odds_source = "n/a";
-	            double[] payouts = {0.6, 0.2, 0.15, 0.05};
-	            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
-	            BasketballBot.createContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts, playerIDs, deadline);
-			
+				CreateBasketballContest();
 			}
 		}
 	}
@@ -143,13 +107,127 @@ public class Cron
 		if (Server.dev_server)
 		{
 			UpdateBTCUSD();
-			UpdateCurrencies();
+			//UpdateCurrencies();
 			
 		}
 					
 		
 	}
+
+//------------------------------------------------------------------------------------
+
+	// template for working with SQL connection
 	
+	@SuppressWarnings("unused")
+	private void Template() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			// do whatever needs to be done
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}	
+
+//------------------------------------------------------------------------------------
+
+	// template for working with SQL connection
+	
+	private void CheckInPlayBasketballContests() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db_connection = new DB(sql_connection);
+			ArrayList<Integer> contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
+			if(!contest_ids.isEmpty()){
+				BasketballBot ball_bot = new BasketballBot(sql_connection);
+				log("Contest is in play and minute is multiple of 20");
+				ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
+				boolean games_ended;
+				games_ended = ball_bot.scrape(gameIDs);
+				for(Integer contest_id : contest_ids ){
+					ball_bot.updateScores(contest_id, sql_connection);
+				}
+				if(games_ended){
+					log("games have ended");
+					for(Integer contest_id : contest_ids){
+						ball_bot.settleContest(contest_id, sql_connection);
+					}
+				}
+			}
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}	
+
+//------------------------------------------------------------------------------------
+
+	// template for working with SQL connection
+	
+	private void CreateBasketballContest() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			System.out.println("6AM player table load");	
+			BasketballBot ball_bot = new BasketballBot(sql_connection);
+			ball_bot.scrapeGameIDs();
+			ball_bot.setup();
+			ball_bot.savePlayers();
+
+			// parameters for contest
+			String category = "FANTASYSPORTS";
+			String contest_type = "ROSTER";
+			Long deadline = ball_bot.getEarliestGame();
+            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
+            log("deadline for contest: " + date);
+			String progressive_code = "";
+			String title = "NBA Jackpot Contest | " + date.toString(); 
+			String desc = "description";
+            double rake = 5.0;
+            double cost_per_entry = 0.0001;
+            String settlement_type = "JACKPOT";
+            int salary_cap = 1000;
+            int min_users = 3;
+            int max_users = 0; // 0 = unlimited
+            int entries_per_user = 0;
+            int roster_size = 8;
+            String score_header = "Points";
+            String odds_source = "n/a";
+            double[] payouts = {0.6, 0.2, 0.15, 0.05};
+            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
+            BasketballBot.createContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts, playerIDs, deadline);
+		
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}	
 
 //------------------------------------------------------------------------------------
 
@@ -303,6 +381,7 @@ public class Cron
 
 	// update BTCUSD price
 	
+	@SuppressWarnings("unused")
 	private void UpdateCurrencies()
 		{
 		Server.async_updater.execute(new Runnable() 
@@ -534,12 +613,6 @@ public class Cron
 		
 	};
 	
-	
-	public static void log(Object msg)
-	{
-	System.out.println(new SimpleDateFormat("MMM d h:mm:ss a").format(new Date()) + " : " + String.valueOf(msg));
-	}
+//------------------------------------------------------------------------------------
 
-	
-	
 }

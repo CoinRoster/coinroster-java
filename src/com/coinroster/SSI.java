@@ -1,7 +1,5 @@
 package com.coinroster;
 
-import java.io.ByteArrayInputStream;
-import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,7 +9,7 @@ import org.json.JSONObject;
 
 public class SSI extends Utils
 	{
-	protected SSI(HttpRequest request, OutputStream response) throws Exception
+	protected SSI(HttpRequest request, HttpResponse response) throws Exception
 		{
 		Connection sql_connection = null;
 		try {
@@ -30,10 +28,7 @@ public class SSI extends Utils
 			String session_token = request.cookie("session_token");
 			Session session = new Session(session_token);
 	
-			boolean 
-			
-			session_active = session.active(),
-			add_response_headers = false;
+			boolean session_active = session.active();
 	
 			if (request.header("promo") != null)
 				{
@@ -60,8 +55,6 @@ public class SSI extends Utils
 					response_data = Utils.read_to_string(ssi_directory + "promo_landing.html");
 					response_data = response_data.replace("<!--factory:promo_details-->", "<script>window.promo = " + promo_properties.toString() + ";</script>");
 					}
-				
-				add_response_headers = true;
 				}
 			
 			switch (target_object)
@@ -221,45 +214,15 @@ public class SSI extends Utils
 					} break;
 				}
 			
-			if (response_data != null)
-				{
-				if (add_response_headers)
-					{
-					response.write(new String("HTTP/1.1 200 OK\r\n").getBytes());
-					response.flush();
-					
-					response.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
-					response.flush();
-	
-					response.write(new String("Content-Length: " + String.valueOf(response_data.length()) + "\r\n").getBytes());
-					response.flush();
-					
-					response.write(new String("Content-Type: text/html\r\n").getBytes());
-					response.flush();
-	
-					response.write(new String("\r\n").getBytes());
-					response.flush();
-					}
-				
-				ByteArrayInputStream stream = new ByteArrayInputStream(response_data.getBytes(Utils.ENCODING));
-	
-				byte[] buffer = new byte[1024];
-	
-				for (int n; (n = stream.read(buffer, 0, buffer.length)) != -1;)
-					{
-					response.write(buffer, 0, n);
-					response.flush();
-					}
-				
-				stream.close();
-				}
-			else 
+//------------------------------------------------------------------------------------
+
+			if (response_data == null)
 				{
 				log("!!!!! Unauthorized SSI request: " + target_url);
-				
-				response.write(new String(" ").getBytes());
-				response.flush();
+				response_data = " ";
 				}
+			
+			response.send(response_data);
 			}
 		catch (Exception e)
 			{

@@ -8,9 +8,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 
-public class CommandHandler extends Utils
+public class CommandPrompt extends Utils
 	{
-	public CommandHandler(String command, Socket socket) throws Exception
+	public CommandPrompt(String command, Socket socket) throws Exception
 		{
 		InputStream in = socket.getInputStream();
 		OutputStream out = socket.getOutputStream();

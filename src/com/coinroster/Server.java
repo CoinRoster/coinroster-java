@@ -114,7 +114,7 @@ public class Server extends Utils
 
 	static int
 	
-	proxy_port = 27038,
+	port = 27038,
 	
 	free_address_quota = 20,
 	
@@ -146,7 +146,7 @@ public class Server extends Utils
 	admin_user_methods = new HashSet<String>(),
 	score_bot_methods = new HashSet<String>();
 	
-	private static ServerSocket proxy_gateway;
+	private static ServerSocket gateway;
 	
 	protected static Map<String, String> config_map = new TreeMap<String, String>();
 	
@@ -154,7 +154,11 @@ public class Server extends Utils
 	
 	public static HashMap<String, String> control = new HashMap<String, String>();
 
-	private static ExecutorService worker_pool;
+	static ExecutorService
+	
+	cron_pool,
+	worker_pool;
+	
 	public static ExecutorService async_updater;
 	
 	private static ComboPooledDataSource sql_pool;
@@ -360,7 +364,7 @@ public class Server extends Utils
 				{
 				dev_server = true;
 				
-				pool_size = 20;
+				pool_size = 3;
 		
 				admin_timeout = 1440 * minute;
 	
@@ -404,8 +408,11 @@ public class Server extends Utils
 	private static void initialize_pools()
 		{
 		worker_pool = Executors.newFixedThreadPool(pool_size);
+		cron_pool = Executors.newFixedThreadPool(pool_size);
 		async_updater = Executors.newFixedThreadPool(2);
+		
 		sql_pool = new ComboPooledDataSource();
+		
 		try {
 			sql_pool.setMinPoolSize(3);
 			sql_pool.setMaxPoolSize(pool_size + 2);
@@ -442,16 +449,16 @@ public class Server extends Utils
 	static void open_proxy_gateway()
 		{
 		try {
-			proxy_gateway = new ServerSocket(proxy_port);
+			gateway = new ServerSocket(port);
 			
 			log("Proxy Gateway Online!");
-			
-			IterativeLoops.start();
+
+			CronDriver.start();
 			
 			while (listening)
 				{
 				try {
-					worker_pool.execute(new ServerWorker(proxy_gateway.accept()));
+					new ServerThread(gateway.accept()).start();
 					}
 				catch (SocketException e) 
 					{
@@ -465,7 +472,7 @@ public class Server extends Utils
 			}
 		catch (BindException b)
 			{
-			log("Port " + proxy_port + " is taken");
+			log("Port " + port + " is taken");
 			} 
 		catch (Exception e) 
 			{
@@ -473,7 +480,7 @@ public class Server extends Utils
 			}	
 		finally 
 			{
-			try {proxy_gateway.close();} 
+			try {gateway.close();} 
 			catch (IOException ignore) {}
 			}
 		}
@@ -501,7 +508,7 @@ public class Server extends Utils
 				Thread.sleep(second);
 				}
 			
-			proxy_gateway.close();
+			gateway.close();
 			}
 		catch (Exception e)
 			{

@@ -1,61 +1,122 @@
 package com.coinroster;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.Date;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import org.json.JSONObject;
 
+import java.util.Map.Entry;
+
 public class HttpResponse 
 	{
-	private Socket socket;
+	private OutputStream out;
 	
-	public String new_session_token = null;
+	private String version;
 
-	public HttpResponse(Socket _socket) throws IOException 
+	Map<String, String> cookie_map = new TreeMap<String, String>();
+
+	public HttpResponse(Socket socket, String version) 
 		{
-		socket = _socket;
+		try {
+			this.version = version;
+			this.out = socket.getOutputStream();
+			} 
+		catch (IOException ignore) {} // broken pipe - nothing to be done
 		}
 
-	public void send(JSONObject output) throws IOException
+	public void set_cookie(String name, String value)
 		{
-		String response_text = output.toString();
-		
-		OutputStream out = socket.getOutputStream();
-		
-		out.write(new String("HTTP/1.1 200 OK\r\n").getBytes());
-		out.flush();
-		
-		out.write(new String("Date: " + new Date().toString() + "\r\n").getBytes());
-		out.flush();
-		
-		out.write(new String("Accept-Ranges: bytes\r\n").getBytes());
-		out.flush();
+		cookie_map.put(name, value);
+		}
 
+	public void send(String response_data)
+		{
+		try {
+			send(response_data.length(), "text/html", new ByteArrayInputStream(response_data.getBytes(Utils.ENCODING)));
+			}
+		catch (IOException ignore) {} // broken pipe - nothing to be done
+		}
+
+	public void send(JSONObject response_JSON)
+		{
+		try {
+			String response_data = response_JSON.toString();
+			send(response_data.length(), "text/html", new ByteArrayInputStream(response_data.getBytes(Utils.ENCODING)));
+			}
+		catch (IOException ignore) {} // broken pipe - nothing to be done
+		}
+
+	public void send(File file, String mime_type) 
+		{
+		try {
+			send(file.length(), mime_type, new FileInputStream(file));
+			}
+		catch (IOException ignore) {} // broken pipe - nothing to be done
+		}
+	
+	private void send(Object response_length, String mime_type, InputStream stream) throws IOException
+		{
+		out.write(new String("HTTP/" + version + " 200 OK\r\n").getBytes());
+		out.flush();
+		
 		out.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
 		out.flush();
 		
-		out.write(new String("Content-Length: " + String.valueOf(response_text.length()) + "\r\n").getBytes());
+		out.write(new String("Content-Length: " + String.valueOf(response_length) + "\r\n").getBytes());
 		out.flush();
 		
-		out.write(new String("Content-Type: text/html\r\n").getBytes());
+		out.write(new String("Content-Type: " + mime_type + "\r\n").getBytes());
 		out.flush();
+
+		Set<Entry<String, String>> cookies = cookie_map.entrySet();
 		
-		if (new_session_token != null)
+		if (cookies.size() != 0)
 			{
-			out.write(new String("Set-Cookie: session_token=" + new_session_token + "; Expires=Fri, 31-Dec-9999 23:59:59 GMT; path=/; secure; httpOnly; \r\n").getBytes());
-			out.flush();
+			for (Map.Entry<String, String> entry : cookies) 
+				{
+				out.write(new String("Set-Cookie: " + entry.getKey() + "=" + entry.getValue() + "; Expires=Fri, 31-Dec-9999 23:59:59 GMT; path=/;\r\n").getBytes());
+				out.flush();
+				}
 			}
 		
 		out.write(new String("\r\n").getBytes());
 		out.flush();
 		
-		out.write(new String(response_text).getBytes());
-		out.flush();
+		byte[] buffer = new byte[1024];
+
+		for (int n; (n = stream.read(buffer, 0, buffer.length)) != -1;)
+			{
+			out.write(buffer, 0, n);
+			out.flush();
+			}
 		
+		stream.close();
 		out.close();
-		
-		socket.close();
 		}
+	
+	public void redirect(String target) 
+		{
+		try {
+			out.write(new String("HTTP/" + version + " 302 Found\r\n").getBytes());
+			out.flush();
+			
+			out.write(new String("Location: " + target + "\r\n").getBytes());
+			out.flush();
+			
+			out.write(new String("\r\n").getBytes());
+			out.flush();
+			
+			out.close();
+			}
+		catch (IOException ignore) {} // broken pipe - nothing to be done
+		}
+
 	}

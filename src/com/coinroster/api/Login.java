@@ -76,8 +76,8 @@ public class Login extends Utils
 				if (SHA1(password + user_id).equals(stored_password_hash)) 
 					{
 					String new_session_token = session.create_session(sql_connection, session, username, user_id, user_level);
-					
-					method.response.new_session_token = new_session_token;
+
+					method.response.set_cookie("session_token", new_session_token);
 					
 					output.put("status", "1");
 					}
