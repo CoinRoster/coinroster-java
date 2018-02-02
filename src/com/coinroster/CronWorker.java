@@ -2,6 +2,7 @@ package com.coinroster;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.FileReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -21,7 +22,7 @@ import java.util.concurrent.Callable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.coinroster.api.BasketballBot;
+import com.coinroster.bots.BasketballBot;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
 import com.coinroster.internal.CloseContestRegistration;
@@ -75,7 +76,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		if(Server.dev_server){
 			if((minute%20)==0){
 				//see if ANY basketball contests are in play (status=2)
-				CheckInPlayBasketballContests();
+				checkBasketballContests();
 				}
 			}
 
@@ -140,9 +141,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// template for working with SQL connection
+	// check to see if contests are in play, settle if necessary
 	
-	private void CheckInPlayBasketballContests() {
+	private void checkBasketballContests() {
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
@@ -180,7 +181,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// template for working with SQL connection
+	// create basketball contests reading from csv
 	
 	private void CreateBasketballContest() {
 		Connection sql_connection = null;
@@ -192,29 +193,48 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ball_bot.setup();
 			ball_bot.savePlayers();
 
-			// parameters for contest
-			String category = "FANTASYSPORTS";
-			String contest_type = "ROSTER";
-			Long deadline = ball_bot.getEarliestGame();
-            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
-            log("deadline for contest: " + date);
-			String progressive_code = "";
-			String title = "NBA Jackpot Contest | " + date.toString(); 
-			String desc = "description";
-            double rake = 5.0;
-            double cost_per_entry = 0.0001;
-            String settlement_type = "JACKPOT";
-            int salary_cap = 1000;
-            int min_users = 3;
-            int max_users = 0; // 0 = unlimited
-            int entries_per_user = 0;
-            int roster_size = 8;
-            String score_header = "Points";
-            String odds_source = "n/a";
-            double[] payouts = {0.6, 0.2, 0.15, 0.05};
-            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
-            BasketballBot.createContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts, playerIDs, deadline);
-		
+			String csvFileName = Server.java_out_path + "BasketballContests.csv";
+			String line = "";
+			String csvSplitBy = ";";
+			try (BufferedReader br = new BufferedReader(new FileReader(csvFileName))) {
+				//skip the header
+				br.readLine();
+				while ((line = br.readLine()) != null) {
+					String[] contest = line.split(csvSplitBy);
+					// parameters for contest
+					String category = "FANTASYSPORTS";
+					String contest_type = contest[0];
+		            String settlement_type = contest[1];
+					Long deadline = ball_bot.getEarliestGame();
+		            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
+		            log("deadline for contest: " + date);
+					String progressive_code = "";
+					String title = contest[2] + " | " + date.toString(); 
+					String desc = contest[3];
+		            double rake = Double.parseDouble(contest[4]);
+		            double cost_per_entry = Double.parseDouble(contest[5]);
+		            int salary_cap = Integer.parseInt(contest[6]);
+		            int min_users = Integer.parseInt(contest[7]);
+		            int max_users = Integer.parseInt(contest[8]);
+		            int entries_per_user = Integer.parseInt(contest[9]);
+		            int roster_size = Integer.parseInt(contest[10]);
+		            String score_header = contest[11];
+		            String odds_source = "n/a";
+		            String[] payouts_str = contest[12].split(",");
+		            double[] payouts = new double[payouts_str.length];
+		            for (int i = 0; i < payouts_str.length; i++) {
+		                payouts[i] = Double.parseDouble(payouts_str[i]);
+		            }
+		            
+		            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
+		            BasketballBot.createContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts, playerIDs, deadline);
+				
+				}
+
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+				
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {
@@ -230,7 +250,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	}	
 
 //------------------------------------------------------------------------------------
-
+	
 	// kick off stale sessions
 	
 	private void SessionExpiry()

@@ -1,4 +1,4 @@
-package com.coinroster.api;
+package com.coinroster.bots;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,6 +21,7 @@ import java.util.TreeMap;
 import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
+import com.coinroster.api.JsonReader;
 import com.coinroster.internal.Backup;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.UserMail;
