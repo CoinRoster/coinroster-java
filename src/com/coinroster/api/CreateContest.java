@@ -33,7 +33,6 @@ public class CreateContest extends Utils
 //------------------------------------------------------------------------------------
 		
 			// get common fields:
-			
 			String category = input.getString("category");
 			String sub_category = input.getString("sub_category");
 			String contest_type = input.getString("contest_type");
@@ -113,6 +112,7 @@ public class CreateContest extends Utils
 	            int roster_size = input.getInt("roster_size");
 	            String score_header = input.getString("score_header");
 	            JSONArray pay_table = input.getJSONArray("pay_table");
+
 	            JSONArray pay_table_final = new JSONArray();
 	            
 	            if (min_users < 2)
@@ -145,7 +145,6 @@ public class CreateContest extends Utils
 					}
 	            
 	            // validate settlement instructions
-	
 	            switch (settlement_type)
 	            	{
 	            	case "HEADS-UP":
@@ -163,7 +162,6 @@ public class CreateContest extends Utils
 	            		
 	            		try {
 	            			int number_of_lines = pay_table.length();
-	            			
 	            			if (number_of_lines < 3)
 	            				{
 	            				output.put("error", "Pay table must have at least 3 ranks");
@@ -176,7 +174,6 @@ public class CreateContest extends Utils
 	            			for (int i=0; i<pay_table.length(); i++)
 	            				{
 	            				JSONObject line = pay_table.getJSONObject(i);
-	            				
 	            				int rank = line.getInt("rank");
 	            				if (rank - last_rank != 1)
 	            					{
@@ -217,6 +214,7 @@ public class CreateContest extends Utils
 	            			}
 	            		catch (Exception e)
 	            			{
+	            			
 	            			output.put("error", "Invalid pay table");
 	                		break method;
 	            			}
@@ -231,6 +229,8 @@ public class CreateContest extends Utils
 
 	            // validate player table
 	            
+	            
+	            System.out.println("MADE IT TO PLAYER TABLE");
 	            try {
 		            for (int i=0; i<option_table.length(); i++)
 						{
@@ -304,13 +304,17 @@ public class CreateContest extends Utils
 				create_contest.setInt(12, max_users);
 				create_contest.setInt(13, entries_per_user);
 				create_contest.setString(14, pay_table_final.toString());
-				log(pay_table_final.toString());
 				create_contest.setDouble(15, salary_cap);
 				create_contest.setString(16, option_table.toString());
-				log(option_table.toString());
 
 				create_contest.setLong(17, System.currentTimeMillis());
-				create_contest.setString(18, session.user_id());
+				String madeBy = "";
+				if(session == null)
+					madeBy = "BasketballBot";
+				else
+					madeBy = session.user_id();
+				
+				create_contest.setString(18, madeBy);
 				create_contest.setInt(19, roster_size);
 				create_contest.setString(20, odds_source);
 				log(odds_source);
@@ -368,7 +372,12 @@ public class CreateContest extends Utils
 				create_contest.setString(10, settlement_type);
 				create_contest.setString(11, option_table.toString());
 				create_contest.setLong(12, System.currentTimeMillis());
-				create_contest.setString(13, session.user_id());
+				String madeBy = "";
+				if(session == null)
+					madeBy = "BasketballBot";
+				else
+					madeBy = session.user_id();
+				create_contest.setString(13, madeBy);
 				create_contest.executeUpdate();
             	}
 
@@ -379,5 +388,6 @@ public class CreateContest extends Utils
 //------------------------------------------------------------------------------------
 
 			} method.response.send(output);
+			
 		}
 	}

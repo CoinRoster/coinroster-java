@@ -3,6 +3,7 @@ package com.coinroster;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.FileReader;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -21,7 +22,7 @@ import java.util.concurrent.Callable;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+import com.coinroster.api.CreateContest;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
@@ -92,8 +93,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 		//if (!Server.dev_server) UpdateCurrencies();
 		
 		if(Server.dev_server){
-			if(hour==6){
-				CreateBasketballContest();
+			if(hour==17){
+				log("reading file and creating contests");
+				createBasketballContests();
 			}
 		}
 	}
@@ -183,52 +185,114 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 	// create basketball contests reading from csv
 	
-	private void CreateBasketballContest() {
+	private void createBasketballContests() {
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
 			System.out.println("6AM player table load");	
 			BasketballBot ball_bot = new BasketballBot(sql_connection);
 			ball_bot.scrapeGameIDs();
-			ball_bot.setup();
-			ball_bot.savePlayers();
+//			ball_bot.setup();
+//			ball_bot.savePlayers();
 
-			String csvFileName = Server.java_out_path + "BasketballContests.csv";
+			String csvFileName = Server.java_path + "BasketballContests.csv";
 			String line = "";
 			String csvSplitBy = ";";
+			
 			try (BufferedReader br = new BufferedReader(new FileReader(csvFileName))) {
 				//skip the header
 				br.readLine();
 				while ((line = br.readLine()) != null) {
+					JSONObject fields = new JSONObject();
+					
 					String[] contest = line.split(csvSplitBy);
 					// parameters for contest
-					String category = "FANTASYSPORTS";
-					String contest_type = contest[0];
-		            String settlement_type = contest[1];
+					String category = "FANTASYSPORTS";		
+					String contest_type = "ROSTER";
+		            String settlement_type = contest[0];
 					Long deadline = ball_bot.getEarliestGame();
 		            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
-		            log("deadline for contest: " + date);
 					String progressive_code = "";
-					String title = contest[2] + " | " + date.toString(); 
-					String desc = contest[3];
-		            double rake = Double.parseDouble(contest[4]);
-		            double cost_per_entry = Double.parseDouble(contest[5]);
-		            int salary_cap = Integer.parseInt(contest[6]);
-		            int min_users = Integer.parseInt(contest[7]);
-		            int max_users = Integer.parseInt(contest[8]);
-		            int entries_per_user = Integer.parseInt(contest[9]);
-		            int roster_size = Integer.parseInt(contest[10]);
-		            String score_header = contest[11];
+					String title = contest[1] + " | " + date.toString(); 
+					String desc = contest[2];
+		            double rake = Double.parseDouble(contest[3]);
+		            double cost_per_entry = Double.parseDouble(contest[4]);
+		            int salary_cap = Integer.parseInt(contest[5]);
+		            int min_users = Integer.parseInt(contest[6]);
+		            int max_users = Integer.parseInt(contest[7]);
+		            int entries_per_user = Integer.parseInt(contest[8]);
+		            int roster_size = Integer.parseInt(contest[9]);
+		            String score_header = contest[10];
 		            String odds_source = "n/a";
-		            String[] payouts_str = contest[12].split(",");
-		            double[] payouts = new double[payouts_str.length];
-		            for (int i = 0; i < payouts_str.length; i++) {
-		                payouts[i] = Double.parseDouble(payouts_str[i]);
+		            if(settlement_type == "HEADS-UP"){
+		            	fields.put("pay_table", "[]");
 		            }
+		            else{
+			            String[] payouts_str = contest[11].split(",");
+			            double[] payouts = new double[payouts_str.length];
+			            for (int i = 0; i < payouts_str.length; i++) {
+			                payouts[i] = Double.parseDouble(payouts_str[i]);
+			            }
+			            JSONArray pay_table = new JSONArray();
+						for(int i=0; i < payouts.length; i++){
+							JSONObject entry = new JSONObject();
+							entry.put("payout", payouts[i]);
+							entry.put("rank", i+1);
+							pay_table.put(entry);
+						}
+						
+						fields.put("pay_table", pay_table);
+		            }
+		       
+		            fields.put("category", category);
+					fields.put("sub_category", "BASKETBALL");
+					fields.put("contest_type", contest_type);
+					fields.put("progressive", progressive_code);
+		            fields.put("settlement_type", settlement_type);
+		            fields.put("title", title);
+		            fields.put("description", desc);
+		            fields.put("rake", rake);
+		            fields.put("cost_per_entry", cost_per_entry);
+		            fields.put("registration_deadline", deadline);
+		            fields.put("odds_source", odds_source);
 		            
 		            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
-		            BasketballBot.createContest(category, contest_type, progressive_code, title, desc, rake, cost_per_entry, settlement_type, salary_cap, min_users, max_users, entries_per_user, roster_size, odds_source, score_header, payouts, playerIDs, deadline);
-				
+		            JSONArray option_table = new JSONArray();
+					while(playerIDs.next()){
+						PreparedStatement get_player = sql_connection.prepareStatement("select name, team_abr, salary from player where id = ?");
+						get_player.setInt(1, playerIDs.getInt(1));
+						ResultSet player_data = get_player.executeQuery();
+						if(player_data.next()){
+							JSONObject player = new JSONObject();
+							player.put("name", player_data.getString(1) + " " + player_data.getString(2));
+							player.put("price", player_data.getDouble(3));
+							player.put("count", 0);
+							player.put("id", playerIDs.getInt(1));
+							option_table.put(player);
+						}
+					}
+					
+					fields.put("option_table", option_table);
+					fields.put("salary_cap", salary_cap);
+					fields.put("min_users", min_users);		            
+					fields.put("max_users", max_users);		            
+					fields.put("entries_per_user", entries_per_user);
+					fields.put("roster_size", roster_size);	
+					fields.put("score_header", score_header);		            
+					
+					MethodInstance method = new MethodInstance();
+					JSONObject output = new JSONObject("{\"status\":\"0\"}");
+					method.input = fields;
+					method.output = output;
+					method.session = null;
+					method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+						c.newInstance(method);
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
 				}
 
 	        } catch (Exception e) {
