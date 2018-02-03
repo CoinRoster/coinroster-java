@@ -111,8 +111,9 @@ public class CreateContest extends Utils
 	            int entries_per_user = input.getInt("entries_per_user");
 	            int roster_size = input.getInt("roster_size");
 	            String score_header = input.getString("score_header");
+	            System.out.println(score_header);
 	            JSONArray pay_table = input.getJSONArray("pay_table");
-
+//	            System.out.println(pay_table.toString());
 	            JSONArray pay_table_final = new JSONArray();
 	            
 	            if (min_users < 2)
@@ -148,6 +149,8 @@ public class CreateContest extends Utils
 	            switch (settlement_type)
 	            	{
 	            	case "HEADS-UP":
+	            		
+	            		System.out.println("inside headsup in createcontest");
 	            		
 	            		if (min_users != 2 || max_users != 2)
 	            			{

@@ -12,5 +12,5 @@ min_users: For DOUBLE-UP or JACKPOT, must be >= 2, but for HEADS-UP must be 2
 max_users: For DOUBLE-UP or JACKPOT, must be > min_users or 0 if unlimited, but for HEADS-UP must be 2
 entries_per: # entries allowed for user: 0 = unlimited. For HEADS_UP, set entries_per = 1
 roster_size: number of players allowed in roster (somewhere between 5-10 usually)
-score_header: for now enter: Points
-payouts: 3+ payouts, seperated by commas (no spaces). MUST ADD UP TO 100. For example: 60,30,10. If HEADS_UP, enter []
+score_header: for now enter Points
+payouts: 3+ payouts, seperated by commas (no spaces). MUST ADD UP TO 100. For example: 60,30,10. If HEADS-UP or DOUBLE-UP leave blank

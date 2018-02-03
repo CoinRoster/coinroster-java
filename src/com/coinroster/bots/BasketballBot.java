@@ -82,14 +82,13 @@ public class BasketballBot extends Utils {
 	            e.printStackTrace();
 	        }
 
-			for(int i=0; i < events.length(); i++){
-				
+			for(int i=0; i < events.length(); i++){	
 				JSONArray links = events.getJSONObject(i).getJSONArray("links");
 				String href = links.getJSONObject(0).getString("href");
 				String gameID = href.split("=")[1].replace("&sourceLang", "");
 				gameIDs.add(gameID.toString());
-				this.game_IDs = gameIDs;
 			}
+			this.game_IDs = gameIDs;
 		}
 	}
 	
@@ -1591,7 +1590,6 @@ public class BasketballBot extends Utils {
 						int ESPN_id = Integer.parseInt(cols.get(1).select("a").attr("href").split("/")[7]);
 						// create a player object, save it to the hashmap
 						Player p = new Player(ESPN_id, name, team_name);
-						System.out.println(p.getName() + " - " + p.getESPN_ID());
 						p.scrape_info();
 						p.setPPG();
 						p.gameID = this.game_IDs.get(i);

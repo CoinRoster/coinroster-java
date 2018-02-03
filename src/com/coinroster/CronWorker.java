@@ -19,10 +19,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-import com.coinroster.api.CreateContest;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
@@ -73,16 +71,13 @@ public class CronWorker extends Utils implements Callable<Integer>
 	{ 
 		SessionExpiry();
 		if (!Server.dev_server) UpdateBTCUSD();
-		
-		if(Server.dev_server){
-			if((minute%20)==0){
-				//see if ANY basketball contests are in play (status=2)
-				checkBasketballContests();
-				}
-			}
-
+	
+		if((minute%20)==0){
+			//see if ANY basketball contests are in play (status=2)
+			checkBasketballContests();
 		}
-			 
+	}
+
 	
 	@SuppressWarnings("unused")
 	private void hour() throws Exception
@@ -91,13 +86,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 		new ExpirePromos();
 //		new CheckPendingWithdrawals();
 		//if (!Server.dev_server) UpdateCurrencies();
-		
-		if(Server.dev_server){
-			if(hour==17){
-				log("reading file and creating contests");
-				createBasketballContests();
-			}
+	
+		if(hour==6){
+			createBasketballContests();
 		}
+		
 	}
 	
 	@SuppressWarnings("unused")
@@ -192,24 +185,26 @@ public class CronWorker extends Utils implements Callable<Integer>
 			System.out.println("6AM player table load");	
 			BasketballBot ball_bot = new BasketballBot(sql_connection);
 			ball_bot.scrapeGameIDs();
-//			ball_bot.setup();
-//			ball_bot.savePlayers();
+			ball_bot.setup();
+			ball_bot.savePlayers();
 
-			String csvFileName = Server.java_path + "BasketballContests.csv";
+			String fileName = Server.java_path + "BasketballContests.txt";
 			String line = "";
-			String csvSplitBy = ";";
+			String sep = ";";
 			
-			try (BufferedReader br = new BufferedReader(new FileReader(csvFileName))) {
+			try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
 				//skip the header
 				br.readLine();
 				while ((line = br.readLine()) != null) {
 					JSONObject fields = new JSONObject();
 					
-					String[] contest = line.split(csvSplitBy);
+					String[] contest = line.split(sep);
+					
 					// parameters for contest
 					String category = "FANTASYSPORTS";		
 					String contest_type = "ROSTER";
 		            String settlement_type = contest[0];
+		            System.out.println(settlement_type);
 					Long deadline = ball_bot.getEarliestGame();
 		            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
 					String progressive_code = "";
@@ -224,8 +219,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 		            int roster_size = Integer.parseInt(contest[9]);
 		            String score_header = contest[10];
 		            String odds_source = "n/a";
-		            if(settlement_type == "HEADS-UP"){
-		            	fields.put("pay_table", "[]");
+		            if(!settlement_type.equals("JACKPOT")){
+		            	JSONArray empty = new JSONArray();
+		            	fields.put("pay_table", empty);
 		            }
 		            else{
 			            String[] payouts_str = contest[11].split(",");
