@@ -151,12 +151,43 @@ public class CronWorker extends Utils implements Callable<Integer>
 				boolean games_ended;
 				games_ended = ball_bot.scrape(gameIDs);
 				for(Integer contest_id : contest_ids ){
-					ball_bot.updateScores(contest_id, sql_connection);
+					
+					JSONObject fields = ball_bot.updateScores(contest_id);
+					
+					MethodInstance method = new MethodInstance();
+					JSONObject output = new JSONObject("{\"status\":\"0\"}");
+					method.input = fields;
+					method.output = output;
+					method.session = null;
+					method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
+						c.newInstance(method);
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
+					
 				}
 				if(games_ended){
 					log("games have ended");
 					for(Integer contest_id : contest_ids){
-						ball_bot.settleContest(contest_id, sql_connection);
+						
+						JSONObject fields = ball_bot.updateScores(contest_id);
+						
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = fields;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
 					}
 				}
 			}

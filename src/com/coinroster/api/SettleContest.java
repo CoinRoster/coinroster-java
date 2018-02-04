@@ -47,8 +47,11 @@ public class SettleContest extends Utils
 			boolean do_update = true;
 			
 			int contest_id = input.getInt("contest_id");
-			
-			String contest_admin = session.user_id();
+			String contest_admin;
+			if(session==null)
+				contest_admin = "BasketballBot";
+			else
+				contest_admin = session.user_id();
 			
 			new Backup();
 

@@ -39,7 +39,7 @@ public class UpdateScores extends Utils
 			int contest_id = input.getInt("contest_id");
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables contest write");
+			statement.execute("lock tables contest write, player read");
 
 			try {
 				lock : {

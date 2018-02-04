@@ -111,9 +111,7 @@ public class CreateContest extends Utils
 	            int entries_per_user = input.getInt("entries_per_user");
 	            int roster_size = input.getInt("roster_size");
 	            String score_header = input.getString("score_header");
-	            System.out.println(score_header);
 	            JSONArray pay_table = input.getJSONArray("pay_table");
-//	            System.out.println(pay_table.toString());
 	            JSONArray pay_table_final = new JSONArray();
 	            
 	            if (min_users < 2)
@@ -231,9 +229,6 @@ public class CreateContest extends Utils
 	            	}
 
 	            // validate player table
-	            
-	            
-	            System.out.println("MADE IT TO PLAYER TABLE");
 	            try {
 		            for (int i=0; i<option_table.length(); i++)
 						{
