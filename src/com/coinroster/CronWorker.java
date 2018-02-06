@@ -87,7 +87,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 //		new CheckPendingWithdrawals();
 		//if (!Server.dev_server) UpdateCurrencies();
 	
-		if(hour==6){
+		if(hour==7){
 			createBasketballContests();
 		}
 		
@@ -96,7 +96,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	@SuppressWarnings("unused")
 	private void day() throws Exception
 	{
-		GenerateAddresses();
+		//GenerateAddresses();
 		PurgePasswordResetTable();
 		TriggerBuildLobby();
 		

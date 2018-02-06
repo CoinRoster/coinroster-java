@@ -149,6 +149,7 @@ public class HttpRequest
 				{
 				int value = reader.read();
 				data.append((char)value);
+				
 				}
 
 			payload = data.toString();

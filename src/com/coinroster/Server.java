@@ -448,6 +448,7 @@ public class Server extends Utils
 	
 	static void open_proxy_gateway()
 		{
+		log("open_proxy_gateway method is called");
 		try {
 			gateway = new ServerSocket(port);
 			
