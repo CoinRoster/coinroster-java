@@ -55,7 +55,7 @@ public class BasketballBot extends Utils {
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
 		if(events.length() == 0){
-			System.out.println("No games");
+			log("No games");
 			this.game_IDs = null;
 		}
 		else{
@@ -63,7 +63,6 @@ public class BasketballBot extends Utils {
 	        SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
 	        try {
 	            Date date = formatter1.parse(earliest_date.replaceAll("Z$", "+0000"));
-	            System.out.println(date);
 	            long milli = date.getTime();
 	            this.earliest_game = milli;
 	        } 
@@ -119,8 +118,7 @@ public class BasketballBot extends Utils {
 		try {
 			PreparedStatement get_games = sql_connection.prepareStatement("select distinct gameID from player where sport_type=?");
 			get_games.setString(1, this.sport);
-			result_set = get_games.executeQuery();
-			
+			result_set = get_games.executeQuery();		
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -136,7 +134,7 @@ public class BasketballBot extends Utils {
 			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
 			delete_old_rows.setString(1, this.sport);
 			delete_old_rows.executeUpdate();
-			System.out.println("deleted " + this.sport + " players from old contests");
+			log("deleted " + this.sport + " players from old contests");
 
 			for(Player player : this.getPlayerHashMap().values()){
 				
@@ -152,7 +150,7 @@ public class BasketballBot extends Utils {
 				save_player.executeUpdate();	
 			}
 			
-			System.out.println("added " + sport + " players to DB");
+			log("added " + sport + " players to DB");
 		}
 		catch (Exception e) {
 			Server.exception(e);
@@ -267,7 +265,7 @@ public class BasketballBot extends Utils {
 			
             //check to see if contest is finished - if all games are deemed final
 			String time_left = page.getElementsByClass("status-detail").first().text();
-			if(time_left.equals("Final")){
+			if(time_left.contains("Final") || time_left.contains("Postponed")){
 				games_ended += 1;
 			}
 			if(games_ended == gameIDs.size()){
@@ -412,7 +410,14 @@ public class BasketballBot extends Utils {
 			}
 			String[] stats = {"STAT_TYPE","GP","MPG","FGM-FGA","FG%","3PM-3PA","3P%","FTM-FTA","FT%","RPG","APG","BLKPG","STLPG","PFPG","TOPG","PPG"};
 			Elements tables = page.getElementsByClass("tablehead");
-			Element stats_table = tables.get(1);
+			Element stats_table;
+			try{
+				stats_table = tables.get(1);
+			}
+			catch (Exception e){
+				log("No available data for " + this.getName() + " - " + this.getESPN_ID() + " so he will not be available in contests");
+				return;
+			}
 			Elements stats_rows = stats_table.getElementsByTag("tr");
 			try{
 				for(Element row : stats_rows){

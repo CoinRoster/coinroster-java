@@ -375,7 +375,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 //------------------------------------------------------------------------------------
 
 	// kick off stale sessions
-	
+	@SuppressWarnings("unused")
 	private void GenerateAddresses()
 		{
 		Connection sql_connection = null;
