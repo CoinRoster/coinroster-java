@@ -308,7 +308,7 @@ public class CreateContest extends Utils
 				create_contest.setLong(17, System.currentTimeMillis());
 				String madeBy = "";
 				if(session == null)
-					madeBy = "BasketballBot";
+					madeBy = "BasketballBot";	
 				else
 					madeBy = session.user_id();
 				
@@ -357,7 +357,7 @@ public class CreateContest extends Utils
             	
             	String settlement_type = "PARI-MUTUEL";
             	
-            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -371,11 +371,15 @@ public class CreateContest extends Utils
 				create_contest.setString(11, option_table.toString());
 				create_contest.setLong(12, System.currentTimeMillis());
 				String madeBy = "";
-				if(session == null)
+				int auto = 0;
+				if(session == null){
 					madeBy = "BasketballBot";
+					auto=1;
+				}
 				else
 					madeBy = session.user_id();
 				create_contest.setString(13, madeBy);
+				create_contest.setInt(14, auto);
 				create_contest.executeUpdate();
             	}
 

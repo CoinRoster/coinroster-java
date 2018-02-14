@@ -320,6 +320,22 @@ public class DB
 		}
 		return contest_ids;
 	}
+	
+	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
+	public ArrayList<Integer> get_pari_mutuel_id(String sub_category, String contest_type) throws Exception
+	{
+		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
+		get_live_contests.setString(1, sub_category);
+		get_live_contests.setString(2, contest_type);
+		ResultSet result_set = get_live_contests.executeQuery();
+		
+		while (result_set.next()){
+			contest_ids.add(result_set.getInt(1));
+		}
+		return contest_ids;
+	}
+	
 
 //------------------------------------------------------------------------------------
 

@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.api.JsonReader;
@@ -84,6 +86,128 @@ public class BasketballBot extends Utils {
 		return players_list;
 	}
 	
+	public JSONObject createPariMutuel(Long deadline, String date) throws JSONException{
+		log("inside createPariMutuel");
+		JSONObject fields = new JSONObject();
+		fields.put("category", "FANTASYSPORTS");
+		fields.put("sub_category", "BASKETBALL");
+		fields.put("contest_type", "PARI-MUTUEL");
+		fields.put("progressive", "");
+		String title = "Most Points Scored in NBA Tonight | " + date;
+		fields.put("title", title);
+		log(title);
+		fields.put("description", "Place your bet on who you will think will score the most points today!");
+		fields.put("rake", 5);
+		fields.put("cost_per_entry", 0.00000001);
+		fields.put("registration_deadline", deadline);
+		JSONArray option_table = new JSONArray(); 
+		ResultSet top_players = null;
+		
+		JSONObject none_above = new JSONObject();
+		none_above.put("description", "Any Other Player");
+		none_above.put("id", 1);
+		option_table.put(none_above);
+		
+		JSONObject tie = new JSONObject();
+		tie.put("description", "Tie");
+		tie.put("id", 2);
+		option_table.put(tie);
+	
+		int index = 3;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit 7");
+			get_players.setString(1, "BASKETBALL");
+			top_players = get_players.executeQuery();
+			while(top_players.next()){
+				log(top_players.toString());
+				JSONObject player = new JSONObject();
+				player.put("description", top_players.getString(2) + " " + top_players.getString(3));
+				player.put("id", index);
+				player.put("player_id", top_players.getInt(1));
+				option_table.put(player);
+				index += 1;
+			}
+			
+			log(option_table.toString());
+			fields.put("option_table", option_table);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return fields;
+	}
+	
+	public JSONObject settlePariMutuel(int contest_id) throws Exception{
+		log("inside settlePariMutuel method");
+		JSONObject fields = new JSONObject();
+		fields.put("contest_id", contest_id);
+		DB db = new DB(sql_connection);
+		JSONObject contest = db.select_contest(contest_id);
+		JSONArray option_table = new JSONArray(contest.getString("option_table"));
+		int winning_outcome = 1;
+		ResultSet max_pts = null;
+		try {
+			PreparedStatement get_pts = sql_connection.prepareStatement("select max(points) from player where sport_type=?");
+			get_pts.setString(1, "BASKETBALL");
+			max_pts = get_pts.executeQuery();
+			double points = 0;
+			while(max_pts.next())
+				points = max_pts.getDouble(1);
+			log("Max points tonight was " + points);
+			ResultSet players = null;
+			try {
+				PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=? and points=?");
+				get_players.setString(1, "BASKETBALL");
+				get_players.setDouble(2, points);
+				players = get_players.executeQuery();
+				
+				ArrayList<Integer> IDs = new ArrayList<Integer>();
+				while(players.next()){
+					IDs.add(players.getInt(1));
+				}
+				
+				if(IDs.size() > 1){
+					//tie is correct answer;
+					winning_outcome = 2;
+					log("winning outcome=2 because of tie");
+					fields.put("winning_outcome", winning_outcome);
+					return fields;
+				}
+				else{
+					for(Integer player_table_ID : IDs){
+						
+						for (int i=0; i<option_table.length(); i++){
+							JSONObject option = option_table.getJSONObject(i);
+							int option_id = option.getInt("id");
+							try{
+								int player_id = option.getInt("player_id");
+								if(player_id == player_table_ID)
+									winning_outcome = option_id;
+									fields.put("winning_outcome", winning_outcome);
+									log("winning outcome is " + option.getString("description"));
+									return fields;		
+							}	
+							catch(Exception e){
+								continue;
+							}			
+						}
+					}
+				}
+				fields.put("winning_outcome", winning_outcome);
+				log("winning outcome is any other player");
+			}
+				
+			catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return fields;
+	}
 	public static ResultSet getAllPlayerIDs(){
 		ResultSet result_set = null;
 		try {

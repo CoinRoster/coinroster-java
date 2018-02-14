@@ -143,14 +143,16 @@ public class CronWorker extends Utils implements Callable<Integer>
 		try {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
-			ArrayList<Integer> contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
-			if(!contest_ids.isEmpty()){
+			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
+			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("BASKETBALL", "PARI-MUTUEL");
+
+			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
 				BasketballBot ball_bot = new BasketballBot(sql_connection);
 				log("Contest is in play and minute is multiple of 20");
 				ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
 				boolean games_ended;
 				games_ended = ball_bot.scrape(gameIDs);
-				for(Integer contest_id : contest_ids ){
+				for(Integer contest_id : roster_contest_ids ){
 					
 					JSONObject fields = ball_bot.updateScores(contest_id);
 					
@@ -171,7 +173,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 				}
 				if(games_ended){
 					log("games have ended");
-					for(Integer contest_id : contest_ids){
+					for(Integer contest_id : roster_contest_ids){
 						
 						JSONObject fields = ball_bot.updateScores(contest_id);
 						
@@ -189,6 +191,25 @@ public class CronWorker extends Utils implements Callable<Integer>
 							e.printStackTrace();
 						}
 					}
+					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
+					for(Integer id : pari_contest_ids){
+						JSONObject pari_fields = ball_bot.settlePariMutuel(id);
+						MethodInstance pari_method = new MethodInstance();
+						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+						pari_method.input = pari_fields;
+						pari_method.output = pari_output;
+						pari_method.session = null;
+						pari_method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(pari_method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+						
+					}
+
 				}
 			}
 		} catch (Exception e) {
@@ -210,7 +231,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 	// create basketball contests reading from csv
 	
 	private void createBasketballContests() {
+		
 		Connection sql_connection = null;
+		
 		try {
 			sql_connection = Server.sql_connection();
 			System.out.println("6AM player table load");	
@@ -218,7 +241,28 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ball_bot.scrapeGameIDs();
 			ball_bot.setup();
 			ball_bot.savePlayers();
+			
+			Long deadline = ball_bot.getEarliestGame();
+            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
 
+            //create Pari-Mutuel contest for most points
+            JSONObject pari_mutuel_data = ball_bot.createPariMutuel(deadline, date.toString());
+            MethodInstance pari_method = new MethodInstance();
+			JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+			pari_method.input = pari_mutuel_data;
+			pari_method.output = pari_output;
+			pari_method.session = null;
+			pari_method.sql_connection = sql_connection;
+			try{
+				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+				c.newInstance(pari_method);
+			}
+			catch(Exception e){
+				log(pari_method.output.toString());
+				e.printStackTrace();
+			}
+			
+			// read text file to create roster contests
 			String fileName = Server.java_path + "BasketballContests.txt";
 			String line = "";
 			String sep = ";";
@@ -234,10 +278,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 					// parameters for contest
 					String category = "FANTASYSPORTS";		
 					String contest_type = "ROSTER";
-		            String settlement_type = contest[0];
-		            System.out.println(settlement_type);
-					Long deadline = ball_bot.getEarliestGame();
-		            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
+		            String settlement_type = contest[0];					
 					String progressive_code = "";
 					String title = contest[1] + " | " + date.toString(); 
 					String desc = contest[2];
