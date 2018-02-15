@@ -160,55 +160,55 @@ public class HttpRequest
 		return 200;
 		}
 
-	protected String first_line() 
+	public String first_line() 
 		{
 		return first_line;
 		}
 
-	protected String method() 
+	public String method() 
 		{
 		return method;
 		}
 
-	protected String full_url() 
+	public String full_url() 
 		{
 		return full_url;
 		}
 	
-	protected String target_url() 
+	public String target_url() 
 		{
 		return url;
 		}
 
-	protected String target_object() 
+	public String target_object() 
 		{
 		return url.substring(url.lastIndexOf("/") + 1, url.length());
 		}
 
-	protected String version() 
+	public String version() 
 		{
 		return version[0] + "." + version[1];
 		}
 	
-	protected String query_field(String name) 
+	public String query_field(String name) 
 		{
 		if (query_fields != null) return query_fields.get(name);
 		else return null;
 		}
 
-	protected String header(String name) 
+	public String header(String name) 
 		{
 		if (headers != null) return headers.get(name.toLowerCase());
 		else return null;
 		}
 
-	protected String cookie(String name) 
+	public String cookie(String name) 
 		{
 		if (cookies != null) return cookies.get(name.toLowerCase());
 		else return null;
 		}
 
-	protected String payload() 
+	public String payload() 
 		{
 		return payload;
 		}

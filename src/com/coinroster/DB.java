@@ -102,6 +102,7 @@ public class DB
 			String odds_format = result_set.getString(30);
 			String cgs_address = result_set.getString(31);
 			double cgs_last_balance = result_set.getDouble(32);
+			String referrer_key = result_set.getString(33);
 			
 			if (ext_address == null) ext_address = "";
 			if (cgs_address == null) cgs_address = "";
@@ -140,6 +141,7 @@ public class DB
 			user.put("odds_format", odds_format);
 			user.put("cgs_address", cgs_address);
 			user.put("cgs_last_balance", cgs_last_balance);
+			user.put("referrer_key", referrer_key);
 			}
 
 		return user;
@@ -586,6 +588,36 @@ public class DB
 			}
 
 		return referral;
+		}
+
+//------------------------------------------------------------------------------------
+	
+	// GET REFERRER'S ID FROM KEY
+
+	public String get_referrer_id_for_key(String referrer_key) throws Exception
+		{
+		String id = null;
+		
+		PreparedStatement select_id = sql_connection.prepareStatement("select id from user where referrer_key = ?");
+		select_id.setString(1, referrer_key);
+		ResultSet result_set = select_id.executeQuery();
+
+		if (result_set.next()) id = result_set.getString(1);
+		
+		return id;
+		}
+
+//------------------------------------------------------------------------------------
+	
+	// GET UNUSED REFERRER KEY
+
+	public String get_new_referrer_key() throws Exception
+		{
+		String referrer_key = Server.generate_key("referrer_key").substring(0, 8);
+		
+		if (get_referrer_id_for_key(referrer_key) != null) referrer_key = get_new_referrer_key();
+
+		return referrer_key;
 		}
 	
 //------------------------------------------------------------------------------------

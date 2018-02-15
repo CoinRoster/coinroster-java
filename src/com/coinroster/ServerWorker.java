@@ -39,6 +39,11 @@ public class ServerWorker extends Utils implements Callable<Integer>
 						new SSI(request, response);
 						break;
 						}
+					case "referral":
+						{
+						new ReferralRedirect(request, response);
+						break;
+						}
 					case "static":
 						{
 						new StaticAsset(request, response);

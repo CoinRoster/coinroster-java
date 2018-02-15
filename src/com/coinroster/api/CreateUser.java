@@ -53,7 +53,9 @@ public class CreateUser extends Utils
 			
 			new_user_id = Server.generate_key(username),
 			email_ver_key = Server.generate_key(username),
-			referrer_id = null,
+			referrer_id = null, // id of referrer (if applicable)
+			referring_user_referrer_key = method.request.cookie("referrer_key"),
+			new_user_referrer_key = db.get_new_referrer_key(), // user's referrer key (their affiliate link)
 			email_address = null;
 			
 			int 
@@ -116,6 +118,14 @@ public class CreateUser extends Utils
 					{
 					output.put("error", "Email is in use");
 					break method;
+					}
+				
+				if (referring_user_referrer_key != null)
+					{
+					referrer_id = db.get_referrer_id_for_key(referring_user_referrer_key);
+					referrer = db.select_user("id", referrer_id);
+					if (referrer == null) referrer_id = null;
+					else referral_program = referrer.getDouble("referral_offer");
 					}
 				}
 			
@@ -208,12 +218,50 @@ public class CreateUser extends Utils
 					
 					PreparedStatement create_user;
 	
-					if (referrer_id == null) create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple, cgs_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					if (referrer_id == null) create_user = sql_connection.prepareStatement("insert into user("
+						
+						+ "id,"
+						+ "username,"
+						+ "password,"
+						+ "level,"
+						+ "created,"
+						+ "email_address,"
+						+ "email_ver_flag,"
+						+ "email_ver_key,"
+						+ "referral_offer,"
+						+ "promo_code,"
+						+ "deposit_bonus_cap,"
+						+ "deposit_bonus_rollover_multiple,"
+						+ "cgs_address,"
+						+ "referrer_key"
+						
+						+ ") values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+					
 					else // we have referrer_id & referral_program from a referral link or promo code
 						{		
-						create_user = sql_connection.prepareStatement("insert into user(id, username, password, level, created, email_address, email_ver_flag, email_ver_key, referral_offer, promo_code, deposit_bonus_cap, deposit_bonus_rollover_multiple, cgs_address, referral_program, referrer) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-						create_user.setDouble(14, referral_program);
-						create_user.setString(15, referrer_id);
+						create_user = sql_connection.prepareStatement("insert into user("
+								
+							+ "id,"
+							+ "username,"
+							+ "password,"
+							+ "level,"
+							+ "created,"
+							+ "email_address,"
+							+ "email_ver_flag,"
+							+ "email_ver_key,"
+							+ "referral_offer,"
+							+ "promo_code,"
+							+ "deposit_bonus_cap,"
+							+ "deposit_bonus_rollover_multiple,"
+							+ "cgs_address,"
+							+ "referrer_key,"
+							+ "referral_program,"
+							+ "referrer"
+							
+							+ ") values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+						
+						create_user.setDouble(15, referral_program);
+						create_user.setString(16, referrer_id);
 						}
 
 					double default_referral_offer = Double.parseDouble(Server.control.get("default_referral_offer"));
@@ -233,6 +281,7 @@ public class CreateUser extends Utils
 					create_user.setDouble(11, deposit_bonus_cap);
 					create_user.setInt(12, deposit_bonus_rollover_multiple);
 					create_user.setString(13, cgs_address);
+					create_user.setString(14, new_user_referrer_key);
 					
 					create_user.executeUpdate();
 					

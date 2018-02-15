@@ -98,6 +98,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		//GenerateAddresses();
 		PurgePasswordResetTable();
 		TriggerBuildLobby();
+		BackfillReferrerKeys();
 		
 		if (Server.dev_server)
 		{
@@ -468,6 +469,50 @@ public class CronWorker extends Utils implements Callable<Integer>
 			if (sql_connection != null)
 				{
 				try {sql_connection.close();} 
+				catch (SQLException ignore) {}
+				}
+			}
+		}	
+
+//------------------------------------------------------------------------------------
+
+	// backfill referrer keys - should only actually do something once
+	
+	private void BackfillReferrerKeys() 
+		{
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			
+			DB db = new DB(sql_connection);
+			
+			PreparedStatement select_id = sql_connection.prepareStatement("select id from user where referrer_key is null");
+			ResultSet result_set = select_id.executeQuery();
+
+			while (result_set.next()) 
+				{
+				String 
+				
+				user_id = result_set.getString(1),
+				referrer_key = db.get_new_referrer_key();
+				
+				PreparedStatement update_user = sql_connection.prepareStatement("update user set referrer_key = ? where id = ?");
+				update_user.setString(1, referrer_key);
+				update_user.setString(2, user_id);
+				update_user.executeUpdate();
+				}
+			} 
+		catch (Exception e) 
+			{
+			Server.exception(e);
+			} 
+		finally 
+			{
+			if (sql_connection != null) 
+				{
+				try {
+					sql_connection.close();
+					} 
 				catch (SQLException ignore) {}
 				}
 			}

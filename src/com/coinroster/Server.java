@@ -4,12 +4,6 @@ package com.coinroster;
 
 To-do:
 
-SQL - build indexes on IDs
-SQL - transactions
-Prevent login brute forcing with incrementing delay
-Add more verbose audit logs (user id, ip address, etc)
-backups
-
 */
 
 import java.net.ServerSocket;

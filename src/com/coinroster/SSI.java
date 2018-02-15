@@ -118,6 +118,7 @@ public class SSI extends Utils
 						session_properties.put("odds_format", user.getString("odds_format"));
 						session_properties.put("cgs_address", user.getString("cgs_address"));
 						session_properties.put("miner_fee", miner_fee);
+						session_properties.put("referral_link", Server.host + "/a/" + user.getString("referrer_key"));
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}

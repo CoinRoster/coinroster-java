@@ -37,18 +37,14 @@ public class HttpResponse
 		cookie_map.put(name, value);
 		}
 
+	public void send(JSONObject object)
+		{
+		send(object.toString());
+		}
+
 	public void send(String response_data)
 		{
 		try {
-			send(response_data.length(), "text/html", new ByteArrayInputStream(response_data.getBytes(Utils.ENCODING)));
-			}
-		catch (IOException ignore) {} // broken pipe - nothing to be done
-		}
-
-	public void send(JSONObject response_JSON)
-		{
-		try {
-			String response_data = response_JSON.toString();
 			send(response_data.length(), "text/html", new ByteArrayInputStream(response_data.getBytes(Utils.ENCODING)));
 			}
 		catch (IOException ignore) {} // broken pipe - nothing to be done
@@ -76,16 +72,7 @@ public class HttpResponse
 		out.write(new String("Content-Type: " + mime_type + "\r\n").getBytes());
 		out.flush();
 
-		Set<Entry<String, String>> cookies = cookie_map.entrySet();
-		
-		if (cookies.size() != 0)
-			{
-			for (Map.Entry<String, String> entry : cookies) 
-				{
-				out.write(new String("Set-Cookie: " + entry.getKey() + "=" + entry.getValue() + "; Expires=Fri, 31-Dec-9999 23:59:59 GMT; path=/;\r\n").getBytes());
-				out.flush();
-				}
-			}
+		write_cookies();
 		
 		out.write(new String("\r\n").getBytes());
 		out.flush();
@@ -110,6 +97,8 @@ public class HttpResponse
 			
 			out.write(new String("Location: " + target + "\r\n").getBytes());
 			out.flush();
+
+			write_cookies();
 			
 			out.write(new String("\r\n").getBytes());
 			out.flush();
@@ -117,6 +106,17 @@ public class HttpResponse
 			out.close();
 			}
 		catch (IOException ignore) {} // broken pipe - nothing to be done
+		}
+	
+	private void write_cookies() throws IOException
+		{
+		Set<Entry<String, String>> cookies = cookie_map.entrySet();
+		
+		for (Map.Entry<String, String> entry : cookies) 
+			{
+			out.write(new String("Set-Cookie: " + entry.getKey() + "=" + entry.getValue() + "; Expires=Fri, 31-Dec-9999 23:59:59 GMT; path=/;\r\n").getBytes());
+			out.flush();
+			}
 		}
 
 	}
