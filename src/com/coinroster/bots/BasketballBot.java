@@ -167,6 +167,7 @@ public class BasketballBot extends Utils {
 					IDs.add(players.getInt(1));
 				}
 				
+				log(IDs.toString());
 				if(IDs.size() > 1){
 					//tie is correct answer;
 					winning_outcome = 2;
@@ -176,17 +177,18 @@ public class BasketballBot extends Utils {
 				}
 				else{
 					for(Integer player_table_ID : IDs){
-						
+						log(player_table_ID);
 						for (int i=0; i<option_table.length(); i++){
 							JSONObject option = option_table.getJSONObject(i);
 							int option_id = option.getInt("id");
 							try{
 								int player_id = option.getInt("player_id");
-								if(player_id == player_table_ID)
+								if(player_id == player_table_ID){
 									winning_outcome = option_id;
 									fields.put("winning_outcome", winning_outcome);
 									log("winning outcome is " + option.getString("description"));
-									return fields;		
+									return fields;	
+								}
 							}	
 							catch(Exception e){
 								continue;

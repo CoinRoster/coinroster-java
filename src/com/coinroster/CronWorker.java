@@ -90,7 +90,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 		if(hour==7){
 			createBasketballContests();
 		}
-		
 	}
 	
 	@SuppressWarnings("unused")
@@ -113,12 +112,13 @@ public class CronWorker extends Utils implements Callable<Integer>
 //------------------------------------------------------------------------------------
 
 	// template for working with SQL connection
-	
 	@SuppressWarnings("unused")
-	private void Template() {
+	private void TestPari(int contest_id) {
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
+			BasketballBot bot = new BasketballBot(sql_connection);
+			bot.settlePariMutuel(contest_id);
 			// do whatever needs to be done
 		} catch (Exception e) {
 			Server.exception(e);
