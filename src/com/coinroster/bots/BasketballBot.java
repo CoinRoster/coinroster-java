@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
@@ -38,7 +37,6 @@ public class BasketballBot extends Utils {
 	private static Connection sql_connection = null;
 	
 	// constructor
-
 	public BasketballBot(Connection sql_connection) throws IOException, JSONException{
 		BasketballBot.sql_connection = sql_connection;
 	}
@@ -262,6 +260,9 @@ public class BasketballBot extends Utils {
 			delete_old_rows.executeUpdate();
 			log("deleted " + this.sport + " players from old contests");
 
+			if(this.getPlayerHashMap() == null)
+				return;
+			
 			for(Player player : this.getPlayerHashMap().values()){
 				
 				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
@@ -315,6 +316,11 @@ public class BasketballBot extends Utils {
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
 	public Map<Integer, Player> setup() throws IOException, JSONException, SQLException{
 		Map<Integer, Player> players = new HashMap<Integer,Player>();
+		if(this.game_IDs == null){
+			log("No games scheduled");
+			this.players_list = null;
+			return null;
+		}
 		for(int i=0; i < this.game_IDs.size(); i++){
 			// for each gameID, get the two teams playing
 			Document page = Jsoup.connect("http://www.espn.com/nba/game?gameId="+this.game_IDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")

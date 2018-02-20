@@ -237,7 +237,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 		
 		try {
 			sql_connection = Server.sql_connection();
-			System.out.println("6AM player table load");	
 			BasketballBot ball_bot = new BasketballBot(sql_connection);
 			ball_bot.scrapeGameIDs();
 			ball_bot.setup();
