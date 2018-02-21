@@ -207,10 +207,8 @@ public class CronWorker extends Utils implements Callable<Integer>
 						}
 						catch(Exception e){
 							e.printStackTrace();
-						}
-						
+						}		
 					}
-
 				}
 			}
 		} catch (Exception e) {
@@ -239,6 +237,8 @@ public class CronWorker extends Utils implements Callable<Integer>
 			sql_connection = Server.sql_connection();
 			BasketballBot ball_bot = new BasketballBot(sql_connection);
 			ball_bot.scrapeGameIDs();
+			if(ball_bot.getGameIDs() == null)
+				return;
 			ball_bot.setup();
 			ball_bot.savePlayers();
 			
