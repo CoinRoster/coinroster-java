@@ -5,21 +5,13 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.api.JsonReader;
-import com.coinroster.bots.GolfBot.Player;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -97,15 +89,17 @@ public class GolfBot extends Utils {
 					JSONObject r_player = ranked_players.getJSONObject(q);
 					if(id == Integer.parseInt(r_player.getString("plrNum"))){
 						String points = r_player.getJSONObject("statValues").getString("statValue2");
-						salary = Math.round(Double.parseDouble(points) * 100);
-						System.out.println(name_fl + " - " + salary);
+						salary = Math.round(Double.parseDouble(points) * 10);
+						if(salary < 80.0)
+							salary = 80.0;
+						System.out.println(name_fl + " - Salary: " + salary);
 						checked = true;
 						break;
 					}
 				}
 				if(!checked){
 					System.out.println(name_fl + " did not have a corresponding score");
-					salary = 100.0;
+					salary = 80.0;
 				}
 				
 				Player p = new Player(id, name_fl, tourneyID);
@@ -197,8 +191,6 @@ public class GolfBot extends Utils {
 		update_points.setDouble(1, pts);
 		update_points.setInt(2, id);
 		update_points.executeUpdate();
-//		this.fantasy_points = pts;
-
 	}
 	
 	
