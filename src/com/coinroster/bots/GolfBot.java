@@ -10,8 +10,10 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import com.coinroster.DB;
 import com.coinroster.Server;
@@ -27,8 +29,9 @@ public class GolfBot extends Utils {
 
 	public static String method_level = "admin";
 	protected Map<Integer, Player> players_list;
-	private String tourney_ID;
-	private long start_date;
+	private String tourneyID;
+	private String tourneyName;
+	private long startDate;
 	private String sport = "GOLF";
 	private static Connection sql_connection = null;
 	
@@ -40,31 +43,75 @@ public class GolfBot extends Utils {
 		return players_list;
 	}
 	
-	public void scrapeTourneyID(){
-		// write code to get tourneyID
-		this.tourney_ID = "522";
+	public void scrapeTourneyID() throws IOException, JSONException{
+	// get the Thursday date in yyyy-MM-dd format
+		// THIS ASSUMES ITS BEING RUN ON A MONDAY
+		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
+		Calendar c = Calendar.getInstance();        
+		c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs     
+		String thursday = (String)(formattedDate.format(c.getTime()));
+		long milli = c.getTimeInMillis();
+		// parse schedule json to get tournaments
+		String url = "https://statdata.pgatour.com/r/current/schedule-v2.json";
+		JSONObject schedule = JsonReader.readJsonFromUrl(url);
+		JSONArray tournaments = schedule.getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trns");
+
+		for(int index=0; index < tournaments.length(); index++){
+			JSONObject tournament = tournaments.getJSONObject(index);
+			
+			//check 3 things: start-date is this coming thurs, tournament is not match-play, and tournament is week's primary tournament
+			if(tournament.getJSONObject("date").getString("start").equals(thursday) && !tournament.getString("format").equals("Match") && tournament.getString("primaryEvent").equals("Y")){
+				System.out.println(tournament.getJSONObject("trnName").getString("official"));
+				this.tourneyName = tournament.getJSONObject("trnName").getString("official");
+				this.tourneyID = tournament.getString("permNum");
+				this.startDate = milli;
+				break;
+			}
+		}
 	}
 	
 	public Map<Integer, Player> setup() throws IOException, JSONException, SQLException {
-		Map<Integer, Player> players = new HashMap<Integer,Player>();
-		String url = "https://statdata.pgatour.com/r/" + this.tourney_ID + "/field.json";
-		JSONObject field = JsonReader.readJsonFromUrl(url);
-		JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
-		for(int i = 0; i < players_json.length(); i++){
-			JSONObject player = players_json.getJSONObject(i);
-			int id = Integer.parseInt(player.getString("TournamentPlayerId"));
-			String name = player.getString("PlayerName");
-			String names[] = name.split(", ");
-			String name_fl;
-			try{
-				name_fl = names[1] + " " + names[0];
+		Map<Integer, Player> players = new HashMap<Integer, Player>();
+		if(this.tourneyID != null){
+			String url = "https://statdata.pgatour.com/r/" + tourneyID + "/field.json";
+			JSONObject field = JsonReader.readJsonFromUrl(url);
+			JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
+			for(int i = 0; i < players_json.length(); i++){
+				JSONObject player = players_json.getJSONObject(i);
+				int id = Integer.parseInt(player.getString("TournamentPlayerId"));
+				String name = player.getString("PlayerName");
+				String names[] = name.split(", ");
+				String name_fl;
+				try{
+					name_fl = names[1] + " " + names[0];
+				}
+				catch(Exception e){
+					name_fl = names[0];
+				}
+				String rank_url = "https://statdata.pgatour.com/r/stats/2018/186.json";
+				JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
+				JSONArray ranked_players = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
+				boolean checked = false;
+				double salary = 0;
+				for(int q=0; q < ranked_players.length(); q++){
+					JSONObject r_player = ranked_players.getJSONObject(q);
+					if(id == Integer.parseInt(r_player.getString("plrNum"))){
+						String points = r_player.getJSONObject("statValues").getString("statValue2");
+						salary = Math.round(Double.parseDouble(points) * 100);
+						System.out.println(name_fl + " - " + salary);
+						checked = true;
+						break;
+					}
+				}
+				if(!checked){
+					System.out.println(name_fl + " did not have a corresponding score");
+					salary = 100.0;
+				}
+				
+				Player p = new Player(id, name_fl, tourneyID);
+				p.set_ppg_salary(salary);
+				players.put(id, p);
 			}
-			catch(Exception e){
-				name_fl = names[0];
-			}
-			log(name_fl);
-			Player p = new Player(id, name_fl, tourney_ID);
-			players.put(id, p);
 		}
 		this.players_list = players;
 		return players;
@@ -80,7 +127,6 @@ public class GolfBot extends Utils {
 		catch(Exception e){
 			e.printStackTrace();
 		}
-		
 		return result_set;
 	}
 	
@@ -117,7 +163,8 @@ public class GolfBot extends Utils {
 				save_player.setString(5, "n/a");
 				save_player.setDouble(6, player.getSalary());
 				save_player.setDouble(7, player.getPoints());
-				save_player.setString(8, player.getBio().toString());
+				JSONObject emptyJSON = new JSONObject();
+				save_player.setString(8, emptyJSON.toString());
 				save_player.executeUpdate();	
 			}
 			
@@ -128,14 +175,39 @@ public class GolfBot extends Utils {
 		}
 	}
 
+	public boolean scrapeScores() throws JSONException, IOException, SQLException{
+		String url = "https://statdata.pgatour.com/r/" + this.tourneyID + "/2018/leaderboard-v2.json";
+		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
+		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
 		
+		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
+		for(int i=0; i<players.length(); i++){
+			JSONObject player = players.getJSONObject(i);
+			int player_id = Integer.parseInt(player.getString("player_id"));
+			int score = player.getInt("total");
+			editPoints(score, sql_connection, player_id);
+		}
+		
+		return finished;
+	}
+	
+	
+	public static void editPoints(double pts, Connection sql_connection, int id) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ?");
+		update_points.setDouble(1, pts);
+		update_points.setInt(2, id);
+		update_points.executeUpdate();
+//		this.fantasy_points = pts;
+
+	}
+	
+	
 	class Player {
 		public String method_level = "admin";
 		private String name;
 		private int pga_id;
 		private String tourney_ID;
 		private double fantasy_points = 0;
-		private double avg_points;
 		private double salary;
 		private String birthString;
 		private String height;
@@ -164,27 +236,26 @@ public class GolfBot extends Utils {
 		public String getTourneyID(){
 			return tourney_ID;
 		}
-		public void setAvgPoints(double avg_pts){
-			this.avg_points = avg_pts;
-		}
+		
 		public double getSalary(){
 			return salary;
 		}
-		public double getAvgPts(){
-			return avg_points;
-		}
+		
 		public String getName(){
 			return name;
 		}
+		
 		public JSONArray getGameLogs(){
 			return last_five_games;
 		}
+		
 		public JSONObject getCareerStats(){
 			if(career_stats == null){
 				return null;
 			}
 			return career_stats;
 		}
+		
 		public JSONObject getYearStats(){
 			if(year_stats == null){
 				return null;
@@ -204,7 +275,7 @@ public class GolfBot extends Utils {
 			return weight;
 		}
 		public void set_ppg_salary(double pts){
-			// set salary
+			this.salary = pts;
 		}
 		public void createBio() throws JSONException{
 			JSONObject bio = new JSONObject();
@@ -221,11 +292,6 @@ public class GolfBot extends Utils {
 		public JSONObject getBio(){
 			return this.bio;
 		}
-		
-		public void scrape_info(int tourney_ID) throws IOException, JSONException{
-			//
 			
-			
-		}	
 	}
 }
