@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.text.Normalizer;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.GolfBot;
 import com.coinroster.internal.BuildLobby;
@@ -489,7 +490,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 						if(player_data.next()){
 							JSONObject player = new JSONObject();
 							String name = player_data.getString(1);
-							player.put("name", name);
+							String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
+							String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
+							player.put("name", nameNormalized);
 							player.put("price", player_data.getDouble(2));
 							player.put("count", 0);
 							player.put("id", playerIDs.getInt(1));
