@@ -118,5 +118,6 @@ public class ContestReport_Admin extends Utils
 //------------------------------------------------------------------------------------
 
 			} method.response.send(output);
+			
 		}
 	}

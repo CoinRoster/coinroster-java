@@ -34,14 +34,28 @@ public class GolfBot extends Utils {
 	public Map<Integer, Player> getPlayerHashMap(){
 		return players_list;
 	}
+	public String getTourneyName(){
+		return tourneyName;
+	}
+	
+	public String getTourneyID(){
+		return this.tourneyID;
+	}
+	
+	public long getDeadline(){
+		return startDate;
+	}
 	
 	public void scrapeTourneyID() throws IOException, JSONException{
 	// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
 		Calendar c = Calendar.getInstance();        
-		c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs     
+		c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs
 		String thursday = (String)(formattedDate.format(c.getTime()));
+		c.set(Calendar.HOUR_OF_DAY, 7);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.MILLISECOND, 0);
 		long milli = c.getTimeInMillis();
 		// parse schedule json to get tournaments
 		String url = "https://statdata.pgatour.com/r/current/schedule-v2.json";
@@ -111,7 +125,7 @@ public class GolfBot extends Utils {
 		return players;
 	}
 	
-	public static ResultSet getAllPlayerIDs(){
+	public ResultSet getAllPlayerIDs(){
 		ResultSet result_set = null;
 		try {
 			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
@@ -175,16 +189,50 @@ public class GolfBot extends Utils {
 		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
 		
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
-		for(int i=0; i<players.length(); i++){
+		for(int i=0; i < players.length(); i++){
 			JSONObject player = players.getJSONObject(i);
 			int player_id = Integer.parseInt(player.getString("player_id"));
 			int score = player.getInt("total");
 			editPoints(score, sql_connection, player_id);
-		}
-		
-		return finished;
+		}	
+		return finished;		
 	}
 	
+	public JSONObject updateScoresDB(int contest_id) throws SQLException, JSONException{
+		
+		PreparedStatement worst_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points DESC limit 1");
+		worst_score.setString(1, "GOLF");
+		ResultSet score = worst_score.executeQuery();
+		int worstScore = 0;
+		while(score.next()){
+			worstScore = score.getInt(1);
+		}
+		log("worst score in tournament: " + worstScore);
+		log("normalizing scores...");
+		JSONObject fields = new JSONObject();
+		fields.put("contest_id", contest_id);
+		fields.put("normalization_scheme", "INTEGER-INVERT");
+		ResultSet playerScores = this.getPlayerScores();
+		JSONArray player_map = new JSONArray();
+		while(playerScores.next()){
+			JSONObject player = new JSONObject();
+			int id = playerScores.getInt(1);
+			double points = playerScores.getDouble(2);
+			int normalizedScore = normalizeScore(points, worstScore);
+			player.put("id", id);
+			player.put("score_raw", Double.toString(points));
+			player.put("score_normalized", normalizedScore);
+			player_map.put(player);
+		}
+		
+		fields.put("player_scores", player_map);
+		return fields;	
+	}
+	
+	public int normalizeScore(double score, int worstScore){
+		int normalizedScore = (int) (worstScore - score + 1);
+		return normalizedScore;
+	}
 	
 	public static void editPoints(double pts, Connection sql_connection, int id) throws SQLException{
 		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ?");
@@ -222,6 +270,11 @@ public class GolfBot extends Utils {
 		public double getPoints(){
 			return fantasy_points;
 		}
+		
+		public void setScore(double score){
+			this.fantasy_points = score;
+		}
+		
 		public int getPGA_ID(){
 			return pga_id;
 		}

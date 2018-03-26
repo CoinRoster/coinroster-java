@@ -26,7 +26,8 @@ public class JsonReader {
     InputStream is = new URL(url).openStream();
     try {
       BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
-      String jsonText = readAll(rd);
+      // weird issue with pgatour.com's current/schedule-v2.json having duplicate "i":"2018" entries
+      String jsonText = readAll(rd).replace("\"i\":\"2018\",", "");    
       JSONObject json = new JSONObject(jsonText);
       return json;
     } finally {
