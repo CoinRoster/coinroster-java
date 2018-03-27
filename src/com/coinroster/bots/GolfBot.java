@@ -45,7 +45,22 @@ public class GolfBot extends Utils {
 	public long getDeadline(){
 		return startDate;
 	}
-	
+	public String getLiveTourneyID() throws SQLException{
+		ResultSet result_set = null;
+		String id = null;
+		try {
+			PreparedStatement get_games = sql_connection.prepareStatement("select distinct gameID from player where sport_type=?");
+			get_games.setString(1, this.sport);
+			result_set = get_games.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		while(result_set.next()){
+			id = result_set.getString(1);	
+		}
+		return id;
+	}
 	public void scrapeTourneyID() throws IOException, JSONException{
 	// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
@@ -183,8 +198,8 @@ public class GolfBot extends Utils {
 		}
 	}
 
-	public boolean scrapeScores() throws JSONException, IOException, SQLException{
-		String url = "https://statdata.pgatour.com/r/" + this.tourneyID + "/2018/leaderboard-v2.json";
+	public boolean scrapeScores(String tourneyID) throws JSONException, IOException, SQLException{
+		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/2018/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
 		
