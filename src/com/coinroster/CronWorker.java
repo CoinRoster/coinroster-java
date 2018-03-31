@@ -99,7 +99,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 		{
 			UpdateBTCUSD();
 			ContestMethods.createGolfContests();
-			log("cron thinks today is: " + day_of_week);
 			//UpdateCurrencies();			
 			
 		}

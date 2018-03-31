@@ -85,7 +85,6 @@ public class BasketballBot extends Utils {
 	}
 	
 	public JSONObject createPariMutuel(Long deadline, String date) throws JSONException{
-		log("inside createPariMutuel");
 		JSONObject fields = new JSONObject();
 		fields.put("category", "FANTASYSPORTS");
 		fields.put("sub_category", "BASKETBALL");
@@ -93,7 +92,6 @@ public class BasketballBot extends Utils {
 		fields.put("progressive", "");
 		String title = "Most Points Scored in NBA Tonight | " + date;
 		fields.put("title", title);
-		log(title);
 		fields.put("description", "Place your bet on who you will think will score the most points today!");
 		fields.put("rake", 5);
 		fields.put("cost_per_entry", 0.00000001);
@@ -117,7 +115,6 @@ public class BasketballBot extends Utils {
 			get_players.setString(1, "BASKETBALL");
 			top_players = get_players.executeQuery();
 			while(top_players.next()){
-				log(top_players.toString());
 				JSONObject player = new JSONObject();
 				player.put("description", top_players.getString(2) + " " + top_players.getString(3));
 				player.put("id", index);
@@ -125,8 +122,6 @@ public class BasketballBot extends Utils {
 				option_table.put(player);
 				index += 1;
 			}
-			
-			log(option_table.toString());
 			fields.put("option_table", option_table);
 		}
 		catch(Exception e){

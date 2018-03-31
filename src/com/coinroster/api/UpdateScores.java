@@ -120,19 +120,23 @@ public class UpdateScores extends Utils
 						int player_id = player.getInt("id");
 						
 						if (!score_map.containsKey(player_id))
-							{
+						{
 							String error = "No score provided for " + player.getString("name");
-							
 							log(error);
-							output.put("error", error);
+							// pga tour withdrawal
+							player.put("score", 0);
+							player.put("score_raw", "WD");
 							
-							break lock;
-							}
+							option_table.put(i, player);
+							
+						}
+						else{
 				
-						player.put("score", score_map.get(player_id));
-						player.put("score_raw", raw_score_map.get(player_id));
-						
-						option_table.put(i, player);
+							player.put("score", score_map.get(player_id));
+							player.put("score_raw", raw_score_map.get(player_id));
+							
+							option_table.put(i, player);
+							}
 						}
 					
 					PreparedStatement update_contest = sql_connection.prepareStatement("update contest set option_table = ?, scores_updated = ?, scoring_scheme = ? where id = ?");

@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -76,6 +77,7 @@ public class ContestMethods extends Utils{
 							e.printStackTrace();
 						}
 					}
+					
 					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
 					for(Integer id : pari_contest_ids){
 						JSONObject pari_fields = ball_bot.settlePariMutuel(id);
@@ -282,23 +284,29 @@ public class ContestMethods extends Utils{
 			
 			Long deadline = golfBot.getDeadline();
 
-            //create Pari-Mutuel contest for most points
-//            JSONObject pari_mutuel_data = ball_bot.createPariMutuel(deadline, date.toString());
-//            MethodInstance pari_method = new MethodInstance();
-//			JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//			pari_method.input = pari_mutuel_data;
-//			pari_method.output = pari_output;
-//			pari_method.session = null;
-//			pari_method.sql_connection = sql_connection;
-//			try{
-//				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//				c.newInstance(pari_method);
-//			}
-//			catch(Exception e){
-//				log(pari_method.output.toString());
-//				e.printStackTrace();
-//			}
-			
+			// create Pari-Mutuel contest for most points
+			Calendar cal = Calendar.getInstance();
+			cal.setTimeInMillis(deadline);
+			for(int round = 1; round <=4; round++){
+				cal.add(Calendar.DATE, round-1);
+				long round_deadline = cal.getTimeInMillis();
+				JSONObject pari_mutuel_data = golfBot.createPariMutuel(round_deadline, String.valueOf(round));
+	            MethodInstance pari_method = new MethodInstance();
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_mutuel_data;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					log(pari_method.output.toString());
+					e.printStackTrace();
+				}	
+			}
+
 			// read text file to create roster contests
 			String fileName = Server.java_path + "GolfContests.txt";
 			String line = "";
@@ -437,8 +445,12 @@ public class ContestMethods extends Utils{
 				log("Golf Contest is in play and minute is multiple of 20");
 				String tourneyID = golfBot.getLiveTourneyID();
 				boolean finished = golfBot.scrapeScores(tourneyID);
+				
+				//check to see if Pari-Mutuels are ready to be settled
+				golfBot.checkPariMutuelStatus(pari_contest_ids);
+			
 				for(Integer contest_id : roster_contest_ids ){
-					
+
 					JSONObject fields = golfBot.updateScoresDB(contest_id);
 					
 					MethodInstance method = new MethodInstance();
@@ -476,24 +488,6 @@ public class ContestMethods extends Utils{
 							e.printStackTrace();
 						}
 					}
-					
-					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
-//					for(Integer id : pari_contest_ids){
-//						JSONObject pari_fields = .settlePariMutuel(id);
-//						MethodInstance pari_method = new MethodInstance();
-//						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//						pari_method.input = pari_fields;
-//						pari_method.output = pari_output;
-//						pari_method.session = null;
-//						pari_method.sql_connection = sql_connection;
-//						try{
-//							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-//							c.newInstance(pari_method);
-//						}
-//						catch(Exception e){
-//							e.printStackTrace();
-//						}		
-//					}
 				}
 			}
 		} catch (Exception e) {

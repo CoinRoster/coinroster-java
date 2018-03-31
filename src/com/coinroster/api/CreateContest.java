@@ -308,7 +308,7 @@ public class CreateContest extends Utils
 				create_contest.setLong(17, System.currentTimeMillis());
 				String madeBy = "";
 				if(session == null)
-					madeBy = "BasketballBot";	
+					madeBy = "ContestBot";	
 				else
 					madeBy = session.user_id();
 				
@@ -373,7 +373,7 @@ public class CreateContest extends Utils
 				String madeBy = "";
 				int auto = 0;
 				if(session == null){
-					madeBy = "BasketballBot";
+					madeBy = "ContestBot";
 					auto=1;
 				}
 				else

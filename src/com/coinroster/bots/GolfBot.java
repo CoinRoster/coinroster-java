@@ -2,13 +2,19 @@ package com.coinroster.bots;
 
 import java.sql.Connection;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.coinroster.DB;
+import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.api.JsonReader;
@@ -207,7 +213,14 @@ public class GolfBot extends Utils {
 		for(int i=0; i < players.length(); i++){
 			JSONObject player = players.getJSONObject(i);
 			int player_id = Integer.parseInt(player.getString("player_id"));
-			int score = player.getInt("total");
+			int score;
+			try{
+				score = player.getInt("total");
+			}
+			catch(JSONException e){
+				log("player status: " + player.getString("status"));
+				score = -999;
+			}
 			editPoints(score, sql_connection, player_id);
 		}	
 		return finished;		
@@ -232,20 +245,30 @@ public class GolfBot extends Utils {
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
 			int id = playerScores.getInt(1);
-			double points = playerScores.getDouble(2);
-			int normalizedScore = normalizeScore(points, worstScore);
-			player.put("id", id);
-			player.put("score_raw", Double.toString(points));
-			player.put("score_normalized", normalizedScore);
-			player_map.put(player);
+			int points = (int) playerScores.getDouble(2);
+			
+			// -999 means WD
+			if(points==-999){
+				player.put("id", id);
+				player.put("score_raw", "WD");
+				player.put("score_normalized", 0);
+				player_map.put(player);
+			}
+			else{
+				int normalizedScore = normalizeScore(points, worstScore);
+				player.put("id", id);
+				player.put("score_raw", Integer.toString(points));
+				player.put("score_normalized", normalizedScore);
+				player_map.put(player);
+			}
 		}
 		
 		fields.put("player_scores", player_map);
 		return fields;	
 	}
 	
-	public int normalizeScore(double score, int worstScore){
-		int normalizedScore = (int) (worstScore - score + 1);
+	public int normalizeScore(int score, int worstScore){
+		int normalizedScore = worstScore - score + 1;
 		return normalizedScore;
 	}
 	
@@ -256,6 +279,167 @@ public class GolfBot extends Utils {
 		update_points.executeUpdate();
 	}
 	
+	public JSONObject createPariMutuel(Long deadline, String round) throws JSONException{
+		JSONObject fields = new JSONObject();
+		fields.put("category", "FANTASYSPORTS");
+		fields.put("sub_category", "GOLF");
+		fields.put("contest_type", "PARI-MUTUEL");
+		fields.put("progressive", "");
+		String title = this.getTourneyName() + " - Top Score in Round " + round;
+		fields.put("title", title);
+		log(title);
+		fields.put("description", "Place your bet on who you will think will have the top score in round " + round);
+		fields.put("rake", 5);
+		fields.put("cost_per_entry", 0.00000001);
+		fields.put("registration_deadline", deadline);
+		JSONArray option_table = new JSONArray(); 
+		ResultSet top_players = null;
+		
+		JSONObject none_above = new JSONObject();
+		none_above.put("description", "Any Other Golfer");
+		none_above.put("id", 1);
+		option_table.put(none_above);
+		
+		JSONObject tie = new JSONObject();
+		tie.put("description", "Tie");
+		tie.put("id", 2);
+		option_table.put(tie);
+	
+		int index = 3;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name from player where sport_type=? order by salary DESC limit 40");
+			get_players.setString(1, "GOLF");
+			top_players = get_players.executeQuery();
+			while(top_players.next()){
+				JSONObject player = new JSONObject();
+				String name = top_players.getString(2);
+				String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
+				String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
+				player.put("description", nameNormalized);
+				player.put("id", index);
+				player.put("player_id", top_players.getInt(1));
+				option_table.put(player);
+				index += 1;
+			}
+			fields.put("option_table", option_table);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return fields;
+	}
+	
+	public void checkPariMutuelStatus(ArrayList<Integer> pari_contest_ids) throws Exception{
+
+		for(Integer contest_id : pari_contest_ids){
+			// get the round for the contest
+			PreparedStatement getRound = sql_connection.prepareStatement("select title from contest where id=?");
+			getRound.setInt(1, contest_id);
+			ResultSet result = getRound.executeQuery();
+			String title = null;
+			while(result.next()){
+				title = result.getString(1);
+			}
+			String round = title.split(" - Top Score in Round ")[1];
+			
+			String url = "https://statdata.pgatour.com/r/" + this.getLiveTourneyID() + "/2018/leaderboard-v2.json";
+			JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
+			String roundStatus = leaderboard.getString("round_state");
+			// if the round status is complete/official get the round
+			if(roundStatus.equals("Official") && String.valueOf(leaderboard.getInt("current_round")).equals(round)){
+			
+				log("settling contest with id " + contest_id + " (Round " + round + ")");
+				JSONObject pari_fields = this.settlePariMutuel(contest_id, round);
+				MethodInstance pari_method = new MethodInstance();
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_fields;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		}
+	}	
+	
+	public JSONObject settlePariMutuel(int contest_id, String round) throws Exception{
+		JSONObject fields = new JSONObject();
+		fields.put("contest_id", contest_id);
+		DB db = new DB(sql_connection);
+		
+		String url = "https://statdata.pgatour.com/r/" + this.getLiveTourneyID() + "/2018/leaderboard-v2.json";
+		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
+		int par = Integer.parseInt(leaderboard.getJSONObject("leaderboard").getJSONArray("courses").getJSONObject(0).getString("par_total"));
+		log("par for the course is " + par);
+		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
+		int best_score = 500;
+		ArrayList<Integer> best_players = new ArrayList<Integer>();
+		for(int i=0; i < players.length(); i++){
+			JSONObject player = players.getJSONObject(i);
+			int player_id = Integer.parseInt(player.getString("player_id"));
+			int score = 999;
+			try{
+				if(player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("round_number") == Integer.parseInt(round) && !player.getString("status").equals("wd"))
+					score = (player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("strokes") - par);
+			}
+			catch(JSONException e){
+				log("player status: " + player.getString("status"));
+				score = 999;
+			}
+			if(score < best_score){
+				best_score = score;
+				best_players.clear();
+				best_players.add(player_id);
+			}
+			else if(score == best_score){
+				best_players.add(player_id);
+			}
+		}		
+	
+		JSONObject contest = db.select_contest(contest_id);
+		JSONArray option_table = new JSONArray(contest.getString("option_table"));
+		int winning_outcome = 1;
+	
+		log("Top score from round " + round + " is " + best_score);
+
+		if(best_players.size() > 1){
+			//tie is correct answer;
+			winning_outcome = 2;
+			log("winning outcome=2 because of tie");
+			fields.put("winning_outcome", winning_outcome);
+			return fields;
+		}
+		else{
+			for(Integer player_table_ID : best_players){
+				for (int i=0; i<option_table.length(); i++){
+					JSONObject option = option_table.getJSONObject(i);
+					int option_id = option.getInt("id");
+					try{
+						int player_id = option.getInt("player_id");
+						if(player_id == player_table_ID){
+							winning_outcome = option_id;
+							fields.put("winning_outcome", winning_outcome);
+							log("winning outcome is " + option.getString("description"));
+							return fields;	
+						}
+					}	
+					catch(Exception e){
+						continue;
+					}			
+				}
+			}
+		}
+		
+		fields.put("winning_outcome", winning_outcome);
+		log("winning outcome is any other player");
+		return fields;
+	}
 	
 	class Player {
 		public String method_level = "admin";
