@@ -184,21 +184,27 @@ public class SettleContest extends Utils
 								int player_id = player.getInt("id");
 								
 								if (!score_map.containsKey(player_id))
-									{
+								{
 									String error = "No score provided for " + player.getString("name");
-									
 									log(error);
-									output.put("error", error);
 									
-									break lock;
-									}
-
-								player.put("score", score_map.get(player_id));
-								player.put("score_raw", raw_score_map.get(player_id));
-								
-								option_table.put(i, player);
+									// pga tour withdrawal
+									player.put("score", 0);
+									player.put("score_raw", "WD");
+									
+									option_table.put(i, player);
+									
 								}
-							} break;
+								else{
+						
+									player.put("score", score_map.get(player_id));
+									player.put("score_raw", raw_score_map.get(player_id));
+									
+									option_table.put(i, player);
+									}
+								}
+							}
+							break;
 						}
 
 					log("");
@@ -788,7 +794,14 @@ public class SettleContest extends Utils
 									{
 									JSONObject player = entry_data.getJSONObject(i);
 									int player_id = player.getInt("id");
-									double player_score = score_map.get(player_id);
+									double player_score = 0;
+									try{
+										player_score = score_map.get(player_id);
+									}
+									catch(NullPointerException e){
+										log("player " + player_id + " not found; setting score = 0");
+										player_score = 0;
+									}
 									roster_score = add(roster_score, player_score, 0);
 									}
 								

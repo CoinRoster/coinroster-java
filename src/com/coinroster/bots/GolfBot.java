@@ -76,7 +76,7 @@ public class GolfBot extends Utils {
 		String thursday = (String)(formattedDate.format(c.getTime()));
 		c.set(Calendar.HOUR_OF_DAY, 7);
 		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.MILLISECOND, 0);
+		c.set(Calendar.SECOND, 0);
 		long milli = c.getTimeInMillis();
 		// parse schedule json to get tournaments
 		String url = "https://statdata.pgatour.com/r/current/schedule-v2.json";
@@ -127,13 +127,11 @@ public class GolfBot extends Utils {
 						salary = Math.round(Double.parseDouble(points) * 10);
 						if(salary < 80.0)
 							salary = 80.0;
-						System.out.println(name_fl + " - Salary: " + salary);
 						checked = true;
 						break;
 					}
 				}
 				if(!checked){
-					System.out.println(name_fl + " did not have a corresponding score");
 					salary = 80.0;
 				}
 				
@@ -212,15 +210,23 @@ public class GolfBot extends Utils {
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
 		for(int i=0; i < players.length(); i++){
 			JSONObject player = players.getJSONObject(i);
-			int player_id = Integer.parseInt(player.getString("player_id"));
 			int score;
-			try{
-				score = player.getInt("total");
-			}
-			catch(JSONException e){
-				log("player status: " + player.getString("status"));
+			int player_id = Integer.parseInt(player.getString("player_id"));
+			String status = player.getString("status");
+			if(status.equals("cut"))
+				score = -888;
+			else if(status.equals("wd"))
 				score = -999;
+			else{
+				try{
+					score = player.getInt("total");
+				}
+				catch(JSONException e){
+					e.printStackTrace();
+					score = -888;
+				}
 			}
+				
 			editPoints(score, sql_connection, player_id);
 		}	
 		return finished;		
@@ -251,6 +257,12 @@ public class GolfBot extends Utils {
 			if(points==-999){
 				player.put("id", id);
 				player.put("score_raw", "WD");
+				player.put("score_normalized", 0);
+				player_map.put(player);
+			}
+			else if(points==-888){
+				player.put("id", id);
+				player.put("score_raw", "CUT");
 				player.put("score_normalized", 0);
 				player_map.put(player);
 			}
@@ -385,7 +397,7 @@ public class GolfBot extends Utils {
 			int player_id = Integer.parseInt(player.getString("player_id"));
 			int score = 999;
 			try{
-				if(player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("round_number") == Integer.parseInt(round) && !player.getString("status").equals("wd"))
+				if(player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("round_number") == Integer.parseInt(round) && !player.getString("status").equals("wd") && !player.getString("status").equals("cut") )
 					score = (player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("strokes") - par);
 			}
 			catch(JSONException e){
