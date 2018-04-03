@@ -67,6 +67,111 @@ public class GolfBot extends Utils {
 		}
 		return id;
 	}
+	
+	public boolean appendLateAdditions() throws SQLException, JSONException, IOException{
+		
+		String gameID = this.getLiveTourneyID();
+		Map<Integer, JSONArray> contest_players = new HashMap<Integer, JSONArray>();
+		ResultSet result_set = null;
+		
+		try {
+			PreparedStatement get_contests = sql_connection.prepareStatement("select id, option_table from contest where gameIDs=? and contest_type='ROSTER' and status=1");
+			get_contests.setString(1, gameID);
+			result_set = get_contests.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		while(result_set.next()){
+			int id = result_set.getInt(1);
+			JSONArray option_table = new JSONArray(result_set.getString(2));
+			contest_players.put(id, option_table);	
+		}
+		
+		if(contest_players.isEmpty()){
+			return false;
+		}
+		
+		ArrayList<Integer> existing_ids = new ArrayList<Integer>();
+		ResultSet all_existing_players = this.getAllPlayerIDs();
+		while(all_existing_players.next()){
+			existing_ids.add(all_existing_players.getInt(1));
+		}
+		
+		boolean flag = false;
+		String url = "https://statdata.pgatour.com/r/" + gameID + "/field.json";
+		JSONObject field = JsonReader.readJsonFromUrl(url);
+		JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
+		
+		for(Map.Entry<Integer, JSONArray> entry : contest_players.entrySet()){
+			int contest_id = entry.getKey();
+			JSONArray option_table = entry.getValue();
+			
+			for(int i = 0; i < players_json.length(); i++){
+				JSONObject player = players_json.getJSONObject(i);
+				int id = Integer.parseInt(player.getString("TournamentPlayerId"));
+				
+				if(!existing_ids.contains(id)){
+					flag = true;
+					String name = player.getString("PlayerName");
+					String names[] = name.split(", ");
+					String name_fl;
+					try{
+						name_fl = names[1] + " " + names[0];
+					}
+					catch(Exception e){
+						name_fl = names[0];
+					}
+					String rank_url = "https://statdata.pgatour.com/r/stats/2018/186.json";
+					JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
+					JSONArray ranked_players = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
+					boolean checked = false;
+					double salary = 0;
+					for(int q=0; q < ranked_players.length(); q++){
+						JSONObject r_player = ranked_players.getJSONObject(q);
+						if(id == Integer.parseInt(r_player.getString("plrNum"))){
+							String points = r_player.getJSONObject("statValues").getString("statValue2");
+							salary = Math.round(Double.parseDouble(points) * 10);
+							if(salary < 80.0)
+								salary = 80.0;
+							checked = true;
+							break;
+						}
+					}
+					if(!checked){
+						salary = 80.0;
+					}
+				
+					// add player to player table
+					PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
+					add_player.setInt(1, id);
+					add_player.setString(2, name_fl);
+					add_player.setString(3, this.sport);
+					add_player.setString(4, gameID);
+					add_player.setString(5, "n/a");
+					add_player.setDouble(6, salary);
+					add_player.setDouble(7, 0.0);
+					add_player.setString(8, "{}");
+					add_player.executeUpdate();
+					
+					//create JSONObject to add to option table
+					JSONObject p = new JSONObject();
+					p.put("price", salary);
+					p.put("count", 0);
+					p.put("name", name_fl);
+					p.put("id", id);
+					log("appending " + name_fl + " to contest " + contest_id );
+					option_table.put(p);	
+				}	
+			}
+			PreparedStatement update_contest = sql_connection.prepareStatement("UPDATE contest SET option_table = ? where id = ?");
+			update_contest.setString(1, option_table.toString());
+			update_contest.setInt(2, contest_id);
+			update_contest.executeUpdate();
+		}
+		return flag;
+	}
+	
 	public void scrapeTourneyID() throws IOException, JSONException{
 	// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
@@ -88,7 +193,6 @@ public class GolfBot extends Utils {
 			
 			//check 3 things: start-date is this coming thurs, tournament is not match-play, and tournament is week's primary tournament
 			if(tournament.getJSONObject("date").getString("start").equals(thursday) && !tournament.getString("format").equals("Match") && tournament.getString("primaryEvent").equals("Y")){
-				System.out.println(tournament.getJSONObject("trnName").getString("official"));
 				this.tourneyName = tournament.getJSONObject("trnName").getString("official");
 				this.tourneyID = tournament.getString("permNum");
 				this.startDate = milli;
@@ -477,7 +581,6 @@ public class GolfBot extends Utils {
 		}
 		
 		// methods
-	
 		public double getPoints(){
 			return fantasy_points;
 		}

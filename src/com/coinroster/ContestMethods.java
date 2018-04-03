@@ -22,99 +22,9 @@ import com.coinroster.bots.GolfBot;
 
 public class ContestMethods extends Utils{
 
-	// check to see if contests are in play, settle if necessary
-	
-	public static void checkBasketballContests() {
-		Connection sql_connection = null;
-		try {
-			sql_connection = Server.sql_connection();
-			DB db_connection = new DB(sql_connection);
-			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
-			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("BASKETBALL", "PARI-MUTUEL");
-
-			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
-				BasketballBot ball_bot = new BasketballBot(sql_connection);
-				log("Contest is in play and minute is multiple of 20");
-				ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
-				boolean games_ended;
-				games_ended = ball_bot.scrape(gameIDs);
-				for(Integer contest_id : roster_contest_ids ){
-					
-					JSONObject fields = ball_bot.updateScores(contest_id);
-					
-					MethodInstance method = new MethodInstance();
-					JSONObject output = new JSONObject("{\"status\":\"0\"}");
-					method.input = fields;
-					method.output = output;
-					method.session = null;
-					method.sql_connection = sql_connection;
-					try{
-						Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
-						c.newInstance(method);
-					}
-					catch(Exception e){
-						e.printStackTrace();
-					}
-					
-				}
-				if(games_ended){
-					log("games have ended");
-					for(Integer contest_id : roster_contest_ids){
-						
-						JSONObject fields = ball_bot.updateScores(contest_id);
-						
-						MethodInstance method = new MethodInstance();
-						JSONObject output = new JSONObject("{\"status\":\"0\"}");
-						method.input = fields;
-						method.output = output;
-						method.session = null;
-						method.sql_connection = sql_connection;
-						try{
-							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-							c.newInstance(method);
-						}
-						catch(Exception e){
-							e.printStackTrace();
-						}
-					}
-					
-					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
-					for(Integer id : pari_contest_ids){
-						JSONObject pari_fields = ball_bot.settlePariMutuel(id);
-						MethodInstance pari_method = new MethodInstance();
-						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-						pari_method.input = pari_fields;
-						pari_method.output = pari_output;
-						pari_method.session = null;
-						pari_method.sql_connection = sql_connection;
-						try{
-							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-							c.newInstance(pari_method);
-						}
-						catch(Exception e){
-							e.printStackTrace();
-						}		
-					}
-				}
-			}
-		} catch (Exception e) {
-			Server.exception(e);
-		} finally {
-			if (sql_connection != null) {
-				try {
-					sql_connection.close();
-					} 
-				catch (SQLException ignore) {
-					// ignore
-				}
-			}
-		}
-	}	
-
 //------------------------------------------------------------------------------------
 
 	// create basketball contests reading from csv
-	
 	public static void createBasketballContests() {
 		
 		Connection sql_connection = null;
@@ -269,6 +179,96 @@ public class ContestMethods extends Utils{
 
 //------------------------------------------------------------------------------------
 
+	// check to see if contests are in play, settle if necessary
+	public static void checkBasketballContests() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db_connection = new DB(sql_connection);
+			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
+			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("BASKETBALL", "PARI-MUTUEL");
+
+			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
+				BasketballBot ball_bot = new BasketballBot(sql_connection);
+				log("Contest is in play and minute is multiple of 20");
+				ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
+				boolean games_ended;
+				games_ended = ball_bot.scrape(gameIDs);
+				for(Integer contest_id : roster_contest_ids ){
+					
+					JSONObject fields = ball_bot.updateScores(contest_id);
+					
+					MethodInstance method = new MethodInstance();
+					JSONObject output = new JSONObject("{\"status\":\"0\"}");
+					method.input = fields;
+					method.output = output;
+					method.session = null;
+					method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
+						c.newInstance(method);
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
+					
+				}
+				if(games_ended){
+					log("games have ended");
+					for(Integer contest_id : roster_contest_ids){
+						
+						JSONObject fields = ball_bot.updateScores(contest_id);
+						
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = fields;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+					}
+					
+					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
+					for(Integer id : pari_contest_ids){
+						JSONObject pari_fields = ball_bot.settlePariMutuel(id);
+						MethodInstance pari_method = new MethodInstance();
+						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+						pari_method.input = pari_fields;
+						pari_method.output = pari_output;
+						pari_method.session = null;
+						pari_method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(pari_method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}		
+					}
+				}
+			}
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}	
+
+//------------------------------------------------------------------------------------
+
 	public static void createGolfContests() {
 		
 		Connection sql_connection = null;
@@ -284,28 +284,28 @@ public class ContestMethods extends Utils{
 			
 			Long deadline = golfBot.getDeadline();
 
-			// create Pari-Mutuel contest for most points
-			Calendar cal = Calendar.getInstance();
-			cal.setTimeInMillis(deadline);
-			for(int round = 1; round <=4; round++){
-				cal.add(Calendar.DATE, round-1);
-				long round_deadline = cal.getTimeInMillis();
-				JSONObject pari_mutuel_data = golfBot.createPariMutuel(round_deadline, String.valueOf(round));
-	            MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-				pari_method.input = pari_mutuel_data;
-				pari_method.output = pari_output;
-				pari_method.session = null;
-				pari_method.sql_connection = sql_connection;
-				try{
-					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-					c.newInstance(pari_method);
-				}
-				catch(Exception e){
-					log(pari_method.output.toString());
-					e.printStackTrace();
-				}	
-			}
+			//create Pari-Mutuel contest for most points
+//			Calendar cal = Calendar.getInstance();
+//			for(int round = 1; round <=4; round++){
+//				cal.setTimeInMillis(deadline);
+//				cal.add(Calendar.DATE, round-1);
+//				long round_deadline = cal.getTimeInMillis();
+//				JSONObject pari_mutuel_data = golfBot.createPariMutuel(round_deadline, String.valueOf(round));
+//	            MethodInstance pari_method = new MethodInstance();
+//				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+//				pari_method.input = pari_mutuel_data;
+//				pari_method.output = pari_output;
+//				pari_method.session = null;
+//				pari_method.sql_connection = sql_connection;
+//				try{
+//					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+//					c.newInstance(pari_method);
+//				}
+//				catch(Exception e){
+//					log(pari_method.output.toString());
+//					e.printStackTrace();
+//				}	
+//			}
 
 			// read text file to create roster contests
 			String fileName = Server.java_path + "GolfContests.txt";
@@ -368,6 +368,7 @@ public class ContestMethods extends Utils{
 		            fields.put("cost_per_entry", cost_per_entry);
 		            fields.put("registration_deadline", deadline);
 		            fields.put("odds_source", odds_source);
+		            fields.put("tourneyID", golfBot.getTourneyID());
 		            
 		            ResultSet playerIDs = golfBot.getAllPlayerIDs();
 		            JSONArray option_table = new JSONArray();
@@ -429,6 +430,30 @@ public class ContestMethods extends Utils{
 		}
 	}
 	
+//------------------------------------------------------------------------------------
+
+	public static void updateGolfContestField() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			GolfBot golfBot = new GolfBot(sql_connection);
+			golfBot.appendLateAdditions();
+		}
+		catch (Exception e) {
+			Server.exception(e);
+		} 
+		finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}
+			
 	
 //------------------------------------------------------------------------------------
 	
@@ -447,7 +472,7 @@ public class ContestMethods extends Utils{
 				boolean finished = golfBot.scrapeScores(tourneyID);
 				
 				//check to see if Pari-Mutuels are ready to be settled
-				golfBot.checkPariMutuelStatus(pari_contest_ids);
+//				golfBot.checkPariMutuelStatus(pari_contest_ids);
 			
 				for(Integer contest_id : roster_contest_ids ){
 

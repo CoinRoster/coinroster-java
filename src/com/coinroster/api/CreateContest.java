@@ -113,6 +113,7 @@ public class CreateContest extends Utils
 	            String score_header = input.getString("score_header");
 	            JSONArray pay_table = input.getJSONArray("pay_table");
 	            JSONArray pay_table_final = new JSONArray();
+	            String tourneyID = input.getString("tourneyID");
 	            
 	            if (min_users < 2)
 	            	{
@@ -287,7 +288,7 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -306,9 +307,12 @@ public class CreateContest extends Utils
 				create_contest.setString(16, option_table.toString());
 
 				create_contest.setLong(17, System.currentTimeMillis());
-				String madeBy = "";
-				if(session == null)
-					madeBy = "ContestBot";	
+				String madeBy = null;
+				String gameIDs = "";
+				if(session == null){
+					madeBy = "ContestBot";
+					gameIDs = tourneyID;
+				}
 				else
 					madeBy = session.user_id();
 				
@@ -318,6 +322,7 @@ public class CreateContest extends Utils
 				log(odds_source);
 				create_contest.setString(21, score_header);
 				log(score_header);
+				create_contest.setString(22, gameIDs);
 				create_contest.executeUpdate();
 	            }
             else if (contest_type.equals("PARI-MUTUEL"))

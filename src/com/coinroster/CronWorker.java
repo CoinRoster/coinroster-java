@@ -85,6 +85,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 		if(hour==7){
 			ContestMethods.createBasketballContests();
 		}
+		// check golf tournament field on pgatour.com every 6 hours
+		// if someone was added, add them to contest and player DB
+		if((hour%6)== 0){
+			ContestMethods.updateGolfContestField();
+		}
 	}
 	
 	@SuppressWarnings("unused")
@@ -94,16 +99,13 @@ public class CronWorker extends Utils implements Callable<Integer>
 		PurgePasswordResetTable();
 		TriggerBuildLobby();
 		BackfillReferrerKeys();
+		ContestMethods.createGolfContests();
 		
 		if (Server.dev_server)
 		{
 			UpdateBTCUSD();
-			ContestMethods.createGolfContests();
 			//UpdateCurrencies();			
-			
 		}
-					
-		
 	}
 
 //------------------------------------------------------------------------------------
