@@ -113,7 +113,13 @@ public class CreateContest extends Utils
 	            String score_header = input.getString("score_header");
 	            JSONArray pay_table = input.getJSONArray("pay_table");
 	            JSONArray pay_table_final = new JSONArray();
-	            String tourneyID = input.getString("tourneyID");
+	            String tourneyID;
+	            try{
+	            	tourneyID = input.getString("tourneyID");
+	            }
+	            catch(Exception e){
+	            	tourneyID = "";
+	            }
 	            
 	            if (min_users < 2)
 	            	{

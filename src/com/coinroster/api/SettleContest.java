@@ -49,7 +49,7 @@ public class SettleContest extends Utils
 			int contest_id = input.getInt("contest_id");
 			String contest_admin;
 			if(session==null)
-				contest_admin = "BasketballBot";
+				contest_admin = "ContestBot";
 			else
 				contest_admin = session.user_id();
 			

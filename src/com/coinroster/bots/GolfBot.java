@@ -192,7 +192,7 @@ public class GolfBot extends Utils {
 			JSONObject tournament = tournaments.getJSONObject(index);
 			
 			//check 3 things: start-date is this coming thurs, tournament is not match-play, and tournament is week's primary tournament
-			if(tournament.getJSONObject("date").getString("start").equals(thursday) && !tournament.getString("format").equals("Match") && tournament.getString("primaryEvent").equals("Y")){
+			if(tournament.getJSONObject("date").getString("start").equals(thursday) && tournament.getString("format").equals("Stroke") && tournament.getString("primaryEvent").equals("Y")){
 				this.tourneyName = tournament.getJSONObject("trnName").getString("official");
 				this.tourneyID = tournament.getString("permNum");
 				this.startDate = milli;
@@ -310,29 +310,41 @@ public class GolfBot extends Utils {
 		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/2018/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
-		
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
-		for(int i=0; i < players.length(); i++){
-			JSONObject player = players.getJSONObject(i);
+		ResultSet playerScores = this.getPlayerScores();
+		while(playerScores.next()){
 			int score;
-			int player_id = Integer.parseInt(player.getString("player_id"));
-			String status = player.getString("status");
-			if(status.equals("cut"))
-				score = -888;
-			else if(status.equals("wd"))
-				score = -999;
-			else{
-				try{
-					score = player.getInt("total");
-				}
-				catch(JSONException e){
-					e.printStackTrace();
-					score = -888;
+			boolean in_leaderboard = false;
+			int id = playerScores.getInt(1);
+			for(int i=0; i < players.length(); i++){
+				JSONObject player = players.getJSONObject(i);
+				int player_id = Integer.parseInt(player.getString("player_id"));
+				if(id == player_id){
+					in_leaderboard = true;
+					String status = player.getString("status");
+					if(status.equals("cut"))
+						score = -888;
+					else if(status.equals("wd"))
+						score = -999;
+					else{
+						try{
+							score = player.getInt("total");
+						}
+						catch(JSONException e){
+							e.printStackTrace();
+							score = -888;
+						}
+					}	
+					editPoints(score, sql_connection, player_id);
+					break;
 				}
 			}
-				
-			editPoints(score, sql_connection, player_id);
-		}	
+			if(!in_leaderboard){
+				log("couldn't find score in leaderboard for player with id" + id );
+				score = -777;
+				editPoints(score, sql_connection, id);	
+			}
+		}
 		return finished;		
 	}
 	
@@ -370,6 +382,12 @@ public class GolfBot extends Utils {
 				player.put("score_normalized", 0);
 				player_map.put(player);
 			}
+			else if(points== -777){
+				player.put("id", id);
+				player.put("score_raw", "INACTIVE");
+				player.put("score_normalized", 0);
+				player_map.put(player);
+			}
 			else{
 				int normalizedScore = normalizeScore(points, worstScore);
 				player.put("id", id);
@@ -400,10 +418,29 @@ public class GolfBot extends Utils {
 		fields.put("category", "FANTASYSPORTS");
 		fields.put("sub_category", "GOLF");
 		fields.put("contest_type", "PARI-MUTUEL");
-		fields.put("progressive", "");
+		
+		String progressive;
+		switch(round){
+	        case "1":
+	            progressive = "THURSDAY";
+	            break;
+	        case "2":
+	        	progressive = "FRIDAY";
+	        	break;
+	        case "3":
+	        	progressive = "SATURDAY";
+	        	break;
+	        case "4":
+	        	progressive = "SUNDAY";
+	        	break;
+	        default:
+	        	progressive = "";
+	        	break;
+		}
+		
+		fields.put("progressive", progressive);
 		String title = this.getTourneyName() + " - Top Score in Round " + round;
 		fields.put("title", title);
-		log(title);
 		fields.put("description", "Place your bet on who you will think will have the top score in round " + round);
 		fields.put("rake", 5);
 		fields.put("cost_per_entry", 0.00000001);
@@ -460,7 +497,7 @@ public class GolfBot extends Utils {
 			String round = title.split(" - Top Score in Round ")[1];
 			
 			String url = "https://statdata.pgatour.com/r/" + this.getLiveTourneyID() + "/2018/leaderboard-v2.json";
-			JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
+			JSONObject leaderboard = JsonReader.readJsonFromUrl(url).getJSONObject("leaderboard");
 			String roundStatus = leaderboard.getString("round_state");
 			// if the round status is complete/official get the round
 			if(roundStatus.equals("Official") && String.valueOf(leaderboard.getInt("current_round")).equals(round)){

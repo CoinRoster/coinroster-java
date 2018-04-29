@@ -64,12 +64,16 @@ public class CronWorker extends Utils implements Callable<Integer>
 	private void minute() throws Exception
 	{ 
 		SessionExpiry();
-		if (!Server.dev_server) UpdateBTCUSD();
+		if (!Server.dev_server && (minute % 5)==0) UpdateBTCUSD();
 	
 		if((minute%20)==0){
 			//see if ANY basketball contests are in play (status=2)
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
+		}
+		if((hour%6==0) && (minute==30)){
+			log("checking to see if golfers have been added to field");
+			ContestMethods.updateGolfContestField();
 		}
 	}
 
@@ -82,14 +86,17 @@ public class CronWorker extends Utils implements Callable<Integer>
 //		new CheckPendingWithdrawals();
 		//if (!Server.dev_server) UpdateCurrencies();
 	
+		
 		if(hour==7){
 			ContestMethods.createBasketballContests();
 		}
+		if(hour==8){
+			ContestMethods.createGolfContests();
+		}
+		
 		// check golf tournament field on pgatour.com every 6 hours
 		// if someone was added, add them to contest and player DB
-		if((hour%6)== 0){
-			ContestMethods.updateGolfContestField();
-		}
+		
 	}
 	
 	@SuppressWarnings("unused")
@@ -99,7 +106,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 		PurgePasswordResetTable();
 		TriggerBuildLobby();
 		BackfillReferrerKeys();
-		ContestMethods.createGolfContests();
 		
 		if (Server.dev_server)
 		{

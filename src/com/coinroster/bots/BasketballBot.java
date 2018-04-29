@@ -89,7 +89,7 @@ public class BasketballBot extends Utils {
 		fields.put("category", "FANTASYSPORTS");
 		fields.put("sub_category", "BASKETBALL");
 		fields.put("contest_type", "PARI-MUTUEL");
-		fields.put("progressive", "");
+		fields.put("progressive", "MOSTBUCKETS");
 		String title = "Most Points Scored in NBA Tonight | " + date;
 		fields.put("title", title);
 		fields.put("description", "Place your bet on who you will think will score the most points today!");
@@ -271,7 +271,6 @@ public class BasketballBot extends Utils {
 				save_player.setString(8, player.getBio().toString());
 				save_player.executeUpdate();	
 			}
-			
 			log("added " + sport + " players to DB");
 		}
 		catch (Exception e) {

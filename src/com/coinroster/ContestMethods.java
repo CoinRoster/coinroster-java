@@ -285,27 +285,27 @@ public class ContestMethods extends Utils{
 			Long deadline = golfBot.getDeadline();
 
 			//create Pari-Mutuel contest for most points
-//			Calendar cal = Calendar.getInstance();
-//			for(int round = 1; round <=4; round++){
-//				cal.setTimeInMillis(deadline);
-//				cal.add(Calendar.DATE, round-1);
-//				long round_deadline = cal.getTimeInMillis();
-//				JSONObject pari_mutuel_data = golfBot.createPariMutuel(round_deadline, String.valueOf(round));
-//	            MethodInstance pari_method = new MethodInstance();
-//				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//				pari_method.input = pari_mutuel_data;
-//				pari_method.output = pari_output;
-//				pari_method.session = null;
-//				pari_method.sql_connection = sql_connection;
-//				try{
-//					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//					c.newInstance(pari_method);
-//				}
-//				catch(Exception e){
-//					log(pari_method.output.toString());
-//					e.printStackTrace();
-//				}	
-//			}
+			Calendar cal = Calendar.getInstance();
+			for(int round = 1; round <=4; round++){
+				cal.setTimeInMillis(deadline);
+				cal.add(Calendar.DATE, round-1);
+				long round_deadline = cal.getTimeInMillis();
+				JSONObject pari_mutuel_data = golfBot.createPariMutuel(round_deadline, String.valueOf(round));
+	            MethodInstance pari_method = new MethodInstance();
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_mutuel_data;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					log(pari_method.output.toString());
+					e.printStackTrace();
+				}	
+			}
 
 			// read text file to create roster contests
 			String fileName = Server.java_path + "GolfContests.txt";
@@ -437,7 +437,9 @@ public class ContestMethods extends Utils{
 		try {
 			sql_connection = Server.sql_connection();
 			GolfBot golfBot = new GolfBot(sql_connection);
-			golfBot.appendLateAdditions();
+			boolean new_players = golfBot.appendLateAdditions();
+			if(!new_players)
+				log("no new golfers added to field");
 		}
 		catch (Exception e) {
 			Server.exception(e);
@@ -472,7 +474,7 @@ public class ContestMethods extends Utils{
 				boolean finished = golfBot.scrapeScores(tourneyID);
 				
 				//check to see if Pari-Mutuels are ready to be settled
-//				golfBot.checkPariMutuelStatus(pari_contest_ids);
+				golfBot.checkPariMutuelStatus(pari_contest_ids);
 			
 				for(Integer contest_id : roster_contest_ids ){
 
