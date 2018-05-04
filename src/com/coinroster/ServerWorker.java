@@ -31,6 +31,7 @@ public class ServerWorker extends Utils implements Callable<Integer>
 					{
 					case "api":
 						{
+						log(request.toString());
 						new MethodCall(request, response);
 						break;
 						}

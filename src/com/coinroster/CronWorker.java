@@ -67,12 +67,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 		if (!Server.dev_server && (minute % 5)==0) UpdateBTCUSD();
 	
 		if((minute%20)==0){
-			//see if ANY basketball contests are in play (status=2)
+			//see if ANY contests are in play (status=2)
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
 		}
 		if((hour%6==0) && (minute==30)){
-			log("checking to see if golfers have been added to field");
 			ContestMethods.updateGolfContestField();
 		}
 	}

@@ -154,9 +154,7 @@ public class CreateContest extends Utils
 	            switch (settlement_type)
 	            	{
 	            	case "HEADS-UP":
-	            		
-	            		System.out.println("inside headsup in createcontest");
-	            		
+	            		            		
 	            		if (min_users != 2 || max_users != 2)
 	            			{
 	            			output.put("error", "Invalid value(s) for number of users");
