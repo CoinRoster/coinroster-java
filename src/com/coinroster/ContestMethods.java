@@ -31,6 +31,7 @@ public class ContestMethods extends Utils{
 		
 		try {
 			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
 			BasketballBot ball_bot = new BasketballBot(sql_connection);
 			ball_bot.scrapeGameIDs();
 			if(ball_bot.getGameIDs() == null)
@@ -120,7 +121,7 @@ public class ContestMethods extends Utils{
 		            fields.put("registration_deadline", deadline);
 		            fields.put("odds_source", odds_source);
 		            
-		            ResultSet playerIDs = BasketballBot.getAllPlayerIDs();
+		            ResultSet playerIDs = db.getAllPlayerIDs(ball_bot.sport);
 		            JSONArray option_table = new JSONArray();
 					while(playerIDs.next()){
 						PreparedStatement get_player = sql_connection.prepareStatement("select name, team_abr, salary from player where id = ?");
@@ -191,7 +192,7 @@ public class ContestMethods extends Utils{
 			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
 				BasketballBot ball_bot = new BasketballBot(sql_connection);
 				log("Contest is in play and minute is multiple of 20");
-				ArrayList<String> gameIDs = ball_bot.getAllGameIDsDB();
+				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(ball_bot.sport);
 				boolean games_ended;
 				games_ended = ball_bot.scrape(gameIDs);
 				for(Integer contest_id : roster_contest_ids ){
@@ -276,6 +277,7 @@ public class ContestMethods extends Utils{
 		try {
 			sql_connection = Server.sql_connection();
 			GolfBot golfBot = new GolfBot(sql_connection);
+			DB db = new DB(sql_connection);
 			golfBot.scrapeTourneyID();
 			if(golfBot.getTourneyID() == null)
 				return;
@@ -370,7 +372,7 @@ public class ContestMethods extends Utils{
 		            fields.put("odds_source", odds_source);
 		            fields.put("tourneyID", golfBot.getTourneyID());
 		            
-		            ResultSet playerIDs = golfBot.getAllPlayerIDs();
+		            ResultSet playerIDs = db.getAllPlayerIDs(golfBot.sport);
 		            JSONArray option_table = new JSONArray();
 					while(playerIDs.next()){
 						PreparedStatement get_player = sql_connection.prepareStatement("select name, salary from player where id = ?");

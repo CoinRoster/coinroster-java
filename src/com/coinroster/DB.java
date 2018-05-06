@@ -1106,5 +1106,64 @@ public class DB
 		}
 //------------------------------------------------------------------------------------
 
+	public ArrayList<String> getAllGameIDsDB(String sport) throws SQLException{
+		ResultSet result_set = null;
+		ArrayList<String> gameIDs = new ArrayList<String>();
+		try {
+			PreparedStatement get_games = sql_connection.prepareStatement("select distinct gameID from player where sport_type=?");
+			get_games.setString(1, sport);
+			result_set = get_games.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		while(result_set.next()){
+			gameIDs.add(result_set.getString(1));	
+		}
+		return gameIDs;
 	}
+	
+//------------------------------------------------------------------------------------
+
+	public ResultSet getAllPlayerIDs(String sport){
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
+			get_players.setString(1, sport);
+			result_set = get_players.executeQuery();
+			
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return result_set;
+	}
+	
+//------------------------------------------------------------------------------------
+	
+	public ResultSet getPlayerScores(String sport) throws SQLException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, points from player where sport_type=?");
+			get_players.setString(1, sport);
+			result_set = get_players.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return result_set;
+	}
+
+//------------------------------------------------------------------------------------
+
+	public void editPoints(double pts, int id, String sport) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ? and sport_type = ?");
+		update_points.setDouble(1, pts);
+		update_points.setInt(2, id);
+		update_points.setString(3, sport);
+		update_points.executeUpdate();
+	}
+	
+}
 
