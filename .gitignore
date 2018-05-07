@@ -1,4 +1,3 @@
-
 # Created by https://www.gitignore.io/api/macos,eclipse,intellij
 
 ### Eclipse ###
@@ -57,7 +56,6 @@ local.properties
 # Eclipse Core		
 
 # JDT-specific (Eclipse Java Development Tools)		
-.classpath
 
 # Annotation Processing
 .apt_generated
