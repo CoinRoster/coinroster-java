@@ -220,7 +220,7 @@ public class BasketballBot extends Utils {
 				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setInt(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
-				save_player.setString(3, sport);
+				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
 				save_player.setString(5, player.getTeam());
 				save_player.setDouble(6, player.getSalary());
@@ -228,7 +228,7 @@ public class BasketballBot extends Utils {
 				save_player.setString(8, player.getBio().toString());
 				save_player.executeUpdate();	
 			}
-			log("added " + sport + " players to DB");
+			log("added " + this.sport + " players to DB");
 		}
 		catch (Exception e) {
 			Server.exception(e);
