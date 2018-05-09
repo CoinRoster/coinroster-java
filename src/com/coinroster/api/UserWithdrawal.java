@@ -154,7 +154,11 @@ public class UserWithdrawal extends Utils
 					result = call.get_result(),
 					error = call.get_error();
 					
-					if (result != null) log(result);
+					if (result != null)
+						{
+						log(result);
+						success = true;
+						}
 					if (error != null)
 						{
 						JSONObject cash_register = db.select_user("username", "internal_cash_register");
@@ -174,11 +178,10 @@ public class UserWithdrawal extends Utils
 						Server.send_mail(cash_register_email_address, cash_register_admin, subject, message_body);
 						
 						log("Message sent to cash register admin");
+						success = false;
 						}
 
 					// end CallCGS ------------------------------------------------------------------------
-					
-					success = true;
 					}
 				}
 			catch (Exception e)
@@ -247,6 +250,10 @@ public class UserWithdrawal extends Utils
 				new UserMail(user, subject, message_body);
 				
 			    output.put("status", "1");
+				}
+			else
+				{
+				output.put("error", "We cannot process this transaction automatically. An admin has been notified and will get back to you shortly.");
 				}
 						
 //------------------------------------------------------------------------------------
