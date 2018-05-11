@@ -464,6 +464,7 @@ public class ContestMethods extends Utils{
 		try {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
+			log(sql_connection.isValid(5));
 			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "GOLF", "ROSTER");
 			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("GOLF", "PARI-MUTUEL");
 

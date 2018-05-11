@@ -33,6 +33,7 @@ public class CronThread extends Thread
 			}
 		catch (TimeoutException e) // only fires if CronWorker hasn't yet returned
 			{
+			Utils.log(task.toString());
 			task.cancel(true); // interrupt CronWorker task
 			
 			Utils.log("--- TASK TIMEOUT ------------------------------------------------");

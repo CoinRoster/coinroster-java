@@ -340,7 +340,6 @@ public class GolfBot extends Utils {
 				}
 			}
 			if(!in_leaderboard){
-				log("couldn't find score in leaderboard for player with id" + id );
 				score = -777;
 				editPoints(score, sql_connection, id);	
 			}

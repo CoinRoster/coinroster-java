@@ -63,6 +63,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	@SuppressWarnings("unused")
 	private void minute() throws Exception
 	{ 
+		log("minute cron being called!");
 		SessionExpiry();
 		if (!Server.dev_server && (minute % 5)==0) UpdateBTCUSD();
 	
@@ -142,6 +143,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	private void SessionExpiry()
 		{
 		try {
+			log("inside SessionExpiry!");
 			for (Entry<String, String[]> entry : Server.session_map.entrySet()) 
 				{
 				String session_token = entry.getKey();
