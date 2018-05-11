@@ -253,6 +253,7 @@ public class UserWithdrawal extends Utils
 				}
 			else
 				{
+				log("Insufficient balance in cash register");
 				output.put("error", "We cannot process this transaction automatically. An admin has been notified and will get back to you shortly.");
 				}
 						
