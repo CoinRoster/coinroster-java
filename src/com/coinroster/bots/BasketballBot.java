@@ -32,13 +32,15 @@ public class BasketballBot extends Utils {
 	protected ArrayList<String> game_IDs;
 	private Map<Integer, Player> players_list;
 	private long earliest_game;
-	private String sport = "BASKETBALL";
-
+	public String sport = "BASKETBALL";
+	private DB db;
 	private static Connection sql_connection = null;
 	
 	// constructor
 	public BasketballBot(Connection sql_connection) throws IOException, JSONException{
 		BasketballBot.sql_connection = sql_connection;
+		db = new DB(sql_connection);
+
 	}
 	// methods
 	public ArrayList<String> getGameIDs(){
@@ -132,10 +134,8 @@ public class BasketballBot extends Utils {
 	}
 	
 	public JSONObject settlePariMutuel(int contest_id) throws Exception{
-		log("inside settlePariMutuel method");
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
-		DB db = new DB(sql_connection);
 		JSONObject contest = db.select_contest(contest_id);
 		JSONArray option_table = new JSONArray(contest.getString("option_table"));
 		int winning_outcome = 1;
@@ -203,51 +203,8 @@ public class BasketballBot extends Utils {
 		
 		return fields;
 	}
-	public static ResultSet getAllPlayerIDs(){
-		ResultSet result_set = null;
-		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
-			get_players.setString(1, "BASKETBALL");
-			result_set = get_players.executeQuery();
-			
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		
-		return result_set;
-	}
 	
-	public ResultSet getPlayerScores() throws SQLException{
-		ResultSet result_set = null;
-		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, points from player where sport_type=?");
-			get_players.setString(1, this.sport);
-			result_set = get_players.executeQuery();		
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		return result_set;
-	}
-	
-	public ArrayList<String> getAllGameIDsDB() throws SQLException{
-		ResultSet result_set = null;
-		ArrayList<String> gameIDs = new ArrayList<String>();
-		try {
-			PreparedStatement get_games = sql_connection.prepareStatement("select distinct gameID from player where sport_type=?");
-			get_games.setString(1, this.sport);
-			result_set = get_games.executeQuery();		
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		while(result_set.next()){
-			gameIDs.add(result_set.getString(1));	
-		}
-		return gameIDs;
-	}
-	
+
 	public void savePlayers(){
 		try {
 			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
@@ -263,7 +220,7 @@ public class BasketballBot extends Utils {
 				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setInt(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
-				save_player.setString(3, sport);
+				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
 				save_player.setString(5, player.getTeam());
 				save_player.setDouble(6, player.getSalary());
@@ -271,19 +228,19 @@ public class BasketballBot extends Utils {
 				save_player.setString(8, player.getBio().toString());
 				save_player.executeUpdate();	
 			}
-			log("added " + sport + " players to DB");
+			log("added " + this.sport + " players to DB");
 		}
 		catch (Exception e) {
 			Server.exception(e);
 		}
 	}
-
 	
 	public JSONObject updateScores(int contest_id) throws SQLException, JSONException{
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
 		fields.put("normalization_scheme", "INTEGER");
-		ResultSet playerScores = this.getPlayerScores();
+		
+		ResultSet playerScores = db.getPlayerScores(this.sport);
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
@@ -299,14 +256,7 @@ public class BasketballBot extends Utils {
 		return fields;
 	}
 	
-	public static void editPoints(double pts, Connection sql_connection, int id) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ?");
-		update_points.setDouble(1, pts);
-		update_points.setInt(2, id);
-		update_points.executeUpdate();
-//		this.fantasy_points = pts;
 
-	}
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
 	public Map<Integer, Player> setup() throws IOException, JSONException, SQLException{
 		Map<Integer, Player> players = new HashMap<Integer,Player>();
@@ -380,7 +330,7 @@ public class BasketballBot extends Utils {
 									pts = 0.0;
 								}
 								// look up player in HashMap with ESPN_ID, update his points in DB
-								editPoints(pts, sql_connection, espn_ID);
+								db.editPoints(pts, espn_ID, this.sport);
 							}			
 						}			
 					}
