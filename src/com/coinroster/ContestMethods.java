@@ -191,13 +191,18 @@ public class ContestMethods extends Utils{
 
 			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
 				BasketballBot ball_bot = new BasketballBot(sql_connection);
-				log("Contest is in play and minute is multiple of 20");
+				log("Basketball contest is in play and minute is multiple of 20");
 				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(ball_bot.sport);
 				boolean games_ended;
 				games_ended = ball_bot.scrape(gameIDs);
+				JSONArray player_scores = ball_bot.updateScores();
+
 				for(Integer contest_id : roster_contest_ids ){
 					
-					JSONObject fields = ball_bot.updateScores(contest_id);
+					JSONObject fields = new JSONObject();
+					fields.put("contest_id", contest_id);
+					fields.put("normalization_scheme", "INTEGER");
+					fields.put("player_scores", player_scores);
 					
 					MethodInstance method = new MethodInstance();
 					JSONObject output = new JSONObject("{\"status\":\"0\"}");
@@ -215,10 +220,13 @@ public class ContestMethods extends Utils{
 					
 				}
 				if(games_ended){
-					log("games have ended");
+					log("Basketball games have ended");
 					for(Integer contest_id : roster_contest_ids){
 						
-						JSONObject fields = ball_bot.updateScores(contest_id);
+						JSONObject fields = new JSONObject();
+						fields.put("contest_id", contest_id);
+						fields.put("normalization_scheme", "INTEGER");
+						fields.put("player_scores", player_scores);
 						
 						MethodInstance method = new MethodInstance();
 						JSONObject output = new JSONObject("{\"status\":\"0\"}");
@@ -466,7 +474,7 @@ public class ContestMethods extends Utils{
 		try {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
-			log(sql_connection.isValid(5));
+			log("is sql valid?" + sql_connection.isValid(5));
 			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "GOLF", "ROSTER");
 			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("GOLF", "PARI-MUTUEL");
 
@@ -478,11 +486,15 @@ public class ContestMethods extends Utils{
 				
 				//check to see if Pari-Mutuels are ready to be settled
 				golfBot.checkPariMutuelStatus(pari_contest_ids);
-			
+				JSONArray player_map = golfBot.updateScoresDB();
+
 				for(Integer contest_id : roster_contest_ids ){
 
-					JSONObject fields = golfBot.updateScoresDB(contest_id);
-					
+					JSONObject fields = new JSONObject();
+					fields.put("contest_id", contest_id);
+					fields.put("normalization_scheme", "INTEGER-INVERT");
+					fields.put("player_scores", player_map);
+
 					MethodInstance method = new MethodInstance();
 					JSONObject output = new JSONObject("{\"status\":\"0\"}");
 					method.input = fields;
@@ -499,10 +511,13 @@ public class ContestMethods extends Utils{
 					
 				}
 				if(finished){
-					log("tournament has ended");
+					log("Golf tournament has ended");
 					for(Integer contest_id : roster_contest_ids){
 						
-						JSONObject fields = golfBot.updateScoresDB(contest_id);
+						JSONObject fields = new JSONObject();
+						fields.put("contest_id", contest_id);
+						fields.put("normalization_scheme", "INTEGER-INVERT");
+						fields.put("player_scores", player_map);
 						
 						MethodInstance method = new MethodInstance();
 						JSONObject output = new JSONObject("{\"status\":\"0\"}");

@@ -323,7 +323,7 @@ public class GolfBot extends Utils {
 		return finished;		
 	}
 	
-	public JSONObject updateScoresDB(int contest_id) throws SQLException, JSONException{
+	public JSONArray updateScoresDB() throws SQLException, JSONException{
 		
 		PreparedStatement worst_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points DESC limit 1");
 		worst_score.setString(1, "GOLF");
@@ -334,9 +334,7 @@ public class GolfBot extends Utils {
 		}
 		log("worst score in tournament: " + worstScore);
 		log("normalizing scores...");
-		JSONObject fields = new JSONObject();
-		fields.put("contest_id", contest_id);
-		fields.put("normalization_scheme", "INTEGER-INVERT");
+		
 		ResultSet playerScores = db.getPlayerScores(this.sport);
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
@@ -371,9 +369,7 @@ public class GolfBot extends Utils {
 				player_map.put(player);
 			}
 		}
-		
-		fields.put("player_scores", player_map);
-		return fields;	
+		return player_map;
 	}
 	
 	public int normalizeScore(int score, int worstScore){

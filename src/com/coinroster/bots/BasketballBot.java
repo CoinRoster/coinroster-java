@@ -235,10 +235,7 @@ public class BasketballBot extends Utils {
 		}
 	}
 	
-	public JSONObject updateScores(int contest_id) throws SQLException, JSONException{
-		JSONObject fields = new JSONObject();
-		fields.put("contest_id", contest_id);
-		fields.put("normalization_scheme", "INTEGER");
+	public JSONArray updateScores() throws SQLException, JSONException{
 		
 		ResultSet playerScores = db.getPlayerScores(this.sport);
 		JSONArray player_map = new JSONArray();
@@ -251,9 +248,7 @@ public class BasketballBot extends Utils {
 			player.put("score_normalized", points);
 			player_map.put(player);
 		}
-		
-		fields.put("player_scores", player_map);
-		return fields;
+		return player_map;
 	}
 	
 
