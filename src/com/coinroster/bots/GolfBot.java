@@ -30,11 +30,13 @@ public class GolfBot extends Utils {
 	private String tourneyID;
 	private String tourneyName;
 	private long startDate;
-	private String sport = "GOLF";
+	private DB db;
+	public String sport = "GOLF";
 	private static Connection sql_connection = null;
 	
 	public GolfBot(Connection sql_connection) throws IOException, JSONException{
 		GolfBot.sql_connection = sql_connection;
+		db = new DB(sql_connection);
 	}
 	
 	public Map<Integer, Player> getPlayerHashMap(){
@@ -93,7 +95,7 @@ public class GolfBot extends Utils {
 		}
 		
 		ArrayList<Integer> existing_ids = new ArrayList<Integer>();
-		ResultSet all_existing_players = this.getAllPlayerIDs();
+		ResultSet all_existing_players = db.getAllPlayerIDs(this.sport);
 		while(all_existing_players.next()){
 			existing_ids.add(all_existing_players.getInt(1));
 		}
@@ -102,6 +104,7 @@ public class GolfBot extends Utils {
 		String url = "https://statdata.pgatour.com/r/" + gameID + "/field.json";
 		JSONObject field = JsonReader.readJsonFromUrl(url);
 		JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
+		boolean player_table_updated = false;
 		
 		for(Map.Entry<Integer, JSONArray> entry : contest_players.entrySet()){
 			int contest_id = entry.getKey();
@@ -142,17 +145,21 @@ public class GolfBot extends Utils {
 						salary = 80.0;
 					}
 				
-					// add player to player table
-					PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
-					add_player.setInt(1, id);
-					add_player.setString(2, name_fl);
-					add_player.setString(3, this.sport);
-					add_player.setString(4, gameID);
-					add_player.setString(5, "n/a");
-					add_player.setDouble(6, salary);
-					add_player.setDouble(7, 0.0);
-					add_player.setString(8, "{}");
-					add_player.executeUpdate();
+					
+					if(!player_table_updated){
+						// add player to player table
+						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
+						add_player.setInt(1, id);
+						add_player.setString(2, name_fl);
+						add_player.setString(3, this.sport);
+						add_player.setString(4, gameID);
+						add_player.setString(5, "n/a");
+						add_player.setDouble(6, salary);
+						add_player.setDouble(7, 0.0);
+						add_player.setString(8, "{}");
+						add_player.executeUpdate();
+						player_table_updated = true;
+					}
 					
 					//create JSONObject to add to option table
 					JSONObject p = new JSONObject();
@@ -248,32 +255,6 @@ public class GolfBot extends Utils {
 		return players;
 	}
 	
-	public ResultSet getAllPlayerIDs(){
-		ResultSet result_set = null;
-		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
-			get_players.setString(1, "GOLF");
-			result_set = get_players.executeQuery();
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		return result_set;
-	}
-	
-	public ResultSet getPlayerScores() throws SQLException{
-		ResultSet result_set = null;
-		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, points from player where sport_type=?");
-			get_players.setString(1, this.sport);
-			result_set = get_players.executeQuery();		
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		return result_set;
-	}
-	
 	public void savePlayers(){
 		try {
 			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
@@ -311,7 +292,7 @@ public class GolfBot extends Utils {
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
-		ResultSet playerScores = this.getPlayerScores();
+		ResultSet playerScores = db.getPlayerScores(this.sport);
 		while(playerScores.next()){
 			int score;
 			boolean in_leaderboard = false;
@@ -335,20 +316,19 @@ public class GolfBot extends Utils {
 							score = -888;
 						}
 					}	
-					editPoints(score, sql_connection, player_id);
+					db.editPoints(score, player_id, this.sport);
 					break;
 				}
 			}
 			if(!in_leaderboard){
-				log("couldn't find score in leaderboard for player with id" + id );
 				score = -777;
-				editPoints(score, sql_connection, id);	
+				db.editPoints(score, id, this.sport);	
 			}
 		}
 		return finished;		
 	}
 	
-	public JSONObject updateScoresDB(int contest_id) throws SQLException, JSONException{
+	public JSONArray updateScoresDB() throws SQLException, JSONException{
 		
 		PreparedStatement worst_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points DESC limit 1");
 		worst_score.setString(1, "GOLF");
@@ -359,10 +339,8 @@ public class GolfBot extends Utils {
 		}
 		log("worst score in tournament: " + worstScore);
 		log("normalizing scores...");
-		JSONObject fields = new JSONObject();
-		fields.put("contest_id", contest_id);
-		fields.put("normalization_scheme", "INTEGER-INVERT");
-		ResultSet playerScores = this.getPlayerScores();
+		
+		ResultSet playerScores = db.getPlayerScores(this.sport);
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
@@ -396,21 +374,12 @@ public class GolfBot extends Utils {
 				player_map.put(player);
 			}
 		}
-		
-		fields.put("player_scores", player_map);
-		return fields;	
+		return player_map;
 	}
 	
 	public int normalizeScore(int score, int worstScore){
 		int normalizedScore = worstScore - score + 1;
 		return normalizedScore;
-	}
-	
-	public static void editPoints(double pts, Connection sql_connection, int id) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ?");
-		update_points.setDouble(1, pts);
-		update_points.setInt(2, id);
-		update_points.executeUpdate();
 	}
 	
 	public JSONObject createPariMutuel(Long deadline, String round) throws JSONException{

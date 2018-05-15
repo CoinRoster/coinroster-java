@@ -63,8 +63,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 	@SuppressWarnings("unused")
 	private void minute() throws Exception
 	{ 
-		SessionExpiry();
-		if (!Server.dev_server && (minute % 5)==0) UpdateBTCUSD();
+		
+		if (!Server.dev_server && (minute % 5)==0) {
+			SessionExpiry();
+			UpdateBTCUSD();
+		}
 	
 		if((minute%20)==0){
 			//see if ANY contests are in play (status=2)
@@ -93,8 +96,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.createGolfContests();
 		}
 		
-		// check golf tournament field on pgatour.com every 6 hours
-		// if someone was added, add them to contest and player DB
 		
 	}
 	
@@ -142,6 +143,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	private void SessionExpiry()
 		{
 		try {
+			log("inside SessionExpiry!");
 			for (Entry<String, String[]> entry : Server.session_map.entrySet()) 
 				{
 				String session_token = entry.getKey();
