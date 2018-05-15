@@ -111,6 +111,7 @@ public class CheckDeposit extends Utils
 					cgs_unconfirmed_amount = balance.getDouble("bitcoin_unc"),
 					cgs_current_balance = balance.getDouble("bitcoin_cnf");
 					
+					if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
 					if (cgs_current_balance == cgs_last_balance)
 						{
 						if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
