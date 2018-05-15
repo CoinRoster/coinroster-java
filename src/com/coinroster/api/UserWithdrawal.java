@@ -40,6 +40,7 @@ public class UserWithdrawal extends Utils
 //------------------------------------------------------------------------------------
 		
 			double withdrawal_amount = input.getDouble("amount_to_withdraw");
+			double miner_fee = input.getDouble("custom_miner_fee");
 			
 			if (withdrawal_amount <= 0)
 				{
@@ -147,6 +148,10 @@ public class UserWithdrawal extends Utils
 					rpc_method_params.put("fromAddress", cgs_address);
 					rpc_method_params.put("toAddress", ext_address);
 					rpc_method_params.put("type", "btc");
+					
+					if (miner_fee > 0.0) {
+						rpc_method_params.put("custom_fee", miner_fee);
+					}
 					
 					JSONObject amount = new JSONObject();
 					amount.put("satoshi", withdrawal_amount_string);
