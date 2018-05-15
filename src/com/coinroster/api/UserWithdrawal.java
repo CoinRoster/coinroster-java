@@ -67,7 +67,15 @@ public class UserWithdrawal extends Utils
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write"); // need control for miner_fee
 
-			JSONObject user = null;
+			JSONObject 
+			
+			user = null,
+			cash_register = db.select_user("username", "internal_cash_register");
+			
+			String 
+			
+			cash_register_email_address = cash_register.getString("email_address"),
+			cash_register_admin = "Cash Register Admin";
 			
 			boolean success = false;
 					
@@ -160,13 +168,7 @@ public class UserWithdrawal extends Utils
 						success = true;
 						}
 					if (error != null)
-						{
-						JSONObject cash_register = db.select_user("username", "internal_cash_register");
-						
-						String 
-						
-						cash_register_email_address = cash_register.getString("email_address"),
-						cash_register_admin = "Cash Register Admin";
+						{						
 						
 						String subject = "CGS Withdrawal Error!",
 						
@@ -225,7 +227,9 @@ public class UserWithdrawal extends Utils
 				calendar.setTimeInMillis(transaction_timestamp);
 				
 				String 
-	
+
+				subject_admin = "",
+				message_body_admin = "",
 				subject = "Withdrawal confirmation", 
 				
 				message_body = "Hi <b><!--USERNAME--></b>";
@@ -247,6 +251,24 @@ public class UserWithdrawal extends Utils
 				message_body += "<br/>";
 				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
 					
+				subject_admin = "Withdrawal confirmation";
+				
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Withdrawal deposited from cash register to user <b>" + session.username() + "</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Transaction ID: <b>" + transaction_id + "</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Amount sent: <b>" + format_btc(withdrawal_amount) + " BTC</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Amount remaining in the cash register: ";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+
+				Server.send_mail(cash_register_email_address, cash_register_admin, subject_admin, message_body_admin);
+				
 				new UserMail(user, subject, message_body);
 				
 			    output.put("status", "1");

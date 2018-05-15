@@ -120,7 +120,8 @@ public class CheckDeposit extends Utils
 					
 					if (cgs_current_balance < cgs_last_balance) // can this even happen?
 						{
-						output.put("error", "No new funds have been received and confirmed.");
+						if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
+						else output.put("error", "No new funds have been received and confirmed.");
 						break lock;
 						}
 					
