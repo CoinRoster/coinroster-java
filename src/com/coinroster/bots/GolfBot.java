@@ -104,6 +104,7 @@ public class GolfBot extends Utils {
 		String url = "https://statdata.pgatour.com/r/" + gameID + "/field.json";
 		JSONObject field = JsonReader.readJsonFromUrl(url);
 		JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
+		boolean player_table_updated = false;
 		
 		for(Map.Entry<Integer, JSONArray> entry : contest_players.entrySet()){
 			int contest_id = entry.getKey();
@@ -144,17 +145,21 @@ public class GolfBot extends Utils {
 						salary = 80.0;
 					}
 				
-					// add player to player table
-					PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
-					add_player.setInt(1, id);
-					add_player.setString(2, name_fl);
-					add_player.setString(3, this.sport);
-					add_player.setString(4, gameID);
-					add_player.setString(5, "n/a");
-					add_player.setDouble(6, salary);
-					add_player.setDouble(7, 0.0);
-					add_player.setString(8, "{}");
-					add_player.executeUpdate();
+					
+					if(!player_table_updated){
+						// add player to player table
+						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
+						add_player.setInt(1, id);
+						add_player.setString(2, name_fl);
+						add_player.setString(3, this.sport);
+						add_player.setString(4, gameID);
+						add_player.setString(5, "n/a");
+						add_player.setDouble(6, salary);
+						add_player.setDouble(7, 0.0);
+						add_player.setString(8, "{}");
+						add_player.executeUpdate();
+						player_table_updated = true;
+					}
 					
 					//create JSONObject to add to option table
 					JSONObject p = new JSONObject();
