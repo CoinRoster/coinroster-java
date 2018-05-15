@@ -53,7 +53,9 @@ public class CheckDeposit extends Utils
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write");
 
-			JSONObject user = null;
+			JSONObject 
+			user = null,
+			cash_register = db.select_user("username", "internal_cash_register");
 					
 			boolean 
 			
@@ -193,7 +195,12 @@ public class CheckDeposit extends Utils
 				String
 				
 				subject = "",
-				message_body = "";
+				message_body = "",
+				
+				cash_register_email_address = cash_register.getString("email_address"),
+				cash_register_admin = "Cash Register Admin",
+				subject_admin = "",
+				message_body_admin = "";
 				
 				if (deposit_bonus_activated)
 					{
@@ -229,6 +236,24 @@ public class CheckDeposit extends Utils
 					message_body += "<br/>";
 					message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
 					}
+				
+				subject_admin = "Deposit confirmation";
+				
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Deposit received from user <b>" + session.username() + "</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Transaction ID: <b>" + transaction_id + "</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Amount received: <b>" + format_btc(deposit_amount) + " BTC</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "The amount will be pushed to cold storage shortly.";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+
+				Server.send_mail(cash_register_email_address, cash_register_admin, subject_admin, message_body_admin);
 				
 				new UserMail(user, subject, message_body);
 				
