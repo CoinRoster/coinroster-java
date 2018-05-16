@@ -40,7 +40,7 @@ public class UserWithdrawal extends Utils
 //------------------------------------------------------------------------------------
 		
 			double withdrawal_amount = input.getDouble("amount_to_withdraw");
-			double miner_fee = input.getDouble("custom_miner_fee");
+			double miner_fee = (double) input.get("custom_miner_fee");
 			
 			if (withdrawal_amount <= 0)
 				{

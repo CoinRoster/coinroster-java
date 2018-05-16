@@ -622,7 +622,7 @@ public class Server extends Utils
 		
 		// if running on development server, redirect all email to developer:
 		
-		if (dev_server) to_address = developer_email_address;
+		//if (dev_server) to_address = developer_email_address;
 		
 		//if (dev_server) return;
 		
