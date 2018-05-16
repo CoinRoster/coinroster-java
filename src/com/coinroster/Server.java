@@ -133,7 +133,7 @@ public class Server extends Utils
 	
 	log_file_active = false,
 	live_server = false,
-	dev_server = true,
+	dev_server = false,
 	listening = true;
 
 	static HashSet<String> 
