@@ -44,7 +44,8 @@ public class UserWithdrawal extends Utils
 			withdrawal_amount = input.getDouble("amount_to_withdraw"),
 			miner_fee, 
 			final_miner_fee = 0.0,
-			withdrawal_fee = satoshi_to_btc(10);
+			withdrawal_fee = satoshi_to_btc(10),
+			total_amount = 0.0;
 			
 			output.put("withdrawal_fee", btc_to_satoshi(withdrawal_fee));
 
@@ -109,14 +110,18 @@ public class UserWithdrawal extends Utils
 						break lock;
 						}
 
-					JSONObject btc_liability = db.select_user("id", btc_liability_id);
+					JSONObject 
+					
+					btc_liability = db.select_user("id", btc_liability_id),
+					btc_withdrawal = db.select_user("id", btc_withdrawal_id);
 					
 					// get account balances:
 				  
 					double
 					
 					btc_liability_balance = btc_liability.getDouble("btc_balance"),
-					user_btc_balance = user.getDouble("btc_balance");
+					user_btc_balance = user.getDouble("btc_balance"),
+					btc_withdrawal_balance = btc_withdrawal.getDouble("btc_balance");
 					
 					// withdrawal-specific logic:
 					
@@ -125,18 +130,6 @@ public class UserWithdrawal extends Utils
 						output.put("error", "Insufficient funds");
 						break lock;
 						}
-	
-					// deduct withdrawal amount from user:
-					
-					Double new_btc_balance = subtract(user_btc_balance, withdrawal_amount, 0);
-			
-					db.update_btc_balance(user_id, new_btc_balance);
-						
-					// add withdrawal amount to internal_btc_liability (decreases liability):
-					
-					Double new_btc_liability_balance = add(btc_liability_balance, withdrawal_amount, 0);
-					
-					db.update_btc_balance(btc_liability_id, new_btc_liability_balance);
 
 					/*double 
 					
@@ -189,6 +182,32 @@ public class UserWithdrawal extends Utils
 						{
 						log(result);
 						final_miner_fee = satoshi_to_btc(result.getDouble("fees"));
+						total_amount = withdrawal_amount + final_miner_fee + withdrawal_fee;
+						
+						
+						// deduct withdrawal amount from user:
+						
+						Double new_btc_balance = subtract(user_btc_balance, total_amount, 0);
+				
+						db.update_btc_balance(user_id, new_btc_balance);
+							
+						// add withdrawal amount to internal_btc_liability (decreases liability):
+						
+						Double new_btc_liability_balance = add(btc_liability_balance, total_amount, 0);
+						
+						db.update_btc_balance(btc_liability_id, new_btc_liability_balance);
+						
+						// deduct withdrawal amount from internal_btc_liability
+						Double new_btc_liability_balance_withdrawal = subtract(new_btc_liability_balance, withdrawal_fee, 0);
+						
+						db.update_btc_balance(btc_liability_id, new_btc_liability_balance_withdrawal);
+						
+						// add withdrawal fee to internal_btc_liability (decreases liability):
+						
+						Double new_btc_withdrawal_balance = add(btc_withdrawal_balance, withdrawal_fee, 0);
+						
+						db.update_btc_balance(btc_withdrawal_id, new_btc_withdrawal_balance);
+						
 						success = true;
 						}
 					if (error != null)
@@ -222,7 +241,7 @@ public class UserWithdrawal extends Utils
 			if (success)
 				{
 				Long transaction_timestamp = System.currentTimeMillis();
-				double total_amount = withdrawal_amount + final_miner_fee + withdrawal_fee;
+				//double total_amount = withdrawal_amount + final_miner_fee + withdrawal_fee;
 				
 				// User transaction, with miner fee and withdrawal fee
 				PreparedStatement user_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
