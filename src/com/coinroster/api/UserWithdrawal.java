@@ -45,7 +45,8 @@ public class UserWithdrawal extends Utils
 			miner_fee, 
 			final_miner_fee = 0.0,
 			withdrawal_fee = satoshi_to_btc(10),
-			total_amount = 0.0;
+			total_amount = 0.0,
+			cash_register_balance = 0.0;
 			
 			output.put("withdrawal_fee", btc_to_satoshi(withdrawal_fee));
 
@@ -183,6 +184,7 @@ public class UserWithdrawal extends Utils
 						log(result);
 						final_miner_fee = satoshi_to_btc(result.getDouble("fees"));
 						total_amount = withdrawal_amount + final_miner_fee + withdrawal_fee;
+						cash_register_balance = satoshi_to_btc(result.getDouble("cashRegisterBalance"));
 						
 						
 						// deduct withdrawal amount from user:
@@ -328,7 +330,7 @@ public class UserWithdrawal extends Utils
 				message_body_admin += "<br/>";
 				message_body_admin += "Internal withdrawal fee transaction ID: <b>" + internal_transaction_id + "</b>";
 				message_body_admin += "<br/>";
-				message_body_admin += "Amount remaining in the cash register: ";
+				message_body_admin += "Amount remaining in the cash register: <b>" + cash_register_balance + " BTC</b>";
 				message_body_admin += "<br/>";
 				message_body_admin += "<br/>";
 
