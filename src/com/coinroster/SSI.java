@@ -77,6 +77,7 @@ public class SSI extends Utils
 						rc_balance = user.getDouble("rc_balance"),
 						available_balance = add(btc_balance, rc_balance, 0),
 						miner_fee = db.get_miner_fee(),
+						withdrawal_fee = db.get_withdrawal_fee(),
 						first_deposit = user.getDouble("first_deposit"),
 						deposit_bonus_cap = user.getDouble("deposit_bonus_cap"),
 						deposit_bonus_available = Math.min(first_deposit, deposit_bonus_cap);
@@ -118,6 +119,7 @@ public class SSI extends Utils
 						session_properties.put("odds_format", user.getString("odds_format"));
 						session_properties.put("cgs_address", user.getString("cgs_address"));
 						session_properties.put("miner_fee", miner_fee);
+						session_properties.put("withdrawal_fee", withdrawal_fee);
 						session_properties.put("referral_link", Server.host + "/a/" + user.getString("referrer_key"));
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
