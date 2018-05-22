@@ -44,21 +44,17 @@ public class UserWithdrawal extends Utils
 			withdrawal_amount = input.getDouble("amount_to_withdraw"),
 			miner_fee, 
 			final_miner_fee = 0.0,
-			withdrawal_fee = satoshi_to_btc(10),
+			withdrawal_fee = btc_to_satoshi(db.get_withdrawal_fee()),
 			total_amount = 0.0,
 			cash_register_balance = 0.0;
-			
-			output.put("withdrawal_fee", btc_to_satoshi(withdrawal_fee));
 
 			try 
 				{
 				miner_fee = input.getDouble("custom_miner_fee");
-				log("Custom Miner Fee: " + miner_fee);
 				} 
 			catch (Exception E) 
 				{
 				miner_fee = 0.0;
-				log("Custom Miner Fee: " + miner_fee);
 				}
 			
 			if (withdrawal_amount <= 0)
