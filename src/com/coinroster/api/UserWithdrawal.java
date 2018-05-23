@@ -156,6 +156,7 @@ public class UserWithdrawal extends Utils
 					rpc_method_params.put("fromAddress", cgs_address);
 					rpc_method_params.put("toAddress", ext_address);
 					rpc_method_params.put("type", "btc");
+					rpc_method_params.put("user_balance", user_btc_balance);
 					
 					if (miner_fee > 0.0) {
 						rpc_method_params.put("custom_fee", f.format(btc_to_satoshi(miner_fee)));
