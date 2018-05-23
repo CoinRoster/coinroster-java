@@ -44,7 +44,7 @@ public class UserWithdrawal extends Utils
 			withdrawal_amount = input.getDouble("amount_to_withdraw"),
 			miner_fee, 
 			final_miner_fee = 0.0,
-			withdrawal_fee = btc_to_satoshi(db.get_withdrawal_fee()),
+			withdrawal_fee = db.get_withdrawal_fee(),
 			total_amount = 0.0,
 			cash_register_balance = 0.0;
 
