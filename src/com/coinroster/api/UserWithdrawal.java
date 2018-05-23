@@ -181,7 +181,7 @@ public class UserWithdrawal extends Utils
 						{
 						log(result);
 						final_miner_fee = satoshi_to_btc(result.getDouble("fees"));
-						total_amount = withdrawal_amount + final_miner_fee + withdrawal_fee;
+						total_amount = add(add(withdrawal_amount, final_miner_fee, 0), withdrawal_fee, 0);
 						cash_register_balance = satoshi_to_btc(result.getDouble("cashRegisterBalance"));
 						
 						
@@ -241,7 +241,6 @@ public class UserWithdrawal extends Utils
 			if (success)
 				{
 				Long transaction_timestamp = System.currentTimeMillis();
-				//double total_amount = withdrawal_amount + final_miner_fee + withdrawal_fee;
 				
 				// User transaction, with miner fee and withdrawal fee
 				PreparedStatement user_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
