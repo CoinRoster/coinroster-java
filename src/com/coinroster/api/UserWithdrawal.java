@@ -54,7 +54,7 @@ public class UserWithdrawal extends Utils
 				} 
 			catch (Exception E) 
 				{
-				miner_fee = 0.0;
+				miner_fee = db.get_miner_fee();
 				}
 			
 			if (withdrawal_amount <= 0)
@@ -119,11 +119,12 @@ public class UserWithdrawal extends Utils
 					btc_liability_balance = btc_liability.getDouble("btc_balance"),
 					user_btc_balance = user.getDouble("btc_balance"),
 					btc_withdrawal_balance = btc_withdrawal.getDouble("btc_balance");
+
 					
 					// withdrawal-specific logic:
 					
-					if (withdrawal_amount > user_btc_balance) 
-						{
+					if (add(withdrawal_amount, miner_fee, 0)> subtract(user_btc_balance, withdrawal_fee, 0)) 
+						{					
 						output.put("error", "Insufficient funds");
 						break lock;
 						}
