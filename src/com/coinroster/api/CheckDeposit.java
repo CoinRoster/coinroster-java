@@ -81,6 +81,7 @@ public class CheckDeposit extends Utils
 
 					rpc_method_params.put("address", cgs_address);
 					rpc_method_params.put("type", "btc");
+					rpc_method_params.put("user_balance", user.getDouble("btc_balance"));
 					
 					rpc_call.put("params", rpc_method_params);
 					
@@ -111,7 +112,7 @@ public class CheckDeposit extends Utils
 					cgs_unconfirmed_amount = balance.getDouble("bitcoin_unc"),
 					cgs_current_balance = balance.getDouble("bitcoin_cnf");
 					
-					if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
+					/*//if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
 					if (cgs_current_balance == cgs_last_balance)
 						{
 						if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
@@ -125,8 +126,23 @@ public class CheckDeposit extends Utils
 						else output.put("error", "No new funds have been received and confirmed.");
 						break lock;
 						}
-					
+						
 					deposit_amount = subtract(cgs_current_balance, cgs_last_balance, 0);
+					*/
+					// NEW STUFF, HIGHLY UNSTABLE-----------------------------------------------------------
+					if (cgs_current_balance == 0)
+						{
+						if (cgs_unconfirmed_amount != 0 && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
+							{
+							output.put("error", "There is an unconfirmed balance of " + Math.abs(subtract(cgs_unconfirmed_amount, cgs_last_balance, 0))+ " BTC. We will credit your account once this amount is confirmed.");
+							break lock;
+							}
+						else
+							{
+							output.put("error", "No new funds have been received and confirmed.");
+							break lock;
+							}
+						}			
 					
 					JSONObject liability_account = db.select_user("username", "internal_liability");
 					from_account = liability_account.getString("user_id");
@@ -140,22 +156,25 @@ public class CheckDeposit extends Utils
 	
 					// subtract received amount from internal_btc_liability:
 					
-					Double new_btc_liability_balance = subtract(btc_liability_balance, deposit_amount, 0);
+					Double new_btc_liability_balance = subtract(btc_liability_balance, cgs_current_balance, 0);
 					
 					db.update_btc_balance(from_account, new_btc_liability_balance);
 
 					// add received amount to user balance:
 					
-					double new_btc_balance = add(user_btc_balance, deposit_amount, 0);
+					double new_btc_balance = add(user_btc_balance, cgs_current_balance, 0);
 					
 					db.update_btc_balance(user_id, new_btc_balance);
 					db.update_cgs_balance(user_id, cgs_current_balance);
+					
+					// -------------------------------------------------------------------------------------
 			
 					// activate deposit bonus (if applicable)
 					
 					deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
 
 					success = true;
+					
 					}
 				}
 			catch (Exception e)

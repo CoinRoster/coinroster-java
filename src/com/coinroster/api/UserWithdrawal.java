@@ -123,7 +123,7 @@ public class UserWithdrawal extends Utils
 					
 					// withdrawal-specific logic:
 					
-					if (add(withdrawal_amount, miner_fee, 0)> subtract(user_btc_balance, withdrawal_fee, 0)) 
+					if (add(withdrawal_amount, miner_fee, 0) > subtract(user_btc_balance, withdrawal_fee, 0)) 
 						{					
 						output.put("error", "Insufficient funds");
 						break lock;
