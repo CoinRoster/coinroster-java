@@ -144,7 +144,7 @@ public class GolfBot extends Utils {
 					if(!checked){
 						salary = 80.0;
 					}
-				
+			
 					
 					if(!player_table_updated){
 						// add player to player table
