@@ -145,9 +145,9 @@ public class CheckDeposit extends Utils
 							break lock;
 							}
 						}			
-					
-					// if there is a confirmed amount, check if it is the same as the last z
-					if (add(cgs_current_balance, cgs_unconfirmed_amount, 0) == 0)
+
+
+					if (add(cgs_current_balance, cgs_unconfirmed_amount, 0) == 0 || cgs_current_balance == cgs_last_balance)
 						{
 						output.put("error", "No new funds have been received and confirmed.");
 						break lock;
