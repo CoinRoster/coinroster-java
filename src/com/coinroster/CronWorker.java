@@ -73,6 +73,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 			//see if ANY contests are in play (status=2)
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
+			ContestMethods.checkBaseballContests();
 		}
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField();
@@ -91,12 +92,12 @@ public class CronWorker extends Utils implements Callable<Integer>
 		
 		if(hour==7){
 			ContestMethods.createBasketballContests();
+			if(Server.dev_server)
+				ContestMethods.createBaseballContests();
 		}
 		if(hour==8){
 			ContestMethods.createGolfContests();
 		}
-		
-		
 	}
 	
 	@SuppressWarnings("unused")
