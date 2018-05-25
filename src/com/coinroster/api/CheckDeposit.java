@@ -130,24 +130,44 @@ public class CheckDeposit extends Utils
 					deposit_amount = subtract(cgs_current_balance, cgs_last_balance, 0);
 					*/
 					// NEW STUFF, HIGHLY UNSTABLE-----------------------------------------------------------
-					
 					// new invariant: cnf_balance is always expected to be 0
 					if (cgs_current_balance == 0)
 						{
 						if (cgs_unconfirmed_amount != 0) // && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
 							{
+							log("unconfirmed balance");
 							output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
 							break lock;
 							}
 						else
 							{
+							log("no pending tx");
 							output.put("error", "No new funds have been received and confirmed.");
 							break lock;
 							}
 						}			
+					
+					// if there is a confirmed amount, check for an unconfirmed amount as well
+					if (cgs_unconfirmed_amount != 0)
+						{
+						// if the sum of cnf and unc is 0, it's waiting to be pushed to cold storage
+						if (add(cgs_current_balance, cgs_unconfirmed_amount, 0) == 0)
+							{
+							log("waiting for cold storage");
+							output.put("error", "No new funds have been received and confirmed.");
+							break lock;
+							}
+						// there is a new deposit in addition to above case
+						else
+							{
+							log("unconfirmed amount in addition to cold storage tx");
+							output.put("error", "There is an unconfirmed balance of " + Math.abs(subtract(cgs_unconfirmed_amount, cgs_current_balance, 0)) + " BTC. We will credit your account once this amount is confirmed.");
+							break lock;
 
+							}
+						}
 
-					if (add(cgs_current_balance, cgs_unconfirmed_amount, 0) == 0 || cgs_current_balance == cgs_last_balance)
+					if (cgs_current_balance == cgs_last_balance)
 						{
 						output.put("error", "No new funds have been received and confirmed.");
 						break lock;
