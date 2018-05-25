@@ -16,8 +16,6 @@ import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.api.JsonReader;
-import com.coinroster.bots.BasketballBot.Player;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -78,7 +76,6 @@ public class BaseballBot extends Utils {
 				JSONArray links = events.getJSONObject(i).getJSONArray("links");
 				String href = links.getJSONObject(0).getString("href");
 				String gameID = href.split("=")[1].replace("&sourceLang", "");
-				System.out.println(gameID);
 				gameIDs.add(gameID.toString());
 			}
 			this.game_IDs = gameIDs;
@@ -226,7 +223,7 @@ public class BaseballBot extends Utils {
 				save_player.setString(5, player.getTeam());
 				save_player.setDouble(6, player.getSalary());
 				save_player.setDouble(7, player.getPoints());
-				save_player.setString(8, player.getBio().toString());
+				save_player.setString(8, "{}");
 				save_player.executeUpdate();	
 			}
 			log("added " + this.sport + " players to DB");
@@ -236,10 +233,7 @@ public class BaseballBot extends Utils {
 		}
 	}
 	
-	public JSONObject updateScores(int contest_id) throws SQLException, JSONException{
-		JSONObject fields = new JSONObject();
-		fields.put("contest_id", contest_id);
-		fields.put("normalization_scheme", "INTEGER");
+	public JSONArray updateScores() throws SQLException, JSONException{
 		
 		ResultSet playerScores = db.getPlayerScores(this.sport);
 		JSONArray player_map = new JSONArray();
@@ -252,9 +246,7 @@ public class BaseballBot extends Utils {
 			player.put("score_normalized", points);
 			player_map.put(player);
 		}
-		
-		fields.put("player_scores", player_map);
-		return fields;
+		return player_map;
 	}
 	
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
@@ -267,14 +259,13 @@ public class BaseballBot extends Utils {
 			}
 			for(int i=0; i < this.game_IDs.size(); i++){
 				// for each gameID, get the two teams playing
-				Document page = Jsoup.connect("http://www.espn.com/mlb/game?gameId="+"380523108").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+				Document page = Jsoup.connect("http://www.espn.com/mlb/game?gameId="+this.game_IDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 					      .referrer("http://www.google.com").timeout(6000).get();
 				Elements team_divs = page.getElementsByClass("team-info-wrapper");
 				// for each team, go to their stats page and scrape ppg
 				for(Element team : team_divs){
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
-					log(team_abr);
 					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/hits").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 						      .referrer("http://www.google.com").timeout(6000).get();
 					Element stats_table = team_stats_page.select("table.tablehead").first();
@@ -282,13 +273,14 @@ public class BaseballBot extends Utils {
 					for (Element row : rows){
 						if(row.className().contains("oddrow") || row.className().contains("evenrow")){
 							Elements cols = row.getElementsByTag("td");
-							String name = cols.get(1).select("a").text();
+							String name = cols.get(0).select("a").text();
 							String team_name = team_abr.toUpperCase();
 							int ESPN_id = Integer.parseInt(cols.get(0).select("a").attr("href").split("/")[7]);
 							double batting_avg = Double.parseDouble(cols.get(13).text());
-							double price = (batting_avg * 10000);
-							if(price < 800)
-								price = 800;
+							int at_bats = Integer.parseInt(cols.get(2).text());
+							double price = (batting_avg * 1000);
+							if(price < 80 || at_bats < 15)
+								price = 80;
 							// create a player object, save it to the hashmap
 							Player p = new Player(ESPN_id, name, team_name);
 							//p.scrape_info();
@@ -316,7 +308,6 @@ public class BaseballBot extends Utils {
 					Elements rows = table.getElementsByTag("tr");
 					try{
 						for (Element row : rows){
-							Elements spans = row.getElementsByClass("name").select("a").select("span");
 							String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
 							if(!espn_ID_url.isEmpty()){
 								int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);		

@@ -120,7 +120,7 @@ public class CreateContest extends Utils
 	            catch(Exception e){
 	            	tourneyID = "";
 	            }
-	            
+	            	            
 	            if (min_users < 2)
 	            	{
 	        		output.put("error", "Invalid value for [min users]");
@@ -176,7 +176,7 @@ public class CreateContest extends Utils
 	            			
 	            			int last_rank = 0;
 	            			double total_payout = 0;
-	            			
+	            				            			
 	            			for (int i=0; i<pay_table.length(); i++)
 	            				{
 	            				JSONObject line = pay_table.getJSONObject(i);
@@ -243,7 +243,7 @@ public class CreateContest extends Utils
 						
 						name = line.getString("name").trim();
 						//odds = line.getString("odds");
-						
+												
 						if (name.equals("") || name == null)
 							{
 							output.put("error", "Player table row " + (i+1) + ": no name entered");
@@ -260,11 +260,13 @@ public class CreateContest extends Utils
 						if (price == 0)
 							{
 							output.put("error", "Player table row " + (i+1) + ": invalid odds or price");
+							log(output.get("error").toString());
 		            		break method;
 							}
 						if (price > salary_cap)
 							{
 							output.put("error", "Player table row " + (i+1) + ": price cannot be greater than salary cap");
+							log(output.get("error").toString());
 		            		break method;
 							}
 
@@ -278,6 +280,7 @@ public class CreateContest extends Utils
 	    		catch (Exception e)
 	    			{
 	    			output.put("error", "Invalid player table");
+	    			log(output.get("error").toString());
 	        		break method;
 	    			}
 	

@@ -17,6 +17,7 @@ import java.util.Calendar;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.GolfBot;
 
@@ -549,7 +550,258 @@ public class ContestMethods extends Utils{
 			}
 		}
 	}	
-	
-//------------------------------------------------------------------------------------
+		
+	//------------------------------------------------------------------------------------
+
+	// create basketball contests reading from csv
+	public static void createBaseballContests() {
+		
+		Connection sql_connection = null;
+		
+		try {
+			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
+			BaseballBot baseball_bot = new BaseballBot(sql_connection);
+			baseball_bot.scrapeGameIDs();
+			if(baseball_bot.getGameIDs() == null)
+				return;
+			baseball_bot.setup();
+			baseball_bot.savePlayers();
+			
+			Long deadline = baseball_bot.getEarliestGame();
+            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
+
+            //create Pari-Mutuel contest for most points
+            JSONObject pari_mutuel_data = baseball_bot.createPariMutuel(deadline, date.toString());
+            MethodInstance pari_method = new MethodInstance();
+			JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+			pari_method.input = pari_mutuel_data;
+			pari_method.output = pari_output;
+			pari_method.session = null;
+			pari_method.sql_connection = sql_connection;
+			try{
+				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+				c.newInstance(pari_method);
+			}
+			catch(Exception e){
+				log(pari_method.output.toString());
+				e.printStackTrace();
+			}
+			
+			// read text file to create roster contests
+			String fileName = Server.java_path + "BaseballContests.txt";
+			String line = "";
+			String sep = ";";
+			
+			try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+				//skip the header
+				br.readLine();
+				while ((line = br.readLine()) != null) {
+					JSONObject fields = new JSONObject();
+					
+					String[] contest = line.split(sep);
+					
+					// parameters for contest
+					String category = "FANTASYSPORTS";		
+					String contest_type = "ROSTER";
+		            String settlement_type = contest[0];
+		            log("Settlement Type:" + settlement_type);
+					String progressive_code = "";
+					String title = contest[1] + " | " + date.toString(); 
+					String desc = contest[2];
+		            double rake = Double.parseDouble(contest[3]);
+		            double cost_per_entry = Double.parseDouble(contest[4]);
+		            int salary_cap = Integer.parseInt(contest[5]);
+		            int min_users = Integer.parseInt(contest[6]);
+		            int max_users = Integer.parseInt(contest[7]);
+		            int entries_per_user = Integer.parseInt(contest[8]);
+		            int roster_size = Integer.parseInt(contest[9]);
+		            String score_header = contest[10];
+		            String odds_source = "n/a";
+		            if(!settlement_type.equals("JACKPOT")){
+		            	JSONArray empty = new JSONArray();
+		            	fields.put("pay_table", empty);
+		            }
+		            else{
+			            String[] payouts_str = contest[11].split(",");
+			            double[] payouts = new double[payouts_str.length];
+			            for (int i = 0; i < payouts_str.length; i++) {
+			                payouts[i] = Double.parseDouble(payouts_str[i]);
+			            }
+			            JSONArray pay_table = new JSONArray();
+						for(int i=0; i < payouts.length; i++){
+							JSONObject entry = new JSONObject();
+							entry.put("payout", payouts[i]);
+							entry.put("rank", i+1);
+							pay_table.put(entry);
+						}
+						log(pay_table.toString());
+						fields.put("pay_table", pay_table);
+		            }
+		       
+		            fields.put("category", category);
+					fields.put("sub_category", "BASEBALL");
+					fields.put("contest_type", contest_type);
+					fields.put("progressive", progressive_code);
+		            fields.put("settlement_type", settlement_type);
+		            fields.put("title", title);
+		            fields.put("description", desc);
+		            fields.put("rake", rake);
+		            fields.put("cost_per_entry", cost_per_entry);
+		            fields.put("registration_deadline", deadline);
+		            fields.put("odds_source", odds_source);
+		            
+		            ResultSet playerIDs = db.getAllPlayerIDs(baseball_bot.sport);
+		            JSONArray option_table = new JSONArray();
+					while(playerIDs.next()){
+						PreparedStatement get_player = sql_connection.prepareStatement("select name, team_abr, salary from player where id = ?");
+						get_player.setInt(1, playerIDs.getInt(1));
+						ResultSet player_data = get_player.executeQuery();
+						if(player_data.next()){
+							JSONObject player = new JSONObject();
+							player.put("name", player_data.getString(1) + " " + player_data.getString(2));
+							player.put("price", player_data.getDouble(3));
+							player.put("count", 0);
+							player.put("id", playerIDs.getInt(1));
+							option_table.put(player);
+						}
+					}
+					
+					fields.put("option_table", option_table);
+					fields.put("salary_cap", salary_cap);
+					fields.put("min_users", min_users);		            
+					fields.put("max_users", max_users);		            
+					fields.put("entries_per_user", entries_per_user);
+					fields.put("roster_size", roster_size);	
+					fields.put("score_header", score_header);		            
+					
+					MethodInstance method = new MethodInstance();
+					JSONObject output = new JSONObject("{\"status\":\"0\"}");
+					method.input = fields;
+					method.output = output;
+					method.session = null;
+					method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+						c.newInstance(method);
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
+				}
+
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+				
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}	
+
+	// check to see if contests are in play, settle if necessary
+	public static void checkBaseballContests() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db_connection = new DB(sql_connection);
+			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASEBALL", "ROSTER");
+			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("BASEBALL", "PARI-MUTUEL");
+
+			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
+				BaseballBot baseball_bot = new BaseballBot(sql_connection);
+				log("Baseball contest is in play and minute is multiple of 20");
+				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
+				boolean games_ended;
+				games_ended = baseball_bot.scrape(gameIDs);
+				JSONArray player_scores = baseball_bot.updateScores();
+
+				for(Integer contest_id : roster_contest_ids ){
+					
+					JSONObject fields = new JSONObject();
+					fields.put("contest_id", contest_id);
+					fields.put("normalization_scheme", "INTEGER");
+					fields.put("player_scores", player_scores);
+					
+					MethodInstance method = new MethodInstance();
+					JSONObject output = new JSONObject("{\"status\":\"0\"}");
+					method.input = fields;
+					method.output = output;
+					method.session = null;
+					method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
+						c.newInstance(method);
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
+					
+				}
+				if(games_ended){
+					log("Baseball games have ended");
+					for(Integer contest_id : roster_contest_ids){
+						
+						JSONObject fields = new JSONObject();
+						fields.put("contest_id", contest_id);
+						fields.put("normalization_scheme", "INTEGER");
+						fields.put("player_scores", player_scores);
+						
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = fields;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+					}
+					
+					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
+					for(Integer id : pari_contest_ids){
+						JSONObject pari_fields = baseball_bot.settlePariMutuel(id);
+						MethodInstance pari_method = new MethodInstance();
+						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+						pari_method.input = pari_fields;
+						pari_method.output = pari_output;
+						pari_method.session = null;
+						pari_method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(pari_method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}		
+					}
+				}
+			}
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}	
 	
 }
