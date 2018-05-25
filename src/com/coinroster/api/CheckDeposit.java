@@ -130,11 +130,13 @@ public class CheckDeposit extends Utils
 					deposit_amount = subtract(cgs_current_balance, cgs_last_balance, 0);
 					*/
 					// NEW STUFF, HIGHLY UNSTABLE-----------------------------------------------------------
+					
+					// new invariant: cnf_balance is always expected to be 0
 					if (cgs_current_balance == 0)
 						{
-						if (cgs_unconfirmed_amount != 0 && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
+						if (cgs_unconfirmed_amount != 0) // && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
 							{
-							output.put("error", "There is an unconfirmed balance of " + Math.abs(subtract(cgs_unconfirmed_amount, cgs_last_balance, 0))+ " BTC. We will credit your account once this amount is confirmed.");
+							output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
 							break lock;
 							}
 						else
@@ -143,6 +145,13 @@ public class CheckDeposit extends Utils
 							break lock;
 							}
 						}			
+					
+					// if there is a confirmed amount, check if it is the same as the last z
+					if (add(cgs_current_balance, cgs_unconfirmed_amount, 0) == 0)
+						{
+						output.put("error", "No new funds have been received and confirmed.");
+						break lock;
+						}
 					
 					JSONObject liability_account = db.select_user("username", "internal_liability");
 					from_account = liability_account.getString("user_id");
@@ -170,7 +179,7 @@ public class CheckDeposit extends Utils
 					// -------------------------------------------------------------------------------------
 			
 					// activate deposit bonus (if applicable)
-					
+					deposit_amount = cgs_current_balance;
 					deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
 
 					success = true;
