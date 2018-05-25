@@ -161,7 +161,7 @@ public class CheckDeposit extends Utils
 						else
 							{
 							log("unconfirmed amount in addition to cold storage tx");
-							output.put("error", "There is an unconfirmed balance of " + Math.abs(subtract(cgs_unconfirmed_amount, cgs_current_balance, 0)) + " BTC. We will credit your account once this amount is confirmed.");
+							output.put("error", "There is an unconfirmed balance of " + Math.abs(add(cgs_unconfirmed_amount, cgs_current_balance, 0)) + " BTC. We will credit your account once this amount is confirmed.");
 							break lock;
 
 							}
