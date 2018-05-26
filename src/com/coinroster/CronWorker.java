@@ -70,6 +70,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 	
 		if((minute%20)==0){
+			
+			new CloseContestRegistration();
+			
 			//see if ANY contests are in play (status=2)
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
@@ -84,7 +87,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	@SuppressWarnings("unused")
 	private void hour() throws Exception
 	{
-		new CloseContestRegistration();
+		
 		new ExpirePromos();
 //		new CheckPendingWithdrawals();
 		//if (!Server.dev_server) UpdateCurrencies();
