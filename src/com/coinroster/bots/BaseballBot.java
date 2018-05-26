@@ -305,31 +305,32 @@ public class BaseballBot extends Utils {
 					      .referrer("http://www.google.com").timeout(6000).get();
 				Elements tables = page.getElementsByAttributeValue("data-type", "batting");
 				for (Element table : tables){
-					Elements rows = table.getElementsByTag("tr");
-					try{
-						for (Element row : rows){
-							String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
-							if(!espn_ID_url.isEmpty()){
-								int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);		
-								String points_string = row.getElementsByClass("batting-stats-h").text();
-								double pts;
-								// if player played, get their points
-								if(!points_string.isEmpty() && !points_string.contains("--")){
-									pts = Double.parseDouble(points_string);		
-								}
-								// if player did not play, set pts=0
-								else{
-									pts = 0.0;
-								}
-								// look up player in HashMap with ESPN_ID, update his points in DB
-								db.editPoints(pts, espn_ID, this.sport);
+					if(!table.hasClass("stats-wrap--pre")){
+						Elements rows = table.getElementsByTag("tr");
+						try{
+							for (Element row : rows){
+								String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
+								if(!espn_ID_url.isEmpty()){
+									int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);		
+									String points_string = row.getElementsByClass("batting-stats-h").text();
+									double pts;
+									// if player played, get their points
+									if(!points_string.isEmpty() && !points_string.contains("--")){
+										pts = Double.parseDouble(points_string);		
+									}
+									// if player did not play, set pts=0
+									else{
+										pts = 0.0;
+									}
+									// look up player in HashMap with ESPN_ID, update his points in DB
+									db.editPoints(pts, espn_ID, this.sport);
+								}			
 							}			
-						}			
+						}
+						catch (NullPointerException nullPointer){		
+						}	
 					}
-					catch (NullPointerException nullPointer){		
-					}		
 				}
-				
 	            //check to see if contest is finished - if all games are deemed final
 				String time_left = page.getElementsByClass("status-detail").first().text();
 				if(time_left.contains("Final") || time_left.contains("Postponed")){
