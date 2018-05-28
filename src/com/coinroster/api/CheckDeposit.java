@@ -81,7 +81,6 @@ public class CheckDeposit extends Utils
 
 					rpc_method_params.put("address", cgs_address);
 					rpc_method_params.put("type", "btc");
-					rpc_method_params.put("user_balance", user.getDouble("btc_balance"));
 					
 					rpc_call.put("params", rpc_method_params);
 					
@@ -129,6 +128,8 @@ public class CheckDeposit extends Utils
 						
 					deposit_amount = subtract(cgs_current_balance, cgs_last_balance, 0);
 					*/
+					
+
 					// NEW STUFF, HIGHLY UNSTABLE-----------------------------------------------------------
 					// new invariant: cnf_balance is always expected to be 0
 					if (cgs_current_balance == 0)
@@ -210,6 +211,37 @@ public class CheckDeposit extends Utils
 					deposit_amount = cgs_current_balance;
 					deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
 
+					// push deposited amount to cold storage
+					// CallCGS ----------------------------------------------------------------------------
+					
+					JSONObject rpc_call_cold_storage = new JSONObject();
+					
+					rpc_call_cold_storage.put("method", "pushToColdStorage");
+					
+					JSONObject rpc_method_params_cold_storage = new JSONObject();
+
+					rpc_method_params_cold_storage.put("address", cgs_address);
+					rpc_method_params_cold_storage.put("type", "btc");
+					
+					rpc_call_cold_storage.put("params", rpc_method_params);
+					
+					CallCGS call_cold_storage = new CallCGS(rpc_call_cold_storage);
+					
+					JSONObject 
+					
+					result_cold_storage = call_cold_storage.get_result();
+					
+					if (result_cold_storage != null) 
+						{
+						log("Successfully pushed deposit amount to cold storage" + result_cold_storage.toString());
+						}
+					else
+						{
+						log("Error pushing to cold storage" + call_cold_storage.get_error().toString());
+						break lock;
+						}
+
+					// end CallCGS ------------------------------------------------------------------------
 					success = true;
 					
 					}
