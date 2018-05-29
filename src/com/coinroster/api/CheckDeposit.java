@@ -110,31 +110,12 @@ public class CheckDeposit extends Utils
 					cgs_last_balance = user.getDouble("cgs_last_balance"),
 					cgs_unconfirmed_amount = balance.getDouble("bitcoin_unc"),
 					cgs_current_balance = balance.getDouble("bitcoin_cnf");
-					
-					/*//if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
-					if (cgs_current_balance == cgs_last_balance)
-						{
-						if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
-						else output.put("error", "No new funds have been received and confirmed.");
-						break lock;
-						}
-					
-					if (cgs_current_balance < cgs_last_balance) // can this even happen?
-						{
-						if (cgs_unconfirmed_amount > 0) output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
-						else output.put("error", "No new funds have been received and confirmed.");
-						break lock;
-						}
-						
-					deposit_amount = subtract(cgs_current_balance, cgs_last_balance, 0);
-					*/
-					
 
-					// NEW STUFF, HIGHLY UNSTABLE-----------------------------------------------------------
-					// new invariant: cnf_balance is always expected to be 0
+					// NEW STUFF -----------------------------------------------------------
+					// invariant: cnf_balance = final_balance, is always expected to be 0
 					if (cgs_current_balance == 0)
 						{
-						if (cgs_unconfirmed_amount != 0) // && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
+						if (cgs_unconfirmed_amount > 0) // && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
 							{
 							log("unconfirmed balance");
 							output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
@@ -176,11 +157,11 @@ public class CheckDeposit extends Utils
 							}
 						}	
 
-					if (cgs_current_balance == cgs_last_balance)
-						{
-						output.put("error", "No new funds have been received and confirmed.");
-						break lock;
-						}
+//					if (cgs_current_balance == cgs_last_balance)
+//						{
+//						output.put("error", "No new funds have been received and confirmed.");
+//						break lock;
+//						}
 					
 					JSONObject liability_account = db.select_user("username", "internal_liability");
 					from_account = liability_account.getString("user_id");
@@ -212,6 +193,7 @@ public class CheckDeposit extends Utils
 					deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
 
 					// push deposited amount to cold storage
+					
 					// CallCGS ----------------------------------------------------------------------------
 					
 					JSONObject rpc_call_cold_storage = new JSONObject();
