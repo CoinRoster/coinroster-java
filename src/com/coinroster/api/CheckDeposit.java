@@ -109,11 +109,12 @@ public class CheckDeposit extends Utils
 					
 					cgs_last_balance = user.getDouble("cgs_last_balance"),
 					cgs_unconfirmed_amount = balance.getDouble("bitcoin_unc"),
-					cgs_current_balance = balance.getDouble("bitcoin_cnf");
+					cgs_current_balance = balance.getDouble("bitcoin_cnf"),
+					cgs_final_balance = balance.getDouble("final_balance");
 
 					// NEW STUFF -----------------------------------------------------------
 					// invariant: cnf_balance = final_balance, is always expected to be 0
-					if (cgs_current_balance == 0)
+					if (cgs_current_balance == 0 || cgs_final_balance == 0)
 						{
 						if (cgs_unconfirmed_amount > 0) // && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
 							{
@@ -123,46 +124,19 @@ public class CheckDeposit extends Utils
 							}
 						else
 							{
+							if(add(cgs_unconfirmed_amount, cgs_last_balance, 0) != 0)
+								{
+								log("unconfirmed balance with push to cold storage");
+								output.put("error", "There is an unconfirmed balance of " + Math.abs(add(cgs_unconfirmed_amount, cgs_last_balance, 0)) + " BTC. We will credit your account once this amount is confirmed.");
+								break lock;
+								}
 							log("no pending tx");
 							output.put("error", "No new funds have been received and confirmed.");
 							break lock;
 							}
 						}			
-					
-					// if there is a confirmed amount, check for an unconfirmed amount as well
-					if (cgs_unconfirmed_amount != 0)
-						{
-						// if the sum of cnf and unc is 0, it's waiting to be pushed to cold storage
-						if (add(cgs_current_balance, cgs_unconfirmed_amount, 0) == 0)
-							{
-							log("waiting for cold storage");
-							output.put("error", "No new funds have been received and confirmed.");
-							break lock;
-							}
-						// there is a new deposit in addition to above case
-						else
-							{
-							if(cgs_unconfirmed_amount > 0)
-								{
-								log("positive unconfirmed amount");
-								output.put("error", "There is an unconfirmed balance of " + Math.abs(subtract(cgs_unconfirmed_amount, cgs_current_balance, 0)) + " BTC. We will credit your account once this amount is confirmed.");
-								break lock;
-								}
-							else
-								{
-								log("positive unconfirmed amount");
-								output.put("error", "There is an unconfirmed balance of " + Math.abs(add(cgs_unconfirmed_amount, cgs_current_balance, 0)) + " BTC. We will credit your account once this amount is confirmed.");
-								break lock;
-								}
-							}
-						}	
 
-//					if (cgs_current_balance == cgs_last_balance)
-//						{
-//						output.put("error", "No new funds have been received and confirmed.");
-//						break lock;
-//						}
-					
+					log("Processing deposit");
 					JSONObject liability_account = db.select_user("username", "internal_liability");
 					from_account = liability_account.getString("user_id");
 					
@@ -191,6 +165,7 @@ public class CheckDeposit extends Utils
 					// activate deposit bonus (if applicable)
 					deposit_amount = cgs_current_balance;
 					deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
+					success = true;
 
 					// push deposited amount to cold storage
 					
@@ -224,7 +199,7 @@ public class CheckDeposit extends Utils
 						}
 
 					// end CallCGS ------------------------------------------------------------------------
-					success = true;
+
 					
 					}
 				}
