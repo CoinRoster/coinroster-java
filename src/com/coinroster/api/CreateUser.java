@@ -46,7 +46,6 @@ public class CreateUser extends Utils
 				output.put("error", "Invalid credentials");
 				break method;
 				}
-			log("test1");
 			// some defaults for setting up an unverified user (unless they are successfully referred):
 
 			String
@@ -128,7 +127,6 @@ public class CreateUser extends Utils
 					else referral_program = referrer.getDouble("referral_offer");
 					}
 				}
-			log("test2");
 			// at this point we should have our referrer_id, referral_program, and promo object where applicable
 			
 			Statement statement = sql_connection.createStatement();
@@ -215,7 +213,6 @@ public class CreateUser extends Utils
 							break lock;
 							}
 						}
-					log("test3");
 					PreparedStatement create_user;
 	
 					if (referrer_id == null) create_user = sql_connection.prepareStatement("insert into user("
@@ -284,7 +281,6 @@ public class CreateUser extends Utils
 					create_user.setString(14, new_user_referrer_key);
 					
 					create_user.executeUpdate();
-					log("test4");
 					if (promo != null) // the promo object made it through validation
 						{
 						double free_play_amount = promo.getDouble("free_play_amount");
@@ -366,7 +362,6 @@ public class CreateUser extends Utils
 			if (success)
 				{
 				// send email to affiliate:
-				log("test5");
 				if (referrer_id != null) // either from referral record or promo code
 					{
 					String
@@ -414,7 +409,6 @@ public class CreateUser extends Utils
 					}
 				
 				// send email to unverified users:
-				log("test6");				
 				if (user_level == 3) // user must verify their email
 					{
 					if (promo == null) db.send_verification_email(username, email_address, email_ver_key); // standard verification email
