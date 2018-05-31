@@ -261,40 +261,42 @@ public class CheckDeposit extends Utils
 				subject_admin = "",
 				message_body_admin = "";
 				
-				if (deposit_bonus_activated)
-					{
-					subject = "Claim your Deposit Bonus!";
-					
-					message_body  = "Hi <b><!--USERNAME--></b>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "We have received your first deposit and have credited to your account.";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "Transaction ID: <b>" + transaction_id + "</b>";
-					message_body += "<br/>";
-					message_body += "Amount received: <b>" + format_btc(deposit_amount) + " BTC</b>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "<a href='" + Server.host + "/account/deposit_bonus.html'>Click here</a> to claim your deposit bonus!";
-					}
-				else
-					{
-					subject = "Deposit confirmation";
-					
-					message_body  = "Hi <b><!--USERNAME--></b>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "We have received your deposit and have credited to your account.";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "Transaction ID: <b>" + transaction_id + "</b>";
-					message_body += "<br/>";
-					message_body += "Amount received: <b>" + format_btc(deposit_amount) + " BTC</b>";
-					message_body += "<br/>";
-					message_body += "<br/>";
-					message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
-					}
+//				if (deposit_bonus_activated)
+//					{
+//					subject = "Claim your Deposit Bonus!";
+//					
+//					message_body  = "Hi <b><!--USERNAME--></b>";
+//					message_body += "<br/>";
+//					message_body += "<br/>";
+//					message_body += "We have received your first deposit and have credited to your account.";
+//					message_body += "<br/>";
+//					message_body += "<br/>";
+//					message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+//					message_body += "<br/>";
+//					message_body += "Amount received: <b>" + format_btc(deposit_amount) + " BTC</b>";
+//					message_body += "<br/>";
+//					message_body += "<br/>";
+//					message_body += "<a href='" + Server.host + "/account/deposit_bonus.html'>Click here</a> to claim your deposit bonus!";
+//					}
+//				else
+//					{
+				
+				subject = "Deposit confirmation";
+				
+				message_body  = "Hi <b><!--USERNAME--></b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "We have received your deposit and have credited to your account.";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Transaction ID: <b>" + transaction_id + "</b>";
+				message_body += "<br/>";
+				message_body += "Amount received: <b>" + format_btc(deposit_amount) + " BTC</b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "You may view your account <a href='" + Server.host + "/account/'>here</a>.";
+				
+//					}
 				
 				subject_admin = "Deposit confirmation";
 				

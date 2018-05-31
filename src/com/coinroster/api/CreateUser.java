@@ -193,7 +193,7 @@ public class CreateUser extends Utils
 						// get CGS address:
 
 						JSONObject rpc_call = new JSONObject();
-						
+						rpc_call.put("craccount", username);
 						rpc_call.put("method", "newAccount");
 						
 						JSONObject rpc_method_params = new JSONObject();
