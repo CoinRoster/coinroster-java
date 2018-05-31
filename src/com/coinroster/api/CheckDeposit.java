@@ -56,6 +56,12 @@ public class CheckDeposit extends Utils
 			JSONObject 
 			user = null,
 			cash_register = db.select_user("username", "internal_cash_register");
+	
+			String 
+			
+			cgs_address = null,
+			cash_register_email_address = cash_register.getString("email_address"),
+			cash_register_admin = "Cash Register Admin";
 					
 			boolean 
 			
@@ -69,7 +75,7 @@ public class CheckDeposit extends Utils
 				
 					user = db.select_user("id", user_id);
 					
-					String cgs_address = user.getString("cgs_address");
+					cgs_address = user.getString("cgs_address");
 					
 					// CallCGS ----------------------------------------------------------------------------
 					
@@ -136,37 +142,45 @@ public class CheckDeposit extends Utils
 							}
 						}			
 
-					log("Processing deposit");
-					JSONObject liability_account = db.select_user("username", "internal_liability");
-					from_account = liability_account.getString("user_id");
-					
-					// get account balances:
-				  
-					double
-					
-					btc_liability_balance = liability_account.getDouble("btc_balance"),
-					user_btc_balance = user.getDouble("btc_balance");
+					if(cgs_last_balance == 0) 
+						{
+						log("Processing deposit");
+						JSONObject liability_account = db.select_user("username", "internal_liability");
+						from_account = liability_account.getString("user_id");
+						
+						// get account balances:
+					  
+						double
+						
+						btc_liability_balance = liability_account.getDouble("btc_balance"),
+						user_btc_balance = user.getDouble("btc_balance");
+		
+						// subtract received amount from internal_btc_liability:
+						
+						Double new_btc_liability_balance = subtract(btc_liability_balance, cgs_current_balance, 0);
+						
+						db.update_btc_balance(from_account, new_btc_liability_balance);
 	
-					// subtract received amount from internal_btc_liability:
-					
-					Double new_btc_liability_balance = subtract(btc_liability_balance, cgs_current_balance, 0);
-					
-					db.update_btc_balance(from_account, new_btc_liability_balance);
+						// add received amount to user balance:
+						
+						double new_btc_balance = add(user_btc_balance, cgs_current_balance, 0);
+						
+						db.update_btc_balance(user_id, new_btc_balance);
+						db.update_cgs_balance(user_id, cgs_current_balance);
+						
+						// -------------------------------------------------------------------------------------
+				
+						// activate deposit bonus (if applicable)
+						deposit_amount = cgs_current_balance;
+						deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
+						success = true;
 
-					// add received amount to user balance:
+						} 
+					else
+						{
+						success = false;
+						}
 					
-					double new_btc_balance = add(user_btc_balance, cgs_current_balance, 0);
-					
-					db.update_btc_balance(user_id, new_btc_balance);
-					db.update_cgs_balance(user_id, cgs_current_balance);
-					
-					// -------------------------------------------------------------------------------------
-			
-					// activate deposit bonus (if applicable)
-					deposit_amount = cgs_current_balance;
-					deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
-					success = true;
-
 					// push deposited amount to cold storage
 					
 					// CallCGS ----------------------------------------------------------------------------
@@ -244,8 +258,6 @@ public class CheckDeposit extends Utils
 				subject = "",
 				message_body = "",
 				
-				cash_register_email_address = cash_register.getString("email_address"),
-				cash_register_admin = "Cash Register Admin",
 				subject_admin = "",
 				message_body_admin = "";
 				
@@ -306,6 +318,21 @@ public class CheckDeposit extends Utils
 				
 				output.put("deposit_amount", deposit_amount);
 				output.put("status", "1");
+				}
+			else if (!output.has("error"))
+				{
+				String subject = "CGS Deposit Error!",
+						
+				message_body = "An error was encountered in processing a deposit for: <b>" + session.username() + "</b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "User bitcoin address: <b>" + cgs_address + "<b>";
+				
+				Server.send_mail(cash_register_email_address, cash_register_admin, subject, message_body);
+				
+				log("Message sent to cash register admin");
+				output.put("status", 0);
+				output.put("error", "We cannot process this transaction automatically. An admin has been notified and will get back to you shortly.");
 				}
 			
 //------------------------------------------------------------------------------------
