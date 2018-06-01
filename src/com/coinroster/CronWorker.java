@@ -95,8 +95,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		
 		if(hour==7){
 			ContestMethods.createBasketballContests();
-			if(Server.dev_server)
-				ContestMethods.createBaseballContests();
+			ContestMethods.createBaseballContests();
 		}
 		if(hour==8){
 			ContestMethods.createGolfContests();
@@ -114,6 +113,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		if (Server.dev_server)
 		{
 			UpdateBTCUSD();
+			SessionExpiry();
 			//UpdateCurrencies();			
 		}
 	}
@@ -147,7 +147,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 	private void SessionExpiry()
 		{
 		try {
-			log("inside SessionExpiry!");
 			for (Entry<String, String[]> entry : Server.session_map.entrySet()) 
 				{
 				String session_token = entry.getKey();
