@@ -1105,6 +1105,24 @@ public class DB
 		return miner_fee;
 		}
 //------------------------------------------------------------------------------------
+	
+	public double get_withdrawal_fee() throws Exception
+		{
+		double withdrawal_fee = 0;
+	
+		PreparedStatement get_contest_prize_pool = sql_connection.prepareStatement("select value from control where name='withdrawal_fee'");
+		ResultSet result_set = get_contest_prize_pool.executeQuery();
+	
+		if (result_set.next()) withdrawal_fee = Double.parseDouble(result_set.getString(1));
+	
+		// convert satoshis to btc:
+		
+		withdrawal_fee = Utils.satoshi_to_btc(withdrawal_fee);
+		
+		return withdrawal_fee;
+		}
+
+//------------------------------------------------------------------------------------
 
 	public ArrayList<String> getAllGameIDsDB(String sport) throws SQLException{
 		ResultSet result_set = null;

@@ -68,4 +68,4 @@ public class AddEmailAddress extends Utils
 
 			} method.response.send(output);
 		}
-	}
+	} 

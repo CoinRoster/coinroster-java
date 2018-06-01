@@ -67,7 +67,7 @@ public class CallCGS extends Utils
 			JSONObject response_obj = new JSONObject(response.toString().trim());
 			
 			if (!response_obj.isNull("result")) result = response_obj.getJSONObject("result");	
-			if (!response_obj.isNull("error")) result = response_obj.getJSONObject("error");	
+			if (!response_obj.isNull("error")) error = response_obj.getJSONObject("error");	
 			}
 		catch (Exception e)
 			{

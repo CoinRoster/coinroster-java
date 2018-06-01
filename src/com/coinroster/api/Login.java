@@ -1,6 +1,8 @@
 package com.coinroster.api;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 
 import org.json.JSONObject;
 
@@ -9,6 +11,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.CallCGS;
 
 public class Login extends Utils
 	{
@@ -68,6 +71,65 @@ public class Login extends Utils
 				stored_password_hash = user.getString("stored_password_hash");
 				
 				int user_level = user.getInt("user_level");
+				
+				log("checking for cgs address" + user.getString("cgs_address") + "___");
+				
+				// Call CGS -----------------------------------------------------------------
+				if (user.getString("cgs_address") == null || user.getString("cgs_address").equals(""))
+					{
+					
+					
+					Statement statement = sql_connection.createStatement();
+					statement.execute("lock tables user write");
+					try {
+						lock: {
+							log("generating user cgs address");
+							JSONObject rpc_call = new JSONObject();
+							
+							rpc_call.put("method", "newAccount");
+							
+							JSONObject rpc_method_params = new JSONObject();
+		
+							rpc_method_params.put("craccount", user.getString("username"));
+							rpc_method_params.put("type", "btc");
+							
+							rpc_call.put("params", rpc_method_params);
+							
+							CallCGS call = new CallCGS(rpc_call);
+							
+							JSONObject 
+							
+							result = call.get_result();
+							
+							if (result != null) 
+								{
+								log(result.toString());
+								}
+							else
+								{
+								log(call.get_error().toString());
+								break lock;
+								}
+							String cgs_address = result.getString("account");
+							PreparedStatement update_user_cgs_address = sql_connection.prepareStatement("update user set cgs_address = ? where username = ?");
+							update_user_cgs_address.setString(1, cgs_address);
+							update_user_cgs_address.setString(2, user.getString("username"));
+							update_user_cgs_address.executeUpdate();
+							}
+						}
+					catch (Exception e)
+						{
+						log("ERROR CREATING CGS ADDRESS FOR" + session.username());
+						Server.exception(e);
+						}
+					finally
+						{
+						statement.execute("unlock tables");
+						}
+
+						// end CallCGS --------------------------------------------------------------
+						}
+				
 				
 				// if internal account, break method:
 				

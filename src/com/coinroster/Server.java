@@ -94,9 +94,12 @@ public class Server extends Utils
 	host_dev = "https://165.227.40.220",
 	host_live = "https://www.coinroster.com",
 	
-	developer_name = "Noah",
+	/*developer_name = "Noah",
 	developer_email_address = "noah@frontierweb.com",
-
+	*/
+	developer_name = "Gov",
+	developer_email_address = "govi218mu@gmail.com",
+	
 	cipher_name = "AES/CBC/PKCS5PADDING",
 	init_vector = "AAAAAAAAAAAAAAAA";
 
