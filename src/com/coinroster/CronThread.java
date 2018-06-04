@@ -35,9 +35,7 @@ public class CronThread extends Thread
 			{
 			task.cancel(true); // interrupt CronWorker task
 			Utils.log("--- TASK TIMEOUT ------------------------------------------------");
-			e.printStackTrace();
-		
-			// stack trace will get logged by Server.exception below
+			Utils.log(e.getStackTrace().toString());
 			}
 		catch (Exception e) 
 			{

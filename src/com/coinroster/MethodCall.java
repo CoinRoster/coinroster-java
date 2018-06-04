@@ -4,6 +4,8 @@ import java.lang.reflect.Constructor;
 import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MethodCall extends Utils
@@ -40,13 +42,19 @@ public class MethodCall extends Utils
 				
 				method.request = request;
 				method.response = response;
-				method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
-				method.output = output;
-				method.session = session;
-				method.sql_connection = sql_connection;
-
-				Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
-				c.newInstance(method);
+				try{
+					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
+					method.output = output;
+					method.session = session;
+					method.sql_connection = sql_connection;
+					Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
+					c.newInstance(method);
+				}
+				catch(JSONException e){
+					log(method.input.toString());
+					log(e.getStackTrace().toString());
+				}
+				
 				}
 			else 
 				{
@@ -62,7 +70,10 @@ public class MethodCall extends Utils
 			{
 			if (sql_connection != null)
 				{
-				try {sql_connection.close();} 
+				try {
+					sql_connection.close();
+					log("is sql connection closed? " + sql_connection.isClosed());
+				} 
 				catch (SQLException ignore) {}
 				}
 			}
