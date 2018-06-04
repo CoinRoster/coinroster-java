@@ -14,7 +14,7 @@ public class ServerThread extends Thread
     	{
         this.socket = socket;
     	}
-    
+
     public void run() 
     	{
     	FutureTask<Integer> task = null;
