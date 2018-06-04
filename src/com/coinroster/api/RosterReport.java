@@ -32,6 +32,7 @@ public class RosterReport extends Utils
 			
 //------------------------------------------------------------------------------------
 		
+			log("method details: " + method.input.toString());
 			int contest_id = input.getInt("contest_id");
 			
 			JSONObject contest = db.select_contest(contest_id);
