@@ -197,8 +197,9 @@ public class CreateUser extends Utils
 						rpc_call.put("method", "newAccount");
 						
 						JSONObject rpc_method_params = new JSONObject();
-						
+
 						rpc_method_params.put("type", "btc");
+						rpc_method_params.put("craccount", username);
 						
 						rpc_call.put("params", rpc_method_params);
 						
