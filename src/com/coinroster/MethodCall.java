@@ -44,17 +44,19 @@ public class MethodCall extends Utils
 				method.response = response;
 				try{
 					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
-					method.output = output;
-					method.session = session;
-					method.sql_connection = sql_connection;
-					Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
-					c.newInstance(method);
 				}
 				catch(JSONException e){
-					log(method.input.toString());
+					log("---------BAD PAYLOAD----------");
+					log(request.payload());
+					if(request.payload() == "")
+						method.input = new JSONObject(URLDecoder.decode("{}", "UTF-8"));
 					log(e.getStackTrace().toString());
 				}
-				
+				method.output = output;
+				method.session = session;
+				method.sql_connection = sql_connection;
+				Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
+				c.newInstance(method);
 				}
 			else 
 				{
@@ -72,7 +74,6 @@ public class MethodCall extends Utils
 				{
 				try {
 					sql_connection.close();
-					log("is sql connection closed? " + sql_connection.isClosed());
 				} 
 				catch (SQLException ignore) {}
 				}
