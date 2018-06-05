@@ -228,7 +228,7 @@ public class CheckDeposit extends Utils
 					
 					CallCGS call_new_account = new CallCGS(rpc_call_new_account);
 					
-					JSONObject result_new_account = call.get_result();
+					JSONObject result_new_account = call_new_account.get_result();
 					
 					if (result_new_account != null) new_cgs_address = result_new_account.getString("account");
 					else
