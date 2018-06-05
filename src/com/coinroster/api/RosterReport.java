@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
@@ -32,55 +33,62 @@ public class RosterReport extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			int contest_id = input.getInt("contest_id");
+			Utils.log("Method input: " + input.toString());
+			try{
+				int contest_id = input.getInt("contest_id");
 			
-			JSONObject contest = db.select_contest(contest_id);
 			
-			if (!contest.getString("contest_type").equals("ROSTER"))
-				{
-				output.put("error", "Contest #" + contest_id + " is not a roster contest.");
-				break method;
-				}
-		
-			if (contest.getInt("status") == 1)
-				{
-				output.put("error", "Contest #" + contest_id + " is still open for registration.");
-				break method;
-				}
+				JSONObject contest = db.select_contest(contest_id);
+				
+				if (!contest.getString("contest_type").equals("ROSTER"))
+					{
+					output.put("error", "Contest #" + contest_id + " is not a roster contest.");
+					break method;
+					}
+			
+				if (contest.getInt("status") == 1)
+					{
+					output.put("error", "Contest #" + contest_id + " is still open for registration.");
+					break method;
+					}
+						
+				JSONArray entry_report = new JSONArray();
+				
+				PreparedStatement select_entries = sql_connection.prepareStatement("select * from entry where contest_id = ? order by score desc, payout desc, id desc");
+				select_entries.setInt(1, contest_id);
+				ResultSet result_set = select_entries.executeQuery();
+				
+				while (result_set.next())
+					{
+					int id = result_set.getInt(1);
+					//int contest_id = result_set.getInt(2);
+					String user_id = result_set.getString(3);
+					Long created = result_set.getLong(4);
+					double amount = result_set.getDouble(5);
+					String entry_data = result_set.getString(6);
+					double score = result_set.getDouble(7);
+					double payout = result_set.getDouble(8);
 					
-			JSONArray entry_report = new JSONArray();
-			
-			PreparedStatement select_entries = sql_connection.prepareStatement("select * from entry where contest_id = ? order by score desc, payout desc, id desc");
-			select_entries.setInt(1, contest_id);
-			ResultSet result_set = select_entries.executeQuery();
-			
-			while (result_set.next())
-				{
-				int id = result_set.getInt(1);
-				//int contest_id = result_set.getInt(2);
-				String user_id = result_set.getString(3);
-				Long created = result_set.getLong(4);
-				double amount = result_set.getDouble(5);
-				String entry_data = result_set.getString(6);
-				double score = result_set.getDouble(7);
-				double payout = result_set.getDouble(8);
+					JSONObject entry = new JSONObject();
+					
+					entry.put("id", id);
+					entry.put("contest_id", contest_id);
+					entry.put("user", db.get_username_for_id(user_id));
+					entry.put("created", created);
+					entry.put("amount", amount);
+					entry.put("entry_data", entry_data);
+					entry.put("score", score);
+					entry.put("payout", payout);
+					
+					entry_report.put(entry);
+					}
 				
-				JSONObject entry = new JSONObject();
-				
-				entry.put("id", id);
-				entry.put("contest_id", contest_id);
-				entry.put("user", db.get_username_for_id(user_id));
-				entry.put("created", created);
-				entry.put("amount", amount);
-				entry.put("entry_data", entry_data);
-				entry.put("score", score);
-				entry.put("payout", payout);
-				
-				entry_report.put(entry);
-				}
-			
-			output.put("entry_report", entry_report);
-			output.put("status", "1");
+				output.put("entry_report", entry_report);
+				output.put("status", "1");
+			}
+			catch(JSONException e){
+				Utils.log(e.getStackTrace().toString());
+			}
 			
 //------------------------------------------------------------------------------------
 
