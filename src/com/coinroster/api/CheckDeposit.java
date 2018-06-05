@@ -224,7 +224,7 @@ public class CheckDeposit extends Utils
 					rpc_method_params_new_account.put("type", "btc");
 					rpc_method_params_new_account.put("craccount", user.getString("username"));
 					
-					rpc_call_new_account.put("params", rpc_method_params);
+					rpc_call_new_account.put("params", rpc_method_params_new_account);
 					
 					CallCGS call_new_account = new CallCGS(rpc_call_new_account);
 					
