@@ -733,6 +733,17 @@ public class DB
 		}
 
 //------------------------------------------------------------------------------------
+	// UPDATE CGS BALANCE
+	
+	public void update_cgs_address(String user_id, String new_cgs_address) throws Exception
+		{
+		PreparedStatement update_btc_balance = sql_connection.prepareStatement("update user set cgs_address = ? where id = ?");
+		update_btc_balance.setString(1, new_cgs_address);
+		update_btc_balance.setString(2, user_id);
+		update_btc_balance.executeUpdate();
+		}
+
+//------------------------------------------------------------------------------------
 	
 	// RESERVE AND RETURN CGS ADDRESS (CREATE USER)
 	

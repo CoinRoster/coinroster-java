@@ -60,6 +60,7 @@ public class CheckDeposit extends Utils
 			String 
 			
 			cgs_address = null,
+			new_cgs_address = null,
 			cash_register_email_address = cash_register.getString("email_address"),
 			cash_register_admin = "Cash Register Admin";
 					
@@ -211,10 +212,33 @@ public class CheckDeposit extends Utils
 						log("Error pushing to cold storage" + call_cold_storage.get_error().toString());
 						break lock;
 						}
+					
+					// ------------------call new account----------------------------------
+
+					JSONObject rpc_call_new_account = new JSONObject();
+
+					rpc_call_new_account.put("method", "newAccount");
+					
+					JSONObject rpc_method_params_new_account = new JSONObject();
+
+					rpc_method_params_new_account.put("type", "btc");
+					rpc_method_params_new_account.put("craccount", user.getString("username"));
+					
+					rpc_call_new_account.put("params", rpc_method_params);
+					
+					CallCGS call_new_account = new CallCGS(rpc_call_new_account);
+					
+					JSONObject result_new_account = call.get_result();
+					
+					if (result_new_account != null) new_cgs_address = result_new_account.getString("account");
+					else
+						{
+						output.put("error", "Could not generate bitcoin wallet. Please try again shortly.");
+						break lock;
+						}
 
 					// end CallCGS ------------------------------------------------------------------------
-
-					
+					db.update_cgs_address(user_id, new_cgs_address);
 					}
 				}
 			catch (Exception e)
