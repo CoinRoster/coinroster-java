@@ -1,6 +1,7 @@
 package com.coinroster;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
@@ -288,7 +289,8 @@ public class CronWorker extends Utils implements Callable<Integer>
 		    	{
 		    	Connection sql_connection = null;
 				try {
-			    	List<String> Bitfinex_BTCUSD_raw = Utils.get_page("https://api.bitfinex.com/v2/ticker/tBTCUSD");
+					List<String> Bitfinex_BTCUSD_raw;
+					Bitfinex_BTCUSD_raw = Utils.get_page("https://api.bitfinex.com/v2/ticker/tBTCUSD");
 			    	
 			    	// the first line is the entire array:
 			    	
@@ -315,6 +317,10 @@ public class CronWorker extends Utils implements Callable<Integer>
 					sql_connection = Server.sql_connection();
 					DB db = new DB(sql_connection);
 					db.update_fx("BTCUSD", Bitfinex_BTCUSD_last_price, "Bitfinex", "Bitcoin in US Dollar");
+					} 
+				catch (IOException e) 
+					{
+					log("couldn't access Bitfinex API - will try again later");
 					} 
 				catch (Exception e) 
 					{

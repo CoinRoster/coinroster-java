@@ -25,13 +25,12 @@ public class ServerThread extends Thread
 			task = new FutureTask<Integer>(worker);
 			
 		    Server.worker_pool.execute(task);
-		    
 		    task.get(30, TimeUnit.SECONDS);
 			}
 		catch (TimeoutException e) // only fires if ServerWorker hasn't yet returned
 			{
 			task.cancel(true); // interrupt ServerWorker task
-			Utils.log("--- TASK TIMEOUT ------------------------------------------------");
+			Utils.log("------------ TASK TIMEOUT -----------------------------------");
 			Utils.log(e.getStackTrace().toString());
 			// stack trace will get logged by Server.exception below
 			}
