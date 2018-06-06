@@ -116,14 +116,11 @@ public class CheckDeposit extends Utils
 					
 					cgs_last_balance = user.getDouble("cgs_last_balance"),
 					cgs_unconfirmed_amount = balance.getDouble("bitcoin_unc"),
-					cgs_current_balance = balance.getDouble("bitcoin_cnf"),
-					cgs_final_balance = balance.getDouble("final_balance");
+					cgs_current_balance = balance.getDouble("bitcoin_cnf");
 
-					// NEW STUFF -----------------------------------------------------------
-					// invariant: cnf_balance = final_balance, is always expected to be 0
-					if (cgs_current_balance == 0 || cgs_final_balance == 0)
+					if (cgs_current_balance == 0)
 						{
-						if (cgs_unconfirmed_amount > 0) // && (cgs_unconfirmed_amount + cgs_last_balance) != 0)
+						if (cgs_unconfirmed_amount > 0) 
 							{
 							log("unconfirmed balance");
 							output.put("error", "There is an unconfirmed balance of " + cgs_unconfirmed_amount + " BTC. We will credit your account once this amount is confirmed.");
@@ -131,57 +128,42 @@ public class CheckDeposit extends Utils
 							}
 						else
 							{
-							if(add(cgs_unconfirmed_amount, cgs_last_balance, 0) != 0)
-								{
-								log("unconfirmed balance with push to cold storage");
-								output.put("error", "There is an unconfirmed balance of " + Math.abs(add(cgs_unconfirmed_amount, cgs_last_balance, 0)) + " BTC. We will credit your account once this amount is confirmed.");
-								break lock;
-								}
 							log("no pending tx");
 							output.put("error", "No new funds have been received and confirmed.");
 							break lock;
 							}
 						}			
 
-					if(cgs_last_balance == 0) 
-						{
-						log("Processing deposit");
-						JSONObject liability_account = db.select_user("username", "internal_liability");
-						from_account = liability_account.getString("user_id");
-						
-						// get account balances:
-					  
-						double
-						
-						btc_liability_balance = liability_account.getDouble("btc_balance"),
-						user_btc_balance = user.getDouble("btc_balance");
-		
-						// subtract received amount from internal_btc_liability:
-						
-						Double new_btc_liability_balance = subtract(btc_liability_balance, cgs_current_balance, 0);
-						
-						db.update_btc_balance(from_account, new_btc_liability_balance);
-	
-						// add received amount to user balance:
-						
-						double new_btc_balance = add(user_btc_balance, cgs_current_balance, 0);
-						
-						db.update_btc_balance(user_id, new_btc_balance);
-						db.update_cgs_balance(user_id, cgs_current_balance);
-						
-						// -------------------------------------------------------------------------------------
-				
-						// activate deposit bonus (if applicable)
-						deposit_amount = cgs_current_balance;
-						deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
-						success = true;
-
-						} 
-					else
-						{
-						success = false;
-						}
+					log("Processing deposit");
+					JSONObject liability_account = db.select_user("username", "internal_liability");
+					from_account = liability_account.getString("user_id");
 					
+					// get account balances:
+				  
+					double
+					
+					btc_liability_balance = liability_account.getDouble("btc_balance"),
+					user_btc_balance = user.getDouble("btc_balance");
+	
+					// subtract received amount from internal_btc_liability:
+					
+					Double new_btc_liability_balance = subtract(btc_liability_balance, cgs_current_balance, 0);
+					
+					db.update_btc_balance(from_account, new_btc_liability_balance);
+
+					// add received amount to user balance:
+					
+					double new_btc_balance = add(user_btc_balance, cgs_current_balance, 0);
+					
+					db.update_btc_balance(user_id, new_btc_balance);
+					db.update_cgs_balance(user_id, cgs_current_balance);
+					
+			
+					// activate deposit bonus (if applicable)
+					deposit_amount = cgs_current_balance;
+					deposit_bonus_activated = db.enable_deposit_bonus(user, deposit_amount);
+					success = true;
+
 					// push deposited amount to cold storage
 					
 					// CallCGS ----------------------------------------------------------------------------
@@ -210,11 +192,10 @@ public class CheckDeposit extends Utils
 					else
 						{
 						log("Error pushing to cold storage" + call_cold_storage.get_error().toString());
-						break lock;
 						}
 					
-					// ------------------call new account----------------------------------
-
+					// ------------------call new account------------------
+					
 					JSONObject rpc_call_new_account = new JSONObject();
 
 					rpc_call_new_account.put("method", "newAccount");
