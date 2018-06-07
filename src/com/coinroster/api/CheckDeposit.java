@@ -237,7 +237,7 @@ public class CheckDeposit extends Utils
 				{
 				int 
 				
-				pending_flag = 1;
+				pending_flag = 0;
 				
 				PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 				new_transaction.setLong(1, transaction_timestamp);

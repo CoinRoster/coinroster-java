@@ -79,7 +79,7 @@ public class UserWithdrawal extends Utils
 			to_currency = "BTC",
 			memo = "CGS BTC withdrawal";
 			
-			int pending_flag = 1;
+			int pending_flag = 0;
 			
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write"); // need control for miner_fee
