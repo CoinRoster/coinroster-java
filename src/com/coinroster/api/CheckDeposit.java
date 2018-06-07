@@ -255,6 +255,7 @@ public class CheckDeposit extends Utils
 				ResultSet rs = new_transaction.getGeneratedKeys();
 			    rs.next();
 			    int transaction_id = rs.getInt(1);
+			    String network = (Server.isLive_server()?"":"testnet.");
 				
 				// communications
 				
@@ -316,6 +317,8 @@ public class CheckDeposit extends Utils
 				message_body_admin += "<br/>";
 				message_body_admin += "<br/>";
 				message_body_admin += "The amount will be pushed to cold storage shortly.";
+				message_body_admin += "<br/>";
+				message_body_admin += "<a href=\"https://" + network + "blockchain.info/address/" + user.getString("cgs_address")+ "\"> View on the explorer</a>";
 				message_body_admin += "<br/>";
 				message_body_admin += "<br/>";
 
