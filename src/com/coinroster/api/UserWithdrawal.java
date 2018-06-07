@@ -280,7 +280,7 @@ public class UserWithdrawal extends Utils
 				ResultSet internal_rs = internal_transaction.getGeneratedKeys();
 			    internal_rs.next();
 			    int internal_transaction_id = internal_rs.getInt(1);
-			    
+			    String network = (Server.isLive_server()?"":"testnet");
 			    // send withdrawal confirmation
 			  			
 				DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -328,6 +328,8 @@ public class UserWithdrawal extends Utils
 				message_body_admin += "Internal withdrawal fee transaction ID: <b>" + internal_transaction_id + "</b>";
 				message_body_admin += "<br/>";
 				message_body_admin += "Amount remaining in the cash register: <b>" + cash_register_balance + " BTC</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<a href=\"https://" + network + "blockchain.info/address/" + user.getString("cgs_address")+ "\"> View on the explorer</a>";
 				message_body_admin += "<br/>";
 				message_body_admin += "<br/>";
 

@@ -160,6 +160,11 @@ public class Server extends Utils
 	
 	private static ComboPooledDataSource sql_pool;
 
+	public static boolean isLive_server() 
+		{
+		return live_server;
+		}
+	
 	public static void kill_session(String session_token) 
 		{
 		session_map.remove(session_token);
