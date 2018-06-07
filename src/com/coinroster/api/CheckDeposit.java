@@ -255,7 +255,7 @@ public class CheckDeposit extends Utils
 				ResultSet rs = new_transaction.getGeneratedKeys();
 			    rs.next();
 			    int transaction_id = rs.getInt(1);
-			    String network = (Server.isLive_server()?"":"testnet");
+			    String network = (Server.isLive_server()?"":"testnet.");
 				
 				// communications
 				
