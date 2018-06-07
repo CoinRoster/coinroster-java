@@ -145,7 +145,6 @@ public class GolfBot extends Utils {
 						salary = 80.0;
 					}
 			
-					
 					if(!player_table_updated){
 						// add player to player table
 						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
@@ -158,7 +157,6 @@ public class GolfBot extends Utils {
 						add_player.setDouble(7, 0.0);
 						add_player.setString(8, "{}");
 						add_player.executeUpdate();
-						player_table_updated = true;
 					}
 					
 					//create JSONObject to add to option table
@@ -169,8 +167,9 @@ public class GolfBot extends Utils {
 					p.put("id", id);
 					log("appending " + name_fl + " to contest " + contest_id );
 					option_table.put(p);	
-				}	
+				}
 			}
+			player_table_updated = true;
 			PreparedStatement update_contest = sql_connection.prepareStatement("UPDATE contest SET option_table = ? where id = ?");
 			update_contest.setString(1, option_table.toString());
 			update_contest.setInt(2, contest_id);
