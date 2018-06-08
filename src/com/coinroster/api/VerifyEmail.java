@@ -1,5 +1,7 @@
 package com.coinroster.api;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
@@ -61,6 +63,31 @@ public class VerifyEmail extends Utils
 					session.update_user_level(user.getString("user_id"), user_level);
 					}
 
+				Runtime rt = Runtime.getRuntime();
+				String[] add_email_to_mailing_list = {"curl", "-X POST https://us12.api.mailchimp.com/3.0/lists/9d79f3f468/members/",
+						"-H 'Authorization: Bearer b526b109e2f18977b21c0a0f2595babf-us12'", "-H 'Cache-Control: no-cache'", 
+						"-H 'Postman-Token: 88357e8d-f1d2-4e9d-b033-8c096b330884'", 
+						"-d '{\"email_address\":\"" + email_address + "\", \"status\":\"subscribed\"}'"};
+				Process proc = rt.exec(add_email_to_mailing_list);
+				BufferedReader stdInput = new BufferedReader(new 
+					     InputStreamReader(proc.getInputStream()));
+
+					BufferedReader stdError = new BufferedReader(new 
+					     InputStreamReader(proc.getErrorStream()));
+
+					// read the output from the command
+					log("add to mail list standard output:\n");
+					String s = null;
+					while ((s = stdInput.readLine()) != null) {
+					    System.out.println(s);
+					}
+
+					// read any errors from the attempted command
+					log("add to mail list (if any):\n");
+					while ((s = stdError.readLine()) != null) {
+					    System.out.println(s);
+					}
+				
 				output.put("status", "1");
 				}
 			
