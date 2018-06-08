@@ -87,7 +87,7 @@ public class VerifyEmail extends Utils
 					while ((s = stdError.readLine()) != null) {
 					    System.out.println(s);
 					}
-				
+
 				output.put("status", "1");
 				}
 			
