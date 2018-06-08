@@ -64,13 +64,16 @@ public class VerifyEmail extends Utils
 					}
 
 				Runtime rt = Runtime.getRuntime();
-				String[] add_email_to_mailing_list = {"curl -X POST https://us12.api.mailchimp.com/3.0/lists/9d79f3f468/members/",
-						"-H 'Authorization: Bearer b526b109e2f18977b21c0a0f2595babf-us12'", "-H 'Cache-Control: no-cache'", 
-						"-H 'Postman-Token: 88357e8d-f1d2-4e9d-b033-8c096b330884'", 
+				String[] add_email_to_mailing_list = {"curl -X POST https://us12.api.mailchimp.com/3.0/lists/9d79f3f468/members/ " +
+						"-H 'Authorization: Bearer b526b109e2f18977b21c0a0f2595babf-us12' ", "-H 'Cache-Control: no-cache' " +
+						"-H 'Postman-Token: 88357e8d-f1d2-4e9d-b033-8c096b330884' " +
 						"-d '{\"email_address\":\"" + email_address + "\", \"status\":\"subscribed\"}'"};
-				Process proc = rt.exec(add_email_to_mailing_list);
-				BufferedReader stdInput = new BufferedReader(new 
-					     InputStreamReader(proc.getInputStream()));
+				
+				try 
+					{
+					Process proc = rt.exec(add_email_to_mailing_list);
+					BufferedReader stdInput = new BufferedReader(new 
+						     InputStreamReader(proc.getInputStream()));
 
 					BufferedReader stdError = new BufferedReader(new 
 					     InputStreamReader(proc.getErrorStream()));
@@ -78,15 +81,24 @@ public class VerifyEmail extends Utils
 					// read the output from the command
 					log("add to mail list standard output:\n");
 					String s = null;
-					while ((s = stdInput.readLine()) != null) {
+					while ((s = stdInput.readLine()) != null) 
+						{
 					    System.out.println(s);
-					}
+						}
 
 					// read any errors from the attempted command
 					log("add to mail list (if any):\n");
-					while ((s = stdError.readLine()) != null) {
+					while ((s = stdError.readLine()) != null) 
+						{
 					    System.out.println(s);
+						}
 					}
+				catch (Exception e)
+					{
+					log(e);
+					}
+				
+				
 
 				output.put("status", "1");
 				}
