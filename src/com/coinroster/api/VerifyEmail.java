@@ -68,7 +68,7 @@ public class VerifyEmail extends Utils
 						"-H", "authorization:Bearer b526b109e2f18977b21c0a0f2595babf-us12", 
 						"-H", "Cache-Control:no-cache" ,
 						// "-H", "'Postman-Token: 88357e8d-f1d2-4e9d-b033-8c096b330884' " ,
-						"-d", "'{\"email_address\":\"" + email_address + "\", \"status\":\"subscribed\"}'"};
+						"-d", "'{\"email_address\":\"" + email_address + "\", \"status\":\"subscribed\",\"merge_fields\": {}}"};
 				
 				try 
 					{
