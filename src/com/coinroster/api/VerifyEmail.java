@@ -63,20 +63,13 @@ public class VerifyEmail extends Utils
 					session.update_user_level(user.getString("user_id"), user_level);
 					}
 
-//				Runtime rt = Runtime.getRuntime();
-//				String[] add_email_to_mailing_list = {"curl", "-X POST", "https://us12.api.mailchimp.com/3.0/lists/9d79f3f468/members/" ,
-//						"-H", "authorization:Bearer b526b109e2f18977b21c0a0f2595babf-us12", 
-//						"-H", "Cache-Control:no-cache" ,
-//						// "-H", "'Postman-Token: 88357e8d-f1d2-4e9d-b033-8c096b330884' " ,
-//						"-d", "'{\"email_address\":\"" + email_address + "\", \"status\":\"subscribed\",\"merge_fields\": {}}"};
-				
 				try 
 					{
 					HttpResponse<String> response = Unirest.post("https://us12.api.mailchimp.com/3.0/lists/9d79f3f468/members/")
 							  .header("Authorization", "Bearer b526b109e2f18977b21c0a0f2595babf-us12")
 							  .header("Cache-Control", "no-cache")
 							  .header("Postman-Token", "66f73ef5-35df-4969-aa9d-3380bfb16549")
-							  .body("{\"email_address\":\"info@govindmohan.com\", \"status\":\"subscribed\"}")
+							  .body("{\"email_address\":\"" + email_address + "\", \"status\":\"subscribed\"}")
 							  .asString();
 					String body = response.getBody();
 					log("mailchimp response: " + body);
