@@ -139,14 +139,12 @@ public class SSI extends Utils
 						
 						JSONObject 
 						
-						inactive_properties = new JSONObject(),
-						internal_promotions = db.select_user("username", "internal_promotions");
+						inactive_properties = new JSONObject();
 						
 						inactive_properties.put("currency", currency);
 						inactive_properties.put("btcusd_last_price", btcusd_last_price);
 						inactive_properties.put("currency_last_price", currency_last_price);
 						inactive_properties.put("currency_description", currency_description);
-						inactive_properties.put("internal_promo_balance", internal_promotions.getDouble("btc_balance"));
 						
 						response_data = "<script>window.inactive_session = " + inactive_properties.toString() + ";</script>";
 						}
