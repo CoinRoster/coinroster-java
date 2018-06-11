@@ -167,7 +167,7 @@ public class CreatePromo extends Utils
 			internal_transaction.execute();
 			
 			Double new_promo_balance = subtract(btc_promo_balance, promotion_amount, 0);	
-			db.update_btc_balance(to_account, new_promo_balance);
+			db.update_btc_balance(from_account, new_promo_balance);
 			
 			// -------------------------------------------------------------------------------
 			
