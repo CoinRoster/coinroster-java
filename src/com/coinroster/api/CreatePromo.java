@@ -43,8 +43,8 @@ public class CreatePromo extends Utils
 			ext_address = "",
 			
 			created_by = session.user_id(),
-			from_account = db.get_id_for_username("internal_promotions"),
-			to_account = db.get_id_for_username("internal_liability"),
+			internal_promotions_id = db.get_id_for_username("internal_promotions"),
+			internal_liability_id = db.get_id_for_username("internal_liability"),
 			from_currency = "BTC",
 			to_currency = "BTC";
 			
@@ -108,15 +108,24 @@ public class CreatePromo extends Utils
 			JSONObject 
 			
 			referrer = null,
-			internal_promo = db.select_user("username", "internal_promotions");
+			internal_promo = db.select_user("username", "internal_promotions"),
+			internal_liability = db.select_user("username", "internal_liability");
 			
 			Double 
 			
 			btc_promo_balance = internal_promo.getDouble("btc_balance"),
+			btc_liability_balance = internal_liability.getDouble("btc_balance"),
 			promotion_amount = multiply(free_play_amount, max_use, 0);	
 			log("promotion amount: " + promotion_amount);
 			log("promotion balnce: " + btc_promo_balance);
 
+			// check if internal_promotion has enough to cover amount
+			if (promotion_amount > btc_promo_balance)
+				{
+				output.put("error", "this promotion exceeds the internal promotion allowance");
+				break method;
+				}
+			
 			if (referrer_id.equals("")) referrer_id = null;
 			else
 				{
@@ -144,20 +153,15 @@ public class CreatePromo extends Utils
 			
 			// -------------------------------------------------------------------------------
 			
-			// check if internal_promotion has enough to cover amount
-			if (promotion_amount > btc_promo_balance)
-				{
-				output.put("error", "this promotion exceeds the internal promotion allowance");
-				break method;
-				}
+
 				
 			
 		    PreparedStatement internal_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 			internal_transaction.setLong(1, transaction_timestamp);
 			internal_transaction.setString(2, created_by);
 			internal_transaction.setString(3, "BTC-WITHDRAWAL");
-			internal_transaction.setString(4, from_account);
-			internal_transaction.setString(5, to_account);
+			internal_transaction.setString(4, internal_promotions_id);
+			internal_transaction.setString(5, internal_liability_id);
 			internal_transaction.setDouble(6, promotion_amount);
 			internal_transaction.setString(7, from_currency);
 			internal_transaction.setString(8, to_currency);
@@ -165,9 +169,11 @@ public class CreatePromo extends Utils
 			internal_transaction.setInt(10, pending_flag);
 			internal_transaction.setString(11, ext_address);
 			internal_transaction.execute();
-			
+		
 			Double new_promo_balance = subtract(btc_promo_balance, promotion_amount, 0);	
-			db.update_btc_balance(from_account, new_promo_balance);
+			db.update_btc_balance(internal_promotions_id, new_promo_balance);
+			Double new_liability_balance = add(btc_liability_balance, promotion_amount, 0);	
+			db.update_btc_balance(internal_liability_id, new_liability_balance);
 			
 			// -------------------------------------------------------------------------------
 			
