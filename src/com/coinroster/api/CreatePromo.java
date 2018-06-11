@@ -43,12 +43,10 @@ public class CreatePromo extends Utils
 			ext_address = "",
 			
 			created_by = session.user_id(),
-			transaction_type = "BTC-WITHDRAWAL",
 			from_account = db.get_id_for_username("internal_promotions"),
 			to_account = db.get_id_for_username("internal_liability"),
 			from_currency = "BTC",
-			to_currency = "BTC",
-			memo = "CGS BTC withdrawal";
+			to_currency = "BTC";
 			
 			Long transaction_timestamp = System.currentTimeMillis();
 			
@@ -116,6 +114,8 @@ public class CreatePromo extends Utils
 			
 			btc_promo_balance = internal_promo.getDouble("btc_balance"),
 			promotion_amount = multiply(free_play_amount, max_use, 0);	
+			log("promotion amount: " + promotion_amount);
+			log("promotion balnce: " + btc_promo_balance);
 			
 			if (referrer_id.equals("")) referrer_id = null;
 			else
