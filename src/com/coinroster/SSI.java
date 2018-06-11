@@ -84,7 +84,10 @@ public class SSI extends Utils
 
 						if (btc_balance < deposit_bonus_available) deposit_bonus_available = btc_balance;
 						
-						JSONObject session_properties = new JSONObject();
+						JSONObject 
+						
+						session_properties = new JSONObject(),
+						internal_promotions = db.select_user("username", "internal_promotions");
 	
 						PreparedStatement check_for_promo  = sql_connection.prepareStatement("select count(*) from promo where referrer = ? and cancelled = 0");
 						check_for_promo.setString(1, user_id);
@@ -122,6 +125,7 @@ public class SSI extends Utils
 						session_properties.put("withdrawal_fee_sat", btc_to_satoshi(withdrawal_fee));
 						session_properties.put("withdrawal_fee", withdrawal_fee);
 						session_properties.put("referral_link", Server.host + "/a/" + user.getString("referrer_key"));
+						session_properties.put("internal_promo_balance", internal_promotions.getDouble("btc_balance"));
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}
