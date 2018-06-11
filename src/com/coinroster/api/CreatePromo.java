@@ -59,7 +59,7 @@ public class CreatePromo extends Utils
 			pending_flag = 0;
 			
 			Long expires = input.getLong("expires");
-			
+			log("????");
 			if (promo_code.equals(""))
 				{
 				output.put("error", "No promo code supplied.");
@@ -116,7 +116,7 @@ public class CreatePromo extends Utils
 			promotion_amount = multiply(free_play_amount, max_use, 0);	
 			log("promotion amount: " + promotion_amount);
 			log("promotion balnce: " + btc_promo_balance);
-			
+			log("???");
 			if (referrer_id.equals("")) referrer_id = null;
 			else
 				{
