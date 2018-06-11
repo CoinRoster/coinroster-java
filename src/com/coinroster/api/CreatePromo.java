@@ -59,7 +59,7 @@ public class CreatePromo extends Utils
 			pending_flag = 0;
 			
 			Long expires = input.getLong("expires");
-			log("????");
+
 			if (promo_code.equals(""))
 				{
 				output.put("error", "No promo code supplied.");
@@ -116,7 +116,7 @@ public class CreatePromo extends Utils
 			promotion_amount = multiply(free_play_amount, max_use, 0);	
 			log("promotion amount: " + promotion_amount);
 			log("promotion balnce: " + btc_promo_balance);
-			log("???");
+
 			if (referrer_id.equals("")) referrer_id = null;
 			else
 				{
@@ -150,8 +150,7 @@ public class CreatePromo extends Utils
 				output.put("error", "this promotion exceeds the internal promotion allowance");
 				break method;
 				}
-			
-			Double new_promo_balance = subtract(btc_promo_balance, promotion_amount, 0);		
+				
 			
 		    PreparedStatement internal_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 			internal_transaction.setLong(1, transaction_timestamp);
@@ -167,8 +166,8 @@ public class CreatePromo extends Utils
 			internal_transaction.setString(11, ext_address);
 			internal_transaction.execute();
 			
-
-			db.update_btc_balance("internal_promotions", new_promo_balance);
+			Double new_promo_balance = subtract(btc_promo_balance, promotion_amount, 0);	
+			db.update_btc_balance(to_account, new_promo_balance);
 			
 			// -------------------------------------------------------------------------------
 			
