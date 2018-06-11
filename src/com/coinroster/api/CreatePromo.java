@@ -2,6 +2,7 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -37,14 +38,27 @@ public class CreatePromo extends Utils
 			
 			promo_code = no_whitespace(input.getString("promo_code")),
 			description = input.getString("description"),
-			referrer_id = input.getString("referrer");
+			referrer_id = input.getString("referrer"),			
+			
+			ext_address = "",
+			
+			created_by = session.user_id(),
+			transaction_type = "BTC-WITHDRAWAL",
+			from_account = db.get_id_for_username("internal_promotions"),
+			to_account = db.get_id_for_username("internal_liability"),
+			from_currency = "BTC",
+			to_currency = "BTC",
+			memo = "CGS BTC withdrawal";
+			
+			Long transaction_timestamp = System.currentTimeMillis();
 			
 			double free_play_amount = input.getDouble("free_play_amount");
 			
 			int 
 			
 			rollover_multiple = input.getInt("rollover_multiple"),
-			max_use = input.getInt("max_use");
+			max_use = input.getInt("max_use"),
+			pending_flag = 0;
 			
 			Long expires = input.getLong("expires");
 			
@@ -93,7 +107,15 @@ public class CreatePromo extends Utils
 	            break method;
 	        	}
 			
-			JSONObject referrer = null;
+			JSONObject 
+			
+			referrer = null,
+			internal_promo = db.select_user("username", "internal_promotions");
+			
+			Double 
+			
+			btc_promo_balance = internal_promo.getDouble("btc_balance"),
+			promotion_amount = multiply(free_play_amount, max_use, 0);	
 			
 			if (referrer_id.equals("")) referrer_id = null;
 			else
@@ -119,6 +141,37 @@ public class CreatePromo extends Utils
 						}
 					}*/
 				}
+			
+			// -------------------------------------------------------------------------------
+			
+			// check if internal_promotion has enough to cover amount
+			if (promotion_amount > btc_promo_balance)
+				{
+				output.put("error", "this promotion exceeds the internal promotion allowance");
+				break method;
+				}
+			
+			Double new_promo_balance = subtract(btc_promo_balance, promotion_amount, 0);		
+			
+		    PreparedStatement internal_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+			internal_transaction.setLong(1, transaction_timestamp);
+			internal_transaction.setString(2, created_by);
+			internal_transaction.setString(3, "BTC-WITHDRAWAL");
+			internal_transaction.setString(4, from_account);
+			internal_transaction.setString(5, to_account);
+			internal_transaction.setDouble(6, promotion_amount);
+			internal_transaction.setString(7, from_currency);
+			internal_transaction.setString(8, to_currency);
+			internal_transaction.setString(9, "Withdrawal fee credit");
+			internal_transaction.setInt(10, pending_flag);
+			internal_transaction.setString(11, ext_address);
+			internal_transaction.execute();
+			
+
+			db.update_btc_balance("internal_promotions", new_promo_balance);
+			
+			// -------------------------------------------------------------------------------
+			
 			
 			PreparedStatement create_promo = sql_connection.prepareStatement("insert into promo(created, expires, approved_by, promo_code, description, referrer, free_play_amount, rollover_multiple, max_use) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			create_promo.setLong(1, System.currentTimeMillis());
