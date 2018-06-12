@@ -42,19 +42,20 @@ public class MethodCall extends Utils
 				
 				method.request = request;
 				method.response = response;
-				try{
+				try
+					{
 					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
 					method.output = output;
 					method.session = session;
 					method.sql_connection = sql_connection;
 					Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
 					c.newInstance(method);
-				}
-				catch(JSONException e){
+					}
+				catch(JSONException e)
+					{
 					log(method.input.toString());
 					log(e.getStackTrace().toString());
-				}
-				
+					}
 				}
 			else 
 				{

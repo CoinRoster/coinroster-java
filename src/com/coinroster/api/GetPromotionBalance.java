@@ -10,6 +10,7 @@ import com.coinroster.Session;
 public class GetPromotionBalance {
 
 
+	public static String method_level = "admin";
 	@SuppressWarnings("unused")
 	public GetPromotionBalance(MethodInstance method) throws Exception 
 		{
