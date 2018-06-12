@@ -132,10 +132,14 @@ public class CreatePromo extends Utils
 			btc_liability_balance = internal_liability.getDouble("btc_balance"),
 			promotion_amount = multiply(free_play_amount, max_use, 0);
 
+			log("account balance: " + btc_balance);
+			
 			// check if internal_promotion has enough to cover amount
 			if (promotion_amount > btc_balance)
 				{
-				output.put("error", "this promotion exceeds the internal promotion allowance");
+				String error_account = ((from_account.getString("username")).equals("internal_promotions"))?
+						"the internal promotions balance":"your account balance";
+				output.put("error", "this promotion exceeds " +  error_account);
 				break method;
 				}
 			
