@@ -64,7 +64,7 @@ public class CreatePromo extends Utils
 			ext_address = "",
 			
 			created_by = session.user_id(),
-			internal_promotions_id = db.get_id_for_username("internal_promotions"),
+			from_account_id = db.get_id_for_username(from_account.getString("username")),
 			internal_liability_id = db.get_id_for_username("internal_liability"),
 			from_currency = "BTC",
 			to_currency = "BTC";
@@ -173,7 +173,7 @@ public class CreatePromo extends Utils
 			internal_transaction.setLong(1, transaction_timestamp);
 			internal_transaction.setString(2, created_by);
 			internal_transaction.setString(3, "BTC-WITHDRAWAL");
-			internal_transaction.setString(4, internal_promotions_id);
+			internal_transaction.setString(4, from_account_id);
 			internal_transaction.setString(5, internal_liability_id);
 			internal_transaction.setDouble(6, promotion_amount);
 			internal_transaction.setString(7, from_currency);
@@ -184,7 +184,8 @@ public class CreatePromo extends Utils
 			internal_transaction.execute();
 		
 			Double new_promo_balance = subtract(btc_balance, promotion_amount, 0);	
-			db.update_btc_balance(internal_promotions_id, new_promo_balance);
+			db.update_btc_balance(from_account_id, new_promo_balance);
+			
 			Double new_liability_balance = add(btc_liability_balance, promotion_amount, 0);	
 			db.update_btc_balance(internal_liability_id, new_liability_balance);
 			
