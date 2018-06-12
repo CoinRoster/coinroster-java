@@ -110,6 +110,42 @@ public class GolfBot extends Utils {
 			int contest_id = entry.getKey();
 			JSONArray option_table = entry.getValue();
 			
+			
+			//check if any players in DB's player table didn't make it in:
+			for(Integer existing_id : existing_ids){
+				boolean in_option_table = false;
+				for(int option_table_index = 0; option_table_index < option_table.length(); option_table_index++){
+					int p_id = option_table.getJSONObject(option_table_index).getInt("id");
+					if(p_id == existing_id){
+						in_option_table = true;
+						break;
+					}
+				}
+				//add player from player table to option table
+				if(!in_option_table){
+					PreparedStatement get_data = sql_connection.prepareStatement("select name, salary from player where sport_type=? and id=?");
+					get_data.setString(1, this.sport);
+					get_data.setInt(2, existing_id);
+					ResultSet player_data = get_data.executeQuery();
+					while(player_data.next()){
+						String name = player_data.getString(1);
+						double price = player_data.getDouble(2);
+						JSONObject p = new JSONObject();
+						p.put("id", existing_id);
+						p.put("name", name);
+						p.put("count",0);
+						p.put("price", price);
+						option_table.put(p);
+						log("appending " + name + " to contest " + contest_id);
+						PreparedStatement update_contest = sql_connection.prepareStatement("UPDATE contest SET option_table = ? where id = ?");
+						update_contest.setString(1, option_table.toString());
+						update_contest.setInt(2, contest_id);
+						update_contest.executeUpdate();
+					}
+				}
+			}
+			
+			
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
 				int id = Integer.parseInt(player.getString("TournamentPlayerId"));
