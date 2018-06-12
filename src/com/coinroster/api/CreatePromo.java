@@ -31,7 +31,10 @@ public class CreatePromo extends Utils
 		DB db = new DB(sql_connection);
 
 		method : {
-			String user_id = session.user_id();
+			String 
+			
+			user_id = session.user_id(),
+			description = input.getString("description");
 			
 			JSONObject 
 			
@@ -40,7 +43,12 @@ public class CreatePromo extends Utils
 			user = db.select_user("id", user_id),
 			from_account;
 			
-			if (user.getInt("user_level") == 1)
+			// maybe find a better way to do this down the line
+			// p.s.: this used to check if the user was admin but 
+			// this entails that admins can't generate user promo codes.
+			// Drwawback is that this desc cannot be used in the admin panel
+			// (not that it should anyway)
+			if (!description.equals("User Generated Promo Code"))
 				{
 				log("admin promo code creation");
 				from_account = db.select_user("username", "internal_promotions");
@@ -58,7 +66,6 @@ public class CreatePromo extends Utils
 			String 
 			
 			promo_code = no_whitespace(input.getString("promo_code")),
-			description = input.getString("description"),
 			referrer_id = input.getString("referrer"),			
 			
 			ext_address = "",
@@ -143,16 +150,19 @@ public class CreatePromo extends Utils
 				break method;
 				}
 			
-			if (referrer_id.equals("")) referrer_id = null;
+			if (referrer_id.equals("") && from_account.getString("username").equals("internal_promotions"))
+				{
+				referrer_id = null;	
+				}
+			else if (referrer_id.equals("") )
+				{
+				referrer = db.select_user("id", from_account_id);
+				}
 			else
 				{
 				referrer = db.select_user("id", referrer_id);
 				
-				if (referrer == null)
-					{
-					output.put("error", "Invalid affiliate");
-		            break method;
-					}
+
 				/*else // valid referrer - only allow one promo code at a time
 					{
 					PreparedStatement check_for_promo  = sql_connection.prepareStatement("select promo_code from promo where referrer = ? and cancelled = 0");
@@ -167,7 +177,11 @@ public class CreatePromo extends Utils
 						}
 					}*/
 				}
-			
+			if (referrer == null && !from_account.getString("username").equals("internal_promotions"))
+				{
+				output.put("error", "Invalid affiliate");
+	            break method;
+				}
 			// -------------------------------------------------------------------------------
 			
 
