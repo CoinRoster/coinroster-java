@@ -40,7 +40,7 @@ public class CreatePromo extends Utils
 			user = db.select_user("id", user_id),
 			from_account;
 			
-			if (user.getInt("level") == 1)
+			if (user.getInt("user_level") == 1)
 				{
 				log("admin promo code creation");
 				from_account = db.select_user("username", "internal_promotions");
