@@ -31,7 +31,7 @@ public class CreatePromo extends Utils
 		DB db = new DB(sql_connection);
 
 		method : {
-			
+			log(session.toString());
 			String user_id = session.user_id();
 			
 			JSONObject 
