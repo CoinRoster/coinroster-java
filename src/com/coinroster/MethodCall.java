@@ -44,7 +44,8 @@ public class MethodCall extends Utils
 				}
 				method.request = request;
 				method.response = response;
-				try{
+				try
+					{
 					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
 				}
 				catch(JSONException e){
@@ -59,6 +60,7 @@ public class MethodCall extends Utils
 				method.sql_connection = sql_connection;
 				Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
 				c.newInstance(method);
+
 				}
 			else 
 				{
