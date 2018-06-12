@@ -16,7 +16,7 @@ import com.coinroster.internal.UserMail;
 
 public class CreatePromo extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "standard";
 	public CreatePromo(MethodInstance method) throws Exception 
 		{
 		JSONObject 

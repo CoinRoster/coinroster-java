@@ -275,19 +275,24 @@ public class BaseballBot extends Utils {
 							Elements cols = row.getElementsByTag("td");
 							String name = cols.get(0).select("a").text();
 							String team_name = team_abr.toUpperCase();
-							int ESPN_id = Integer.parseInt(cols.get(0).select("a").attr("href").split("/")[7]);
-							double batting_avg = Double.parseDouble(cols.get(13).text());
-							int at_bats = Integer.parseInt(cols.get(2).text());
-							double price = (batting_avg * 1000);
-							if(price < 80 || at_bats < 15)
-								price = 80;
-							// create a player object, save it to the hashmap
-							Player p = new Player(ESPN_id, name, team_name);
-							//p.scrape_info();
-							p.gameID = this.game_IDs.get(i);
-							p.set_salary(price);
-							//p.createBio();		
-							players.put(ESPN_id, p);
+							try{
+								int ESPN_id = Integer.parseInt(cols.get(0).select("a").attr("href").split("/")[7]);
+								double batting_avg = Double.parseDouble(cols.get(13).text());
+								int at_bats = Integer.parseInt(cols.get(2).text());
+								double price = (batting_avg * 1000);
+								if(price < 80 || at_bats < 15)
+									price = 80;
+								// create a player object, save it to the hashmap
+								Player p = new Player(ESPN_id, name, team_name);
+								//p.scrape_info();
+								p.gameID = this.game_IDs.get(i);
+								p.set_salary(price);
+								//p.createBio();		
+								players.put(ESPN_id, p);
+							}
+							catch(ArrayIndexOutOfBoundsException e){
+								continue;
+							}
 						}
 					}
 				}

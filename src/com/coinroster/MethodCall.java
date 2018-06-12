@@ -39,9 +39,6 @@ public class MethodCall extends Utils
 				sql_connection = Server.sql_connection();
 
 				MethodInstance method = new MethodInstance();
-				if(session.active() && session.username() != null){
-					Utils.log("Session user: " + session.username() + " with ID: " + session.user_id());
-				}
 				method.request = request;
 				method.response = response;
 				try
@@ -60,7 +57,6 @@ public class MethodCall extends Utils
 				method.sql_connection = sql_connection;
 				Constructor<?> c = Class.forName("com.coinroster.api." + method_name).getConstructor(MethodInstance.class);
 				c.newInstance(method);
-
 				}
 			else 
 				{
