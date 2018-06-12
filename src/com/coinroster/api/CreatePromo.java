@@ -31,7 +31,6 @@ public class CreatePromo extends Utils
 		DB db = new DB(sql_connection);
 
 		method : {
-			log(session.toString());
 			String user_id = session.user_id();
 			
 			JSONObject 
@@ -51,7 +50,8 @@ public class CreatePromo extends Utils
 				log("standard user promo code creation");
 				from_account = user;
 				}
-			
+
+			log(from_account.toString());
 			
 //------------------------------------------------------------------------------------
 		
