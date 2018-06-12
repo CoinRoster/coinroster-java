@@ -32,6 +32,27 @@ public class CreatePromo extends Utils
 
 		method : {
 			
+			String user_id = session.user_id();
+			
+			JSONObject 
+			
+			referrer = null,
+			internal_liability = db.select_user("username", "internal_liability"),
+			user = db.select_user("id", user_id),
+			from_account;
+			
+			if (user.getInt("level") == 1)
+				{
+				log("admin promo code creation");
+				from_account = db.select_user("username", "internal_promotions");
+				}
+			else
+				{
+				log("standard user promo code creation");
+				from_account = user;
+				}
+			
+			
 //------------------------------------------------------------------------------------
 		
 			String 
@@ -105,22 +126,14 @@ public class CreatePromo extends Utils
 	            break method;
 	        	}
 			
-			JSONObject 
-			
-			referrer = null,
-			internal_promo = db.select_user("username", "internal_promotions"),
-			internal_liability = db.select_user("username", "internal_liability");
-			
 			Double 
 			
-			btc_promo_balance = internal_promo.getDouble("btc_balance"),
+			btc_balance = from_account.getDouble("btc_balance"),
 			btc_liability_balance = internal_liability.getDouble("btc_balance"),
-			promotion_amount = multiply(free_play_amount, max_use, 0);	
-			log("promotion amount: " + promotion_amount);
-			log("promotion balnce: " + btc_promo_balance);
+			promotion_amount = multiply(free_play_amount, max_use, 0);
 
 			// check if internal_promotion has enough to cover amount
-			if (promotion_amount > btc_promo_balance)
+			if (promotion_amount > btc_balance)
 				{
 				output.put("error", "this promotion exceeds the internal promotion allowance");
 				break method;
@@ -170,7 +183,7 @@ public class CreatePromo extends Utils
 			internal_transaction.setString(11, ext_address);
 			internal_transaction.execute();
 		
-			Double new_promo_balance = subtract(btc_promo_balance, promotion_amount, 0);	
+			Double new_promo_balance = subtract(btc_balance, promotion_amount, 0);	
 			db.update_btc_balance(internal_promotions_id, new_promo_balance);
 			Double new_liability_balance = add(btc_liability_balance, promotion_amount, 0);	
 			db.update_btc_balance(internal_liability_id, new_liability_balance);
