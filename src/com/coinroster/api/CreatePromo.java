@@ -196,7 +196,7 @@ public class CreatePromo extends Utils
 			internal_transaction.setDouble(6, promotion_amount);
 			internal_transaction.setString(7, from_currency);
 			internal_transaction.setString(8, to_currency);
-			internal_transaction.setString(9, "Withdrawal fee credit");
+			internal_transaction.setString(9, "Promo Creation");
 			internal_transaction.setInt(10, pending_flag);
 			internal_transaction.setString(11, ext_address);
 			internal_transaction.execute();
