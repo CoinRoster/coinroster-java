@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
@@ -35,13 +36,14 @@ public class GetProgressiveCodes extends Utils
 			PreparedStatement select_categories = sql_connection.prepareStatement("select code from progressive");
 			ResultSet code_rs = select_categories.executeQuery();
 			
+			JSONArray codes = new JSONArray();
+			
 			while(code_rs.next())
 				{
-				log(code_rs.getString(1));
-				// JSONObject codes = new JSONObject();
+				codes.put(code_rs.getString(1));
 				}
-
-
+			
+			output.put("codes", codes);
 			
 //------------------------------------------------------------------------------------
 
