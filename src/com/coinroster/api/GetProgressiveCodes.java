@@ -37,7 +37,7 @@ public class GetProgressiveCodes extends Utils
 			
 			while(code_rs.next())
 				{
-				log(code_rs.toString());
+				log(code_rs.getString(1));
 				// JSONObject codes = new JSONObject();
 				}
 
