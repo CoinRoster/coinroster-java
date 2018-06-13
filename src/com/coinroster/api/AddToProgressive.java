@@ -38,7 +38,6 @@ public class AddToProgressive extends Utils
 
 			created_by = session.user_id(),
 			code = input.getString("code"),
-			payout_info =input.getString("payout_info"),
 			internal_promotions_id = db.get_id_for_username("internal_promotions"),
 			internal_progressive_id = db.get_id_for_username("internal_progressive"),
 			ext_address = "",
@@ -90,9 +89,8 @@ public class AddToProgressive extends Utils
 			JSONObject progressive_for_code = db.select_progressive(code);
 			Double new_balance_for_code = add(progressive_for_code.getDouble("balance"), amount_to_add, 0);
 			
-			PreparedStatement update_progressive_balance = sql_connection.prepareStatement("update progressive set balance = ?, payout_info = ? where code = ?");
+			PreparedStatement update_progressive_balance = sql_connection.prepareStatement("update progressive set balance = ? where code = ?");
 			update_progressive_balance.setDouble(1, new_balance_for_code);
-			update_progressive_balance.setString(2, payout_info);
 			update_progressive_balance.setString(3, code);
 			update_progressive_balance.executeUpdate();
 
