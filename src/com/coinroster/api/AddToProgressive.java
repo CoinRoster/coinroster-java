@@ -91,7 +91,7 @@ public class AddToProgressive extends Utils
 			
 			PreparedStatement update_progressive_balance = sql_connection.prepareStatement("update progressive set balance = ? where code = ?");
 			update_progressive_balance.setDouble(1, new_balance_for_code);
-			update_progressive_balance.setString(3, code);
+			update_progressive_balance.setString(2, code);
 			update_progressive_balance.executeUpdate();
 
             output.put("status", "1");
