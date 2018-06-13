@@ -43,7 +43,7 @@ public class GetProgressiveCodes extends Utils
 				{
 				codes.put(code_rs.getString(1));
 				balances.put(code_rs.getString(2));
-				log(balances.getString(2));
+				log(code_rs.getString(2));
 				}
 			
 			output.put("codes", codes);
