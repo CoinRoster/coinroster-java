@@ -33,17 +33,21 @@ public class GetProgressiveCodes extends Utils
 			
 //------------------------------------------------------------------------------------
 
-			PreparedStatement select_categories = sql_connection.prepareStatement("select code from progressive");
+			PreparedStatement select_categories = sql_connection.prepareStatement("select code, balance from progressive");
 			ResultSet code_rs = select_categories.executeQuery();
 			
 			JSONArray codes = new JSONArray();
+			JSONArray balances = new JSONArray();
 			
 			while(code_rs.next())
 				{
 				codes.put(code_rs.getString(1));
+				balances.put(code_rs.getString(2));
 				}
 			
 			output.put("codes", codes);
+			output.put("balances", balances);
+			
 			
 //------------------------------------------------------------------------------------
 
