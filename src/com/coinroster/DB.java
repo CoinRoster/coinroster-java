@@ -33,7 +33,7 @@ public class DB
 		ResultSet result_set = select_username.executeQuery();
 
 		if (result_set.next()) username = result_set.getString(1);
-
+		
 		return username;
 		}
 
