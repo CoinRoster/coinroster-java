@@ -31,10 +31,10 @@ public class UpdateColdStorageBalance extends Utils	{
 //------------------------------------------------------------------------------------
 
 			Double amount = input.getDouble("amount");
-			
 			PreparedStatement update_cold_storage_balance = sql_connection.prepareStatement("update control set value = ? where name = ?");
 			update_cold_storage_balance.setDouble(1, amount);
 			update_cold_storage_balance.setString(2, "cold_storage_balance");
+			update_cold_storage_balance.execute();
 			
 			output.put("status", "1");
 			
