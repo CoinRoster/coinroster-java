@@ -124,6 +124,7 @@ public class SSI extends Utils
 						session_properties.put("withdrawal_fee_sat", btc_to_satoshi(withdrawal_fee));
 						session_properties.put("withdrawal_fee", withdrawal_fee);
 						session_properties.put("referral_link", Server.host + "/a/" + user.getString("referrer_key"));
+						session_properties.put("cold_storage_balance", db.get_cold_storage_balance());
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}
