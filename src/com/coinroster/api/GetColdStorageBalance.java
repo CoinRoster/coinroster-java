@@ -5,6 +5,7 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 
 public class GetColdStorageBalance {
@@ -24,11 +25,12 @@ public class GetColdStorageBalance {
 		Connection sql_connection = method.sql_connection;
 
 		DB db = new DB(sql_connection);
-
+		
 		method : {
 			
 //------------------------------------------------------------------------------------
 			Double cold_storage_balance = db.get_cold_storage_balance();
+			Server.log(cold_storage_balance);
 			output.put("cold_storage_balance", cold_storage_balance);
 			output.put("status", "1");
 //------------------------------------------------------------------------------------
