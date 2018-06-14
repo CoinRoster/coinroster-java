@@ -1,5 +1,7 @@
 .idea
 CoinRoster.iml
+coinroster.properties
+coinroster.xml
 # Created by https://www.gitignore.io/api/macos,eclipse,intellij
 
 ### Eclipse ###

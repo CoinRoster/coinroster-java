@@ -9,6 +9,8 @@ import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
 
 public class VerifyEmail extends Utils
 	{
@@ -60,6 +62,24 @@ public class VerifyEmail extends Utils
 					{
 					session.update_user_level(user.getString("user_id"), user_level);
 					}
+
+				try 
+					{
+					HttpResponse<String> response = Unirest.post("https://us12.api.mailchimp.com/3.0/lists/9d79f3f468/members/")
+							  .header("Authorization", "Bearer b526b109e2f18977b21c0a0f2595babf-us12")
+							  .header("Cache-Control", "no-cache")
+							  .header("Postman-Token", "66f73ef5-35df-4969-aa9d-3380bfb16549")
+							  .body("{\"email_address\":\"" + email_address + "\", \"status\":\"subscribed\"}")
+							  .asString();
+					String body = response.getBody();
+					log("mailchimp response: " + body);
+					}
+				catch (Exception e)
+					{
+					log(e);
+					}
+				
+				
 
 				output.put("status", "1");
 				}
