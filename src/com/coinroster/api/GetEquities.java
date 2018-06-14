@@ -8,12 +8,12 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
-public class GetColdStorageBalance extends Utils{
+public class GetEquities extends Utils{
 
 
 	public static String method_level = "admin";
 	@SuppressWarnings("unused")
-	public GetColdStorageBalance(MethodInstance method) throws Exception 
+	public GetEquities(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
@@ -29,9 +29,11 @@ public class GetColdStorageBalance extends Utils{
 		method : {
 			
 //------------------------------------------------------------------------------------
-			Double cold_storage_balance = db.get_cold_storage_balance();
+			JSONObject internal_promotions = db.select_user("username", "internal_promotions");
+			JSONObject internal_asset = db.select_user("username", "internal_asset");
 
-			output.put("cold_storage_balance", cold_storage_balance);
+			output.put("promo_balance", internal_promotions.getDouble("btc_balance"));
+			output.put("asset_balance", internal_asset.getDouble("btc_balance"));
 			output.put("status", "1");
 //------------------------------------------------------------------------------------
 
