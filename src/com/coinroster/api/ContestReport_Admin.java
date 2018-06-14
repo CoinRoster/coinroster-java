@@ -38,7 +38,7 @@ public class ContestReport_Admin extends Utils
 			category = input.getString("category"),
 			sub_category = input.getString("sub_category");
 
-			PreparedStatement select_contests = sql_connection.prepareStatement("select * from contest order by status asc, id desc, limit 200");
+			PreparedStatement select_contests = sql_connection.prepareStatement("select * from contest order by status asc, id desc limit 200");
 			ResultSet result_set = select_contests.executeQuery();
 
 			JSONArray contest_report = new JSONArray();
