@@ -401,6 +401,10 @@ public class CreateContest extends Utils
     			create_contest.executeUpdate();
             } else {
             	create_contest.executeUpdate();
+<<<<<<< Updated upstream
+=======
+            	create_contest.setString(15, null);
+>>>>>>> Stashed changes
     			new BuildLobby(sql_connection);
             }
 			
