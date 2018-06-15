@@ -90,7 +90,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	{
 		
 		new ExpirePromos();
-//		new CheckPendingWithdrawals();
+		//new CheckPendingWithdrawals();
 		//if (!Server.dev_server) UpdateCurrencies();
 	
 		
