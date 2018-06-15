@@ -34,9 +34,7 @@ public class ContestReport_Lobby extends Utils
 		method : {
 			
 //------------------------------------------------------------------------------------
-		
-			Utils.log("Method input: " + input.toString());
-			
+					
 			try{
 				String 
 				category = input.getString("category"),
