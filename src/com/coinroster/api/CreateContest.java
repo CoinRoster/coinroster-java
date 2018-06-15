@@ -43,6 +43,7 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
+            PreparedStatement create_contest = null;
             
             // validate common fields
             
@@ -295,7 +296,7 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -330,7 +331,6 @@ public class CreateContest extends Utils
 				create_contest.setString(21, score_header);
 				log(score_header);
 				create_contest.setString(22, gameIDs);
-				create_contest.executeUpdate();
 	            }
             else if (contest_type.equals("PARI-MUTUEL"))
             	{
@@ -369,7 +369,7 @@ public class CreateContest extends Utils
             	
             	String settlement_type = "PARI-MUTUEL";
             	
-            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -392,10 +392,18 @@ public class CreateContest extends Utils
 					madeBy = session.user_id();
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
+				
 				create_contest.executeUpdate();
             	}
-
-			new BuildLobby(sql_connection);
+            
+            if (category.equals("USER-GENERATED")) {
+            	create_contest.setInt(15, 5);
+    			create_contest.executeUpdate();
+            } else {
+            	create_contest.executeUpdate();
+            	create_contest.setString(15, null);
+    			new BuildLobby(sql_connection);
+            }
 			
             output.put("status", "1");
 			
