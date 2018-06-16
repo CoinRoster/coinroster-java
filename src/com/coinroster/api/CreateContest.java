@@ -395,13 +395,13 @@ public class CreateContest extends Utils
 				
 				create_contest.executeUpdate();
             	}
-            
+            	
             if (category.equals("USER-GENERATED")) {
             	create_contest.setInt(15, 5);
     			create_contest.executeUpdate();
             } else {
             	create_contest.executeUpdate();
-            	create_contest.setString(15, null);
+            	create_contest.setString(15, "NULL");
     			new BuildLobby(sql_connection);
             }
 			
