@@ -1115,6 +1115,23 @@ public class DB
 		
 		return miner_fee;
 		}
+	
+//------------------------------------------------------------------------------------
+
+	// GET CONTEST PRIZE POOL
+
+	public double get_cold_storage_balance() throws Exception
+		{
+		double cold_storage_balance = 0;
+
+		PreparedStatement get_cold_storage_balance = sql_connection.prepareStatement("select value from control where name='cold_storage_balance'");
+		ResultSet result_set = get_cold_storage_balance.executeQuery();
+
+		if (result_set.next()) cold_storage_balance = Double.parseDouble(result_set.getString(1));
+		
+		return cold_storage_balance;
+		}
+	
 //------------------------------------------------------------------------------------
 	
 	public double get_withdrawal_fee() throws Exception

@@ -41,7 +41,8 @@ public class MethodCall extends Utils
 				MethodInstance method = new MethodInstance();
 				method.request = request;
 				method.response = response;
-				try{
+				try
+					{
 					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
 				}
 				catch(JSONException e){

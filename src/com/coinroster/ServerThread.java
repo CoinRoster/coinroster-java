@@ -40,6 +40,7 @@ public class ServerThread extends Thread
 				Utils.log("filename: " + element.getFileName());
 				Utils.log("classname: " + element.getClassName());
 				Utils.log("line num: " + element.getLineNumber());
+
 			}
 			// stack trace will get logged by Server.exception below
 			}

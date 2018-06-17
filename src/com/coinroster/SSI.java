@@ -84,7 +84,9 @@ public class SSI extends Utils
 
 						if (btc_balance < deposit_bonus_available) deposit_bonus_available = btc_balance;
 						
-						JSONObject session_properties = new JSONObject();
+						JSONObject 
+						
+						session_properties = new JSONObject();
 	
 						PreparedStatement check_for_promo  = sql_connection.prepareStatement("select count(*) from promo where referrer = ? and cancelled = 0");
 						check_for_promo.setString(1, user_id);
@@ -122,6 +124,7 @@ public class SSI extends Utils
 						session_properties.put("withdrawal_fee_sat", btc_to_satoshi(withdrawal_fee));
 						session_properties.put("withdrawal_fee", withdrawal_fee);
 						session_properties.put("referral_link", Server.host + "/a/" + user.getString("referrer_key"));
+						session_properties.put("cold_storage_balance", db.get_cold_storage_balance());
 						
 						response_data = "<script>window.session = " + session_properties.toString() + ";</script>";
 						}
@@ -135,7 +138,9 @@ public class SSI extends Utils
 						currency_last_price = db.get_last_price(currency);
 						String currency_description = db.get_currency_description(currency);
 						
-						JSONObject inactive_properties = new JSONObject();
+						JSONObject 
+						
+						inactive_properties = new JSONObject();
 						
 						inactive_properties.put("currency", currency);
 						inactive_properties.put("btcusd_last_price", btcusd_last_price);
