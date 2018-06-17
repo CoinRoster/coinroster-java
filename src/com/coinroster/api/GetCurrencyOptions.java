@@ -34,7 +34,8 @@ public class GetCurrencyOptions extends Utils
 		
 			JSONArray currency_options = new JSONArray();
 			
-			PreparedStatement select_currencies = sql_connection.prepareStatement("select * from fx where not symbol = 'BTCUSD' order by symbol asc");
+			//only works because the the sql limit 5
+			PreparedStatement select_currencies = sql_connection.prepareStatement("select * from fx where not symbol = 'BTCUSD' order by symbol asc limit 5");
 			ResultSet result_set = select_currencies.executeQuery();
 			
 			while (result_set.next())
@@ -51,7 +52,7 @@ public class GetCurrencyOptions extends Utils
 				
 				currency_options.put(currency);
 				}
-			
+			Utils.log("passing currency_options json");
 			output.put("currency_options", currency_options);
 			output.put("status", "1");
 			
