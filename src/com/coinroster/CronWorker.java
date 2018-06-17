@@ -71,13 +71,18 @@ public class CronWorker extends Utils implements Callable<Integer>
 			
 			new CloseContestRegistration();
 			
-			//see if ANY contests are in play (status=2)
+			// see if contests are in play (status=2) and live update scores if applicable
+			// also settle the contests when applicable
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 		}
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField();
+		}
+		//update currencies hourly on live
+		if(Server.live_server && minute==2){
+			UpdateCurrencies();
 		}
 	}
 
@@ -88,7 +93,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 		
 		new ExpirePromos();
 //		new CheckPendingWithdrawals();
-		//if (!Server.dev_server) UpdateCurrencies();
 	
 		if(hour==7){
 			ContestMethods.createBasketballContests();
@@ -336,7 +340,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// update currencies using fixer.io API
+	// update currencies using open exchange rates API
 	private void UpdateCurrencies(){
 		Server.async_updater.execute(new Runnable(){
 		    public void run(){
@@ -349,7 +353,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 					
 					String api_key = null;
 					if(Server.live_server)
-						api_key = "";
+						api_key = "f165abfe564e42e49e6d7876af17ed51";
 					else if(Server.dev_server)
 						api_key = "3e80b1fb4e894599bef34ffb7216fc50";
 					
