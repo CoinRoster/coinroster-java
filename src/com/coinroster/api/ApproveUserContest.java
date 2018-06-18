@@ -40,7 +40,7 @@ public class ApproveUserContest extends Utils {
 				log("Admin has rejected contest " + input.getInt("contest_id"));
 				PreparedStatement delete_contest = sql_connection.prepareStatement("delete from contest where id = ?");
 				delete_contest.setInt(1, input.getInt("contest_id"));
-				delete_contest.executeQuery();
+				delete_contest.executeUpdate();
 			}
 			output.put("status", "1");
 //------------------------------------------------------------------------------------
