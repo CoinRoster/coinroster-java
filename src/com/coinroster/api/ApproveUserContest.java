@@ -42,7 +42,7 @@ public class ApproveUserContest extends Utils {
 				delete_contest.setInt(1, input.getInt("contest_id"));
 				delete_contest.executeQuery();
 			}
-			
+			output.put("status", "1");
 //------------------------------------------------------------------------------------
 
 		} method.response.send(output);
