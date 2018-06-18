@@ -394,12 +394,12 @@ public class CreateContest extends Utils
 				create_contest.setInt(14, auto);
             	}
 
-            if (category.equals("USER-GENERATED")) {
+            if (category.equals("USERGENERATED")) {
             	create_contest.setInt(15, 5);
     			create_contest.executeUpdate();
             } else {
-            	create_contest.executeUpdate();
             	create_contest.setString(15, "NULL");
+            	create_contest.executeUpdate();
     			new BuildLobby(sql_connection);
             }
 			
