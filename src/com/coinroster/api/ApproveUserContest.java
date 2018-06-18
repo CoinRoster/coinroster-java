@@ -33,7 +33,7 @@ public class ApproveUserContest extends Utils {
 			
 			log(input.toString());
 //------------------------------------------------------------------------------------
-			if (input.getInt("admin_approval") == 1) {
+			if (input.getString("admin_approval").equals("1")) {
 				log("Admin has approved contest " + input.getInt("contest_id"));
 				new UpdateContestStatus(sql_connection, input.getInt("contest_id"), 1);
 				new BuildLobby(sql_connection);
