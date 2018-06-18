@@ -31,6 +31,7 @@ public class ApproveUserContest extends Utils {
 
 		method : {
 			
+			log(output.toString());
 //------------------------------------------------------------------------------------
 			if (input.getInt("admin_approval") == 1) {
 				log("Admin has approved contest " + input.getInt("contest_id"));
