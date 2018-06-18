@@ -393,7 +393,7 @@ public class CreateContest extends Utils
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
             	}
-            	
+
             if (category.equals("USER-GENERATED")) {
             	create_contest.setInt(15, 5);
     			create_contest.executeUpdate();
