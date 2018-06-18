@@ -14,7 +14,7 @@ import com.coinroster.internal.BuildLobby;
 
 public class CreateContest extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "standard";
 	public CreateContest(MethodInstance method) throws Exception 
 		{
 		JSONObject 
