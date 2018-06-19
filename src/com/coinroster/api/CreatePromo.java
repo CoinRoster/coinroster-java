@@ -161,10 +161,8 @@ public class CreatePromo extends Utils
 			else
 				{
 				// created by user; user_id is not passed to frontend via SSI
-				referrer = db.select_user("id", db.get_username_for_id(referrer_id));
-				log(referrer_id);
-				log(referrer);
-
+				referrer = db.select_user("name", referrer_id);
+				
 				/*else // valid referrer - only allow one promo code at a time
 					{
 					PreparedStatement check_for_promo  = sql_connection.prepareStatement("select promo_code from promo where referrer = ? and cancelled = 0");
