@@ -33,8 +33,9 @@ public class GetUserContests extends Utils
 			
 //------------------------------------------------------------------------------------
 
-			PreparedStatement select_user_contest  = sql_connection.prepareStatement("select * from contest where created_by = ?");
+			PreparedStatement select_user_contest  = sql_connection.prepareStatement("select * from contest where created_by = ? and status = ?");
 			select_user_contest.setString(1, session.user_id());
+			select_user_contest.setInt(2, 2);
 
 			ResultSet result_set = select_user_contest.executeQuery();
 			
