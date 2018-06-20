@@ -44,6 +44,7 @@ public class CreateContest extends Utils
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
             PreparedStatement create_contest = null;
+            Long settlement_deadline = null;
             
             // validate common fields
             
@@ -53,11 +54,21 @@ public class CreateContest extends Utils
                 break method;
             	}
             
-            if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
+            if (category.equals("USERGENERATED")) 
             	{
-            	output.put("error", "Registration deadline must be at least 1 hour from now");
-                break method;
+                settlement_deadline = input.getLong("settlement_deadline");
+	            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000)
+	            	{
+	            	output.put("error", "Settlement deadline must be at least 1 hour from resgistration deadline");
+	                break method;
+	            	}
             	}
+            
+            if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
+	        	{
+	        	output.put("error", "Registration deadline must be at least 1 hour from now");
+	            break method;
+	        	}
             
             if (rake < 0 || rake >= 100)
             	{
@@ -369,7 +380,7 @@ public class CreateContest extends Utils
             	
             	String settlement_type = "PARI-MUTUEL";
             	
-            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -396,9 +407,11 @@ public class CreateContest extends Utils
 
             if (category.equals("USERGENERATED")) {
             	create_contest.setInt(15, 5);
+            	create_contest.setLong(16, settlement_deadline);
     			create_contest.executeUpdate();
             } else {
             	create_contest.setString(15, "NULL");
+            	create_contest.setString(16, "NULL");
             	create_contest.executeUpdate();
     			new BuildLobby(sql_connection);
             }
