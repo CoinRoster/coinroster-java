@@ -33,7 +33,6 @@ public class RosterReport extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			Utils.log("Method input: " + input.toString());
 			try{
 				int contest_id = input.getInt("contest_id");
 			
@@ -86,7 +85,7 @@ public class RosterReport extends Utils
 				output.put("status", "1");
 			}
 			catch(JSONException e){
-				Utils.log(e.getStackTrace().toString());
+				e.printStackTrace();
 			}
 			
 //------------------------------------------------------------------------------------
