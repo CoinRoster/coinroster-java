@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
@@ -15,7 +16,7 @@ import com.coinroster.Utils;
 public class GetContestDetails extends Utils
 	{
 	public static String method_level = "guest";
-	@SuppressWarnings("unused")
+
 	public GetContestDetails(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -34,8 +35,16 @@ public class GetContestDetails extends Utils
 //------------------------------------------------------------------------------------
 		
 			// method logic goes here
+			int contest_id;
 			
-			int contest_id = input.getInt("contest_id");
+			try{
+				contest_id = input.getInt("contest_id");
+			}
+			catch(JSONException e){
+				Utils.log("unable to find contest_id in method.input");
+				output.put("error", "No contest ID given");
+				break method;
+			}
 			
 			JSONObject contest = db.select_contest(contest_id);
 			

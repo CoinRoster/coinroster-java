@@ -45,7 +45,6 @@ public class MethodCall extends Utils
 					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
 				}
 				catch(JSONException e){
-					log("---------BAD PAYLOAD----------\t\tPassing empty JSONObject as method.input");
 					method.input = new JSONObject();
 				}
 				method.output = output;
