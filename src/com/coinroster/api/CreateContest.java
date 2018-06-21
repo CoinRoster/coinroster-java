@@ -45,6 +45,7 @@ public class CreateContest extends Utils
             JSONArray option_table = input.getJSONArray("option_table");
             PreparedStatement create_contest = null;
             Long settlement_deadline = input.getLong("settlement_deadline");
+			String madeBy = "";
             
             // validate common fields
             
@@ -322,7 +323,6 @@ public class CreateContest extends Utils
 				create_contest.setString(16, option_table.toString());
 
 				create_contest.setLong(17, System.currentTimeMillis());
-				String madeBy = null;
 				String gameIDs = "";
 				if(session == null){
 					madeBy = "ContestBot";
@@ -389,7 +389,6 @@ public class CreateContest extends Utils
 				create_contest.setString(10, settlement_type);
 				create_contest.setString(11, option_table.toString());
 				create_contest.setLong(12, System.currentTimeMillis());
-				String madeBy = "";
 				int auto = 0;
 				if(session == null){
 					madeBy = "ContestBot";
@@ -402,11 +401,15 @@ public class CreateContest extends Utils
             	}
 
             if (category.equals("USERGENERATED")) {
-            	create_contest.setInt(15, 5);
+				if(session.user_level().equals("1")) {
+	            	create_contest.setInt(15, 1);
+				} else {
+	            	create_contest.setInt(15, 5);
+				}
             	create_contest.setLong(16, settlement_deadline);
     			create_contest.executeUpdate();
             } else {
-            	create_contest.setNull(15, java.sql.Types.INTEGER);
+            	create_contest.setInt(15, 1);
             	create_contest.setNull(16, java.sql.Types.BIGINT);
             	create_contest.executeUpdate();
     			new BuildLobby(sql_connection);
