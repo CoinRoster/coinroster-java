@@ -412,6 +412,7 @@ public class CreateContest extends Utils
             	create_contest.setInt(15, 1);
             	create_contest.setNull(16, java.sql.Types.BIGINT);
             	create_contest.executeUpdate();
+				// new ExpireSettlementWindow(settlement_deadline, contest_id, sql_connection);
     			new BuildLobby(sql_connection);
             }
 			
