@@ -44,7 +44,7 @@ public class CreateContest extends Utils
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
             PreparedStatement create_contest = null;
-            Long settlement_deadline = null;
+            Long settlement_deadline = input.getLong("settlement_deadline");
             
             // validate common fields
             
@@ -53,15 +53,11 @@ public class CreateContest extends Utils
             	output.put("error", "Title is too long");
                 break method;
             	}
-            
-            if (category.equals("USERGENERATED")) 
+
+            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000)
             	{
-                settlement_deadline = input.getLong("settlement_deadline");
-	            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000)
-	            	{
-	            	output.put("error", "Settlement deadline must be at least 1 hour from resgistration deadline");
-	                break method;
-	            	}
+            	output.put("error", "Settlement deadline must be at least 1 hour from resgistration deadline");
+                break method;
             	}
             
             if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
@@ -410,8 +406,8 @@ public class CreateContest extends Utils
             	create_contest.setLong(16, settlement_deadline);
     			create_contest.executeUpdate();
             } else {
-            	create_contest.setString(15, "NULL");
-            	create_contest.setString(16, "NULL");
+            	create_contest.setNull(15, java.sql.Types.INTEGER);
+            	create_contest.setNull(16, java.sql.Types.BIGINT);
             	create_contest.executeUpdate();
     			new BuildLobby(sql_connection);
             }
