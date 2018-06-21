@@ -400,6 +400,7 @@ public class DB
 			String scoring_scheme = result_set.getString(26);
 			String progressive = result_set.getString(27);
 			double progressive_paid = result_set.getDouble(28);
+			Long settlement_deadline = result_set.getLong(31);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
@@ -429,6 +430,7 @@ public class DB
 			contest.put("scoring_scheme", scoring_scheme);
 			contest.put("progressive", progressive);
 			contest.put("progressive_paid", progressive_paid);
+			contest.put("settlement_deadline", settlement_deadline);
 			}
 
 		return contest;
