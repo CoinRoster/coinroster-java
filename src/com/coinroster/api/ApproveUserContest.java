@@ -10,14 +10,15 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
+import com.coinroster.internal.ExpireSettlementWindow;
 import com.coinroster.internal.UpdateContestStatus;
 
 public class ApproveUserContest extends Utils {
 	
 	public static String method_level = "admin";
 	@SuppressWarnings("unused")
-	public ApproveUserContest(MethodInstance method) throws Exception 
-		{
+	public ApproveUserContest(MethodInstance method) throws Exception {
+		
 		JSONObject 
 		
 		input = method.input,
@@ -31,10 +32,16 @@ public class ApproveUserContest extends Utils {
 
 		method : {
 			
-			log(input.toString());
+			int contest_id = input.getInt("contest_id");
 //------------------------------------------------------------------------------------
 			if (input.getString("admin_approval").equals("1")) {
+				JSONObject contest = db.select_contest(contest_id);
+				
+				Long settlement_deadline = contest.getLong("settlement_deadline");
+				new ExpireSettlementWindow(settlement_deadline, contest_id, sql_connection);
+				
 				log("Admin has approved contest " + input.getInt("contest_id"));
+				
 				new UpdateContestStatus(sql_connection, input.getInt("contest_id"), 1);
 				new BuildLobby(sql_connection);
 			} else {
