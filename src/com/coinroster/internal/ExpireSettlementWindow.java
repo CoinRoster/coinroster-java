@@ -10,20 +10,16 @@ import com.coinroster.Server;
 
 public class ExpireSettlementWindow {
     
-	public ExpireSettlementWindow(Long settlement_deadline, int contest_id, Connection sql_connection) throws Exception 
+	public ExpireSettlementWindow(Long settlement_deadline, int contest_id, JSONObject cash_register) throws Exception 
 		{
 		     
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		
 		Runnable task = new Runnable() {
 			public void run() {
-				
-				DB db = new DB(sql_connection);
 
 				try {
 					Server.log("Settlement deadline for contest " + contest_id + " has elapsed, notifying admin");
-					
-					JSONObject cash_register = db.select_user("username", "internal_cash_register");	
 
 					String
 	

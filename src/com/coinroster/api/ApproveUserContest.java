@@ -37,7 +37,7 @@ public class ApproveUserContest extends Utils {
 			if (input.getString("admin_approval").equals("1")) {
 				JSONObject contest = db.select_contest(contest_id);
 				Long settlement_deadline = contest.getLong("settlement_deadline");
-				new ExpireSettlementWindow(settlement_deadline, contest_id, sql_connection);
+				new ExpireSettlementWindow(settlement_deadline, contest_id, db.select_user("username", "internal_cash_register"));
 				
 				log("Admin has approved contest " + input.getInt("contest_id"));
 				
