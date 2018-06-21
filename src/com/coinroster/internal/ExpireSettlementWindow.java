@@ -46,7 +46,7 @@ public class ExpireSettlementWindow {
 	
 					Server.send_mail("govi218mu@gmail.com", cash_register_admin, subject_admin, message_body_admin);
 				} catch (Exception e) {
-					Server.log("Exception occured while notifying admin:");
+					Server.log("Exception occured while notifying admin: " + e.toString());
 					e.printStackTrace();
 				}
 			}
