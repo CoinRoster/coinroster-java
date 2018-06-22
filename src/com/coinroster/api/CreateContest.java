@@ -2,7 +2,6 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,7 +11,6 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
-import com.coinroster.internal.ExpireSettlementWindow;
 
 public class CreateContest extends Utils
 	{
@@ -378,8 +376,8 @@ public class CreateContest extends Utils
             	
             	String settlement_type = "PARI-MUTUEL";
 
-            	if(category.equals("USER-GENERATED")) {
-            		settlement_type = input.getString("settlement_type");	
+            	if(category.equals("USERGENERATED")) {
+            		settlement_type = input.getString("settlement_type");
             	}
     			
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
@@ -414,14 +412,6 @@ public class CreateContest extends Utils
             	create_contest.setInt(15, 1);
             	create_contest.setNull(16, java.sql.Types.BIGINT);
             	create_contest.executeUpdate();
-            	
-        		PreparedStatement select_user = sql_connection.prepareStatement("select max(id) from contest");
-        		ResultSet result_set = select_user.executeQuery();
-        		if(result_set.next()) {
-        			int contest_id = result_set.getInt(1);
-        			new ExpireSettlementWindow((long) 500, contest_id, db.select_user("username", "internal_cash_register"));
-        		} 
-        		
     			new BuildLobby(sql_connection);
             }
 			
