@@ -377,9 +377,9 @@ public class CreateContest extends Utils
             	String settlement_type = "PARI-MUTUEL";
 
             	if(category.equals("USERGENERATED")) {
+            		log(input.toString());
             		settlement_type = input.getString("settlement_type");
             	}
-    			
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
