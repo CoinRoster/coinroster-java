@@ -41,16 +41,11 @@ public class MethodCall extends Utils
 				MethodInstance method = new MethodInstance();
 				method.request = request;
 				method.response = response;
-				try
-					{
+				try{
 					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
 				}
 				catch(JSONException e){
-					log("---------BAD PAYLOAD----------");
-					log(request.payload());
-					if(request.payload() == "")
-						method.input = new JSONObject(URLDecoder.decode("{}", "UTF-8"));
-					log(e.getStackTrace().toString());
+					method.input = new JSONObject();
 				}
 				method.output = output;
 				method.session = session;

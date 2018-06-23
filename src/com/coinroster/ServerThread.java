@@ -31,14 +31,16 @@ public class ServerThread extends Thread
 			{
 			task.cancel(true); // interrupt ServerWorker task
 			Utils.log("------------ TASK TIMEOUT -----------------------------------");
-			Utils.log(e.getStackTrace().toString());
+			e.printStackTrace();
 			StackTraceElement[] stackTraceElements = e.getStackTrace();
+			Utils.log("looping through stack trace");
 			for (StackTraceElement element : stackTraceElements) {
 				Utils.log(element);
-				Utils.log(element.getFileName());
-				Utils.log(element.getClassName());
-				Utils.log(element.getLineNumber());
-				Utils.log(element.toString());				
+				Utils.log(element.toString());
+				Utils.log("filename: " + element.getFileName());
+				Utils.log("classname: " + element.getClassName());
+				Utils.log("line num: " + element.getLineNumber());
+
 			}
 			// stack trace will get logged by Server.exception below
 			}

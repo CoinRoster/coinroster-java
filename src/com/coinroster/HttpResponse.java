@@ -66,8 +66,10 @@ public class HttpResponse
 		out.write(new String("Cache-Control: no-cache, max-age=0, must-revalidate, no-store\r\n").getBytes());
 		out.flush();
 		
-		out.write(new String("Content-Length: " + String.valueOf(response_length) + "\r\n").getBytes());
-		out.flush();
+//		out.write(new String("Content-Length: " + String.valueOf(response_length) + "\r\n").getBytes());
+//		Utils.log("resp le: " + String.valueOf(response_length));
+//		Utils.log("response length: " + String.valueOf(response_length).getBytes().length);
+//		out.flush();
 		
 		out.write(new String("Content-Type: " + mime_type + "\r\n").getBytes());
 		out.flush();

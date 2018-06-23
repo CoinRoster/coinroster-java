@@ -80,7 +80,7 @@ public class CloseContestRegistration extends Utils
 							
 							/* VOTING ROUND CREATION */
 							
-			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 							create_contest.setString(1, contest.getString("category"));
 							create_contest.setString(2, contest.getString("sub_category"));
 							create_contest.setLong(3, System.currentTimeMillis());
