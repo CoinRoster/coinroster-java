@@ -35,7 +35,15 @@ public class CronThread extends Thread
 			{
 			task.cancel(true); // interrupt CronWorker task
 			Utils.log("--- TASK TIMEOUT ------------------------------------------------");
-			Utils.log(e.getStackTrace().toString());
+			e.printStackTrace();
+			StackTraceElement[] elements = e.getStackTrace();
+			for(StackTraceElement el : elements){
+				Utils.log("class name: " + el.getClassName());
+				Utils.log("file name: " + el.getFileName());
+				Utils.log("line num: " + el.getLineNumber());
+				Utils.log("toString: " + el.toString());
+			}
+			
 			}
 		catch (Exception e) 
 			{
