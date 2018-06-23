@@ -17,7 +17,7 @@ import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
-import com.coinroster.api.JsonReader;
+import com.coinroster.internal.JsonReader;
 
 import org.json.JSONException;
 import org.json.JSONObject;

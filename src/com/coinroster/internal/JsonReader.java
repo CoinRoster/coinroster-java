@@ -1,4 +1,4 @@
-package com.coinroster.api;
+package com.coinroster.internal;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +10,8 @@ import java.nio.charset.Charset;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.coinroster.Utils;
 
 public class JsonReader {
 
@@ -30,7 +32,12 @@ public class JsonReader {
       String jsonText = readAll(rd).replace("\"i\":\"2018\",", "");    
       JSONObject json = new JSONObject(jsonText);
       return json;
-    } finally {
+    }
+    catch(JSONException e){
+    	Utils.log("Unable to connect to API and grab JSON");
+    	return null;
+    }
+    finally {
       is.close();
     }
   }
