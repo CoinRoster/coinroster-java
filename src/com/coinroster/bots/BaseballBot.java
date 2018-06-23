@@ -15,7 +15,8 @@ import java.util.Map;
 import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
-import com.coinroster.api.JsonReader;
+import com.coinroster.internal.JsonReader;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;

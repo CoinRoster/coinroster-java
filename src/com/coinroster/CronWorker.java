@@ -13,11 +13,11 @@ import java.util.concurrent.Callable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import com.coinroster.ContestMethods;
-import com.coinroster.api.JsonReader;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
 import com.coinroster.internal.CloseContestRegistration;
 import com.coinroster.internal.ExpirePromos;
+import com.coinroster.internal.JsonReader;
 
 public class CronWorker extends Utils implements Callable<Integer> 
 	{
