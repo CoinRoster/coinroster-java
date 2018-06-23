@@ -96,6 +96,7 @@ public class CloseContestRegistration extends Utils
 							create_contest.setString(12, "Crowd Contest: " + contest_id);
 							create_contest.setInt(13, 0);
 							create_contest.setInt(14, 1);
+							create_contest.executeUpdate();
 							
 							new BuildLobby(sql_connection);
 							
