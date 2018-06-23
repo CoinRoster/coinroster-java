@@ -88,7 +88,7 @@ public class CloseContestRegistration extends Utils
 							create_contest.setString(4, contest.getString("contest_type"));
 							create_contest.setString(5, "VOTING ROUND: " + contest.getString("title"));
 							create_contest.setString(6, contest.getString("description"));
-							create_contest.setLong(7, contest.getLong("registration_deadline"));
+							create_contest.setLong(7, contest.getLong("settlement_deadline"));
 							create_contest.setDouble(8, contest.getDouble("rake"));
 							create_contest.setDouble(9, contest.getDouble("cost_per_entry"));
 							create_contest.setString(10, contest.getString("settlement_type"));
