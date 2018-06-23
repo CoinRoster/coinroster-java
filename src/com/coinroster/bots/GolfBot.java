@@ -103,13 +103,16 @@ public class GolfBot extends Utils {
 		boolean flag = false;
 		String url = "https://statdata.pgatour.com/r/" + gameID + "/field.json";
 		JSONObject field = JsonReader.readJsonFromUrl(url);
+		if(field == null){
+			log("Unable to connect to pgatour API");
+			return false;
+		}
 		JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
 		boolean player_table_updated = false;
 		
 		for(Map.Entry<Integer, JSONArray> entry : contest_players.entrySet()){
 			int contest_id = entry.getKey();
 			JSONArray option_table = entry.getValue();
-			
 			
 			//check if any players in DB's player table didn't make it in:
 			for(Integer existing_id : existing_ids){
@@ -144,7 +147,6 @@ public class GolfBot extends Utils {
 					}
 				}
 			}
-			
 			
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
@@ -215,7 +217,7 @@ public class GolfBot extends Utils {
 	}
 	
 	public void scrapeTourneyID() throws IOException, JSONException{
-	// get the Thursday date in yyyy-MM-dd format
+		// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
 		Calendar c = Calendar.getInstance();        
@@ -325,6 +327,10 @@ public class GolfBot extends Utils {
 	public boolean scrapeScores(String tourneyID) throws JSONException, IOException, SQLException{
 		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/2018/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
+		if(leaderboard == null){
+			log("couldn't connect to pgatour API");
+			return false;
+		}
 		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
 		ResultSet playerScores = db.getPlayerScores(this.sport);
