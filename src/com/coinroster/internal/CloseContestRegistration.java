@@ -74,7 +74,44 @@ public class CloseContestRegistration extends Utils
 
 						int min_users = contest.getInt("min_users");
 										
-						if (users.size() >= min_users) // contest is adequately subscribed
+						if (users.size() >= min_users && contest.getString("settlement_type").equals("CROWD-SETTLED")) // contest is adequately subscribed
+							{
+							Server.log("Contest #" + contest_id + " is being crowd-settled");
+							
+							/* VOTING ROUND CREATION */
+							
+			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+							create_contest.setString(1, contest.getString("category"));
+							create_contest.setString(2, contest.getString("sub_category"));
+							create_contest.setLong(3, System.currentTimeMillis());
+							//create_contest.setString(3, contest.getString("progressive_code"));
+							create_contest.setString(4, contest.getString("contest_type"));
+							create_contest.setString(5, "VOTING ROUND: " + contest.getString("title"));
+							create_contest.setString(6, contest.getString("description"));
+							create_contest.setLong(7, contest.getLong("registration_deadline"));
+							create_contest.setDouble(8, contest.getDouble("rake"));
+							create_contest.setDouble(9, contest.getDouble("cost_per_entry"));
+							create_contest.setString(10, contest.getString("settlement_type"));
+							create_contest.setString(11, contest.getString("option_table"));
+							create_contest.setString(12, "Crowd Contest: " + contest_id);
+							create_contest.setInt(13, 0);
+							create_contest.setInt(14, 1);
+							
+							new BuildLobby(sql_connection);
+							
+							// notify users that contest is in play
+							
+							subject = contest_title + " is now in play!";
+							
+							message_body  = "Hi <b><!--USERNAME--></b>";
+							message_body += "<br/>";
+							message_body += "<br/>";
+							message_body += "<b>" + contest_title + "</b> is now being Crowd settled! <a href='" + Server.host + "/login.html>Log in now</a> and cast your bet on what you think is the correct outcome.";
+							message_body += "<br/>";
+							message_body += "<br/>";
+							message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> to view your wagers.";
+							}										
+						else if (users.size() >= min_users) // contest is adequately subscribed
 							{
 							Server.log("Contest #" + contest_id + " is in play");
 							
