@@ -75,7 +75,10 @@ public class CrowdSettleBot {
 		}
 		catch(Exception e){
 			Utils.log(e.toString());
-			e.printStackTrace();
+			Utils.log(e.getMessage());
+			Utils.log(e.getCause());
+			Utils.log(e.getClass());
+			Utils.log(e.getLocalizedMessage());
 		}
 		
 		return fields;
