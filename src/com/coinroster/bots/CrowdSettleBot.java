@@ -12,7 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
-import com.coinroster.Server;
+import com.coinroster.Utils;
 
 public class CrowdSettleBot {
 	
@@ -35,6 +35,7 @@ public class CrowdSettleBot {
 		fields.put("contest_id", contest_id);
 		int winning_outcome = 1;
 		ResultSet contest_users = null;
+		Utils.log("test");
 		try {
 			PreparedStatement get_contest_users = sql_connection.prepareStatement("select user_id, entry_data from entry where contest_id=?");
 			get_contest_users.setInt(1, contest_id);
@@ -63,7 +64,7 @@ public class CrowdSettleBot {
 			}
 
 			fields.put("winning_outcome", winning_outcome);
-			Server.log("winning outcome for crowd settled contest: " + winning_outcome);
+			Utils.log("winning outcome for crowd settled contest: " + winning_outcome);
 		}
 		catch(Exception e){
 			e.printStackTrace();
