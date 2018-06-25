@@ -562,7 +562,7 @@ public class ContestMethods extends Utils{
 				DB db = new DB(sql_connection);
 				
 				ArrayList<Integer> voting_contest_ids = db.check_if_in_play("USERGENERATED", "VOTING", "PARI-MUTUEL");
-
+				
 				if(!voting_contest_ids.isEmpty()){
 					CrowdSettleBot crowd_bot = new CrowdSettleBot(sql_connection);
 					
