@@ -13,12 +13,14 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
+import com.coinroster.bots.CrowdSettleBot;
 import com.coinroster.bots.GolfBot;
 
 public class ContestMethods extends Utils{
@@ -549,7 +551,83 @@ public class ContestMethods extends Utils{
 			}
 		}
 	}	
-		
+
+	//------------------------------------------------------------------------------------
+	
+		public static void checkCrowdContests() {
+
+			Connection sql_connection = null;
+			try {
+				sql_connection = Server.sql_connection();
+				DB db = new DB(sql_connection);
+				
+				ArrayList<Integer> voting_contest_ids = db.check_if_in_play("USERGENERATED", "VOTING", "PARI-MUTUEL");
+
+				if(!voting_contest_ids.isEmpty()){
+					CrowdSettleBot crowd_bot = new CrowdSettleBot(sql_connection);
+					
+					for(Integer contest_id : voting_contest_ids){
+						
+						JSONObject contest = db.select_contest(contest_id);
+						if(new Date().getTime() > contest.getLong("settlement_deadline")) {
+							
+							// Settle Voting Round
+							log("Voting round for contest: " + contest_id + " has ended, settling");
+							JSONObject input = crowd_bot.settlePariMutuel(contest_id);
+							input.put("contest_id", contest_id);
+
+							MethodInstance method = new MethodInstance();
+							JSONObject output = new JSONObject("{\"status\":\"0\"}");
+							method.input = input;
+							method.output = output;
+							method.session = null;
+							method.sql_connection = sql_connection;
+							try{
+								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+								c.newInstance(method);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
+							input.remove("contest_id");
+							
+							// get contest ID of contest that created voting round
+							// (maybe find a better way of doing this)
+							int original_contest_id = Integer.parseInt(contest.getString("created_by").replaceAll("[\\D]", ""));
+							
+							// settle original contest
+//							JSONObject original_contest = db.select_contest(original_contest_id);
+							input.put("contest_id", original_contest_id);							
+							
+							MethodInstance original_method = new MethodInstance();
+							original_method.input = input;
+							original_method.output = output;
+							original_method.session = null;
+							original_method.sql_connection = sql_connection;
+							try{
+								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+								c.newInstance(method);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				Server.exception(e);
+			} finally {
+				if (sql_connection != null) {
+					try {
+						sql_connection.close();
+						} 
+					catch (SQLException ignore) {
+						// ignore
+					}
+				}
+			}
+		}	
+			
 	//------------------------------------------------------------------------------------
 
 	// create basketball contests reading from csv

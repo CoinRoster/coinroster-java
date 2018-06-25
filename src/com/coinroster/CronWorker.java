@@ -76,6 +76,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
+			ContestMethods.checkCrowdContests();
 		}
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField();
