@@ -549,7 +549,88 @@ public class ContestMethods extends Utils{
 			}
 		}
 	}	
-		
+
+	//------------------------------------------------------------------------------------
+	
+		public static void checkCrowdContests() {
+			/*Connection sql_connection = null;
+			try {
+				sql_connection = Server.sql_connection();
+				DB db_connection = new DB(sql_connection);
+				ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "GOLF", "ROSTER");
+				ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("GOLF", "PARI-MUTUEL");
+
+				if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
+					GolfBot golfBot = new GolfBot(sql_connection);
+					log("Golf Contest is in play and minute is multiple of 20");
+					String tourneyID = golfBot.getLiveTourneyID();
+					boolean finished = golfBot.scrapeScores(tourneyID);
+					
+					//check to see if Pari-Mutuels are ready to be settled
+					golfBot.checkPariMutuelStatus(pari_contest_ids);
+					JSONArray player_map = golfBot.updateScoresDB();
+
+					for(Integer contest_id : roster_contest_ids ){
+
+						JSONObject fields = new JSONObject();
+						fields.put("contest_id", contest_id);
+						fields.put("normalization_scheme", "INTEGER-INVERT");
+						fields.put("player_scores", player_map);
+
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = fields;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+						
+					}
+					if(finished){
+						log("Golf tournament has ended");
+						for(Integer contest_id : roster_contest_ids){
+							
+							JSONObject fields = new JSONObject();
+							fields.put("contest_id", contest_id);
+							fields.put("normalization_scheme", "INTEGER-INVERT");
+							fields.put("player_scores", player_map);
+							
+							MethodInstance method = new MethodInstance();
+							JSONObject output = new JSONObject("{\"status\":\"0\"}");
+							method.input = fields;
+							method.output = output;
+							method.session = null;
+							method.sql_connection = sql_connection;
+							try{
+								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+								c.newInstance(method);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				Server.exception(e);
+			} finally {
+				if (sql_connection != null) {
+					try {
+						sql_connection.close();
+						} 
+					catch (SQLException ignore) {
+						// ignore
+					}
+				}
+			}*/
+		}	
+			
 	//------------------------------------------------------------------------------------
 
 	// create basketball contests reading from csv
