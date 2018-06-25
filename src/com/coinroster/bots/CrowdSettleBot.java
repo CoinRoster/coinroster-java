@@ -28,7 +28,6 @@ public class CrowdSettleBot {
 	public CrowdSettleBot(Connection sql_connection) throws IOException, JSONException{
 		CrowdSettleBot.sql_connection = sql_connection;
 		db = new DB(sql_connection);
-
 	}
 	
 	public JSONObject settlePariMutuel(int contest_id) throws Exception{
