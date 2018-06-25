@@ -67,6 +67,7 @@ public class CrowdSettleBot {
 			Utils.log("winning outcome for crowd settled contest: " + winning_outcome);
 		}
 		catch(Exception e){
+			Utils.log(e.toString());
 			e.printStackTrace();
 		}
 		
