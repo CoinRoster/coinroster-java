@@ -34,11 +34,12 @@ public class CrowdSettleBot extends Utils{
 		fields.put("contest_id", contest_id);
 		int winning_outcome = 1;
 		ResultSet contest_users = null;
-		log("test");
+		log("test1");
 		try {
 			PreparedStatement get_contest_users = sql_connection.prepareStatement("select entry_data, amount from entry where contest_id=?");
 			get_contest_users.setInt(1, contest_id);
 			contest_users = get_contest_users.executeQuery();
+			log("test2");
 
 			// assign number of votes to each entry
 			Double max_amount = 0.0;
@@ -46,14 +47,17 @@ public class CrowdSettleBot extends Utils{
 			
 			while(contest_users.next()) {
 				if(!entries.containsKey(contest_users.getInt(1))) {
+					log("test3");
 					entries.put(contest_users.getInt(1), contest_users.getDouble(2));
 				} else {
+					log("test4");
 					Double updated_amount = add(contest_users.getDouble(2), entries.get(contest_users.getInt(1)), 0);
 					entries.put(contest_users.getInt(1), updated_amount);
 				}
 				
 				// keep running max vote count
 				if (max_amount < entries.get(contest_id)) {
+					log("test5");
 					log("max_amount: " + max_amount);
 					max_amount = entries.get(contest_id);
 					winning_outcome = contest_id;
@@ -70,7 +74,8 @@ public class CrowdSettleBot extends Utils{
 			log("winning outcome for crowd settled contest: " + winning_outcome);
 		}
 		catch(Exception e){
-			log(e.getStackTrace().toString());
+			e.printStackTrace(System.out);
+			log(e.getCause());
 		}
 		
 		return fields;
