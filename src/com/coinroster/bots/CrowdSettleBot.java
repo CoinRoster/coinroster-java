@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -78,7 +79,7 @@ public class CrowdSettleBot {
 			Utils.log(e.getMessage());
 			Utils.log(e.getCause());
 			Utils.log(e.getClass());
-			Utils.log(e.getLocalizedMessage());
+			Utils.log(e.getStackTrace());
 		}
 		
 		return fields;
