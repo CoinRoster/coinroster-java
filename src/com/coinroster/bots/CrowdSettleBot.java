@@ -56,11 +56,11 @@ public class CrowdSettleBot extends Utils{
 				}
 				
 				// keep running max vote count
-				if (max_amount < entries.get(contest_id)) {
+				if (max_amount < entries.get(contest_users.getInt(1))) {
 					log("test5");
 					log("max_amount: " + max_amount);
-					max_amount = entries.get(contest_id);
-					winning_outcome = contest_id;
+					max_amount = entries.get(contest_users.getInt(1));
+					winning_outcome = contest_users.getInt(1);
 				}
 			}
 			
