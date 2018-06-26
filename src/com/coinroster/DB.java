@@ -310,10 +310,12 @@ public class DB
 	public ArrayList<Integer> check_if_in_play(String category, String sub_category, String contest_type) throws Exception
 	{
 		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where category = ? and sub_category = ? and contest_type = ? and status = ?");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
 		get_live_contests.setString(3, contest_type);
+		if(sub_category.equals("VOTING")) get_live_contests.setInt(4, 1);
+		else get_live_contests.setInt(4, 2);
 	
 		ResultSet result_set = get_live_contests.executeQuery();
 		
