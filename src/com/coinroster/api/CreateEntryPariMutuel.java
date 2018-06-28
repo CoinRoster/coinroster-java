@@ -159,13 +159,25 @@ public class CreateEntryPariMutuel extends Utils
 						break lock;
 						}
 					
+					// only rc for voting round
+					if (contest.getString("subcategory").equals("VOTING") && total_entry_fees > rc_balance) {
+						output.put("error", "Insufficient funds");
+						break lock;
+					}
+					
 					// --------------------------------------------- //
 					// if we get here, the entry has been validated! //
 					// --------------------------------------------- //
 	
 					// calculate user balances and transaction amounts
-	
-					if (use_rc && rc_balance > 0)
+					
+					if (contest.getString("subcategory").equals("VOTING")) {
+						// if voting round, we already determined the user has enough
+						double temp_rc_balance = subtract(rc_balance, total_entry_fees, 0);
+						rc_transaction_amount = total_entry_fees;
+						rc_balance = temp_rc_balance;
+					}
+					else if (use_rc && rc_balance > 0)
 						{
 						double temp_rc_balance = subtract(rc_balance, total_entry_fees, 0);
 	
