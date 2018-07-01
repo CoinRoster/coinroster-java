@@ -32,9 +32,18 @@ public class GetUnapprovedContests extends Utils
 		method : {
 			
 //------------------------------------------------------------------------------------
+			
+			String settlement = input.getString("settlement_type");
 
-			PreparedStatement select_transaction  = sql_connection.prepareStatement("select * from contest where status = 5");
-
+			PreparedStatement select_transaction  = null;
+			if(settlement.equals("crowd")) {
+				select_transaction= sql_connection.prepareStatement("select * from contest where status = 5 and sub_category = ?");
+			} else {
+				select_transaction= sql_connection.prepareStatement("select * from contest where status = 5 and sub_category not in ( ? )");
+			}
+			
+			select_transaction.setString(1, "VOTING");
+			
 			ResultSet result_set = select_transaction.executeQuery();
 			
 			JSONArray pending_contests = new JSONArray();

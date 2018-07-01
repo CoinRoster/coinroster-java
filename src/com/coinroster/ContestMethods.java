@@ -22,6 +22,7 @@ import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.CrowdSettleBot;
 import com.coinroster.bots.GolfBot;
+import com.coinroster.internal.UpdateContestStatus;
 
 public class ContestMethods extends Utils{
 
@@ -575,6 +576,34 @@ public class ContestMethods extends Utils{
 							log("Voting round for contest: " + contest_id + " has ended, settling");
 							JSONObject input = crowd_bot.settlePariMutuel(contest_id);
 							input.put("contest_id", contest_id);
+							
+							// multiple bets placed, notify admin
+							if(input.has("multiple_bets")) {
+								JSONObject cash_register = db.select_user("username", "internal_cash_register");
+								
+								String
+								
+								cash_register_email_address = cash_register.getString("email_address"),
+								cash_register_admin = "Cash Register Admin",
+								
+								subject_admin = "Crowd Settled Contest Has Multiple Entries",
+								message_body_admin = "";
+								
+								message_body_admin += "<br/>";
+								message_body_admin += "<br/>";
+								message_body_admin += "A crowd settled contest has entries that users have placed on multiple options. Please settle the contest below:";
+								message_body_admin += "<br/>";
+								message_body_admin += "<br/>";
+								message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
+								message_body_admin += "<br/>";
+								message_body_admin += "<br/>";
+								message_body_admin += "Please settle the contest from the admin panel.";
+								message_body_admin += "<br/>";
+				
+								Server.send_mail(cash_register_email_address, cash_register_admin, subject_admin, message_body_admin);
+								new UpdateContestStatus(sql_connection, contest_id, 5);
+								return;
+							}
 
 							MethodInstance method = new MethodInstance();
 							JSONObject output = new JSONObject("{\"status\":\"0\"}");
