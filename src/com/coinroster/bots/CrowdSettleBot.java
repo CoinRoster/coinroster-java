@@ -32,7 +32,7 @@ public class CrowdSettleBot extends Utils{
 	public JSONObject settlePariMutuel(int contest_id) throws Exception{
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
-		int winning_outcome = 1;
+		int winning_outcome = 0;
 		ResultSet contest_users = null;
 		try {
 			PreparedStatement get_contest_users = sql_connection.prepareStatement("select entry_data, amount from entry where contest_id=?");
@@ -45,20 +45,22 @@ public class CrowdSettleBot extends Utils{
 			
 			while(contest_users.next()) {
 				if(!entries.containsKey(contest_users.getInt(1))) {
+					// bets on more than one entry
+					if (winning_outcome != 0) {
+						fields.put("multiple_bets", "true");
+					}
 					entries.put(contest_users.getInt(1), contest_users.getDouble(2));
 				} else {
 					Double updated_amount = add(contest_users.getDouble(2), entries.get(contest_users.getInt(1)), 0);
 					entries.put(contest_users.getInt(1), updated_amount);
 				}
-				
+
 				// keep running max vote count
 				if (max_amount < entries.get(contest_users.getInt(1))) {
 					log("test5");
 					log("max_amount: " + max_amount);
 					max_amount = entries.get(contest_users.getInt(1));
-					if (winning_outcome != contest_users.getInt(1)) {
-						fields.put("multiple_bets", "true");
-					}
+
 					winning_outcome = contest_users.getInt(1);
 				}
 			}
