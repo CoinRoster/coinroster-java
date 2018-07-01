@@ -570,13 +570,13 @@ public class ContestMethods extends Utils{
 					for(Integer contest_id : voting_contest_ids){
 						
 						JSONObject contest = db.select_contest(contest_id);
-						if(new Date().getTime() > contest.getLong("settlement_deadline")) {
+						if(new Date().getTime() > contest.getLong("registration_deadline")) {
 							
 							// Settle Voting Round
 							log("Voting round for contest: " + contest_id + " has ended, settling");
 							JSONObject input = crowd_bot.settlePariMutuel(contest_id);
 							input.put("contest_id", contest_id);
-							
+							log(input.toString());
 							// multiple bets placed, notify admin
 							if(input.has("multiple_bets")) {
 								JSONObject cash_register = db.select_user("username", "internal_cash_register");
