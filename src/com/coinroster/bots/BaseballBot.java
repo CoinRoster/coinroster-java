@@ -90,7 +90,7 @@ public class BaseballBot extends Utils {
 	public JSONObject createPariMutuel(Long deadline, String date) throws JSONException{
 		JSONObject fields = new JSONObject();
 		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", this.sport);
+		fields.put("sub_category", "BASEBALLPROPS");
 		fields.put("contest_type", "PARI-MUTUEL");
 		fields.put("progressive", "MOSTHITS");
 		String title = "Most Hits in MLB Tonight | " + date;
