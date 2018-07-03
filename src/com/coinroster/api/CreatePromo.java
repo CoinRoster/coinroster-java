@@ -152,10 +152,11 @@ public class CreatePromo extends Utils
 			
 			if (referrer_id.equals("") && from_account.getString("username").equals("internal_promotions"))
 				{
-				referrer_id = null;	
+				referrer_id = from_account_id;	
 				}
 			else if (referrer_id.equals("") )
 				{
+				referrer_id = from_account_id;
 				referrer = db.select_user("id", from_account_id);
 				}
 			else
@@ -178,7 +179,7 @@ public class CreatePromo extends Utils
 						}
 					}*/
 				}
-			if (referrer == null && !from_account.getString("username").equals("internal_promotions"))
+			if (referrer == null) // && !from_account.getString("username").equals("internal_promotions"))
 				{
 				output.put("error", "Invalid affiliate");
 	            break method;
@@ -186,6 +187,7 @@ public class CreatePromo extends Utils
 			// -------------------------------------------------------------------------------
 			
 
+			log("referrer id: " + referrer_id);
 				
 			
 		    PreparedStatement internal_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
