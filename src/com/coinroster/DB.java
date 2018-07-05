@@ -1174,7 +1174,7 @@ public class DB
 	public ResultSet getPlayerScores(String sport) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, points from player where sport_type=?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, data from player where sport_type=?");
 			get_players.setString(1, sport);
 			result_set = get_players.executeQuery();		
 		}
@@ -1186,12 +1186,28 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	public void editPoints(double pts, int id, String sport) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ? and sport_type = ?");
-		update_points.setDouble(1, pts);
+	public void editData(String data, int id, String sport) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ?");
+		update_points.setString(1, data);
 		update_points.setInt(2, id);
 		update_points.setString(3, sport);
 		update_points.executeUpdate();
+	}
+	
+//------------------------------------------------------------------------------------
+
+	public ResultSet getRosterTemplates(String sub_category) throws SQLException{
+		
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_contests = sql_connection.prepareStatement("select * from contest_template where sub_category = ? and active = 1 and contest_type = ROSTER");
+			get_contests.setString(1, sub_category);
+			result_set = get_contests.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return result_set;	
 	}
 	
 }

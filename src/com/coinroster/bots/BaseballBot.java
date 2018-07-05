@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import com.coinroster.DB;
 import com.coinroster.Server;
@@ -209,21 +210,33 @@ public class BaseballBot extends Utils {
 			delete_old_rows.setString(1, this.sport);
 			delete_old_rows.executeUpdate();
 			log("deleted " + this.sport + " players from old contests");
+			
+			JSONObject empty_data_json = new JSONObject();
+			try {
+				empty_data_json.append("hits", 0);
+				empty_data_json.append("runs", 0);
+				empty_data_json.append("rbis", 0);
+				empty_data_json.append("walks", 0);
+				empty_data_json.append("strikeouts", 0);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 
 			if(this.getPlayerHashMap() == null)
 				return;
 			
 			for(Player player : this.getPlayerHashMap().values()){
 				
-				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setInt(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
 				save_player.setString(5, player.getTeam());
 				save_player.setDouble(6, player.getSalary());
-				save_player.setDouble(7, player.getPoints());
-				save_player.setString(8, "{}");
+				save_player.setString(7, empty_data_json.toString());
+				save_player.setDouble(8, player.getPoints());
+				save_player.setString(9, "{}");
 				save_player.executeUpdate();	
 			}
 			log("added " + this.sport + " players to DB");
@@ -233,16 +246,27 @@ public class BaseballBot extends Utils {
 		}
 	}
 	
-	public JSONArray updateScores() throws SQLException, JSONException{
+	public JSONArray updateScores(JSONObject scoring_rules) throws SQLException, JSONException{
 		
 		ResultSet playerScores = db.getPlayerScores(this.sport);
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
 			int id = playerScores.getInt(1);
-			double points = playerScores.getDouble(2);
+			JSONObject data = (JSONObject) JSONObject.stringToValue(playerScores.getString(2));
 			player.put("id", id);
-			player.put("score_raw", Double.toString(points));
+			String data_to_display = "";
+			Double points = 0.0;
+			Iterator<?> keys = scoring_rules.keys();
+			while(keys.hasNext()){
+				String key = (String) keys.next();
+				int multiplier = scoring_rules.getInt(key);
+				data_to_display += key + ": " + String.valueOf(data.get(key)) + ", ";
+				points += (double) data.getInt(key) * multiplier;			
+			}
+			data_to_display = data_to_display.substring(0, data_to_display.length()-3);
+			
+			player.put("score_raw", data_to_display);
 			player.put("score_normalized", points);
 			player_map.put(player);
 		}
@@ -317,18 +341,24 @@ public class BaseballBot extends Utils {
 								String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
 								if(!espn_ID_url.isEmpty()){
 									int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);		
-									String points_string = row.getElementsByClass("batting-stats-h").text();
-									double pts;
-									// if player played, get their points
-									if(!points_string.isEmpty() && !points_string.contains("--")){
-										pts = Double.parseDouble(points_string);		
+									int hits_string = Integer.parseInt(row.getElementsByClass("batting-stats-h").text());
+									int runs_string = Integer.parseInt(row.getElementsByClass("batting-stats-r").text());
+									int rbi_string = Integer.parseInt(row.getElementsByClass("batting-stats-rbi").text());
+									int bb_string = Integer.parseInt(row.getElementsByClass("batting-stats-bb").text());
+									int k_string = Integer.parseInt(row.getElementsByClass("batting-stats-k").text());
+									JSONObject data = new JSONObject();
+									try {
+										data.append("hits", hits_string);
+										data.append("runs", runs_string);
+										data.append("rbis", rbi_string);
+										data.append("walks", bb_string);
+										data.append("strikeouts", k_string);
+									} catch (JSONException e) {
+										e.printStackTrace();
 									}
-									// if player did not play, set pts=0
-									else{
-										pts = 0.0;
-									}
-									// look up player in HashMap with ESPN_ID, update his points in DB
-									db.editPoints(pts, espn_ID, this.sport);
+								
+									// look up player in HashMap with ESPN_ID, update his data in DB
+									db.editData(data.toString(), espn_ID, this.sport);
 								}			
 							}			
 						}
