@@ -29,7 +29,7 @@ public class LogAffiliate extends Utils
 				break method;
 			}
 			
-		    PreparedStatement add_affiliate = sql_connection.prepareStatement("insert into affiliate(source) values(?)");				
+		    PreparedStatement add_affiliate = sql_connection.prepareStatement("insert into affiliate (source) values(?)");				
 		    add_affiliate.setString(1, affiliate);
 			add_affiliate.execute();
 		
