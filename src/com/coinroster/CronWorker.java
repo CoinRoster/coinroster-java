@@ -1,11 +1,7 @@
 package com.coinroster;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,6 +17,7 @@ import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
 import com.coinroster.internal.CloseContestRegistration;
 import com.coinroster.internal.ExpirePromos;
+import com.coinroster.internal.JsonReader;
 
 public class CronWorker extends Utils implements Callable<Integer> 
 	{
@@ -74,13 +71,18 @@ public class CronWorker extends Utils implements Callable<Integer>
 			
 			new CloseContestRegistration();
 			
-			//see if ANY contests are in play (status=2)
+			// see if contests are in play (status=2) and live update scores if applicable
+			// also settle the contests when applicable
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 		}
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField();
+		}
+		//update currencies hourly on live
+		if(Server.live_server && minute==2){
+			UpdateCurrencies();
 		}
 	}
 
@@ -91,9 +93,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		
 		new ExpirePromos();
 //		new CheckPendingWithdrawals();
-		//if (!Server.dev_server) UpdateCurrencies();
 	
-		
 		if(hour==7){
 			ContestMethods.createBasketballContests();
 			ContestMethods.createBaseballContests();
@@ -115,7 +115,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		{
 			UpdateBTCUSD();
 			SessionExpiry();
-			//UpdateCurrencies();			
+			UpdateCurrencies();			
 		}
 	}
 
@@ -340,77 +340,50 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// update BTCUSD price
-	
-	@SuppressWarnings("unused")
-	private void UpdateCurrencies()
-		{
-		Server.async_updater.execute(new Runnable() 
-			{
-		    public void run() 
-		    	{
+	// update currencies using open exchange rates API
+	private void UpdateCurrencies(){
+		Server.async_updater.execute(new Runnable(){
+		    public void run(){
 		    	Connection sql_connection = null;
 				try {
 					StringBuilder builder = new StringBuilder();
-					
-					for (String[] currency : currencies) builder.append(currency[2] + "+");
+					for (String[] currency : currencies) builder.append(currency[1] + ",");
 					String symbol_string = builder.toString();
 					symbol_string = symbol_string.substring(0,symbol_string.length() - 1);
 					
-					URL obj = new URL("http://download.finance.yahoo.com/d/quotes.csv?s=" + symbol_string + "&f=l1");
-					HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-					con.setRequestMethod("GET");
-					con.setRequestProperty("User-Agent", "CoinRoster.com - We respect your API and make requests once per hour");
-				
-					BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+					String api_key = null;
+					if(Server.live_server)
+						api_key = "f165abfe564e42e49e6d7876af17ed51";
+					else if(Server.dev_server)
+						api_key = "3e80b1fb4e894599bef34ffb7216fc50";
 					
-					String line;
-				
-					int ctr = 0;
-
+					Utils.log("updating currencies from openexchangerates");
+					String url = "https://openexchangerates.org/api/latest.json?app_id=" + api_key + "&symbols=" + symbol_string;
+					JSONObject response = JsonReader.readJsonFromUrl(url);
+					JSONObject rates = response.getJSONObject("rates");
+					
 					sql_connection = Server.sql_connection();
 					DB db = new DB(sql_connection);
 					
-					while ((line = in.readLine()) != null)
-						{
-						if (line.contains("N/A")) continue;
-						try {
-							String
-							
-							description = currencies[ctr][0], // e.g. Canadian Dollar
-							symbol = currencies[ctr][1]; // e.g. CAD
-							
-							double 
-							
-							price = Double.parseDouble(line),
-							last_price = db.get_last_price(symbol);
-							
-							if (price != last_price && price != 0) db.update_fx(symbol, price, "Yahoo Finance", description);
-							}
-						catch (Exception e)
-							{
-							Server.exception(e);
-							}
-						ctr++;
-						}
-				
-					in.close();
-					} 
-				catch (Exception e) 
-					{
+					for (String[] currency : currencies){
+						double price = rates.getDouble(currency[1]);
+						if (price != 0) 
+							db.update_fx(currency[1], price, "openexchangerates", currency[0]);
+					}
+				} 
+				catch (Exception e){
+					e.printStackTrace();
 					Server.exception(e);
-					} 
-				finally
-					{
-					if (sql_connection != null)
-						{
+				} 
+				finally{
+					if (sql_connection != null){
 						try {sql_connection.close();} 
 						catch (SQLException ignore) {}
-						}
 					}
-		    	}
-			});
-		}	
+				}
+		    }
+		});
+	}	
 	
 //------------------------------------------------------------------------------------
 

@@ -34,9 +34,7 @@ public class ContestReport_Lobby extends Utils
 		method : {
 			
 //------------------------------------------------------------------------------------
-		
-			Utils.log("Method input: " + input.toString());
-			
+					
 			try{
 				String 
 				category = input.getString("category"),
@@ -164,7 +162,7 @@ public class ContestReport_Lobby extends Utils
 				output.put("status", "1");
 			}
 			catch(JSONException e){
-				Utils.log(e.getStackTrace().toString());
+				e.printStackTrace();
 			}
 				
 //------------------------------------------------------------------------------------

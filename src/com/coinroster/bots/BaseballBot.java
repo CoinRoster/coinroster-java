@@ -16,7 +16,8 @@ import java.util.Map;
 import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
-import com.coinroster.api.JsonReader;
+import com.coinroster.internal.JsonReader;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -90,7 +91,7 @@ public class BaseballBot extends Utils {
 	public JSONObject createPariMutuel(Long deadline, String date) throws JSONException{
 		JSONObject fields = new JSONObject();
 		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", this.sport);
+		fields.put("sub_category", "BASEBALLPROPS");
 		fields.put("contest_type", "PARI-MUTUEL");
 		fields.put("progressive", "MOSTHITS");
 		String title = "Most Hits in MLB Tonight | " + date;

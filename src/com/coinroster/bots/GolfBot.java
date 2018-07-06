@@ -17,7 +17,7 @@ import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
-import com.coinroster.api.JsonReader;
+import com.coinroster.internal.JsonReader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -103,12 +103,50 @@ public class GolfBot extends Utils {
 		boolean flag = false;
 		String url = "https://statdata.pgatour.com/r/" + gameID + "/field.json";
 		JSONObject field = JsonReader.readJsonFromUrl(url);
+		if(field == null){
+			log("Unable to connect to pgatour API");
+			return false;
+		}
 		JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
 		boolean player_table_updated = false;
 		
 		for(Map.Entry<Integer, JSONArray> entry : contest_players.entrySet()){
 			int contest_id = entry.getKey();
 			JSONArray option_table = entry.getValue();
+			
+			//check if any players in DB's player table didn't make it in:
+			for(Integer existing_id : existing_ids){
+				boolean in_option_table = false;
+				for(int option_table_index = 0; option_table_index < option_table.length(); option_table_index++){
+					int p_id = option_table.getJSONObject(option_table_index).getInt("id");
+					if(p_id == existing_id){
+						in_option_table = true;
+						break;
+					}
+				}
+				//add player from player table to option table
+				if(!in_option_table){
+					PreparedStatement get_data = sql_connection.prepareStatement("select name, salary from player where sport_type=? and id=?");
+					get_data.setString(1, this.sport);
+					get_data.setInt(2, existing_id);
+					ResultSet player_data = get_data.executeQuery();
+					while(player_data.next()){
+						String name = player_data.getString(1);
+						double price = player_data.getDouble(2);
+						JSONObject p = new JSONObject();
+						p.put("id", existing_id);
+						p.put("name", name);
+						p.put("count",0);
+						p.put("price", price);
+						option_table.put(p);
+						log("appending " + name + " to contest " + contest_id);
+						PreparedStatement update_contest = sql_connection.prepareStatement("UPDATE contest SET option_table = ? where id = ?");
+						update_contest.setString(1, option_table.toString());
+						update_contest.setInt(2, contest_id);
+						update_contest.executeUpdate();
+					}
+				}
+			}
 			
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
@@ -129,11 +167,14 @@ public class GolfBot extends Utils {
 					JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
 					JSONArray ranked_players = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
 					boolean checked = false;
+					String name_with_country = name_fl;
 					double salary = 0;
 					for(int q=0; q < ranked_players.length(); q++){
 						JSONObject r_player = ranked_players.getJSONObject(q);
 						if(id == Integer.parseInt(r_player.getString("plrNum"))){
 							String points = r_player.getJSONObject("statValues").getString("statValue2");
+							String country = r_player.getJSONObject("statValues").getString("statValue5");
+							name_with_country = name_fl + " " + country;
 							salary = Math.round(Double.parseDouble(points) * 10);
 							if(salary < 80.0)
 								salary = 80.0;
@@ -149,7 +190,7 @@ public class GolfBot extends Utils {
 						// add player to player table
 						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
 						add_player.setInt(1, id);
-						add_player.setString(2, name_fl);
+						add_player.setString(2, name_with_country);
 						add_player.setString(3, this.sport);
 						add_player.setString(4, gameID);
 						add_player.setString(5, "n/a");
@@ -163,9 +204,9 @@ public class GolfBot extends Utils {
 					JSONObject p = new JSONObject();
 					p.put("price", salary);
 					p.put("count", 0);
-					p.put("name", name_fl);
+					p.put("name", name_with_country);
 					p.put("id", id);
-					log("appending " + name_fl + " to contest " + contest_id );
+					log("appending " + name_with_country + " to contest " + contest_id );
 					option_table.put(p);	
 				}
 			}
@@ -179,7 +220,7 @@ public class GolfBot extends Utils {
 	}
 	
 	public void scrapeTourneyID() throws IOException, JSONException{
-	// get the Thursday date in yyyy-MM-dd format
+		// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
 		Calendar c = Calendar.getInstance();        
@@ -197,7 +238,7 @@ public class GolfBot extends Utils {
 		for(int index=0; index < tournaments.length(); index++){
 			JSONObject tournament = tournaments.getJSONObject(index);
 			
-			//check 3 things: start-date is this coming thurs, tournament is not match-play, and tournament is week's primary tournament
+			//check 3 things: start-date is this coming thurs, tournament is stroke play, and tournament is week's primary tournament
 			if(tournament.getJSONObject("date").getString("start").equals(thursday) && tournament.getString("format").equals("Stroke") && tournament.getString("primaryEvent").equals("Y")){
 				this.tourneyName = tournament.getJSONObject("trnName").getString("official");
 				this.tourneyID = tournament.getString("permNum");
@@ -229,11 +270,13 @@ public class GolfBot extends Utils {
 				JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
 				JSONArray ranked_players = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
 				boolean checked = false;
+				String country = "";
 				double salary = 0;
 				for(int q=0; q < ranked_players.length(); q++){
 					JSONObject r_player = ranked_players.getJSONObject(q);
 					if(id == Integer.parseInt(r_player.getString("plrNum"))){
 						String points = r_player.getJSONObject("statValues").getString("statValue2");
+						country = r_player.getJSONObject("statValues").getString("statValue5");
 						salary = Math.round(Double.parseDouble(points) * 10);
 						if(salary < 80.0)
 							salary = 80.0;
@@ -247,6 +290,7 @@ public class GolfBot extends Utils {
 				
 				Player p = new Player(id, name_fl, tourneyID);
 				p.set_ppg_salary(salary);
+				p.setCountry(country);
 				players.put(id, p);
 			}
 		}
@@ -271,7 +315,7 @@ public class GolfBot extends Utils {
 				save_player.setString(2, player.getName());
 				save_player.setString(3, sport);
 				save_player.setString(4, player.getTourneyID());
-				save_player.setString(5, "n/a");
+				save_player.setString(5, player.getCountry());
 				save_player.setDouble(6, player.getSalary());
 				save_player.setDouble(7, player.getPoints());
 				JSONObject emptyJSON = new JSONObject();
@@ -289,6 +333,10 @@ public class GolfBot extends Utils {
 	public boolean scrapeScores(String tourneyID) throws JSONException, IOException, SQLException{
 		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/2018/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
+		if(leaderboard == null){
+			log("couldn't connect to pgatour API");
+			return false;
+		}
 		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
 		ResultSet playerScores = db.getPlayerScores(this.sport);
@@ -465,7 +513,7 @@ public class GolfBot extends Utils {
 	public JSONObject createPariMutuel(Long deadline, String round) throws JSONException{
 		JSONObject fields = new JSONObject();
 		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", "GOLF");
+		fields.put("sub_category", "GOLFPROPS");
 		fields.put("contest_type", "PARI-MUTUEL");
 		
 		String progressive;
@@ -646,6 +694,7 @@ public class GolfBot extends Utils {
 	class Player {
 		public String method_level = "admin";
 		private String name;
+		private String country;
 		private int pga_id;
 		private String tourney_ID;
 		private double fantasy_points = 0;
@@ -665,14 +714,22 @@ public class GolfBot extends Utils {
 			this.name = n;
 			this.tourney_ID = tourney_ID;
 		}
-		
+	
 		// methods
 		public double getPoints(){
 			return fantasy_points;
 		}
 		
+		public void setCountry(String c){
+			this.country = c;
+		}
+		
 		public void setScore(double score){
 			this.fantasy_points = score;
+		}
+		
+		public String getCountry(){
+			return country;
 		}
 		
 		public int getPGA_ID(){

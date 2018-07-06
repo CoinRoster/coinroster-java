@@ -11,7 +11,7 @@ import com.coinroster.Utils;
 
 public class CheckPromoCode extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "standard";
 	@SuppressWarnings("unused")
 	public CheckPromoCode(MethodInstance method) throws Exception 
 		{

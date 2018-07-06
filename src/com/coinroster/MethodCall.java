@@ -39,20 +39,13 @@ public class MethodCall extends Utils
 				sql_connection = Server.sql_connection();
 
 				MethodInstance method = new MethodInstance();
-				if(session.active() && session.username() != null){
-					Utils.log("Session user: " + session.username() + " with ID: " + session.user_id());
-				}
 				method.request = request;
 				method.response = response;
 				try{
 					method.input = new JSONObject(URLDecoder.decode(request.payload(), "UTF-8"));
 				}
 				catch(JSONException e){
-					log("---------BAD PAYLOAD----------");
-					log(request.payload());
-					if(request.payload() == "")
-						method.input = new JSONObject(URLDecoder.decode("{}", "UTF-8"));
-					log(e.getStackTrace().toString());
+					method.input = new JSONObject();
 				}
 				method.output = output;
 				method.session = session;
