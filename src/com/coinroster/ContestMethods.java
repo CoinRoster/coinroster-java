@@ -562,11 +562,13 @@ public class ContestMethods extends Utils{
 				sql_connection = Server.sql_connection();
 				DB db = new DB(sql_connection);
 				
-				ArrayList<Integer> voting_contest_ids = db.check_if_in_play("USERGENERATED", "VOTING", "PARI-MUTUEL");
+				// get voting round contests that have status 1
+				ArrayList<Integer> voting_contest_ids = db.check_if_in_play();
 				
 				if(!voting_contest_ids.isEmpty()){
 					CrowdSettleBot crowd_bot = new CrowdSettleBot(sql_connection);
 					
+					// iterate through list of ids and check for contests whose registration deadline expired
 					for(Integer contest_id : voting_contest_ids){
 						
 						JSONObject contest = db.select_contest(contest_id);
@@ -577,6 +579,7 @@ public class ContestMethods extends Utils{
 							JSONObject input = crowd_bot.settlePariMutuel(contest_id);
 							input.put("contest_id", contest_id);
 							log(input.toString());
+							
 							// multiple bets placed, notify admin
 							if(input.has("multiple_bets")) {
 								JSONObject cash_register = db.select_user("username", "internal_cash_register");
@@ -620,12 +623,13 @@ public class ContestMethods extends Utils{
 							}
 							input.remove("contest_id");
 							
+//							int original_contest_id = Integer.parseInt(contest.getString("created_by").replaceAll("[\\D]", ""));
+
 							// get contest ID of contest that created voting round
-							// (maybe find a better way of doing this)
-							int original_contest_id = Integer.parseInt(contest.getString("created_by").replaceAll("[\\D]", ""));
+							
+							int original_contest_id = db.get_original_contest(contest_id);
 							
 							// settle original contest
-//							JSONObject original_contest = db.select_contest(original_contest_id);
 							input.put("contest_id", original_contest_id);							
 							
 							MethodInstance original_method = new MethodInstance();

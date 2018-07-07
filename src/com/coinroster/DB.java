@@ -314,9 +314,23 @@ public class DB
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
 		get_live_contests.setString(3, contest_type);
-		if(sub_category.equals("VOTING")) get_live_contests.setInt(4, 1);
-		else get_live_contests.setInt(4, 2);
+		get_live_contests.setInt(4, 2);
 	
+		ResultSet result_set = get_live_contests.executeQuery();
+		
+		while (result_set.next()){
+			contest_ids.add(result_set.getInt(1));
+		}
+		return contest_ids;
+	}
+	
+	// CHECK IF VOTING ROUND CONTESTS ARE IN PLAY
+
+	public ArrayList<Integer> check_if_in_play() throws Exception
+	{
+		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from voting where and status = 1");
+
 		ResultSet result_set = get_live_contests.executeQuery();
 		
 		while (result_set.next()){
@@ -1181,7 +1195,6 @@ public class DB
 			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
 			get_players.setString(1, sport);
 			result_set = get_players.executeQuery();
-			
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -1213,6 +1226,22 @@ public class DB
 		update_points.setInt(2, id);
 		update_points.setString(3, sport);
 		update_points.executeUpdate();
+	}
+
+//------------------------------------------------------------------------------------
+
+	public int get_original_contest(Integer contest_id) {
+		int original_contest_id = 0;
+		try {
+			PreparedStatement get_original_contest = sql_connection.prepareStatement("select original_contest_id from voting where id = ?");
+			get_original_contest.setInt(1, contest_id);
+			ResultSet result_set = get_original_contest.executeQuery();		
+			if (result_set.next()) original_contest_id = result_set.getInt(1);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return original_contest_id;
 	}
 	
 }

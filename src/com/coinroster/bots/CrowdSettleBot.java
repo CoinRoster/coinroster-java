@@ -45,6 +45,7 @@ public class CrowdSettleBot extends Utils{
 			
 			while(contest_users.next()) {
 				if(!entries.containsKey(contest_users.getInt(1))) {
+					
 					// bets on more than one entry
 					if (winning_outcome != 0) {
 						fields.put("multiple_bets", "true");
@@ -57,7 +58,6 @@ public class CrowdSettleBot extends Utils{
 
 				// keep running max vote count
 				if (max_amount < entries.get(contest_users.getInt(1))) {
-					log("test5");
 					log("max_amount: " + max_amount);
 					max_amount = entries.get(contest_users.getInt(1));
 
