@@ -44,6 +44,9 @@ public class CreateContest extends Utils
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
 			String settlement_type = input.getString("settlement_type");
+			
+			PreparedStatement create_contest = null;
+            Long settlement_deadline = input.getLong("settlement_deadline");
             
             // validate common fields
             
@@ -56,6 +59,13 @@ public class CreateContest extends Utils
             if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
             	{
             	output.put("error", "Registration deadline must be at least 1 hour from now");
+                break method;
+            	}
+            
+
+            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000)
+            	{
+            	output.put("error", "Settlement deadline must be at least 1 hour from resgistration deadline");
                 break method;
             	}
             
@@ -296,7 +306,7 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-				PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -370,7 +380,7 @@ public class CreateContest extends Utils
             	
             	
             	
-            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -395,6 +405,24 @@ public class CreateContest extends Utils
 				create_contest.setInt(14, auto);
 				create_contest.executeUpdate();
             	}
+            // user generated contests
+            if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
+            	
+            	// exclude admins from seeking approval
+            	if(session.user_level() != "1") {
+            		create_contest.setInt(15, 5);            		
+            	} else {
+            		create_contest.setInt(15, 1);
+            	}
+            	
+            	create_contest.setLong(16, settlement_deadline);
+    			create_contest.executeUpdate();
+            } else {
+            	create_contest.setInt(15, 1);
+            	create_contest.setNull(16, java.sql.Types.BIGINT);
+            	create_contest.executeUpdate();
+    			new BuildLobby(sql_connection);
+            }
 
 			new BuildLobby(sql_connection);
 			
