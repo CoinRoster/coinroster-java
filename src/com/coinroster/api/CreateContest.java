@@ -403,7 +403,6 @@ public class CreateContest extends Utils
 				
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
-				create_contest.executeUpdate();
             	}
             // user generated contests
             if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
