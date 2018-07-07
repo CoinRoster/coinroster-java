@@ -329,7 +329,7 @@ public class DB
 	public ArrayList<Integer> check_if_in_play() throws Exception
 	{
 		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from voting where and status = 1");
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from voting where status = 1");
 
 		ResultSet result_set = get_live_contests.executeQuery();
 		
