@@ -52,7 +52,7 @@ public class BaseballBot extends Utils {
 	public long getEarliestGame(){
 		return earliest_game;
 	}
-	public void scrapeGameIDs() throws IOException, JSONException{
+	public String scrapeGameIDs() throws IOException, JSONException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
@@ -61,13 +61,15 @@ public class BaseballBot extends Utils {
 		if(events.length() == 0){
 			log("No baseball games today");
 			this.game_IDs = null;
+			return null;
 		}
 		else{
 			String earliest_date = events.getJSONObject(0).getString("date");
 	        SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
 	        try {
 	            Date date = formatter1.parse(earliest_date.replaceAll("Z$", "+0000"));
-	            long milli = date.getTime();
+	            long milli = 1531170000000L;
+	            //long milli = date.getTime();
 	            this.earliest_game = milli;
 	        } 
 	        catch (ParseException e) {
@@ -81,6 +83,7 @@ public class BaseballBot extends Utils {
 				gameIDs.add(gameID.toString());
 			}
 			this.game_IDs = gameIDs;
+			return gameIDs.toString();
 		}
 	}
 	
@@ -135,7 +138,7 @@ public class BaseballBot extends Utils {
 		return fields;
 	}
 	
-	public JSONObject settlePariMutuel(int contest_id) throws Exception{
+	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules) throws Exception{
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
 		JSONObject contest = db.select_contest(contest_id);
@@ -214,11 +217,11 @@ public class BaseballBot extends Utils {
 			
 			JSONObject empty_data_json = new JSONObject();
 			try {
-				empty_data_json.append("hits", 0);
-				empty_data_json.append("runs", 0);
-				empty_data_json.append("rbis", 0);
-				empty_data_json.append("walks", 0);
-				empty_data_json.append("strikeouts", 0);
+				empty_data_json.put("hits", 0);
+				empty_data_json.put("runs", 0);
+				empty_data_json.put("rbis", 0);
+				empty_data_json.put("walks", 0);
+				empty_data_json.put("strikeouts", 0);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -255,6 +258,7 @@ public class BaseballBot extends Utils {
 			JSONObject player = new JSONObject();
 			int id = playerScores.getInt(1);
 			JSONObject data = (JSONObject) JSONObject.stringToValue(playerScores.getString(2));
+			Utils.log(data.toString());
 			player.put("id", id);
 			String data_to_display = "";
 			Double points = 0.0;
@@ -265,6 +269,7 @@ public class BaseballBot extends Utils {
 				data_to_display += key + ": " + String.valueOf(data.get(key)) + ", ";
 				points += (double) data.getInt(key) * multiplier;			
 			}
+			// chop off ", " from end of string
 			data_to_display = data_to_display.substring(0, data_to_display.length()-3);
 			
 			player.put("score_raw", data_to_display);
