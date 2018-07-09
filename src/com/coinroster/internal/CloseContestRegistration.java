@@ -64,10 +64,17 @@ public class CloseContestRegistration extends Utils
 							select_max_contest.setInt(1, contest_id);
 							ResultSet select_contest_result = select_contest.executeQuery();
 							if (select_contest_result.next()) max_id = select_contest_result.getInt(1);
+							else {
+								log("error with query: " + select_contest_result.toString());
+								break;
+							}
 						} catch (Exception e) {
 							log("Error getting max id from contest table: " + e.toString());
 						} finally {
 							lock_contest.execute("unlock tables");
+							if(max_id == 0) {
+								return;
+							}
 						}
 						
 						// count number of users
