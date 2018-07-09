@@ -61,8 +61,7 @@ public class CloseContestRegistration extends Utils
 						int max_id = 0;
 						try {
 							PreparedStatement select_max_contest = sql_connection.prepareStatement("select max(id) from contest");
-							select_max_contest.setInt(1, contest_id);
-							ResultSet select_contest_result = select_contest.executeQuery();
+							ResultSet select_contest_result = select_max_contest.executeQuery();
 							if (select_contest_result.next()) max_id = select_contest_result.getInt(1);
 							else {
 								log("error with query: " + select_contest_result.toString());
