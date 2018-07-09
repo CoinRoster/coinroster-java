@@ -553,115 +553,113 @@ public class ContestMethods extends Utils{
 		}
 	}	
 
-	//------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+	public static void checkCrowdContests() {
 	
-		public static void checkCrowdContests() {
-
-			Connection sql_connection = null;
-			try {
-				sql_connection = Server.sql_connection();
-				DB db = new DB(sql_connection);
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
+			
+			// get voting round contests that have status 1
+			ArrayList<Integer> voting_contest_ids = db.check_if_in_play();
+			
+			if(!voting_contest_ids.isEmpty()){
+				CrowdSettleBot crowd_bot = new CrowdSettleBot(sql_connection);
 				
-				// get voting round contests that have status 1
-				ArrayList<Integer> voting_contest_ids = db.check_if_in_play();
-				
-				if(!voting_contest_ids.isEmpty()){
-					CrowdSettleBot crowd_bot = new CrowdSettleBot(sql_connection);
+				// iterate through list of ids and check for contests whose registration deadline expired
+				for(Integer contest_id : voting_contest_ids){
 					
-					// iterate through list of ids and check for contests whose registration deadline expired
-					for(Integer contest_id : voting_contest_ids){
+					JSONObject contest = db.select_contest(contest_id);
+					if(new Date().getTime() > contest.getLong("registration_deadline")) {
 						
-						JSONObject contest = db.select_contest(contest_id);
-						if(new Date().getTime() > contest.getLong("registration_deadline")) {
+						// Settle Voting Round
+						log("Voting round for contest: " + contest_id + " has ended, settling");
+						JSONObject input = crowd_bot.settlePariMutuel(contest_id);
+						input.put("contest_id", contest_id);
+						log(input.toString());
+						
+						// multiple bets placed, notify admin
+						if(input.has("multiple_bets")) {
+							JSONObject cash_register = db.select_user("username", "internal_cash_register");
 							
-							// Settle Voting Round
-							log("Voting round for contest: " + contest_id + " has ended, settling");
-							JSONObject input = crowd_bot.settlePariMutuel(contest_id);
-							input.put("contest_id", contest_id);
-							log(input.toString());
+							String
 							
-							// multiple bets placed, notify admin
-							if(input.has("multiple_bets")) {
-								JSONObject cash_register = db.select_user("username", "internal_cash_register");
-								
-								String
-								
-								cash_register_email_address = cash_register.getString("email_address"),
-								cash_register_admin = "Cash Register Admin",
-								
-								subject_admin = "Crowd Settled Contest Has Multiple Entries",
-								message_body_admin = "";
-								
-								message_body_admin += "<br/>";
-								message_body_admin += "<br/>";
-								message_body_admin += "A crowd settled contest has entries that users have placed on multiple options. Please settle the contest below:";
-								message_body_admin += "<br/>";
-								message_body_admin += "<br/>";
-								message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
-								message_body_admin += "<br/>";
-								message_body_admin += "<br/>";
-								message_body_admin += "Please settle the contest from the admin panel.";
-								message_body_admin += "<br/>";
-				
-								Server.send_mail(cash_register_email_address, cash_register_admin, subject_admin, message_body_admin);
-								new UpdateContestStatus(sql_connection, contest_id, 5);
-								return;
-							}
-
-							MethodInstance method = new MethodInstance();
-							JSONObject output = new JSONObject("{\"status\":\"0\"}");
-							method.input = input;
-							method.output = output;
-							method.session = null;
-							method.sql_connection = sql_connection;
-							try{
-								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-								c.newInstance(method);
-							}
-							catch(Exception e){
-								e.printStackTrace();
-							}
-							input.remove("contest_id");
+							cash_register_email_address = cash_register.getString("email_address"),
+							cash_register_admin = "Cash Register Admin",
 							
-//							int original_contest_id = Integer.parseInt(contest.getString("created_by").replaceAll("[\\D]", ""));
-
-							// get contest ID of contest that created voting round
+							subject_admin = "Crowd Settled Contest Has Multiple Entries",
+							message_body_admin = "";
 							
-							int original_contest_id = db.get_original_contest(contest_id);
-							
-							// settle original contest
-							input.put("contest_id", original_contest_id);							
-							
-							MethodInstance original_method = new MethodInstance();
-							original_method.input = input;
-							original_method.output = output;
-							original_method.session = null;
-							original_method.sql_connection = sql_connection;
-							try{
-								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-								c.newInstance(method);
-							}
-							catch(Exception e){
-								e.printStackTrace();
-							}
+							message_body_admin += "<br/>";
+							message_body_admin += "<br/>";
+							message_body_admin += "A crowd settled contest has entries that users have placed on multiple options. Please settle the contest below:";
+							message_body_admin += "<br/>";
+							message_body_admin += "<br/>";
+							message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
+							message_body_admin += "<br/>";
+							message_body_admin += "<br/>";
+							message_body_admin += "Please settle the contest from the admin panel.";
+							message_body_admin += "<br/>";
+			
+							Server.send_mail(cash_register_email_address, cash_register_admin, subject_admin, message_body_admin);
+							new UpdateContestStatus(sql_connection, contest_id, 5);
+							return;
+						}
+	
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = input;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+						input.remove("contest_id");
+						
+						// get contest ID of contest that created voting round
+						
+						int original_contest_id = db.get_original_contest(contest_id);
+						
+						// settle original contest
+						input.put("contest_id", original_contest_id);							
+						
+						MethodInstance original_method = new MethodInstance();
+						original_method.input = input;
+						original_method.output = output;
+						original_method.session = null;
+						original_method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
 						}
 					}
 				}
-			} catch (Exception e) {
-				Server.exception(e);
-			} finally {
-				if (sql_connection != null) {
-					try {
-						sql_connection.close();
-						} 
-					catch (SQLException ignore) {
-						// ignore
-					}
+			}
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
 				}
 			}
-		}	
-			
-	//------------------------------------------------------------------------------------
+		}
+	}	
+	
+//------------------------------------------------------------------------------------
 
 	// create basketball contests reading from csv
 	public static void createBaseballContests() {
