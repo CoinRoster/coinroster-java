@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.internal.UserMail;
@@ -307,21 +308,21 @@ public class DB
 	
 	// CHECK IF CONTESTS ARE IN PLAY
 
-	public ArrayList<Integer> check_if_in_play(String category, String sub_category, String contest_type) throws Exception
+	public JSONObject check_if_in_play(String category, String sub_category, String contest_type) throws Exception
 	{
-		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where category = ? and sub_category = ? and contest_type = ? and status = ?");
+
+		JSONObject contests = new JSONObject();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
 		get_live_contests.setString(3, contest_type);
-		get_live_contests.setInt(4, 2);
 	
 		ResultSet result_set = get_live_contests.executeQuery();
 		
-		while (result_set.next()){
-			contest_ids.add(result_set.getInt(1));
-		}
-		return contest_ids;
+		while (result_set.next())
+			contests.put(String.valueOf(result_set.getInt(1)), result_set.getString(2));
+
+		return contests;
 	}
 	
 	// CHECK IF VOTING ROUND CONTESTS ARE IN PLAY
@@ -337,21 +338,23 @@ public class DB
 			contest_ids.add(result_set.getInt(1));
 		}
 		return contest_ids;
+		
 	}
 	
 	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
-	public ArrayList<Integer> get_pari_mutuel_id(String sub_category, String contest_type) throws Exception
+	public JSONObject get_pari_mutuel_id(String sub_category, String contest_type) throws Exception
 	{
-		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
-		get_live_contests.setString(1, sub_category);
-		get_live_contests.setString(2, contest_type);
+		JSONObject contests = new JSONObject();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
+		get_live_contests.setString(2, sub_category);
+		get_live_contests.setString(3, contest_type);
+	
 		ResultSet result_set = get_live_contests.executeQuery();
 		
-		while (result_set.next()){
-			contest_ids.add(result_set.getInt(1));
-		}
-		return contest_ids;
+		while (result_set.next())
+			contests.put(String.valueOf(result_set.getInt(1)), result_set.getString(2));
+		
+		return contests;
 	}
 	
 
@@ -1210,7 +1213,7 @@ public class DB
 	public ResultSet getPlayerScores(String sport) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, points from player where sport_type=?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, data from player where sport_type=?");
 			get_players.setString(1, sport);
 			result_set = get_players.executeQuery();		
 		}
@@ -1222,9 +1225,9 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	public void editPoints(double pts, int id, String sport) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ? and sport_type = ?");
-		update_points.setDouble(1, pts);
+	public void editData(String data, int id, String sport) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ?");
+		update_points.setString(1, data);
 		update_points.setInt(2, id);
 		update_points.setString(3, sport);
 		update_points.executeUpdate();
@@ -1245,6 +1248,54 @@ public class DB
 		}
 		return original_contest_id;
 	}
+	
+//------------------------------------------------------------------------------------
+
+	public JSONArray getRosterTemplates(String sub_category) throws SQLException{
+		
+		Utils.log("reading contests templates for " + sub_category + " contests");
+		JSONArray templates = new JSONArray();
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_contests = sql_connection.prepareStatement("select * from contest_template where sub_category = ? and active = 1");
+			get_contests.setString(1, sub_category);
+			result_set = get_contests.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		while (result_set.next()){
+			JSONObject entry = new JSONObject();
+			try{
+				entry.put("category", result_set.getString(2));
+				entry.put("sub_category", result_set.getString(3));
+				entry.put("contest_type", result_set.getString(4));
+				entry.put("title", result_set.getString(5));
+				entry.put("description", result_set.getString(6));
+				entry.put("settlement_type", result_set.getString(7));
+				entry.put("pay_table", result_set.getString(8));
+				entry.put("rake", result_set.getFloat(9));
+				entry.put("salary_cap", result_set.getFloat(10));
+				entry.put("cost_per_entry", result_set.getDouble(11));
+				entry.put("min_users", result_set.getInt(12));
+				entry.put("max_users", result_set.getInt(13));
+				entry.put("entries_per_user", result_set.getInt(14));
+				entry.put("roster_size", result_set.getInt(15));
+				entry.put("multi_stat", result_set.getBoolean(16));
+				entry.put("prop_type", result_set.getString(17));
+				entry.put("scoring_rules", result_set.getString(18));
+				entry.put("score_header", result_set.getString(19));
+				entry.put("progressive", result_set.getString(20));
+				templates.put(entry);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return templates;
+	}
+	
+//------------------------------------------------------------------------------------
+	
 	
 }
 
