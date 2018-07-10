@@ -597,6 +597,7 @@ public class ContestMethods extends Utils{
 				contest.put("title", title);
 				contest.put("odds_source", "n/a");
 				contest.put("gameIDs", gameID_array);
+				contest.put("registration_deadline", deadline);
 				ResultSet options;
 				if(contest.getInt("filter") == 0){
 					options = db.getOptionTable(baseball_bot.sport, false, 0);
@@ -688,8 +689,9 @@ public class ContestMethods extends Utils{
 					
 				}
 				if(games_ended){
-					log("Baseball games have ended, settling in 30 minutes.");
 					
+					roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASEBALL", "ROSTER");
+					roster_contest_ids = roster_contests.keys();
 					while(roster_contest_ids.hasNext()){
 						String c_id = (String) roster_contest_ids.next();
 						String scoring_rules_string = roster_contests.getString(c_id);
@@ -717,7 +719,8 @@ public class ContestMethods extends Utils{
 					}
 					
 					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
-					Iterator<?> pari_contest_ids = pari_contests.keys();
+					pari_contests = db_connection.get_pari_mutuel_id("BASEBALLPROPS", "PARI-MUTUEL");
+					Iterator<?> pari_contest_ids = pari_contests.keys();	
 					while(pari_contest_ids.hasNext()){
 						String c_id = (String) pari_contest_ids.next();
 						String scoring_rules_string = pari_contests.getString(c_id);
