@@ -68,8 +68,7 @@ public class BaseballBot extends Utils {
 	        SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
 	        try {
 	            Date date = formatter1.parse(earliest_date.replaceAll("Z$", "+0000"));
-	            long milli = 1531170000000L;
-	            //long milli = date.getTime();
+	            long milli = date.getTime();
 	            this.earliest_game = milli;
 	        } 
 	        catch (ParseException e) {
@@ -241,6 +240,7 @@ public class BaseballBot extends Utils {
 				save_player.setString(7, empty_data_json.toString());
 				save_player.setDouble(8, player.getPoints());
 				save_player.setString(9, "{}");
+				save_player.setInt(10, player.get_filter());
 				save_player.executeUpdate();	
 			}
 			log("added " + this.sport + " players to DB");
@@ -257,8 +257,7 @@ public class BaseballBot extends Utils {
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
 			int id = playerScores.getInt(1);
-			JSONObject data = (JSONObject) JSONObject.stringToValue(playerScores.getString(2));
-			Utils.log(data.toString());
+			JSONObject data = new JSONObject(playerScores.getString(2));
 			player.put("id", id);
 			String data_to_display = "";
 			Double points = 0.0;
@@ -266,11 +265,11 @@ public class BaseballBot extends Utils {
 			while(keys.hasNext()){
 				String key = (String) keys.next();
 				int multiplier = scoring_rules.getInt(key);
-				data_to_display += key + ": " + String.valueOf(data.get(key)) + ", ";
-				points += (double) data.getInt(key) * multiplier;			
+				data_to_display += key.toUpperCase() + ": " + String.valueOf(data.get(key)) + ", ";
+				points += ((double) (data.getInt(key) * multiplier));			
 			}
 			// chop off ", " from end of string
-			data_to_display = data_to_display.substring(0, data_to_display.length()-3);
+			data_to_display = data_to_display.substring(0, data_to_display.length() - 2);
 			
 			player.put("score_raw", data_to_display);
 			player.put("score_normalized", points);
@@ -296,7 +295,7 @@ public class BaseballBot extends Utils {
 				for(Element team : team_divs){
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
-					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/hits").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/atBats").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 						      .referrer("http://www.google.com").timeout(6000).get();
 					Element stats_table = team_stats_page.select("table.tablehead").first();
 					Elements rows = stats_table.getElementsByTag("tr");
@@ -317,6 +316,7 @@ public class BaseballBot extends Utils {
 								//p.scrape_info();
 								p.gameID = this.game_IDs.get(i);
 								p.set_salary(price);
+								p.set_filter(at_bats);
 								//p.createBio();		
 								players.put(ESPN_id, p);
 							}
@@ -347,18 +347,28 @@ public class BaseballBot extends Utils {
 								String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
 								if(!espn_ID_url.isEmpty()){
 									int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);		
-									int hits_string = Integer.parseInt(row.getElementsByClass("batting-stats-h").text());
-									int runs_string = Integer.parseInt(row.getElementsByClass("batting-stats-r").text());
-									int rbi_string = Integer.parseInt(row.getElementsByClass("batting-stats-rbi").text());
-									int bb_string = Integer.parseInt(row.getElementsByClass("batting-stats-bb").text());
-									int k_string = Integer.parseInt(row.getElementsByClass("batting-stats-k").text());
+									String hits_string = row.getElementsByClass("batting-stats-h").text();
+									String runs_string = row.getElementsByClass("batting-stats-r").text();
+									String rbi_string = row.getElementsByClass("batting-stats-rbi").text();
+									String bb_string = row.getElementsByClass("batting-stats-bb").text();
+									String k_string = row.getElementsByClass("batting-stats-k").text();
 									JSONObject data = new JSONObject();
 									try {
-										data.append("hits", hits_string);
-										data.append("runs", runs_string);
-										data.append("rbis", rbi_string);
-										data.append("walks", bb_string);
-										data.append("strikeouts", k_string);
+										if(hits_string.equals("--"))
+											hits_string = "0";
+										data.put("hits", Integer.parseInt(hits_string));
+										if(runs_string.equals("--"))
+											runs_string = "0";
+										data.put("runs", Integer.parseInt(runs_string));
+										if(rbi_string.equals("--"))
+											rbi_string = "0";
+										data.put("rbis", Integer.parseInt(rbi_string));
+										if(bb_string.equals("--"))
+											bb_string = "0";
+										data.put("walks", Integer.parseInt(bb_string));
+										if(k_string.equals("--"))
+											k_string = "0";
+										data.put("strikeouts", Integer.parseInt(k_string));
 									} catch (JSONException e) {
 										e.printStackTrace();
 									}
@@ -402,6 +412,7 @@ public class BaseballBot extends Utils {
 		private JSONObject year_stats;
 		private JSONObject bio;
 		private String gameID;
+		private int filter;
 		
 		// constructor
 		public Player(int id, String n, String team){
@@ -466,6 +477,13 @@ public class BaseballBot extends Utils {
 		public void set_salary(double sal){
 			this.salary = sal;
 		}
+		public void set_filter(int at_bats){
+			this.filter = at_bats;
+		}
+		public int get_filter(){
+			return filter;
+		}
+		
 		public void createBio() throws JSONException{
 			JSONObject bio = new JSONObject();
 			bio.put("birthString", this.getBirthString());

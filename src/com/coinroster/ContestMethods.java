@@ -15,16 +15,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
-//import com.coinroster.bots.BasketballBot;
-//import com.coinroster.bots.GolfBot;
+
 
 public class ContestMethods extends Utils{
 
@@ -601,21 +597,22 @@ public class ContestMethods extends Utils{
 				contest.put("title", title);
 				contest.put("odds_source", "n/a");
 				contest.put("gameIDs", gameID_array);
-				
-				ResultSet playerIDs = db.getAllPlayerIDs(baseball_bot.sport);
+				ResultSet options;
+				if(contest.getInt("filter") == 0){
+					options = db.getOptionTable(baseball_bot.sport, false, 0);
+				}
+				else{
+					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"));
+				}
+					
 	            JSONArray option_table = new JSONArray();
-				while(playerIDs.next()){
-					PreparedStatement get_player = sql_connection.prepareStatement("select name, team_abr, salary from player where id = ?");
-					get_player.setInt(1, playerIDs.getInt(1));
-					ResultSet player_data = get_player.executeQuery();
-					if(player_data.next()){
-						JSONObject player = new JSONObject();
-						player.put("name", player_data.getString(1) + " " + player_data.getString(2));
-						player.put("price", player_data.getDouble(3));
-						player.put("count", 0);
-						player.put("id", playerIDs.getInt(1));
-						option_table.put(player);
-					}
+				while(options.next()){
+					JSONObject player = new JSONObject();
+					player.put("name", options.getString(2) + " " + options.getString(3));
+					player.put("price", options.getDouble(4));
+					player.put("count", 0);
+					player.put("id", options.getInt(1));
+					option_table.put(player);
 				}
 				contest.put("option_table", option_table);
 				
@@ -654,7 +651,7 @@ public class ContestMethods extends Utils{
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
 			JSONObject roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASEBALL", "ROSTER");
-			JSONObject pari_contests = db_connection.get_pari_mutuel_id("BASEBALL", "PARI-MUTUEL");
+			JSONObject pari_contests = db_connection.get_pari_mutuel_id("BASEBALLPROPS", "PARI-MUTUEL");
 
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				BaseballBot baseball_bot = new BaseballBot(sql_connection);
@@ -692,83 +689,55 @@ public class ContestMethods extends Utils{
 				}
 				if(games_ended){
 					log("Baseball games have ended, settling in 30 minutes.");
-					ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-					Runnable task = new Runnable() {
-						public void run() {
-							Connection sql_connection_inner = null;
-							try {
-								sql_connection_inner = Server.sql_connection();
-								Iterator<?> roster_contest_ids = roster_contests.keys();
-								while(roster_contest_ids.hasNext()){
-									String c_id = (String) roster_contest_ids.next();
-									String scoring_rules_string = roster_contests.getString(c_id);
-									JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-									JSONArray player_scores = baseball_bot.updateScores(scoring_rules);
+					
+					while(roster_contest_ids.hasNext()){
+						String c_id = (String) roster_contest_ids.next();
+						String scoring_rules_string = roster_contests.getString(c_id);
+						JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+						JSONArray player_scores = baseball_bot.updateScores(scoring_rules);
 
-									JSONObject fields = new JSONObject();
-									fields.put("contest_id", Integer.parseInt(c_id));
-									fields.put("normalization_scheme", "INTEGER");
-									fields.put("player_scores", player_scores);
-									
-									MethodInstance method = new MethodInstance();
-									JSONObject output = new JSONObject("{\"status\":\"0\"}");
-									method.input = fields;
-									method.output = output;
-									method.session = null;
-									method.sql_connection = sql_connection_inner;
-									try{
-										Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-										c.newInstance(method);
-									}
-									catch(Exception e){
-										e.printStackTrace();
-									}
-								}
-								
-								//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
-								Iterator<?> pari_contest_ids = pari_contests.keys();
-								while(pari_contest_ids.hasNext()){
-									String c_id = (String) pari_contest_ids.next();
-									String scoring_rules_string = pari_contests.getString(c_id);
-									JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-
-									JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules);
-									MethodInstance pari_method = new MethodInstance();
-									JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-									pari_method.input = pari_fields;
-									pari_method.output = pari_output;
-									pari_method.session = null;
-									pari_method.sql_connection = sql_connection_inner;
-									try{
-										Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-										c.newInstance(pari_method);
-									}
-									catch(Exception e){
-										e.printStackTrace();
-									}		
-								}
-								
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-							finally {
-								if (sql_connection_inner != null) {
-									try {
-										sql_connection_inner.close();
-										} 
-									catch (SQLException ignore) {
-										// ignore
-									}
-								}
-							}
-							
+						JSONObject fields = new JSONObject();
+						fields.put("contest_id", Integer.parseInt(c_id));
+						fields.put("normalization_scheme", "INTEGER");
+						fields.put("player_scores", player_scores);
+						
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = fields;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
 						}
-					};
-					Calendar date = Calendar.getInstance();
-					date.add(Calendar.MINUTE, 30);
-					long millis = date.getTimeInMillis();
-					scheduler.schedule(task, millis, TimeUnit.MILLISECONDS);
-					scheduler.shutdown();
+						catch(Exception e){
+							e.printStackTrace();
+						}
+					}
+					
+					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
+					Iterator<?> pari_contest_ids = pari_contests.keys();
+					while(pari_contest_ids.hasNext()){
+						String c_id = (String) pari_contest_ids.next();
+						String scoring_rules_string = pari_contests.getString(c_id);
+						JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+
+						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules);
+						MethodInstance pari_method = new MethodInstance();
+						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+						pari_method.input = pari_fields;
+						pari_method.output = pari_output;
+						pari_method.session = null;
+						pari_method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(pari_method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}		
+					}
 				}
 			}
 		} catch (Exception e) {
