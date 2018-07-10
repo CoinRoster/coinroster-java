@@ -12,6 +12,8 @@ import org.json.JSONObject;
 
 import com.coinroster.internal.UserMail;
 
+import sun.util.logging.resources.logging;
+
 public class DB 
 	{
 	Connection sql_connection;
@@ -325,8 +327,14 @@ public class DB
 		return contests;
 	}
 	
+<<<<<<< HEAD
 	// CHECK IF VOTING ROUND CONTESTS ARE IN PLAY
 
+=======
+//------------------------------------------------------------------------------------
+	
+	//get ids from voting table
+>>>>>>> baseball
 	public ArrayList<Integer> check_if_in_play() throws Exception
 	{
 		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
@@ -340,14 +348,20 @@ public class DB
 		return contest_ids;
 		
 	}
+<<<<<<< HEAD
 	
+=======
+
+//------------------------------------------------------------------------------------
+
+>>>>>>> baseball
 	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
 	public JSONObject get_pari_mutuel_id(String sub_category, String contest_type) throws Exception
 	{
 		JSONObject contests = new JSONObject();
 		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
-		get_live_contests.setString(2, sub_category);
-		get_live_contests.setString(3, contest_type);
+		get_live_contests.setString(1, sub_category);
+		get_live_contests.setString(2, contest_type);
 	
 		ResultSet result_set = get_live_contests.executeQuery();
 		
@@ -457,8 +471,6 @@ public class DB
 		return contest;
 		}
 
-	
-	
 //------------------------------------------------------------------------------------
 
 	// SELECT CONTEST ENTRY 
@@ -1208,6 +1220,41 @@ public class DB
 		return result_set;
 	}
 	
+	//------------------------------------------------------------------------------------
+
+	public ResultSet getOptionTable(String sport, boolean filtered, int filter) throws SQLException{
+		
+		ResultSet result_set = null;
+		
+		if(filtered){
+			try{
+				PreparedStatement get_players = sql_connection.prepareStatement("SELECT a.id, a.name, a.team_abr, a.salary, a.filter_on FROM player AS a "
+						+ "WHERE (SELECT COUNT(*) FROM player AS b "
+						+ "WHERE b.team_abr = a.team_abr AND b.filter_on >= a.filter_on) <= ? "
+						+ "AND a.sport_type = ?"
+						+ "ORDER BY a.team_abr ASC, a.filter_on DESC");
+				get_players.setInt(1, filter);
+				get_players.setString(2, sport);
+				result_set = get_players.executeQuery();
+			}
+			catch(Exception e){
+				Utils.log(e.toString());
+			}
+		}
+		else{
+			try {
+				PreparedStatement get_players = sql_connection.prepareStatement("SELECT id, name, team_abr, salary from player where sport_type = ?");
+				get_players.setString(1, sport);
+				result_set = get_players.executeQuery();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		return result_set;
+	}
+	
+	
 //------------------------------------------------------------------------------------
 	
 	public ResultSet getPlayerScores(String sport) throws SQLException{
@@ -1275,24 +1322,37 @@ public class DB
 				entry.put("settlement_type", result_set.getString(7));
 				entry.put("pay_table", result_set.getString(8));
 				entry.put("rake", result_set.getFloat(9));
-				entry.put("salary_cap", result_set.getFloat(10));
+				entry.put("salary_cap", result_set.getInt(10));
 				entry.put("cost_per_entry", result_set.getDouble(11));
 				entry.put("min_users", result_set.getInt(12));
 				entry.put("max_users", result_set.getInt(13));
 				entry.put("entries_per_user", result_set.getInt(14));
 				entry.put("roster_size", result_set.getInt(15));
 				entry.put("multi_stat", result_set.getBoolean(16));
-				entry.put("prop_type", result_set.getString(17));
-				entry.put("scoring_rules", result_set.getString(18));
+				entry.put("prop_type", result_set.getObject(17));
+				entry.put("scoring_rules", result_set.getObject(18));
 				entry.put("score_header", result_set.getString(19));
-				entry.put("progressive", result_set.getString(20));
+				
+				if(result_set.getObject(20) == null)
+					entry.put("progressive", "");
+				else
+					entry.put("progressive", result_set.getObject(20));
+				
+				if(result_set.getObject(22) == null)
+					entry.put("filter", 0);
+				else
+					entry.put("filter", result_set.getInt(22));
+				
 				templates.put(entry);
-			} catch (JSONException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				Utils.log(e.getMessage());
+				Utils.log(e.getLocalizedMessage());
+				Utils.log(e.toString());
 			}
 		}
 		return templates;
 	}
+
 	
 //------------------------------------------------------------------------------------
 	
