@@ -327,14 +327,9 @@ public class DB
 		return contests;
 	}
 	
-<<<<<<< HEAD
-	// CHECK IF VOTING ROUND CONTESTS ARE IN PLAY
-
-=======
 //------------------------------------------------------------------------------------
 	
 	//get ids from voting table
->>>>>>> baseball
 	public ArrayList<Integer> check_if_in_play() throws Exception
 	{
 		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
@@ -348,13 +343,8 @@ public class DB
 		return contest_ids;
 		
 	}
-<<<<<<< HEAD
-	
-=======
-
 //------------------------------------------------------------------------------------
 
->>>>>>> baseball
 	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
 	public JSONObject get_pari_mutuel_id(String sub_category, String contest_type) throws Exception
 	{

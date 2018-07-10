@@ -230,7 +230,7 @@ public class BaseballBot extends Utils {
 			
 			for(Player player : this.getPlayerHashMap().values()){
 				
-				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setInt(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
