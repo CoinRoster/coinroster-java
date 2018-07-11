@@ -42,7 +42,7 @@ public class CrowdSettleBot extends Utils{
 			// assign number of votes to each entry
 			Double max_amount = 0.0;
 			HashMap<Integer, Double> entries = new HashMap<>();
-			
+			log(contest_users.toString());
 			while(contest_users.next()) {
 				if(!entries.containsKey(contest_users.getInt(1))) {
 					
