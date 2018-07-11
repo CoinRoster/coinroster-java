@@ -90,18 +90,8 @@ public class BaseballBot extends Utils {
 		return players_list;
 	}
 	
-	public JSONObject createPariMutuel(Long deadline, String date) throws JSONException{
-		JSONObject fields = new JSONObject();
-		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", "BASEBALLPROPS");
-		fields.put("contest_type", "PARI-MUTUEL");
-		fields.put("progressive", "MOSTHITS");
-		String title = "Most Hits in MLB Tonight | " + date;
-		fields.put("title", title);
-		fields.put("description", "Place your bet on who you will think will have the most hits today!");
-		fields.put("rake", 5);
-		fields.put("cost_per_entry", 0.00000001);
-		fields.put("registration_deadline", deadline);
+	public JSONObject createPariMutuel(Long deadline, String date, JSONObject contest) throws JSONException{
+		
 		JSONArray option_table = new JSONArray(); 
 		ResultSet top_players = null;
 		
@@ -117,8 +107,9 @@ public class BaseballBot extends Utils {
 	
 		int index = 3;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit 7");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit ?");
 			get_players.setString(1, "BASEBALL");
+			get_players.setInt(2, contest.getInt("filter"));
 			top_players = get_players.executeQuery();
 			while(top_players.next()){
 				JSONObject player = new JSONObject();
@@ -128,82 +119,81 @@ public class BaseballBot extends Utils {
 				option_table.put(player);
 				index += 1;
 			}
-			fields.put("option_table", option_table);
+			contest.put("option_table", option_table);
 		}
 		catch(Exception e){
 			e.printStackTrace();
 		}
 		
-		return fields;
+		return contest;
 	}
 	
 	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules) throws Exception{
+		
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
 		JSONObject contest = db.select_contest(contest_id);
 		JSONArray option_table = new JSONArray(contest.getString("option_table"));
 		int winning_outcome = 1;
-		ResultSet max_pts = null;
-		try {
-			PreparedStatement get_pts = sql_connection.prepareStatement("select max(points) from player where sport_type=?");
-			get_pts.setString(1, this.sport);
-			max_pts = get_pts.executeQuery();
-			double points = 0;
-			while(max_pts.next())
-				points = max_pts.getDouble(1);
-			log("Max hits tonight was " + points);
-			ResultSet players = null;
-			try {
-				PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=? and points=?");
-				get_players.setString(1, this.sport);
-				get_players.setDouble(2, points);
-				players = get_players.executeQuery();
-				
-				ArrayList<Integer> IDs = new ArrayList<Integer>();
-				while(players.next()){
-					IDs.add(players.getInt(1));
-				}
-				
-				if(IDs.size() > 1){
-					//tie is correct answer;
-					winning_outcome = 2;
-					log("winning outcome=2 because of tie");
-					fields.put("winning_outcome", winning_outcome);
-					return fields;
-				}
-				else{
-					for(Integer player_table_ID : IDs){
-						log(player_table_ID);
-						for (int i=0; i<option_table.length(); i++){
-							JSONObject option = option_table.getJSONObject(i);
-							int option_id = option.getInt("id");
-							try{
-								int player_id = option.getInt("player_id");
-								if(player_id == player_table_ID){
-									winning_outcome = option_id;
-									fields.put("winning_outcome", winning_outcome);
-									log("winning outcome is " + option.getString("description"));
-									return fields;	
-								}
-							}	
-							catch(Exception e){
-								continue;
-							}			
-						}
-					}
-				}
-				fields.put("winning_outcome", winning_outcome);
-				log("winning outcome is any other player");
-			}
-				
-			catch(Exception e){
-				e.printStackTrace();
-			}
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
+		double max_points = -999.0;
+		ArrayList<Integer> top_players = new ArrayList<Integer>();
 		
+		ResultSet all_players = null;
+		try{
+			all_players = db.getPlayerScores("GOLF");
+		}catch(Exception e){
+			log(e.toString());
+		}
+		// loop through players and compile ArratList<Integer> of player_ids with top score
+		while(all_players.next()){
+			int player_id = all_players.getInt(1);
+			JSONObject data = new JSONObject(all_players.getString(2));
+			Double points = 0.0;
+			Iterator<?> keys = scoring_rules.keys();
+			while(keys.hasNext()){
+				String key = (String) keys.next();
+				int multiplier = scoring_rules.getInt(key);
+				points += ((double) (data.getInt(key) * multiplier));
+			}
+			if(points > max_points){
+				max_points = points;
+				top_players.clear();
+				top_players.add(player_id);
+			}
+			else if(points == max_points){
+				top_players.add(player_id);
+			}
+		}
+	
+		if(top_players.size() >= 2){
+		//tie is correct answer;
+		winning_outcome = 2;
+		log("winning outcome=2 because of tie");
+		fields.put("winning_outcome", winning_outcome);
+		return fields;
+		}
+		else{
+			for(Integer player_table_ID : top_players){
+				for (int i=0; i<option_table.length(); i++){
+					JSONObject option = option_table.getJSONObject(i);
+					int option_id = option.getInt("id");
+					try{
+						int player_id = option.getInt("player_id");
+						if(player_id == player_table_ID){
+							winning_outcome = option_id;
+							fields.put("winning_outcome", winning_outcome);
+							log("winning outcome is " + option.getString("description"));
+							return fields;	
+						}
+					}	
+					catch(Exception e){
+						continue;
+					}			
+				}
+			}
+		}
+		fields.put("winning_outcome", winning_outcome);
+		log("winning outcome is any other player");
 		return fields;
 	}
 	

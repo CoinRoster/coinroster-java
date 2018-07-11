@@ -455,11 +455,12 @@ public class CreateContest extends Utils
 						create_contest.setNull(16, java.sql.Types.BIGINT);
 					}		
 					
-					create_contest.setString(13, madeBy);
-					create_contest.setInt(14, auto);
-					create_contest.setNull(17, java.sql.Types.VARCHAR);
-				}
-				create_contest.executeUpdate();
+				create_contest.setString(13, madeBy);
+				create_contest.setInt(14, auto);
+            	}
+			
+				create_contest.setString(17, scoring_rules);
+            	create_contest.executeUpdate();
             }
             
             new BuildLobby(sql_connection);
