@@ -739,6 +739,19 @@ public class DB
 		update_rc_balance.setString(2, user_id);
 		update_rc_balance.executeUpdate();
 		}
+//------------------------------------------------------------------------------------
+
+	// CHECK IF CONTEST IS VOTING ROUND
+	
+	public boolean is_voting_contest(int contest_id) throws Exception
+		{
+		PreparedStatement check_voting = sql_connection.prepareStatement("select original_contest_id from voting where id = ?");
+		check_voting.setInt(1, contest_id);
+		
+		ResultSet voting_rs = check_voting.executeQuery();
+		if(voting_rs.next()) return true;
+		return false;
+		}
 
 //------------------------------------------------------------------------------------
 	
@@ -1245,6 +1258,22 @@ public class DB
 		}
 		return original_contest_id;
 	}
-	
+
+
+//------------------------------------------------------------------------------------
+
+	public double get_voting_contest_commission() {
+		double voting_contest_creator_commission = 0;
+		try {
+			PreparedStatement voting_contest_commission = sql_connection.prepareStatement("select voting_contest_creator_commission from control");
+			ResultSet result_set = voting_contest_commission.executeQuery();		
+			if (result_set.next()) voting_contest_creator_commission = result_set.getInt(1);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return voting_contest_creator_commission;
+	}
+
 }
 

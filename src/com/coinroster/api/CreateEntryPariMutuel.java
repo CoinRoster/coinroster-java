@@ -54,6 +54,8 @@ public class CreateEntryPariMutuel extends Utils
 			contest_account_id = null,
 			contest_title = null;
 			
+			boolean voting_contest = db.is_voting_contest(contest_id);
+			
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();
@@ -160,7 +162,7 @@ public class CreateEntryPariMutuel extends Utils
 						}
 					
 					// only rc for voting round
-					if (contest.getString("sub_category").equals("VOTING") && total_entry_fees > rc_balance) {
+					if (voting_contest && total_entry_fees > rc_balance) {
 						output.put("error", "Insufficient funds");
 						break lock;
 					}
@@ -171,7 +173,7 @@ public class CreateEntryPariMutuel extends Utils
 	
 					// calculate user balances and transaction amounts
 					
-					if (contest.getString("sub_category").equals("VOTING")) {
+					if (voting_contest) {
 						// if voting round, we already determined the user has enough
 						double temp_rc_balance = subtract(rc_balance, total_entry_fees, 0);
 						rc_transaction_amount = total_entry_fees;
