@@ -106,7 +106,7 @@ public class CloseContestRegistration extends Utils
 							
 			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 							create_contest.setString(1, contest.getString("category"));
-							create_contest.setString(2, "VOTING");
+							create_contest.setString(2, contest.getString("sub_category"));
 							create_contest.setLong(3, System.currentTimeMillis());
 							create_contest.setString(4, contest.getString("contest_type"));
 							create_contest.setString(5, "VOTING ROUND: " + contest.getString("title"));
