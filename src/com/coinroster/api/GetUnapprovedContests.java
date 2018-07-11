@@ -60,8 +60,8 @@ public class GetUnapprovedContests extends Utils
 				description = result_set.getString(8),
 				settlement_type = result_set.getString(9),
 				option_table = result_set.getString(11),
-				rake = result_set.getString(12),
-				cost_per_entry = result_set.getString(14);
+				rake = result_set.getString(13),
+				cost_per_entry = result_set.getString(15);
 		
 				JSONObject transaction = new JSONObject();
 
