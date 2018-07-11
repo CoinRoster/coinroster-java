@@ -67,9 +67,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 			UpdateBTCUSD();
 		}
 	
-//		if((minute%5)==0){
+		if((minute%5)==0){
 		    ContestMethods.checkCrowdContests();
-//		}
+		}
 		
 		if((minute%20)==0){
 			
