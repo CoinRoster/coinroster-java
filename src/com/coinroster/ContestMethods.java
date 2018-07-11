@@ -572,22 +572,31 @@ public class ContestMethods extends Utils{
 			Long deadline = baseball_bot.getEarliestGame();
             LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
 
-            //create Pari-Mutuel contest for most points
-//            JSONObject pari_mutuel_data = baseball_bot.createPariMutuel(deadline, date.toString());
-//            MethodInstance pari_method = new MethodInstance();
-//			JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//			pari_method.input = pari_mutuel_data;
-//			pari_method.output = pari_output;
-//			pari_method.session = null;
-//			pari_method.sql_connection = sql_connection;
-//			try{
-//				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//				c.newInstance(pari_method);
-//			}
-//			catch(Exception e){
-//				log(pari_method.output.toString());
-//				e.printStackTrace();
-//			}
+            JSONArray prop_contests = db.getRosterTemplates("BASEBALLPROPS");
+            for(int i = 0; i < prop_contests.length(); i++){
+				JSONObject contest = prop_contests.getJSONObject(i);
+				String title = contest.getString("title")  + " | " + date.toString(); 
+				contest.put("title", title);
+				contest.put("odds_source", "n/a");
+				contest.put("gameIDs", gameID_array);
+				contest.put("registration_deadline", deadline);
+				
+	            JSONObject pari_mutuel_data = baseball_bot.createPariMutuel(deadline, date.toString(), contest);
+	            MethodInstance pari_method = new MethodInstance();
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_mutuel_data;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					log(pari_method.output.toString());
+					e.printStackTrace();
+				}
+            }
 			
 			//read templates from `CONTEST_TEMPLATES` table
 			JSONArray roster_contests = db.getRosterTemplates("BASEBALL");
@@ -725,7 +734,6 @@ public class ContestMethods extends Utils{
 						String c_id = (String) pari_contest_ids.next();
 						String scoring_rules_string = pari_contests.getString(c_id);
 						JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-
 						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules);
 						MethodInstance pari_method = new MethodInstance();
 						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");

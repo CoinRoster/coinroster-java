@@ -1295,9 +1295,9 @@ public class DB
 				entry.put("title", result_set.getString(5));
 				entry.put("description", result_set.getString(6));
 				entry.put("settlement_type", result_set.getString(7));
-				entry.put("pay_table", result_set.getString(8));
+				entry.put("pay_table", result_set.getObject(8));
 				entry.put("rake", result_set.getFloat(9));
-				entry.put("salary_cap", result_set.getInt(10));
+				entry.put("salary_cap", result_set.getObject(10));
 				entry.put("cost_per_entry", result_set.getDouble(11));
 				entry.put("min_users", result_set.getInt(12));
 				entry.put("max_users", result_set.getInt(13));

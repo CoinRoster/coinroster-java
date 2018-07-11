@@ -454,7 +454,8 @@ public class CreateContest extends Utils
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
             	}
-
+				
+				create_contest.setString(17, scoring_rules);
             	create_contest.executeUpdate();
             }
 			
