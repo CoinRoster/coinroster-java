@@ -85,7 +85,7 @@ public class SettleContest extends Utils
 						break lock;
 						}
 					
-					if (contest.getInt("status") != 2)
+					if (contest.getInt("status") != 2 && !contest.getString("sub_category").equals("VOTING"))
 						{
 						String error = "Contest " + contest_id + " is not in play";
 						

@@ -14,7 +14,7 @@ import com.coinroster.internal.BuildLobby;
 
 public class CreateContest extends Utils
 	{
-	public static String method_level = "admin";
+	public static String method_level = "standard";
 	public CreateContest(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -43,10 +43,22 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
-			String settlement_type = input.getString("settlement_type");
-			
-			PreparedStatement create_contest = null;
-            Long settlement_deadline = input.getLong("settlement_deadline");
+
+            String settlement_type = input.getString("settlement_type");
+            PreparedStatement create_contest = null;
+            Long settlement_deadline = null;
+            try{		
+            	settlement_deadline = input.getLong("settlement_deadline");		
+            }catch(Exception e){
+            }
+            
+            String madeBy = "";
+			String scoring_rules;
+			try{
+				scoring_rules = input.getString("scoring_rules");
+			}catch(Exception e){
+				scoring_rules = null;
+			}
             
             // validate common fields
             
@@ -55,19 +67,20 @@ public class CreateContest extends Utils
             	output.put("error", "Title is too long");
                 break method;
             	}
+
+            if(settlement_deadline != null){
+	            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000)
+	            	{
+	            	output.put("error", "Settlement deadline must be at least 1 hour from resgistration deadline");
+	                break method;
+	            	}
+            }
             
             if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
-            	{
-            	output.put("error", "Registration deadline must be at least 1 hour from now");
-                break method;
-            	}
-            
-
-            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000)
-            	{
-            	output.put("error", "Settlement deadline must be at least 1 hour from resgistration deadline");
-                break method;
-            	}
+	        	{
+	        	output.put("error", "Registration deadline must be at least 1 hour from now");
+	            break method;
+	        	}
             
             if (rake < 0 || rake >= 100)
             	{
@@ -76,7 +89,7 @@ public class CreateContest extends Utils
             	}
             
             rake = divide(rake, 100, 0); // convert to %
-            
+            	
             if (cost_per_entry == 0)
             	{
             	output.put("error", "Cost per entry cannot be 0");
@@ -122,7 +135,7 @@ public class CreateContest extends Utils
 	            int entries_per_user = input.getInt("entries_per_user");
 	            int roster_size = input.getInt("roster_size");
 	            String score_header = input.getString("score_header");
-	            JSONArray pay_table = input.getJSONArray("pay_table");
+	            JSONArray pay_table = new JSONArray(input.getString("pay_table"));
 	            JSONArray pay_table_final = new JSONArray();
 	            String tourneyID;
 	            try{
@@ -131,7 +144,7 @@ public class CreateContest extends Utils
 	            catch(Exception e){
 	            	tourneyID = "";
 	            }
-	            	            
+	                       
 	            if (min_users < 2)
 	            	{
 	        		output.put("error", "Invalid value for [min users]");
@@ -306,7 +319,8 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-				create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -323,26 +337,50 @@ public class CreateContest extends Utils
 				create_contest.setString(14, pay_table_final.toString());
 				create_contest.setDouble(15, salary_cap);
 				create_contest.setString(16, option_table.toString());
-
 				create_contest.setLong(17, System.currentTimeMillis());
-				String madeBy = null;
-				String gameIDs = "";
+				String gameIDs = null;
 				if(session == null){
+					String gameID_array;
+					// read gameIDs for baseball, basketball
+					try{
+						gameID_array = input.getString("gameIDs");
+						gameIDs = gameID_array;
+					}
+					// read tourneyID for golf
+					catch(Exception e){
+						gameIDs  = tourneyID;
+					}
 					madeBy = "ContestBot";
-					gameIDs = tourneyID;
+					create_contest.setNull(24, java.sql.Types.BIGINT);
+					create_contest.setInt(25, 1);
 				}
-				else
+				else{
 					madeBy = session.user_id();
+					if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
+						
+						create_contest.setLong(24, settlement_deadline);
+		            	
+						// exclude admins from seeking approval
+		            	if(session.user_level() != "1") 
+		            		create_contest.setInt(25, 5);            		
+		            	else
+		            		create_contest.setInt(25, 1);     
+					}
+					else{
+						create_contest.setInt(25, 1);     
+						create_contest.setNull(24, java.sql.Types.BIGINT);
+					}					
+				}
 				
 				create_contest.setString(18, madeBy);
 				create_contest.setInt(19, roster_size);
 				create_contest.setString(20, odds_source);
-				log(odds_source);
 				create_contest.setString(21, score_header);
-				log(score_header);
 				create_contest.setString(22, gameIDs);
-				create_contest.executeUpdate();
-	            }
+				create_contest.setString(23, scoring_rules);
+	            create_contest.executeUpdate();
+
+	        }
             else if (contest_type.equals("PARI-MUTUEL"))
             	{
             	// validate option table:
@@ -377,10 +415,8 @@ public class CreateContest extends Utils
 	            		break method;
 						}
 					}
-            	
-            	
-            	
-            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+
+            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline, scoring_rules) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -393,43 +429,42 @@ public class CreateContest extends Utils
 				create_contest.setString(10, settlement_type);
 				create_contest.setString(11, option_table.toString());
 				create_contest.setLong(12, System.currentTimeMillis());
-				String madeBy = "";
 				int auto = 0;
 				if(session == null){
 					madeBy = "ContestBot";
 					auto=1;
+					create_contest.setInt(15, 1);
+					create_contest.setNull(16, java.sql.Types.BIGINT);
+					
 				}
-				else madeBy = session.user_id();
-				
-				create_contest.setString(13, madeBy);
-				create_contest.setInt(14, auto);
-            	}
-            // user generated contests
-            if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
-            	
-            	// exclude admins from seeking approval
-            	if(session.user_level() != "1") {
-            		create_contest.setInt(15, 5);            		
-            	} else {
-            		create_contest.setInt(15, 1);
-            	}
-            	
-            	create_contest.setLong(16, settlement_deadline);
-    			create_contest.executeUpdate();
-            } else {
-            	create_contest.setInt(15, 1);
-            	create_contest.setNull(16, java.sql.Types.BIGINT);
-            	create_contest.executeUpdate();
-    			new BuildLobby(sql_connection);
+
+				else{
+					madeBy = session.user_id();
+					if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
+						
+						create_contest.setLong(16, settlement_deadline);
+		            	
+						// exclude admins from seeking approval
+		            	if(session.user_level() != "1") 
+		            		create_contest.setInt(15, 5);            		
+		            	else
+		            		create_contest.setInt(15, 1);     
+					}
+					else{
+						create_contest.setInt(15, 1);     
+						create_contest.setNull(16, java.sql.Types.BIGINT);
+					}		
+					
+					create_contest.setString(13, madeBy);
+					create_contest.setInt(14, auto);
+				}
+				create_contest.executeUpdate();
             }
-
-			new BuildLobby(sql_connection);
-			
-            output.put("status", "1");
-			
-//------------------------------------------------------------------------------------
-
-			} method.response.send(output);
-			
+            
+            new BuildLobby(sql_connection);
+			output.put("status", "1");	
 		}
+		method.response.send(output);
 	}
+}
+	
