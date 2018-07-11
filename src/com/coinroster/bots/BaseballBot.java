@@ -58,7 +58,7 @@ public class BaseballBot extends Utils {
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
 		if(events.length() == 0){
-			log("No games");
+			log("No baseball games today");
 			this.game_IDs = null;
 		}
 		else{
@@ -90,7 +90,7 @@ public class BaseballBot extends Utils {
 	public JSONObject createPariMutuel(Long deadline, String date) throws JSONException{
 		JSONObject fields = new JSONObject();
 		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", this.sport);
+		fields.put("sub_category", "BASEBALLPROPS");
 		fields.put("contest_type", "PARI-MUTUEL");
 		fields.put("progressive", "MOSTHITS");
 		String title = "Most Hits in MLB Tonight | " + date;
