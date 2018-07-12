@@ -71,9 +71,12 @@ public class SettleContest extends Utils
 					
 					contest_title = contest.getString("title"),
 					contest_type = contest.getString("contest_type");
+					
+					boolean voting_contest = db.is_voting_contest(contest_id);
 
 					log("Validating contest #" + contest_id);
 					log("Type: " + contest_type);
+					log("Voting contest: " + voting_contest);
 					
 					if (contest == null)
 						{
@@ -85,7 +88,7 @@ public class SettleContest extends Utils
 						break lock;
 						}
 					
-					if (contest.getInt("status") != 2 && !contest.getString("sub_category").equals("VOTING"))
+					if (contest.getInt("status") != 2 && !voting_contest)
 						{
 						String error = "Contest " + contest_id + " is not in play";
 						
@@ -228,8 +231,6 @@ public class SettleContest extends Utils
 					get_entry_total.setInt(1, contest_id);
 					ResultSet entry_total_rs = get_entry_total.executeQuery();
 					entry_total_rs.next();
-					
-					boolean voting_contest = db.is_voting_contest(contest_id);
 					
 					double 
 					
