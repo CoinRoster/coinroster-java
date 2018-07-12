@@ -339,7 +339,7 @@ public class SettleContest extends Utils
 						PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
 						get_entry_total.setInt(1, original_contest);
 						ResultSet original_total_rs = get_entry_total.executeQuery();
-						entry_total_rs.next();
+						original_total_rs.next();
 						contest_creator_commission = multiply(db.get_voting_contest_commission(), entry_total_rs.getDouble(1), 0);
 						log("Contest creator commission: " + contest_creator_commission);
 						
