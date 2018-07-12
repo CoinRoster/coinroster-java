@@ -128,72 +128,148 @@ public class BaseballBot extends Utils {
 		return contest;
 	}
 	
-	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules) throws Exception{
+	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules, JSONObject prop_data, JSONArray option_table) throws Exception{
 		
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
-		JSONObject contest = db.select_contest(contest_id);
-		JSONArray option_table = new JSONArray(contest.getString("option_table"));
-		int winning_outcome = 1;
-		double max_points = -999.0;
-		ArrayList<Integer> top_players = new ArrayList<Integer>();
+		String prop_type = prop_data.getString("prop_type");
+		int winning_outcome;
 		
-		ResultSet all_players = null;
-		try{
-			all_players = db.getPlayerScores("GOLF");
-		}catch(Exception e){
-			log(e.toString());
-		}
-		// loop through players and compile ArratList<Integer> of player_ids with top score
-		while(all_players.next()){
-			int player_id = all_players.getInt(1);
-			JSONObject data = new JSONObject(all_players.getString(2));
-			Double points = 0.0;
-			Iterator<?> keys = scoring_rules.keys();
-			while(keys.hasNext()){
-				String key = (String) keys.next();
-				int multiplier = scoring_rules.getInt(key);
-				points += ((double) (data.getInt(key) * multiplier));
-			}
-			if(points > max_points){
-				max_points = points;
-				top_players.clear();
-				top_players.add(player_id);
-			}
-			else if(points == max_points){
-				top_players.add(player_id);
-			}
-		}
-	
-		if(top_players.size() >= 2){
-		//tie is correct answer;
-		winning_outcome = 2;
-		log("winning outcome=2 because of tie");
-		fields.put("winning_outcome", winning_outcome);
-		return fields;
-		}
-		else{
-			for(Integer player_table_ID : top_players){
-				for (int i=0; i<option_table.length(); i++){
-					JSONObject option = option_table.getJSONObject(i);
-					int option_id = option.getInt("id");
-					try{
-						int player_id = option.getInt("player_id");
-						if(player_id == player_table_ID){
-							winning_outcome = option_id;
-							fields.put("winning_outcome", winning_outcome);
-							log("winning outcome is " + option.getString("description"));
-							return fields;	
-						}
-					}	
-					catch(Exception e){
-						continue;
-					}			
+		switch(prop_type){
+		
+			case "MOST": 
+				double max_points = -999.0;
+				ArrayList<Integer> top_players = new ArrayList<Integer>();
+				winning_outcome = 1;
+				ResultSet all_players = null;
+				try{
+					all_players = db.getPlayerScores("BASEBALL");
+				}catch(Exception e){
+					log(e.toString());
 				}
-			}
+				// loop through players and compile ArrayList<Integer> of player_ids with top score
+				while(all_players.next()){
+					int player_id = all_players.getInt(1);
+					JSONObject data = new JSONObject(all_players.getString(2));
+					Double points = 0.0;
+					Iterator<?> keys = scoring_rules.keys();
+					while(keys.hasNext()){
+						String key = (String) keys.next();
+						int multiplier = scoring_rules.getInt(key);
+						points += ((double) (data.getInt(key) * multiplier));
+					}
+					if(points > max_points){
+						max_points = points;
+						top_players.clear();
+						top_players.add(player_id);
+					}
+					else if(points == max_points){
+						top_players.add(player_id);
+					}
+				}
+			
+				if(top_players.size() >= 2){
+					//tie is correct answer;
+					winning_outcome = 2;
+					log("winning outcome=2 because of tie");
+					fields.put("winning_outcome", winning_outcome);
+					break;
+				}
+				else{
+					for(Integer player_table_ID : top_players){
+						for (int i=0; i<option_table.length(); i++){
+							JSONObject option = option_table.getJSONObject(i);
+							int option_id = option.getInt("id");
+							try{
+								int player_id = option.getInt("player_id");
+								if(player_id == player_table_ID){
+									winning_outcome = option_id;
+									fields.put("winning_outcome", winning_outcome);
+									log("winning outcome is " + option.getString("description"));
+									break;
+								}
+							}	
+							catch(Exception e){
+								continue;
+							}			
+						}
+					}
+				}
+				fields.put("winning_outcome", winning_outcome);
+				log("winning outcome is any other player");
+				break;
+		
+			case "MATCH_PLAY":
+				max_points = -999.0;
+				top_players = new ArrayList<Integer>();
+				for(int i = 0; i < option_table.length(); i++){
+					JSONObject player = option_table.getJSONObject(i);
+					int player_id = player.getInt("player_id");
+					JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
+					Double points = 0.0;
+					Iterator<?> keys = scoring_rules.keys();
+					while(keys.hasNext()){
+						String key = (String) keys.next();
+						int multiplier = scoring_rules.getInt(key);
+						points += ((double) (player_data.getInt(key) * multiplier));
+					}
+					if(points > max_points){
+						max_points = points;
+						top_players.clear();
+						top_players.add(player_id);
+					}
+					else if(points == max_points){
+						top_players.add(player_id);
+					}
+				}
+				if(top_players.size() >= 2){
+					winning_outcome = 1;
+					fields.put("winning_outcome", winning_outcome); 
+				}
+				else{
+					int winner_id = top_players.get(0);
+					for(int i=0; i<option_table.length(); i++){
+						JSONObject option = option_table.getJSONObject(i);
+						int option_id = option.getInt("id");
+						try{
+							int p_id = option.getInt("player_id");
+							if(winner_id == p_id){
+								winning_outcome = option_id;
+								fields.put("winning_outcome", winning_outcome);
+								log("winning outcome is " + option.getString("description"));
+							}
+						}	
+						catch(Exception e){
+							continue;
+						}			
+					}
+				}
+				break;
+			
+			case "OVER_UNDER":
+				int player_id = prop_data.getInt("player_id");
+				JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
+				Double points = 0.0;
+				Iterator<?> keys = scoring_rules.keys();
+				while(keys.hasNext()){
+					String key = (String) keys.next();
+					int multiplier = scoring_rules.getInt(key);
+					points += ((double) (player_data.getInt(key) * multiplier));
+				}
+				double o_u = prop_data.getDouble("over_under_value");
+				//over = 1, under = 2
+				if(points > o_u)
+					winning_outcome = 1;
+				else
+					winning_outcome = 2;
+
+				fields.put("winning_outcome", winning_outcome);
+				break;
+				
+			default:
+				log("error: prop_type not supported");
+				break;
 		}
-		fields.put("winning_outcome", winning_outcome);
-		log("winning outcome is any other player");
 		return fields;
 	}
 	

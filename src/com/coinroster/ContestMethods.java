@@ -768,7 +768,7 @@ public class ContestMethods extends Utils{
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
 			JSONObject roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASEBALL", "ROSTER");
-			JSONObject pari_contests = db_connection.get_pari_mutuel_id("BASEBALLPROPS", "PARI-MUTUEL");
+			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BASEBALLPROPS", "PARI-MUTUEL");
 
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				BaseballBot baseball_bot = new BaseballBot(sql_connection);
@@ -805,7 +805,7 @@ public class ContestMethods extends Utils{
 					
 				}
 				if(games_ended){
-					
+					log("baseball games have ended. Settling now...");
 					roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASEBALL", "ROSTER");
 					roster_contest_ids = roster_contests.keys();
 					while(roster_contest_ids.hasNext()){
@@ -835,13 +835,16 @@ public class ContestMethods extends Utils{
 					}
 					
 					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
-					pari_contests = db_connection.get_pari_mutuel_id("BASEBALLPROPS", "PARI-MUTUEL");
-					Iterator<?> pari_contest_ids = pari_contests.keys();
+					pari_contests = db_connection.get_active_pari_mutuels("BASEBALLPROPS", "PARI-MUTUEL");
+					Iterator<?> pari_contest_ids = pari_contests.keys();	
 					while(pari_contest_ids.hasNext()){
 						String c_id = (String) pari_contest_ids.next();
-						String scoring_rules_string = pari_contests.getString(c_id);
-						JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules);
+						
+						JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
+						JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
+						JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
+
+						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
 						MethodInstance pari_method = new MethodInstance();
 						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 						pari_method.input = pari_fields;
