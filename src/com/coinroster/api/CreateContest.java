@@ -52,11 +52,14 @@ public class CreateContest extends Utils
             }
             
             String madeBy = "";
-			String scoring_rules;
+			String scoring_rules, prop_data;
 			try{
 				scoring_rules = input.getString("scoring_rules");
+				prop_data = input.getString("prop_data");
+				
 			}catch(Exception e){
 				scoring_rules = null;
+				prop_data = null;
 			}
             
             // validate common fields
@@ -413,7 +416,7 @@ public class CreateContest extends Utils
 						}
 					}
             	
-            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline, scoring_rules) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline, scoring_rules, prop_data) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -451,11 +454,12 @@ public class CreateContest extends Utils
 						create_contest.setNull(16, java.sql.Types.BIGINT);
 					}		
 					
+				
+            	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
-            	}
-				
 				create_contest.setString(17, scoring_rules);
+				create_contest.setString(18, prop_data);
             	create_contest.executeUpdate();
             }
 			

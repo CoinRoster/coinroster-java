@@ -346,18 +346,22 @@ public class DB
 //------------------------------------------------------------------------------------
 
 	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
-	public JSONObject get_pari_mutuel_id(String sub_category, String contest_type) throws Exception
+	public JSONObject get_active_pari_mutuels(String sub_category, String contest_type) throws Exception
 	{
 		JSONObject contests = new JSONObject();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
 		get_live_contests.setString(1, sub_category);
 		get_live_contests.setString(2, contest_type);
 	
 		ResultSet result_set = get_live_contests.executeQuery();
 		
-		while (result_set.next())
-			contests.put(String.valueOf(result_set.getInt(1)), result_set.getString(2));
-		
+		while (result_set.next()){
+			JSONObject contest_data = new JSONObject();
+			contest_data.put("scoring_rules", result_set.getString(2));
+			contest_data.put("prop_data", result_set.getString(3));
+			contest_data.put("option_table", result_set.getString(4));
+			contests.put(String.valueOf(result_set.getInt(1)), contest_data);
+		}
 		return contests;
 	}
 	
@@ -1211,7 +1215,30 @@ public class DB
 		return result_set;
 	}
 	
-	//------------------------------------------------------------------------------------
+	
+//------------------------------------------------------------------------------------
+
+	public JSONArray get_all_players(String sport) throws JSONException, SQLException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type= ? order by salary desc");
+			get_players.setString(1, sport);
+			result_set = get_players.executeQuery();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		JSONArray players = new JSONArray();
+		while(result_set.next()){
+			JSONObject p = new JSONObject();
+			p.put("name", result_set.getString(2) + " " + result_set.getString(3));
+			p.put("player_id", result_set.getInt(1));
+			players.put(p);
+		}
+		return players;
+	}
+		
+//------------------------------------------------------------------------------------
 
 	public ResultSet getOptionTable(String sport, boolean filtered, int filter) throws SQLException{
 		
@@ -1263,6 +1290,26 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	public JSONObject getPlayerScores(int player_id, String sport) throws SQLException, JSONException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select data from player where sport_type= ? and id = ?");
+			get_players.setString(1, sport);
+			get_players.setInt(2, player_id);
+			result_set = get_players.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		if(result_set.next()){
+			JSONObject data = new JSONObject(result_set.getString(1));
+			return data;
+		}
+		else return null;
+	}
+	
+//------------------------------------------------------------------------------------
+
 	public void editData(String data, int id, String sport) throws SQLException{
 		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ?");
 		update_points.setString(1, data);
@@ -1304,7 +1351,7 @@ public class DB
 				entry.put("entries_per_user", result_set.getInt(14));
 				entry.put("roster_size", result_set.getInt(15));
 				entry.put("multi_stat", result_set.getBoolean(16));
-				entry.put("prop_type", result_set.getObject(17));
+				entry.put("prop_data", result_set.getObject(17));
 				entry.put("scoring_rules", result_set.getObject(18));
 				entry.put("score_header", result_set.getString(19));
 				
