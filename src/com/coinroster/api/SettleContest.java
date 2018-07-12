@@ -339,14 +339,14 @@ public class SettleContest extends Utils
 						PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
 						get_entry_total.setInt(1, original_contest);
 						ResultSet original_total_rs = get_entry_total.executeQuery();
-						log(original_total_rs.toString());
+						log(original_total_rs.getDouble(1));
 						original_total_rs.next();
 						contest_creator_commission = multiply(db.get_voting_contest_commission(), original_total_rs.getDouble(1), 0);
 						log("Contest creator commission: " + contest_creator_commission);
 						
 						// account id that created the original crowd-settled contest
 						String to_account =  db.select_contest(original_contest).getString("created_by");
-						String from_account = internal_asset.getString("id");
+						String from_account = db.get_id_for_username("internal_asset");
 						
 						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 						create_transaction.setLong(1, System.currentTimeMillis());
