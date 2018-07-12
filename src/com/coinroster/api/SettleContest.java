@@ -341,7 +341,7 @@ public class SettleContest extends Utils
 						ResultSet original_total_rs = get_entry_total.executeQuery();
 						log(original_total_rs.toString());
 						original_total_rs.next();
-						contest_creator_commission = multiply(db.get_voting_contest_commission(), entry_total_rs.getDouble(1), 0);
+						contest_creator_commission = multiply(db.get_voting_contest_commission(), original_total_rs.getDouble(1), 0);
 						log("Contest creator commission: " + contest_creator_commission);
 						
 						// account id that created the original crowd-settled contest
