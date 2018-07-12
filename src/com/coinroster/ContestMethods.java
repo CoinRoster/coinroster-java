@@ -501,7 +501,7 @@ public class ContestMethods extends Utils{
 						input.put("contest_id", contest_id);
 						log(input.toString());
 						
-						// multiple bets placed, notify admin
+/*						// multiple bets placed, notify admin
 						if(input.has("multiple_bets")) {
 							JSONObject cash_register = db.select_user("username", "internal_cash_register");
 							
@@ -528,7 +528,7 @@ public class ContestMethods extends Utils{
 							new UpdateContestStatus(sql_connection, contest_id, 5);
 							return;
 						}
-	
+	*/
 						MethodInstance method = new MethodInstance();
 						JSONObject output = new JSONObject("{\"status\":\"0\"}");
 						method.input = input;
