@@ -536,6 +536,7 @@ public class ContestMethods extends Utils{
 						method.session = null;
 						method.sql_connection = sql_connection;
 						try{
+							log("Settling voting round");
 							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
 							c.newInstance(method);
 						}
@@ -543,6 +544,8 @@ public class ContestMethods extends Utils{
 							e.printStackTrace();
 						}
 						input.remove("contest_id");
+						
+						log("Settling betting round");
 						
 						// get contest ID of contest that created voting round
 						
