@@ -437,6 +437,8 @@ public class CreateContest extends Utils
 				create_contest.setString(11, option_table.toString());
 				create_contest.setLong(12, System.currentTimeMillis());
 				int auto = 0;
+				
+				// contestBot made contest
 				if(session == null){
 					madeBy = "ContestBot";
 					auto=1;
@@ -446,7 +448,21 @@ public class CreateContest extends Utils
 				}
 				else{
 					madeBy = session.user_id();
-					if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
+					
+					// auto_settle is set in SetupPropBet api (user generated but auto-settle)
+					int auto_settle = 0;
+					try{
+						auto_settle = input.getInt("auto_settle");
+					}catch(Exception e){
+					}
+					if(auto_settle == 1){
+						auto = 1;
+						create_contest.setInt(15, 1);
+						create_contest.setNull(16, java.sql.Types.BIGINT);
+					}
+					
+					// user or crowd settlement
+					else if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
 						
 						create_contest.setLong(16, settlement_deadline);
 		            	
@@ -456,6 +472,8 @@ public class CreateContest extends Utils
 		            	else
 		            		create_contest.setInt(15, 1);     
 					}
+					
+					// admin created contest
 					else{
 						create_contest.setInt(15, 1);     
 						create_contest.setNull(16, java.sql.Types.BIGINT);

@@ -1,5 +1,6 @@
 package com.coinroster.api;
 
+import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -36,6 +37,12 @@ public class SetupPropBet extends Utils{
 				String category = input.getString("category");
 				String sub_category = input.getString("sub_category");
 				String sport = sub_category.replace("PROPS", "");
+				
+				/*
+				DO SOMETHING WITH THIS!
+				String public_private = input.getString("public_private");
+				*/
+				
 				Long deadline = null;
 				switch(sport){
 					case "BASEBALL":
@@ -56,11 +63,12 @@ public class SetupPropBet extends Utils{
 				String settlement_type = input.getString("settlement_type");
 				double cost_per_entry = input.getDouble("cost_per_entry");
 				double rake = 5.0;
-				String progressive_code = "";
+				String progressive = "";
 				JSONObject scoring_rules = input.getJSONObject("scoring_rules");
 				JSONObject prop_data = input.getJSONObject("prop_data");
 				String prop_type = prop_data.getString("prop_type");
-				String title, description;
+				int auto_settle = 1;
+				String title = "", description = "";
 				JSONArray option_table = new JSONArray();
 				
 				//check prop_type and set option_table, title, description accordingly
@@ -139,6 +147,41 @@ public class SetupPropBet extends Utils{
 						break;
 				
 				}
+				
+				JSONObject prop = new JSONObject();
+				prop.put("category", category);
+				prop.put("sub_category", sub_category);
+				prop.put("progressive", progressive);
+				prop.put("contest_type", contest_type);
+				prop.put("title", title);
+				prop.put("description", description);
+				prop.put("registration_deadline", deadline);
+				prop.put("rake", rake);
+				prop.put("cost_per_entry", cost_per_entry);
+				prop.put("settlement_type", settlement_type);
+				prop.put("option_table", option_table);
+				prop.put("auto_settle", auto_settle);
+				prop.put("scoring_rules", scoring_rules.toString());
+				prop.put("prop_data", prop_data.toString());
+				
+				
+				MethodInstance prop_method = new MethodInstance();
+				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");
+				prop_method.input = prop;
+				prop_method.output = prop_output;
+				prop_method.session = method.session;
+				prop_method.sql_connection = sql_connection;
+				
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(prop_method);
+				}
+				catch(Exception e){
+					log(prop_method.output.toString());
+					e.printStackTrace();
+				}
+				
+				method.output.put("status", "1");
 				
 			}catch(Exception e){
 				log(e.toString());
