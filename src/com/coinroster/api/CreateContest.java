@@ -419,7 +419,14 @@ public class CreateContest extends Utils
 						}
 					}
 
-            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline, scoring_rules, prop_data) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            	log("scoring rules: " + scoring_rules);
+				log("prop_data: " + prop_data);
+				
+            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
+            																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
+            																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
+            																		+ "scoring_rules, prop_data) "
+            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -433,6 +440,8 @@ public class CreateContest extends Utils
 				create_contest.setString(11, option_table.toString());
 				create_contest.setLong(12, System.currentTimeMillis());
 				int auto = 0;
+				
+				// contestBot made contest
 				if(session == null){
 					madeBy = "ContestBot";
 					auto=1;
@@ -443,7 +452,21 @@ public class CreateContest extends Utils
 
 				else{
 					madeBy = session.user_id();
-					if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
+					
+					// auto_settle is set in SetupPropBet api (user generated but auto-settle)
+					int auto_settle = 0;
+					try{
+						auto_settle = input.getInt("auto_settle");
+					}catch(Exception e){
+					}
+					if(auto_settle == 1){
+						auto = 1;
+						create_contest.setInt(15, 1);
+						create_contest.setNull(16, java.sql.Types.BIGINT);
+					}
+					
+					// user or crowd settlement
+					else if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
 						
 						create_contest.setLong(16, settlement_deadline);
 		            	
@@ -453,12 +476,13 @@ public class CreateContest extends Utils
 		            	else
 		            		create_contest.setInt(15, 1);     
 					}
+					
+					// admin created contest
 					else{
 						create_contest.setInt(15, 1);     
 						create_contest.setNull(16, java.sql.Types.BIGINT);
 					}		
 					
-				
             	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);

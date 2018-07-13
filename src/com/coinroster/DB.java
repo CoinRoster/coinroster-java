@@ -1421,6 +1421,20 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
+	public String get_player_info(String sport, int player_id) throws SQLException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr from player where sport_type = ? and id = ?");
+			get_players.setString(1, sport);
+			get_players.setInt(2, player_id);
+			result_set = get_players.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		if(result_set.next()) return result_set.getString(1) + " " + result_set.getString(2);
+		else return null;
+	}
 
 }
 

@@ -162,18 +162,21 @@ public class BaseballBot extends Utils {
 						max_points = points;
 						top_players.clear();
 						top_players.add(player_id);
+						log("adding " + player_id + " to top_players array with points = " + points);
 					}
 					else if(points == max_points){
 						top_players.add(player_id);
 					}
 				}
+				
+				log("TOP PLAYERS: " + top_players.toString());
 			
 				if(top_players.size() >= 2){
 					//tie is correct answer;
 					winning_outcome = 2;
 					log("winning outcome=2 because of tie");
 					fields.put("winning_outcome", winning_outcome);
-					break;
+					return fields;
 				}
 				else{
 					for(Integer player_table_ID : top_players){
@@ -186,7 +189,7 @@ public class BaseballBot extends Utils {
 									winning_outcome = option_id;
 									fields.put("winning_outcome", winning_outcome);
 									log("winning outcome is " + option.getString("description"));
-									break;
+									return fields;
 								}
 							}	
 							catch(Exception e){
@@ -197,7 +200,7 @@ public class BaseballBot extends Utils {
 				}
 				fields.put("winning_outcome", winning_outcome);
 				log("winning outcome is any other player");
-				break;
+				return fields;
 		
 			case "MATCH_PLAY":
 				max_points = -999.0;
@@ -224,7 +227,8 @@ public class BaseballBot extends Utils {
 				}
 				if(top_players.size() >= 2){
 					winning_outcome = 1;
-					fields.put("winning_outcome", winning_outcome); 
+					fields.put("winning_outcome", winning_outcome);
+					return fields;
 				}
 				else{
 					int winner_id = top_players.get(0);
@@ -237,6 +241,7 @@ public class BaseballBot extends Utils {
 								winning_outcome = option_id;
 								fields.put("winning_outcome", winning_outcome);
 								log("winning outcome is " + option.getString("description"));
+								return fields;
 							}
 						}	
 						catch(Exception e){
