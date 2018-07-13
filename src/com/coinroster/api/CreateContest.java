@@ -415,8 +415,15 @@ public class CreateContest extends Utils
 	            		break method;
 						}
 					}
-            	
-            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created, created_by, auto_settle, status, settlement_deadline, scoring_rules, prop_data) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            
+            	log("scoring rules: " + scoring_rules);
+				log("prop_data: " + prop_data);
+				
+            	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
+            																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
+            																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
+            																		+ "scoring_rules, prop_data) "
+            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -454,7 +461,6 @@ public class CreateContest extends Utils
 						create_contest.setNull(16, java.sql.Types.BIGINT);
 					}		
 					
-				
             	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
