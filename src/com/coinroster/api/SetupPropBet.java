@@ -34,8 +34,10 @@ public class SetupPropBet extends Utils{
 //------------------------------------------------------------------------------------
 			try{
 				
-				String category = input.getString("category");
-				String sub_category = input.getString("sub_category");
+				JSONObject data = input.getJSONObject("data");
+				
+				String category = data.getString("category");
+				String sub_category = data.getString("sub_category");
 				String sport = sub_category.replace("PROPS", "");
 				
 				/*
@@ -58,14 +60,14 @@ public class SetupPropBet extends Utils{
 						break;
 				}
 	            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
-				String contest_type = input.getString("contest_type");
+				String contest_type = data.getString("contest_type");
 				Long registration_deadline = deadline;
-				String settlement_type = input.getString("settlement_type");
-				double cost_per_entry = input.getDouble("cost_per_entry");
+				String settlement_type = data.getString("settlement_type");
+				double cost_per_entry = data.getDouble("cost_per_entry");
 				double rake = 5.0;
 				String progressive = "";
-				JSONObject scoring_rules = input.getJSONObject("scoring_rules");
-				JSONObject prop_data = input.getJSONObject("prop_data");
+				JSONObject scoring_rules = data.getJSONObject("scoring_rules");
+				JSONObject prop_data = data.getJSONObject("prop_data");
 				String prop_type = prop_data.getString("prop_type");
 				int auto_settle = 1;
 				String title = "", description = "";
