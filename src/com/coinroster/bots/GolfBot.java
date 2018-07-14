@@ -348,6 +348,8 @@ public class GolfBot extends Utils {
 						score = -888;
 					else if(status.equals("wd"))
 						score = -999;
+					else if(status.equals("dq"))
+						score = -666;
 					else{
 						try{
 							score = player.getInt("total");
@@ -404,6 +406,12 @@ public class GolfBot extends Utils {
 			else if(points== -777){
 				player.put("id", id);
 				player.put("score_raw", "INACTIVE");
+				player.put("score_normalized", 0);
+				player_map.put(player);
+			}
+			else if(points== -666){
+				player.put("id", id);
+				player.put("score_raw", "DQ");
 				player.put("score_normalized", 0);
 				player_map.put(player);
 			}
