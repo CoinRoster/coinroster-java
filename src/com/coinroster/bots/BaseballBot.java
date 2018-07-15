@@ -207,22 +207,29 @@ public class BaseballBot extends Utils {
 				top_players = new ArrayList<Integer>();
 				for(int i = 0; i < option_table.length(); i++){
 					JSONObject player = option_table.getJSONObject(i);
-					int player_id = player.getInt("player_id");
-					JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
-					Double points = 0.0;
-					Iterator<?> keys = scoring_rules.keys();
-					while(keys.hasNext()){
-						String key = (String) keys.next();
-						int multiplier = scoring_rules.getInt(key);
-						points += ((double) (player_data.getInt(key) * multiplier));
+					try{
+						int player_id = player.getInt("player_id");
+					
+						JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
+						Double points = 0.0;
+						Iterator<?> keys = scoring_rules.keys();
+						while(keys.hasNext()){
+							String key = (String) keys.next();
+							int multiplier = scoring_rules.getInt(key);
+							points += ((double) (player_data.getInt(key) * multiplier));
+						}
+						log(player_id + ": " + points);
+						if(points > max_points){
+							max_points = points;
+							top_players.clear();
+							top_players.add(player_id);
+						}
+						else if(points == max_points){
+							top_players.add(player_id);
+						}
 					}
-					if(points > max_points){
-						max_points = points;
-						top_players.clear();
-						top_players.add(player_id);
-					}
-					else if(points == max_points){
-						top_players.add(player_id);
+					catch(JSONException e){
+						continue;
 					}
 				}
 				if(top_players.size() >= 2){
@@ -232,6 +239,7 @@ public class BaseballBot extends Utils {
 				}
 				else{
 					int winner_id = top_players.get(0);
+					log("player id of winner: " + winner_id);
 					for(int i=0; i<option_table.length(); i++){
 						JSONObject option = option_table.getJSONObject(i);
 						int option_id = option.getInt("id");
