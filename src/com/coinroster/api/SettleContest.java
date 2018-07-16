@@ -338,11 +338,11 @@ public class SettleContest extends Utils
 						
 						PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
 						get_entry_total.setInt(1, original_contest);
-						ResultSet original_total_rs = get_entry_total.executeQuery();
-						original_total_rs.next();
-						Double commission = original_total_rs.getDouble(1);
-						log("commission: " + commission);
-						contest_creator_commission = multiply(db.get_voting_contest_commission(), commission, 0);
+						ResultSet betting_total_rs = get_entry_total.executeQuery();
+						betting_total_rs.next();
+						Double total_from_original = betting_total_rs.getDouble(1);
+						log("commission: " + total_from_original);
+						contest_creator_commission = multiply(db.get_voting_contest_commission(), total_from_original, 0);
 						log("Contest creator commission: " + contest_creator_commission);
 						
 						// account id that created the original crowd-settled contest
@@ -1455,6 +1455,26 @@ public class SettleContest extends Utils
 					from_currency = "BTC",
 					to_currency = "BTC",
 					memo = "Rake (BTC) from contest #" + contest_id;
+					
+					// voting contests should theoretically not have any rake amount but in case it does, implicitly
+					// convert rc to btc within contest account and credit asset account accordingly
+					if (voting_contest) {
+						
+						/* destroy rc amount from internal_contest */
+						
+						//refresh data
+						contest_account = db.select_user("id", contest_account_id);
+						double rc_contest = contest_account.getDouble("rc_balance");
+						rc_contest = add(rc_contest, actual_rake_amount, 0);
+						db.update_rc_balance(contest_account_id, rc_contest);
+						
+						from_currency = "RC";
+						
+						/* create btc for same amount in internal_contest */
+						double btc_contest = contest_account.getDouble("btcc_balance");
+						btc_contest = subtract(btc_contest, actual_rake_amount, 0);
+						db.update_btc_balance(contest_account_id, btc_contest);
+					}
 					
 					if (do_update)
 						{
