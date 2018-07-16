@@ -69,11 +69,12 @@ public class CronWorker extends Utils implements Callable<Integer>
 	
 		if((minute%5)==0){
 		    ContestMethods.checkCrowdContests();
+		    new CloseContestRegistration();
 		}
 		
 		if((minute%20)==0){
 			
-			new CloseContestRegistration();
+//			new CloseContestRegistration();
 			
 			// see if contests are in play (status=2) and live update scores if applicable
 			// also settle the contests when applicable
