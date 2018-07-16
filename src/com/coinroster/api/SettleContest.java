@@ -340,9 +340,11 @@ public class SettleContest extends Utils
 						get_entry_total.setInt(1, original_contest);
 						ResultSet betting_total_rs = get_entry_total.executeQuery();
 						betting_total_rs.next();
-						Double total_from_original = betting_total_rs.getDouble(1);
+						Double total_from_original = betting_total_rs.getDouble(1),
+								voting_contest_commission = db.get_voting_contest_commission();
 						log("commission: " + total_from_original);
-						contest_creator_commission = multiply(db.get_voting_contest_commission(), total_from_original, 0);
+						log("control commission: " + voting_contest_commission);
+						contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
 						log("Contest creator commission: " + contest_creator_commission);
 						
 						// account id that created the original crowd-settled contest
