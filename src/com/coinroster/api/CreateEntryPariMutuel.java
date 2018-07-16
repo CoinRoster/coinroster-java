@@ -174,6 +174,7 @@ public class CreateEntryPariMutuel extends Utils
 					// calculate user balances and transaction amounts
 					
 					if (voting_contest) {
+						log("voting contest entry, uses roster coins");
 						// if voting round, we already determined the user has enough
 						double temp_rc_balance = subtract(rc_balance, total_entry_fees, 0);
 						rc_transaction_amount = total_entry_fees;

@@ -501,6 +501,15 @@ public class ContestMethods extends Utils{
 						input.put("contest_id", contest_id);
 						log(input.toString());
 						
+						// no bets on voting round; undersubscribe both for now
+						// !!! DOES NOT BACKOUT BETTING ROUND YET !!!
+						if(input.getInt("winning_outcome") == 0) {
+							new UpdateContestStatus(sql_connection, contest_id, 3);
+							new UpdateContestStatus(sql_connection, db.get_original_contest(contest_id), 3);
+							
+							return;
+						}
+						
 /*						// multiple bets placed, notify admin
 						if(input.has("multiple_bets")) {
 							JSONObject cash_register = db.select_user("username", "internal_cash_register");
