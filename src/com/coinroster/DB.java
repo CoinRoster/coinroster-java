@@ -1409,12 +1409,12 @@ public class DB
 	public double get_voting_contest_commission() {
 		double voting_contest_creator_commission = 0;
 		try {
-			PreparedStatement voting_contest_commission = sql_connection.prepareStatement("select value from control where name = voting_contest_creator_commission");
+			PreparedStatement voting_contest_commission = sql_connection.prepareStatement("select value from control where name = 'voting_contest_creator_commission'");
 			ResultSet result_set = voting_contest_commission.executeQuery();		
 			if (result_set.next()) voting_contest_creator_commission = result_set.getInt(1);
 		}
 		catch(Exception e){
-			e.printStackTrace();
+			e.printStackTrace(System.out);
 		}
 		return voting_contest_creator_commission;
 	}
