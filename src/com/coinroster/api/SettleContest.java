@@ -1471,7 +1471,7 @@ public class SettleContest extends Utils
 						from_currency = "RC";
 						
 						/* create btc for same amount in internal_contest */
-						double btc_contest = contest_account.getDouble("btcc_balance");
+						double btc_contest = contest_account.getDouble("btc_balance");
 						btc_contest = subtract(btc_contest, actual_rake_amount, 0);
 						db.update_btc_balance(contest_account_id, btc_contest);
 					}
