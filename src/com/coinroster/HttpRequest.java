@@ -76,7 +76,8 @@ public class HttpRequest
 		else 
 			{
 			url = URLDecoder.decode(full_url.substring(0, query_index), "ISO-8859-1");
-			
+			Utils.log("URL: " + url.toString());
+
 			// parse query string:
 			
 			String[] query_items = full_url.substring(query_index + 1).split("&");

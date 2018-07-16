@@ -437,6 +437,81 @@ public class GolfBot extends Utils {
 		return normalizedScore;
 	}
 	
+	public JSONObject createTeamsPariMutuel(Long deadline) throws JSONException{
+		JSONObject fields = new JSONObject();
+		fields.put("category", "FANTASYSPORTS");
+		fields.put("sub_category", "GOLF");
+		fields.put("contest_type", "PARI-MUTUEL");
+		fields.put("progressive", "");
+		String title = this.getTourneyName() + " | Team Competition";
+		fields.put("title", title);
+		fields.put("description", "Place your bet on which team will accumulate the best score!");
+		fields.put("rake", 5);
+		fields.put("cost_per_entry", 0.00000001);
+		fields.put("registration_deadline", deadline);
+		
+		//get 30 most expensive golfers
+		Map<Integer, ArrayList<String>> players = new HashMap<>();
+		ResultSet top_players = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name from player where sport_type=? order by salary DESC limit 30");
+			get_players.setString(1, "GOLF");
+			top_players = get_players.executeQuery();
+			
+			while(top_players.next()){
+				int row = top_players.getRow();
+				String id = String.valueOf(top_players.getInt(1));
+				String name = top_players.getString(2);
+				ArrayList<String> golfer = new ArrayList<>();
+				golfer.add(id);
+				golfer.add(name);
+				players.put(row, golfer);
+			}
+			
+			JSONArray teams = new JSONArray();
+			int num_teams = 5;
+			int rounds = 6;
+			//create 5 teams, 6 rounds draft 
+			for(int i=1; i<=num_teams; i++){
+				JSONObject team = new JSONObject();
+				team.put("id", i);
+				ArrayList<String> names = new ArrayList<>();
+				ArrayList<Integer> golfer_ids = new ArrayList<>();
+				for(int round=1; round<=rounds; round++){
+					int pick;
+					//snake draft picking algorithm
+					if(round % 2 == 0)
+						pick = (round * num_teams) - i + 1;
+					else
+						pick = ((round - 1) * num_teams) + i;
+					
+					ArrayList<String> golfer = players.get(pick);
+					int id = Integer.parseInt(golfer.get(0));
+					golfer_ids.add(id);
+					String name = golfer.get(1);
+					names.add(name);
+				}
+				String desc = names.get(0) + ", " + names.get(1) + ", " + names.get(2) + ", " + names.get(3) + ", " + names.get(4);
+				team.put("description", desc);
+				team.put("player_ids", golfer_ids.toString());
+				teams.put(team);
+			}
+			JSONObject tie = new JSONObject();
+			tie.put("id", 6);
+			tie.put("description", "Tie");
+			teams.put(tie);
+			
+			fields.put("option_table", teams);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return fields;
+		
+	}
+	
+	
 	public JSONObject createPariMutuel(Long deadline, String round) throws JSONException{
 		JSONObject fields = new JSONObject();
 		fields.put("category", "FANTASYSPORTS");
