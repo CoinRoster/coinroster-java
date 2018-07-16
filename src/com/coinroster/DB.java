@@ -7,9 +7,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.internal.UserMail;
+
+import sun.util.logging.resources.logging;
 
 public class DB 
 	{
@@ -307,35 +310,59 @@ public class DB
 	
 	// CHECK IF CONTESTS ARE IN PLAY
 
-	public ArrayList<Integer> check_if_in_play(String category, String sub_category, String contest_type) throws Exception
+	public JSONObject check_if_in_play(String category, String sub_category, String contest_type) throws Exception
 	{
-		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
+		JSONObject contests = new JSONObject();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
 		get_live_contests.setString(3, contest_type);
 	
 		ResultSet result_set = get_live_contests.executeQuery();
 		
-		while (result_set.next()){
-			contest_ids.add(result_set.getInt(1));
-		}
-		return contest_ids;
+		while (result_set.next())
+			contests.put(String.valueOf(result_set.getInt(1)), result_set.getString(2));
+
+		return contests;
 	}
 	
-	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
-	public ArrayList<Integer> get_pari_mutuel_id(String sub_category, String contest_type) throws Exception
+//------------------------------------------------------------------------------------
+	
+	//get ids from voting table
+	public ArrayList<Integer> check_if_in_play() throws Exception
 	{
 		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
-		get_live_contests.setString(1, sub_category);
-		get_live_contests.setString(2, contest_type);
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id from voting where status = 1");
+
 		ResultSet result_set = get_live_contests.executeQuery();
 		
 		while (result_set.next()){
 			contest_ids.add(result_set.getInt(1));
 		}
 		return contest_ids;
+		
+	}
+
+//------------------------------------------------------------------------------------
+
+	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
+	public JSONObject get_active_pari_mutuels(String sub_category, String contest_type) throws Exception
+	{
+		JSONObject contests = new JSONObject();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
+		get_live_contests.setString(1, sub_category);
+		get_live_contests.setString(2, contest_type);
+	
+		ResultSet result_set = get_live_contests.executeQuery();
+		
+		while (result_set.next()){
+			JSONObject contest_data = new JSONObject();
+			contest_data.put("scoring_rules", result_set.getString(2));
+			contest_data.put("prop_data", result_set.getString(3));
+			contest_data.put("option_table", result_set.getString(4));
+			contests.put(String.valueOf(result_set.getInt(1)), contest_data);
+		}
+		return contests;
 	}
 	
 
@@ -383,23 +410,25 @@ public class DB
 			String settlement_type = result_set.getString(9);
 			String pay_table = result_set.getString(10);
 			String option_table = result_set.getString(11);
-			double rake = result_set.getDouble(12);
-			double salary_cap = result_set.getDouble(13);
-			double cost_per_entry = result_set.getDouble(14);
-			int min_users = result_set.getInt(15);
-			int max_users = result_set.getInt(16);
-			int entries_per_user = result_set.getInt(17);
-			Long registration_deadline = result_set.getLong(18);
-			int status = result_set.getInt(19);
-			int roster_size = result_set.getInt(20);
-			String odds_source = result_set.getString(21);
-			String settled_by = result_set.getString(22);
-			Long settled = result_set.getLong(23);
-			String score_header = result_set.getString(24);
-			Long scores_updated = result_set.getLong(25);
-			String scoring_scheme = result_set.getString(26);
-			String progressive = result_set.getString(27);
-			double progressive_paid = result_set.getDouble(28);
+			String scoring_rules = result_set.getString(12);
+			double rake = result_set.getDouble(13);
+			double salary_cap = result_set.getDouble(14);
+			double cost_per_entry = result_set.getDouble(15);
+			int min_users = result_set.getInt(16);
+			int max_users = result_set.getInt(17);
+			int entries_per_user = result_set.getInt(18);
+			Long registration_deadline = result_set.getLong(19);
+			int status = result_set.getInt(20);
+			int roster_size = result_set.getInt(21);
+			String odds_source = result_set.getString(22);
+			String settled_by = result_set.getString(23);
+			Long settled = result_set.getLong(24);
+			String score_header = result_set.getString(25);
+			Long scores_updated = result_set.getLong(26);
+			String scoring_scheme = result_set.getString(27);
+			String progressive = result_set.getString(28);
+			double progressive_paid = result_set.getDouble(29);
+			Long settlement_deadline = result_set.getLong(32);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
@@ -412,6 +441,7 @@ public class DB
 			contest.put("settlement_type", settlement_type);
 			contest.put("pay_table", pay_table);
 			contest.put("option_table", option_table);
+			contest.put("scoring_rules", scoring_rules);
 			contest.put("rake", rake);
 			contest.put("salary_cap", salary_cap);
 			contest.put("cost_per_entry", cost_per_entry);
@@ -429,13 +459,12 @@ public class DB
 			contest.put("scoring_scheme", scoring_scheme);
 			contest.put("progressive", progressive);
 			contest.put("progressive_paid", progressive_paid);
+			contest.put("settlement_deadline", settlement_deadline);
 			}
 
 		return contest;
 		}
 
-	
-	
 //------------------------------------------------------------------------------------
 
 	// SELECT CONTEST ENTRY 
@@ -1186,12 +1215,70 @@ public class DB
 		return result_set;
 	}
 	
+	
+//------------------------------------------------------------------------------------
+
+	public JSONArray get_all_players(String sport) throws JSONException, SQLException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type= ? order by salary desc");
+			get_players.setString(1, sport);
+			result_set = get_players.executeQuery();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		JSONArray players = new JSONArray();
+		while(result_set.next()){
+			JSONObject p = new JSONObject();
+			p.put("name", result_set.getString(2) + " " + result_set.getString(3));
+			p.put("player_id", result_set.getInt(1));
+			players.put(p);
+		}
+		return players;
+	}
+		
+//------------------------------------------------------------------------------------
+
+	public ResultSet getOptionTable(String sport, boolean filtered, int filter) throws SQLException{
+		
+		ResultSet result_set = null;
+		
+		if(filtered){
+			try{
+				PreparedStatement get_players = sql_connection.prepareStatement("SELECT a.id, a.name, a.team_abr, a.salary, a.filter_on FROM player AS a "
+						+ "WHERE (SELECT COUNT(*) FROM player AS b "
+						+ "WHERE b.team_abr = a.team_abr AND b.filter_on >= a.filter_on) <= ? "
+						+ "AND a.sport_type = ?"
+						+ "ORDER BY a.team_abr ASC, a.filter_on DESC");
+				get_players.setInt(1, filter);
+				get_players.setString(2, sport);
+				result_set = get_players.executeQuery();
+			}
+			catch(Exception e){
+				Utils.log(e.toString());
+			}
+		}
+		else{
+			try {
+				PreparedStatement get_players = sql_connection.prepareStatement("SELECT id, name, team_abr, salary from player where sport_type = ?");
+				get_players.setString(1, sport);
+				result_set = get_players.executeQuery();
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		return result_set;
+	}
+	
+	
 //------------------------------------------------------------------------------------
 	
 	public ResultSet getPlayerScores(String sport) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, points from player where sport_type=?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, data from player where sport_type=?");
 			get_players.setString(1, sport);
 			result_set = get_players.executeQuery();		
 		}
@@ -1203,13 +1290,109 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	public void editPoints(double pts, int id, String sport) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ? and sport_type = ?");
-		update_points.setDouble(1, pts);
+	public JSONObject getPlayerScores(int player_id, String sport) throws SQLException, JSONException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select data from player where sport_type= ? and id = ?");
+			get_players.setString(1, sport);
+			get_players.setInt(2, player_id);
+			result_set = get_players.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		if(result_set.next()){
+			JSONObject data = new JSONObject(result_set.getString(1));
+			return data;
+		}
+		else return null;
+	}
+	
+//------------------------------------------------------------------------------------
+
+	public void editData(String data, int id, String sport) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ?");
+		update_points.setString(1, data);
 		update_points.setInt(2, id);
 		update_points.setString(3, sport);
 		update_points.executeUpdate();
 	}
 	
+//------------------------------------------------------------------------------------
+
+	public JSONArray getRosterTemplates(String sub_category) throws SQLException{
+		
+		Utils.log("reading contests templates for " + sub_category + " contests");
+		JSONArray templates = new JSONArray();
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_contests = sql_connection.prepareStatement("select * from contest_template where sub_category = ? and active = 1");
+			get_contests.setString(1, sub_category);
+			result_set = get_contests.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		while (result_set.next()){
+			JSONObject entry = new JSONObject();
+			try{
+				entry.put("category", result_set.getString(2));
+				entry.put("sub_category", result_set.getString(3));
+				entry.put("contest_type", result_set.getString(4));
+				entry.put("title", result_set.getString(5));
+				entry.put("description", result_set.getString(6));
+				entry.put("settlement_type", result_set.getString(7));
+				entry.put("pay_table", result_set.getObject(8));
+				entry.put("rake", result_set.getFloat(9));
+				entry.put("salary_cap", result_set.getObject(10));
+				entry.put("cost_per_entry", result_set.getDouble(11));
+				entry.put("min_users", result_set.getInt(12));
+				entry.put("max_users", result_set.getInt(13));
+				entry.put("entries_per_user", result_set.getInt(14));
+				entry.put("roster_size", result_set.getInt(15));
+				entry.put("multi_stat", result_set.getBoolean(16));
+				entry.put("prop_data", result_set.getObject(17));
+				entry.put("scoring_rules", result_set.getObject(18));
+				entry.put("score_header", result_set.getString(19));
+				
+				if(result_set.getObject(20) == null)
+					entry.put("progressive", "");
+				else
+					entry.put("progressive", result_set.getObject(20));
+				
+				if(result_set.getObject(22) == null)
+					entry.put("filter", 0);
+				else
+					entry.put("filter", result_set.getInt(22));
+				
+				templates.put(entry);
+			} catch (Exception e) {
+				Utils.log(e.getMessage());
+				Utils.log(e.getLocalizedMessage());
+				Utils.log(e.toString());
+			}
+		}
+		return templates;
+	}
+
+	
+//------------------------------------------------------------------------------------
+	
+	public String get_player_info(String sport, int player_id) throws SQLException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr from player where sport_type = ? and id = ?");
+			get_players.setString(1, sport);
+			get_players.setInt(2, player_id);
+			result_set = get_players.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		if(result_set.next()) return result_set.getString(1) + " " + result_set.getString(2);
+		else return null;
+	}
+
+
 }
 

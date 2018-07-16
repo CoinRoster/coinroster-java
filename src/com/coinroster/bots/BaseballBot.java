@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import com.coinroster.DB;
 import com.coinroster.Server;
@@ -51,7 +52,7 @@ public class BaseballBot extends Utils {
 	public long getEarliestGame(){
 		return earliest_game;
 	}
-	public void scrapeGameIDs() throws IOException, JSONException{
+	public String scrapeGameIDs() throws IOException, JSONException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
@@ -60,6 +61,7 @@ public class BaseballBot extends Utils {
 		if(events.length() == 0){
 			log("No baseball games today");
 			this.game_IDs = null;
+			return null;
 		}
 		else{
 			String earliest_date = events.getJSONObject(0).getString("date");
@@ -80,6 +82,7 @@ public class BaseballBot extends Utils {
 				gameIDs.add(gameID.toString());
 			}
 			this.game_IDs = gameIDs;
+			return gameIDs.toString();
 		}
 	}
 	
@@ -87,18 +90,8 @@ public class BaseballBot extends Utils {
 		return players_list;
 	}
 	
-	public JSONObject createPariMutuel(Long deadline, String date) throws JSONException{
-		JSONObject fields = new JSONObject();
-		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", "BASEBALLPROPS");
-		fields.put("contest_type", "PARI-MUTUEL");
-		fields.put("progressive", "MOSTHITS");
-		String title = "Most Hits in MLB Tonight | " + date;
-		fields.put("title", title);
-		fields.put("description", "Place your bet on who you will think will have the most hits today!");
-		fields.put("rake", 5);
-		fields.put("cost_per_entry", 0.00000001);
-		fields.put("registration_deadline", deadline);
+	public JSONObject createPariMutuel(Long deadline, String date, JSONObject contest) throws JSONException{
+		
 		JSONArray option_table = new JSONArray(); 
 		ResultSet top_players = null;
 		
@@ -114,8 +107,9 @@ public class BaseballBot extends Utils {
 	
 		int index = 3;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit 7");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit ?");
 			get_players.setString(1, "BASEBALL");
+			get_players.setInt(2, contest.getInt("filter"));
 			top_players = get_players.executeQuery();
 			while(top_players.next()){
 				JSONObject player = new JSONObject();
@@ -125,43 +119,59 @@ public class BaseballBot extends Utils {
 				option_table.put(player);
 				index += 1;
 			}
-			fields.put("option_table", option_table);
+			contest.put("option_table", option_table);
 		}
 		catch(Exception e){
 			e.printStackTrace();
 		}
 		
-		return fields;
+		return contest;
 	}
 	
-	public JSONObject settlePariMutuel(int contest_id) throws Exception{
+	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules, JSONObject prop_data, JSONArray option_table) throws Exception{
+		
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
-		JSONObject contest = db.select_contest(contest_id);
-		JSONArray option_table = new JSONArray(contest.getString("option_table"));
-		int winning_outcome = 1;
-		ResultSet max_pts = null;
-		try {
-			PreparedStatement get_pts = sql_connection.prepareStatement("select max(points) from player where sport_type=?");
-			get_pts.setString(1, this.sport);
-			max_pts = get_pts.executeQuery();
-			double points = 0;
-			while(max_pts.next())
-				points = max_pts.getDouble(1);
-			log("Max hits tonight was " + points);
-			ResultSet players = null;
-			try {
-				PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=? and points=?");
-				get_players.setString(1, this.sport);
-				get_players.setDouble(2, points);
-				players = get_players.executeQuery();
-				
-				ArrayList<Integer> IDs = new ArrayList<Integer>();
-				while(players.next()){
-					IDs.add(players.getInt(1));
+		String prop_type = prop_data.getString("prop_type");
+		int winning_outcome;
+		
+		switch(prop_type){
+		
+			case "MOST": 
+				double max_points = -999.0;
+				ArrayList<Integer> top_players = new ArrayList<Integer>();
+				winning_outcome = 1;
+				ResultSet all_players = null;
+				try{
+					all_players = db.getPlayerScores("BASEBALL");
+				}catch(Exception e){
+					log(e.toString());
+				}
+				// loop through players and compile ArrayList<Integer> of player_ids with top score
+				while(all_players.next()){
+					int player_id = all_players.getInt(1);
+					JSONObject data = new JSONObject(all_players.getString(2));
+					Double points = 0.0;
+					Iterator<?> keys = scoring_rules.keys();
+					while(keys.hasNext()){
+						String key = (String) keys.next();
+						int multiplier = scoring_rules.getInt(key);
+						points += ((double) (data.getInt(key) * multiplier));
+					}
+					if(points > max_points){
+						max_points = points;
+						top_players.clear();
+						top_players.add(player_id);
+						log("adding " + player_id + " to top_players array with points = " + points);
+					}
+					else if(points == max_points){
+						top_players.add(player_id);
+					}
 				}
 				
-				if(IDs.size() > 1){
+				log("TOP PLAYERS: " + top_players.toString());
+			
+				if(top_players.size() >= 2){
 					//tie is correct answer;
 					winning_outcome = 2;
 					log("winning outcome=2 because of tie");
@@ -169,8 +179,7 @@ public class BaseballBot extends Utils {
 					return fields;
 				}
 				else{
-					for(Integer player_table_ID : IDs){
-						log(player_table_ID);
+					for(Integer player_table_ID : top_players){
 						for (int i=0; i<option_table.length(); i++){
 							JSONObject option = option_table.getJSONObject(i);
 							int option_id = option.getInt("id");
@@ -180,7 +189,7 @@ public class BaseballBot extends Utils {
 									winning_outcome = option_id;
 									fields.put("winning_outcome", winning_outcome);
 									log("winning outcome is " + option.getString("description"));
-									return fields;	
+									return fields;
 								}
 							}	
 							catch(Exception e){
@@ -191,16 +200,89 @@ public class BaseballBot extends Utils {
 				}
 				fields.put("winning_outcome", winning_outcome);
 				log("winning outcome is any other player");
-			}
-				
-			catch(Exception e){
-				e.printStackTrace();
-			}
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
+				return fields;
 		
+			case "MATCH_PLAY":
+				max_points = -999.0;
+				top_players = new ArrayList<Integer>();
+				for(int i = 0; i < option_table.length(); i++){
+					JSONObject player = option_table.getJSONObject(i);
+					try{
+						int player_id = player.getInt("player_id");
+					
+						JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
+						Double points = 0.0;
+						Iterator<?> keys = scoring_rules.keys();
+						while(keys.hasNext()){
+							String key = (String) keys.next();
+							int multiplier = scoring_rules.getInt(key);
+							points += ((double) (player_data.getInt(key) * multiplier));
+						}
+						log(player_id + ": " + points);
+						if(points > max_points){
+							max_points = points;
+							top_players.clear();
+							top_players.add(player_id);
+						}
+						else if(points == max_points){
+							top_players.add(player_id);
+						}
+					}
+					catch(JSONException e){
+						continue;
+					}
+				}
+				if(top_players.size() >= 2){
+					winning_outcome = 1;
+					fields.put("winning_outcome", winning_outcome);
+					return fields;
+				}
+				else{
+					int winner_id = top_players.get(0);
+					log("player id of winner: " + winner_id);
+					for(int i=0; i<option_table.length(); i++){
+						JSONObject option = option_table.getJSONObject(i);
+						int option_id = option.getInt("id");
+						try{
+							int p_id = option.getInt("player_id");
+							if(winner_id == p_id){
+								winning_outcome = option_id;
+								fields.put("winning_outcome", winning_outcome);
+								log("winning outcome is " + option.getString("description"));
+								return fields;
+							}
+						}	
+						catch(Exception e){
+							continue;
+						}			
+					}
+				}
+				break;
+			
+			case "OVER_UNDER":
+				int player_id = prop_data.getInt("player_id");
+				JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
+				Double points = 0.0;
+				Iterator<?> keys = scoring_rules.keys();
+				while(keys.hasNext()){
+					String key = (String) keys.next();
+					int multiplier = scoring_rules.getInt(key);
+					points += ((double) (player_data.getInt(key) * multiplier));
+				}
+				double o_u = prop_data.getDouble("over_under_value");
+				//over = 1, under = 2
+				if(points > o_u)
+					winning_outcome = 1;
+				else
+					winning_outcome = 2;
+
+				fields.put("winning_outcome", winning_outcome);
+				break;
+				
+			default:
+				log("error: prop_type not supported");
+				break;
+		}
 		return fields;
 	}
 	
@@ -210,21 +292,34 @@ public class BaseballBot extends Utils {
 			delete_old_rows.setString(1, this.sport);
 			delete_old_rows.executeUpdate();
 			log("deleted " + this.sport + " players from old contests");
+			
+			JSONObject empty_data_json = new JSONObject();
+			try {
+				empty_data_json.put("hits", 0);
+				empty_data_json.put("runs", 0);
+				empty_data_json.put("rbis", 0);
+				empty_data_json.put("walks", 0);
+				empty_data_json.put("strikeouts", 0);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 
 			if(this.getPlayerHashMap() == null)
 				return;
 			
 			for(Player player : this.getPlayerHashMap().values()){
 				
-				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setInt(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
 				save_player.setString(5, player.getTeam());
 				save_player.setDouble(6, player.getSalary());
-				save_player.setDouble(7, player.getPoints());
-				save_player.setString(8, "{}");
+				save_player.setString(7, empty_data_json.toString());
+				save_player.setDouble(8, player.getPoints());
+				save_player.setString(9, "{}");
+				save_player.setInt(10, player.get_filter());
 				save_player.executeUpdate();	
 			}
 			log("added " + this.sport + " players to DB");
@@ -234,16 +329,28 @@ public class BaseballBot extends Utils {
 		}
 	}
 	
-	public JSONArray updateScores() throws SQLException, JSONException{
+	public JSONArray updateScores(JSONObject scoring_rules) throws SQLException, JSONException{
 		
 		ResultSet playerScores = db.getPlayerScores(this.sport);
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
 			int id = playerScores.getInt(1);
-			double points = playerScores.getDouble(2);
+			JSONObject data = new JSONObject(playerScores.getString(2));
 			player.put("id", id);
-			player.put("score_raw", Double.toString(points));
+			String data_to_display = "";
+			Double points = 0.0;
+			Iterator<?> keys = scoring_rules.keys();
+			while(keys.hasNext()){
+				String key = (String) keys.next();
+				int multiplier = scoring_rules.getInt(key);
+				data_to_display += key.toUpperCase() + ": " + String.valueOf(data.get(key)) + ", ";
+				points += ((double) (data.getInt(key) * multiplier));			
+			}
+			// chop off ", " from end of string
+			data_to_display = data_to_display.substring(0, data_to_display.length() - 2);
+			
+			player.put("score_raw", data_to_display);
 			player.put("score_normalized", points);
 			player_map.put(player);
 		}
@@ -267,7 +374,7 @@ public class BaseballBot extends Utils {
 				for(Element team : team_divs){
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
-					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/hits").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/atBats").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 						      .referrer("http://www.google.com").timeout(6000).get();
 					Element stats_table = team_stats_page.select("table.tablehead").first();
 					Elements rows = stats_table.getElementsByTag("tr");
@@ -288,6 +395,7 @@ public class BaseballBot extends Utils {
 								//p.scrape_info();
 								p.gameID = this.game_IDs.get(i);
 								p.set_salary(price);
+								p.set_filter(at_bats);
 								//p.createBio();		
 								players.put(ESPN_id, p);
 							}
@@ -318,18 +426,34 @@ public class BaseballBot extends Utils {
 								String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
 								if(!espn_ID_url.isEmpty()){
 									int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);		
-									String points_string = row.getElementsByClass("batting-stats-h").text();
-									double pts;
-									// if player played, get their points
-									if(!points_string.isEmpty() && !points_string.contains("--")){
-										pts = Double.parseDouble(points_string);		
+									String hits_string = row.getElementsByClass("batting-stats-h").text();
+									String runs_string = row.getElementsByClass("batting-stats-r").text();
+									String rbi_string = row.getElementsByClass("batting-stats-rbi").text();
+									String bb_string = row.getElementsByClass("batting-stats-bb").text();
+									String k_string = row.getElementsByClass("batting-stats-k").text();
+									JSONObject data = new JSONObject();
+									try {
+										if(hits_string.equals("--"))
+											hits_string = "0";
+										data.put("hits", Integer.parseInt(hits_string));
+										if(runs_string.equals("--"))
+											runs_string = "0";
+										data.put("runs", Integer.parseInt(runs_string));
+										if(rbi_string.equals("--"))
+											rbi_string = "0";
+										data.put("rbis", Integer.parseInt(rbi_string));
+										if(bb_string.equals("--"))
+											bb_string = "0";
+										data.put("walks", Integer.parseInt(bb_string));
+										if(k_string.equals("--"))
+											k_string = "0";
+										data.put("strikeouts", Integer.parseInt(k_string));
+									} catch (JSONException e) {
+										e.printStackTrace();
 									}
-									// if player did not play, set pts=0
-									else{
-										pts = 0.0;
-									}
-									// look up player in HashMap with ESPN_ID, update his points in DB
-									db.editPoints(pts, espn_ID, this.sport);
+								
+									// look up player in HashMap with ESPN_ID, update his data in DB
+									db.editData(data.toString(), espn_ID, this.sport);
 								}			
 							}			
 						}
@@ -367,6 +491,7 @@ public class BaseballBot extends Utils {
 		private JSONObject year_stats;
 		private JSONObject bio;
 		private String gameID;
+		private int filter;
 		
 		// constructor
 		public Player(int id, String n, String team){
@@ -431,6 +556,13 @@ public class BaseballBot extends Utils {
 		public void set_salary(double sal){
 			this.salary = sal;
 		}
+		public void set_filter(int at_bats){
+			this.filter = at_bats;
+		}
+		public int get_filter(){
+			return filter;
+		}
+		
 		public void createBio() throws JSONException{
 			JSONObject bio = new JSONObject();
 			bio.put("birthString", this.getBirthString());

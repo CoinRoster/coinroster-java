@@ -73,12 +73,12 @@ public class CronWorker extends Utils implements Callable<Integer>
 			
 			// see if contests are in play (status=2) and live update scores if applicable
 			// also settle the contests when applicable
-			ContestMethods.checkBasketballContests();
-			ContestMethods.checkGolfContests();
+//			ContestMethods.checkBasketballContests();
+//			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 		}
 		if((hour%6==0) && (minute==30)){
-			ContestMethods.updateGolfContestField();
+//			ContestMethods.updateGolfContestField();
 		}
 		//update currencies hourly on live
 		if(Server.live_server && minute==2){
@@ -95,11 +95,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 //		new CheckPendingWithdrawals();
 	
 		if(hour==7){
-			ContestMethods.createBasketballContests();
+//			ContestMethods.createBasketballContests();
 			ContestMethods.createBaseballContests();
 		}
 		if(hour==8){
-			ContestMethods.createGolfContests();
+//			ContestMethods.createGolfContests();
 		}
 	}
 	

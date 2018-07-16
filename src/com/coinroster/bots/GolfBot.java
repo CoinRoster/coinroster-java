@@ -350,6 +350,13 @@ public class GolfBot extends Utils {
 				if(id == player_id){
 					in_leaderboard = true;
 					String status = player.getString("status");
+					JSONObject data = new JSONObject();
+					JSONObject empty = new JSONObject();
+					data.put("1", empty);
+					data.put("2", empty);
+					data.put("3", empty);
+					data.put("4", empty);
+					data.put("overall", 0);
 					if(status.equals("cut"))
 						score = -888;
 					else if(status.equals("wd"))
@@ -365,13 +372,13 @@ public class GolfBot extends Utils {
 							score = -888;
 						}
 					}	
-					db.editPoints(score, player_id, this.sport);
+//					db.editPoints(score, player_id, this.sport);
 					break;
 				}
 			}
 			if(!in_leaderboard){
 				score = -777;
-				db.editPoints(score, id, this.sport);	
+//				db.editPoints(score, id, this.sport);	
 			}
 		}
 		return finished;		
@@ -508,7 +515,6 @@ public class GolfBot extends Utils {
 		}
 		
 		return fields;
-		
 	}
 	
 	

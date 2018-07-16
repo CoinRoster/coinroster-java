@@ -16,7 +16,6 @@ import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -51,7 +50,7 @@ public class BasketballBot extends Utils {
 	public long getEarliestGame(){
 		return earliest_game;
 	}
-	public void scrapeGameIDs() throws IOException, JSONException{
+	public String scrapeGameIDs() throws IOException, JSONException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
@@ -60,6 +59,7 @@ public class BasketballBot extends Utils {
 		if(events.length() == 0){
 			log("No basketball games today");
 			this.game_IDs = null;
+			return null;
 		}
 		else{
 			String earliest_date = events.getJSONObject(0).getString("date");
@@ -80,6 +80,7 @@ public class BasketballBot extends Utils {
 				gameIDs.add(gameID.toString());
 			}
 			this.game_IDs = gameIDs;
+			return gameIDs.toString();
 		}
 	}
 	
@@ -326,7 +327,7 @@ public class BasketballBot extends Utils {
 									pts = 0.0;
 								}
 								// look up player in HashMap with ESPN_ID, update his points in DB
-								db.editPoints(pts, espn_ID, this.sport);
+								//db.editPoints(pts, espn_ID, this.sport);
 							}			
 						}			
 					}

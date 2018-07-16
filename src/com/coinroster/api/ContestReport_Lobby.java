@@ -92,23 +92,25 @@ public class ContestReport_Lobby extends Utils
 					String settlement_type = result_set.getString(9);
 					String pay_table = result_set.getString(10);
 					String option_table = result_set.getString(11);
-					double rake = result_set.getDouble(12);
-					double salary_cap = result_set.getDouble(13);
-					double cost_per_entry = result_set.getDouble(14);
-					int min_users = result_set.getInt(15);
-					int max_users = result_set.getInt(16);
-					int entries_per_user = result_set.getInt(17);
-					Long registration_deadline = result_set.getLong(18);
-					int status = result_set.getInt(19);
-					int roster_size = result_set.getInt(20);
-					String odds_source = result_set.getString(21);
-					String settled_by = result_set.getString(22);
-					Long settled = result_set.getLong(23);
-					String score_header = result_set.getString(24);
-					Long scores_updated = result_set.getLong(25);
-					String scoring_scheme = result_set.getString(26);
-					String progressive_code = result_set.getString(27);
-					double progressive_paid = result_set.getDouble(28);
+					String scoring_rules = result_set.getString(12);
+					double rake = result_set.getDouble(13);
+					double salary_cap = result_set.getDouble(14);
+					double cost_per_entry = result_set.getDouble(15);
+					int min_users = result_set.getInt(16);
+					int max_users = result_set.getInt(17);
+					int entries_per_user = result_set.getInt(18);
+					Long registration_deadline = result_set.getLong(19);
+					int status = result_set.getInt(20);
+					int roster_size = result_set.getInt(21);
+					String odds_source = result_set.getString(22);
+					String settled_by = result_set.getString(23);
+					Long settled = result_set.getLong(24);
+					String score_header = result_set.getString(25);
+					Long scores_updated = result_set.getLong(26);
+					String scoring_scheme = result_set.getString(27);
+					String progressive_code = result_set.getString(28);
+					double progressive_paid = result_set.getDouble(29);
+					
 					
 					if (contest_status != 0 && status != contest_status) continue;
 					
@@ -154,6 +156,11 @@ public class ContestReport_Lobby extends Utils
 					contest.put("score_header", score_header);
 					contest.put("scores_updated", scores_updated);
 					contest.put("scoring_scheme", scoring_scheme);
+					
+					if (category.equals("USERGENERATED")) 
+						{
+						contest.put("settlement_deadline", result_set.getLong(32));
+						}
 					
 					contest_report.put(contest);
 					}
