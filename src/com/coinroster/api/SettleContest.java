@@ -338,11 +338,16 @@ public class SettleContest extends Utils
 						Integer original_contest = db.get_original_contest(contest_id);
 						
 						PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
-						get_entry_total.setInt(1, original_contest);
-						ResultSet betting_total_rs = get_entry_total.executeQuery();
+						get_original_total.setInt(1, original_contest);
+						ResultSet betting_total_rs = get_original_total.executeQuery();
 						betting_total_rs.next();
-						Double total_from_original = betting_total_rs.getDouble(1),
-								voting_contest_commission = db.get_voting_contest_commission();
+						
+						Double 
+						
+						total_from_original = betting_total_rs.getDouble(1),
+						voting_contest_commission = 0.01; //db.get_voting_contest_commission();  ---> This isn't working for some reason
+						
+						
 						log("commission: " + total_from_original);
 						log("control commission: " + voting_contest_commission);
 						contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);

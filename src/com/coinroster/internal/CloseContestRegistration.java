@@ -1,5 +1,6 @@
 package com.coinroster.internal;
 
+import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +11,7 @@ import java.util.HashSet;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
+import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 
@@ -101,6 +103,63 @@ public class CloseContestRegistration extends Utils
 							Server.log("Contest #" + contest_id + " is being crowd-settled");
 							
 							/* VOTING ROUND CREATION */
+							
+							// create progressive
+							
+							JSONObject progressive_input = new JSONObject();
+							progressive_input.put("category", contest.getString("category"));
+							progressive_input.put("sub_category", contest.getString("category"));
+							progressive_input.put("code", Utils.SHA1(contest.getString("title") + contest.getInt("contest_id")));
+							progressive_input.put("payout_info", "Voting Round Commission");
+							
+							MethodInstance method = new MethodInstance();
+							JSONObject output = new JSONObject("{\"status\":\"0\"}");
+							method.input = progressive_input;
+							method.output = output;
+							method.session = null;
+							method.sql_connection = sql_connection;
+							try{
+								log("Creating progressive for voting round");
+								Constructor<?> c = Class.forName("com.coinroster.api." + "CreateProgressive").getConstructor(MethodInstance.class);
+								c.newInstance(method);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
+							
+							PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
+							get_original_total.setInt(1, contest_id);
+							ResultSet betting_total_rs = get_original_total.executeQuery();
+							betting_total_rs.next();
+							
+							Double 
+							
+							total_from_original = betting_total_rs.getDouble(1),
+							voting_contest_commission = 0.01; //db.get_voting_contest_commission();
+							
+							log("commission: " + total_from_original);
+							log("control commission: " + voting_contest_commission);
+							
+							Double contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
+							log("Contest creator commission: " + contest_creator_commission);
+							
+							JSONObject fund_progressive_input = new JSONObject();
+							fund_progressive_input.put("code", Utils.SHA1(contest.getString("title") + contest.getInt("contest_id")));
+							fund_progressive_input.put("amount_to_add", contest_creator_commission);
+							
+							MethodInstance fund_method = new MethodInstance();
+							fund_method.input = fund_progressive_input;
+							fund_method.output = output;
+							fund_method.session = null;
+							fund_method.sql_connection = sql_connection;
+							try{
+								log("Creating progressive for voting round");
+								Constructor<?> c = Class.forName("com.coinroster.api." + "AddToProgressive").getConstructor(MethodInstance.class);
+								c.newInstance(fund_method);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
 							
 							// populate contest table
 							
