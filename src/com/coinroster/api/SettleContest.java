@@ -21,6 +21,7 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.Backup;
 import com.coinroster.internal.BuildLobby;
+import com.coinroster.internal.UpdateContestStatus;
 import com.coinroster.internal.UserMail;
 
 public class SettleContest extends Utils
@@ -1533,6 +1534,9 @@ public class SettleContest extends Utils
 								break;
 							}
 
+						if (voting_contest) {
+							new UpdateContestStatus(sql_connection, contest_id, 3);
+						}
 						update_contest.executeUpdate();
 						}
 
