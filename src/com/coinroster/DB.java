@@ -1414,8 +1414,10 @@ public class DB
 			if (result_set.next()) voting_contest_creator_commission = result_set.getInt(1);
 		}
 		catch(Exception e){
+			Utils.log(e.toString());
 			e.printStackTrace(System.out);
 		}
+		Utils.log("creator commission: " + voting_contest_creator_commission);
 		return voting_contest_creator_commission;
 	}
 	
