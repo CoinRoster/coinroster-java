@@ -1537,6 +1537,7 @@ public class SettleContest extends Utils
 						if (voting_contest) {
 							new UpdateContestStatus(sql_connection, contest_id, 3);
 						}
+						
 						update_contest.executeUpdate();
 						}
 
