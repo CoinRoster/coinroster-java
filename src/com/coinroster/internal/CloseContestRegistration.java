@@ -124,7 +124,7 @@ public class CloseContestRegistration extends Utils
 								c.newInstance(method);
 							}
 							catch(Exception e){
-								e.printStackTrace();
+								e.printStackTrace(System.out);
 							}
 							
 							PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
@@ -158,7 +158,7 @@ public class CloseContestRegistration extends Utils
 								c.newInstance(fund_method);
 							}
 							catch(Exception e){
-								e.printStackTrace();
+								e.printStackTrace(System.out);
 							}
 							
 							// populate contest table

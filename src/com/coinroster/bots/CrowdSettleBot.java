@@ -64,6 +64,12 @@ public class CrowdSettleBot extends Utils{
 					winning_outcome = contest_users.getInt(1);
 				}
 			}
+			
+			for (Integer key: entries.keySet()) {
+				if(key != winning_outcome && entries.get(key).equals(entries.get(winning_outcome))) {
+					fields.put("multiple_winning_outcomes", "true");
+				}
+			}
 
 			fields.put("winning_outcome", winning_outcome);
 			log("winning outcome for crowd settled contest: " + winning_outcome);

@@ -370,14 +370,14 @@ public class SettleContest extends Utils
 						create_transaction.setInt(10, contest_id);
 						create_transaction.executeUpdate();
 						
-						// update balances by swapping asset BTC balance to user's RC balance
-						Double internal_asset_btc_balance = internal_asset.getDouble("btc_balance");
+						// update balances by debiting asset RC balance to user's RC balance
+						Double internal_asset_rc_balance = internal_asset.getDouble("rc_balance");
 						Double user_rc_balance = db.select_user("id", to_account).getDouble("rc_balance");
 						
-						internal_asset_btc_balance = subtract(internal_asset_btc_balance, contest_creator_commission, 0);
+						internal_asset_rc_balance = subtract(internal_asset_rc_balance, contest_creator_commission, 0);
 						user_rc_balance = add(user_rc_balance, contest_creator_commission, 0);
 						
-						db.update_btc_balance(from_account, internal_asset_btc_balance);
+						db.update_rc_balance(from_account, internal_asset_rc_balance);
 						db.update_rc_balance(to_account, user_rc_balance);
 					}
 					

@@ -22,6 +22,7 @@ import org.json.JSONObject;
 import com.coinroster.bots.BaseballBot;
 
 import com.coinroster.bots.CrowdSettleBot;
+import com.coinroster.internal.BackoutContest;
 import com.coinroster.internal.UpdateContestStatus;
 
 
@@ -501,16 +502,15 @@ public class ContestMethods extends Utils{
 						input.put("contest_id", contest_id);
 						log(input.toString());
 						
-						// no bets on voting round; undersubscribe both for now
-						// !!! DOES NOT BACKOUT BETTING ROUND YET !!!
-						if(input.getInt("winning_outcome") == 0) {
-							new UpdateContestStatus(sql_connection, contest_id, 3);
-							new UpdateContestStatus(sql_connection, db.get_original_contest(contest_id), 3);
+						// no bets on voting round; back
+						if(input.getInt("winning_outcome") == 0 || input.has("multiple_winning_outcomes")) {
+							new BackoutContest(sql_connection, contest_id);
+							new BackoutContest(sql_connection, db.get_original_contest(contest_id));
 							
 							return;
 						}
 						
-/*						// multiple bets placed, notify admin
+						// multiple bets placed, notify admin
 						if(input.has("multiple_bets")) {
 							JSONObject cash_register = db.select_user("username", "internal_cash_register");
 							
@@ -537,7 +537,7 @@ public class ContestMethods extends Utils{
 							new UpdateContestStatus(sql_connection, contest_id, 5);
 							return;
 						}
-	*/
+	
 						MethodInstance method = new MethodInstance();
 						JSONObject output = new JSONObject("{\"status\":\"0\"}");
 						method.input = input;
