@@ -20,6 +20,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
+import com.coinroster.bots.GolfBot;
+
 
 import com.coinroster.bots.CrowdSettleBot;
 import com.coinroster.internal.BackoutContest;
@@ -285,22 +287,22 @@ public class ContestMethods extends Utils{
 
 //------------------------------------------------------------------------------------
 
-//	public static void createGolfContests() {
-//		
-//		Connection sql_connection = null;
-//		
-//		try {
-//			sql_connection = Server.sql_connection();
-//			GolfBot golfBot = new GolfBot(sql_connection);
-//			DB db = new DB(sql_connection);
-//			golfBot.scrapeTourneyID();
-//			if(golfBot.getTourneyID() == null)
-//				return;
-//			golfBot.setup();
-//			golfBot.savePlayers();
-//			
-//			Long deadline = golfBot.getDeadline();
-//
+	public static void createGolfContests() {
+		
+		Connection sql_connection = null;
+		
+		try {
+			sql_connection = Server.sql_connection();
+			GolfBot golfBot = new GolfBot(sql_connection);
+			DB db = new DB(sql_connection);
+			golfBot.scrapeTourneyID();
+			if(golfBot.getTourneyID() == null)
+				return;
+			golfBot.setup();
+			golfBot.savePlayers();
+			
+			Long deadline = golfBot.getDeadline();
+
 //			//create Pari-Mutuel contest for most points
 //			Calendar cal = Calendar.getInstance();
 //			for(int round = 1; round <=4; round++){
@@ -323,8 +325,8 @@ public class ContestMethods extends Utils{
 //					e.printStackTrace();
 //				}	
 //			}
-//
-//			// read text file to create roster contests
+
+			// read text file to create roster contests
 //			String fileName = Server.java_path + "GolfContests.txt";
 //			String line = "";
 //			String sep = ";";
@@ -432,21 +434,21 @@ public class ContestMethods extends Utils{
 //	        } catch (Exception e) {
 //	            e.printStackTrace();
 //	        }
-//				
-//		} catch (Exception e) {
-//			Server.exception(e);
-//		} finally {
-//			if (sql_connection != null) {
-//				try {
-//					sql_connection.close();
-//					} 
-//				catch (SQLException ignore) {
-//					// ignore
-//				}
-//			}
-//		}
-//	}
-//	
+				
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}
+	
 ////------------------------------------------------------------------------------------
 //
 //	public static void updateGolfContestField() {
@@ -717,7 +719,7 @@ public class ContestMethods extends Utils{
 					e.printStackTrace();
 				}
             }
-			
+
 			//read templates from `CONTEST_TEMPLATES` table
 			JSONArray roster_contests = db.getRosterTemplates("BASEBALL");
 			for(int index = 0; index < roster_contests.length(); index++){

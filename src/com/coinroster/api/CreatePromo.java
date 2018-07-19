@@ -70,7 +70,6 @@ public class CreatePromo extends Utils
 			
 			ext_address = "",
 			
-			created_by = session.user_id(),
 			from_account_id = db.get_id_for_username(from_account.getString("username")),
 			internal_liability_id = db.get_id_for_username("internal_liability"),
 			from_currency = "BTC",
@@ -152,32 +151,22 @@ public class CreatePromo extends Utils
 			
 			if (referrer_id.equals("") && from_account.getString("username").equals("internal_promotions"))
 				{
-				referrer_id = null;	
+				// promos from admin panel do not require a referral
+				referrer_id = from_account_id;
 				}
 			else if (referrer_id.equals("") )
 				{
+				// failsafe if frontend doesn't pass referrer correctly
+				referrer_id = from_account_id;
 				referrer = db.select_user("id", from_account_id);
 				}
 			else
 				{
-				// created by user; user_id is not passed to frontend via SSI
+				// created by user; derived from frontend
 				referrer = db.select_user("username", referrer_id);
 				referrer_id = db.get_id_for_username(referrer_id);
-				
-				/*else // valid referrer - only allow one promo code at a time
-					{
-					PreparedStatement check_for_promo  = sql_connection.prepareStatement("select promo_code from promo where referrer = ? and cancelled = 0");
-					check_for_promo.setString(1, referrer_id);
-					ResultSet result_set = check_for_promo.executeQuery();
-
-					if (result_set.next())
-						{
-						String existing_promo_code = result_set.getString(1);
-						output.put("error", "Affiliate already has an active promo code: " + existing_promo_code);
-			            break method;
-						}
-					}*/
 				}
+			
 			if (referrer == null && !from_account.getString("username").equals("internal_promotions"))
 				{
 				output.put("error", "Invalid affiliate");
@@ -186,11 +175,12 @@ public class CreatePromo extends Utils
 			// -------------------------------------------------------------------------------
 			
 
+			log("referrer id: " + referrer_id);
 				
 			
 		    PreparedStatement internal_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 			internal_transaction.setLong(1, transaction_timestamp);
-			internal_transaction.setString(2, created_by);
+			internal_transaction.setString(2, user.getString("user_id"));
 			internal_transaction.setString(3, "BTC-WITHDRAWAL");
 			internal_transaction.setString(4, from_account_id);
 			internal_transaction.setString(5, internal_liability_id);

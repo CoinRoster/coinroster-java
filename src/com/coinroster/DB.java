@@ -1301,6 +1301,20 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	public ResultSet getPlayerScoresAndStatus(String sport) throws SQLException{
+		ResultSet result_set = null;
+		try {
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, data, filter_on, points from player where sport_type=?");
+			get_players.setString(1, sport);
+			result_set = get_players.executeQuery();		
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return result_set;
+	}
+//------------------------------------------------------------------------------------
+
 	public JSONObject getPlayerScores(int player_id, String sport) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
@@ -1343,6 +1357,26 @@ public class DB
 			e.printStackTrace();
 		}
 		return original_contest_id;
+	}	
+
+//------------------------------------------------------------------------------------
+
+	public void setGolfStatus(int status, int id, String sport) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set filter_on = ? where id = ? and sport_type = ?");
+		update_points.setInt(1, status);
+		update_points.setInt(2, id);
+		update_points.setString(3, sport);
+		update_points.executeUpdate();
+	}
+	
+//------------------------------------------------------------------------------------
+	
+	public void updateOverallScore(int score, int id, String sport) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ? and sport_type = ?");
+		update_points.setInt(1, score);
+		update_points.setInt(2, id);
+		update_points.setString(3, sport);
+		update_points.executeUpdate();
 	}
 	
 //------------------------------------------------------------------------------------
