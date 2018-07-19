@@ -7,7 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -21,7 +21,6 @@ import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.GolfBot;
-
 
 
 public class ContestMethods extends Utils{
@@ -291,13 +290,75 @@ public class ContestMethods extends Utils{
 			sql_connection = Server.sql_connection();
 			GolfBot golfBot = new GolfBot(sql_connection);
 			DB db = new DB(sql_connection);
-			golfBot.scrapeTourneyID();
-			if(golfBot.getTourneyID() == null)
-				return;
-			golfBot.setup();
-			golfBot.savePlayers();
+			JSONArray roster_contests = db.getRosterTemplates("GOLF");
+			int today = getToday();
+			switch(today){
 			
-			Long deadline = golfBot.getDeadline();
+				// MONDAY
+				case 2: 
+					// initialize and scrape
+					golfBot.scrapeTourneyID(today);
+					if(golfBot.getTourneyID() == null)
+						return;
+					golfBot.setup();
+					golfBot.savePlayers();
+					
+					//generate tournament ROSTER contests
+					for(int index = 0; index < roster_contests.length(); index++){
+						
+						// check if the contest is a round 1 contest or tournament contest:
+						JSONObject contest = roster_contests.getJSONObject(index);
+						golfBot.createGolfRosterContest(contest, "tournament");
+						golfBot.createGolfRosterContest(contest, "1");
+					}		
+					break;
+				
+				// THURSDAY
+				case 5:
+					golfBot.scrapeTourneyID(today);
+					if(golfBot.getTourneyID() == null)
+						return;
+					
+					//generate tournament ROSTER contests
+					for(int index = 0; index < roster_contests.length(); index++){
+						// check if the contest is a round 2 contest:
+						JSONObject contest = roster_contests.getJSONObject(index);
+						golfBot.createGolfRosterContest(contest, "2");
+					}		
+					break;
+					
+				// FRIDAY
+				case 6:
+					golfBot.scrapeTourneyID(today);
+					if(golfBot.getTourneyID() == null)
+						return;
+					
+					//generate tournament ROSTER contests
+					for(int index = 0; index < roster_contests.length(); index++){
+						// check if the contest is a round 2 contest:
+						JSONObject contest = roster_contests.getJSONObject(index);
+						golfBot.createGolfRosterContest(contest, "3");
+					}		
+					break;
+					
+				// SATURDAY
+				case 7:
+					golfBot.scrapeTourneyID(today);
+					if(golfBot.getTourneyID() == null)
+						return;
+					
+					//generate tournament ROSTER contests
+					for(int index = 0; index < roster_contests.length(); index++){
+						// check if the contest is a round 2 contest:
+						JSONObject contest = roster_contests.getJSONObject(index);
+						golfBot.createGolfRosterContest(contest, "4");
+					}		
+					break;
+				
+				default:
+					break;
+			}
+			
 
 //			//create Pari-Mutuel contest for most points
 //			Calendar cal = Calendar.getInstance();
@@ -321,115 +382,7 @@ public class ContestMethods extends Utils{
 //					e.printStackTrace();
 //				}	
 //			}
-
-			// read text file to create roster contests
-//			String fileName = Server.java_path + "GolfContests.txt";
-//			String line = "";
-//			String sep = ";";
-//			
-//			try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-//				//skip the header
-//				br.readLine();
-//				while ((line = br.readLine()) != null) {
-//					JSONObject fields = new JSONObject();
-//					
-//					String[] contest = line.split(sep);
-//					
-//					// parameters for contest
-//					String category = "FANTASYSPORTS";		
-//					String contest_type = "ROSTER";
-//		            String settlement_type = contest[0];					
-//					String progressive_code = "";
-//					String title = golfBot.getTourneyName() + " " + contest[1];
-//					String desc = contest[2];
-//		            double rake = Double.parseDouble(contest[3]);
-//		            double cost_per_entry = Double.parseDouble(contest[4]);
-//		            int salary_cap = Integer.parseInt(contest[5]);
-//		            int min_users = Integer.parseInt(contest[6]);
-//		            int max_users = Integer.parseInt(contest[7]);
-//		            int entries_per_user = Integer.parseInt(contest[8]);
-//		            int roster_size = Integer.parseInt(contest[9]);
-//		            String score_header = contest[10];
-//		            String odds_source = "n/a";
-//		            if(!settlement_type.equals("JACKPOT")){
-//		            	JSONArray empty = new JSONArray();
-//		            	fields.put("pay_table", empty);
-//		            }
-//		            else{
-//			            String[] payouts_str = contest[11].split(",");
-//			            double[] payouts = new double[payouts_str.length];
-//			            for (int i = 0; i < payouts_str.length; i++) {
-//			                payouts[i] = Double.parseDouble(payouts_str[i]);
-//			            }
-//			            JSONArray pay_table = new JSONArray();
-//						for(int i=0; i < payouts.length; i++){
-//							JSONObject entry = new JSONObject();
-//							entry.put("payout", payouts[i]);
-//							entry.put("rank", i+1);
-//							pay_table.put(entry);
-//						}
-//						
-//						fields.put("pay_table", pay_table);
-//		            }
-//		       
-//		            fields.put("category", category);
-//					fields.put("sub_category", "GOLF");
-//					fields.put("contest_type", contest_type);
-//					fields.put("progressive", progressive_code);
-//		            fields.put("settlement_type", settlement_type);
-//		            fields.put("title", title);
-//		            fields.put("description", desc);
-//		            fields.put("rake", rake);
-//		            fields.put("cost_per_entry", cost_per_entry);
-//		            fields.put("registration_deadline", deadline);
-//		            fields.put("odds_source", odds_source);
-//		            fields.put("tourneyID", golfBot.getTourneyID());
-//		            
-//		            ResultSet playerIDs = db.getAllPlayerIDs(golfBot.sport);
-//		            JSONArray option_table = new JSONArray();
-//					while(playerIDs.next()){
-//						PreparedStatement get_player = sql_connection.prepareStatement("select name, salary from player where id = ?");
-//						get_player.setInt(1, playerIDs.getInt(1));
-//						ResultSet player_data = get_player.executeQuery();
-//						if(player_data.next()){
-//							JSONObject player = new JSONObject();
-//							String name = player_data.getString(1);
-//							String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
-//							String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
-//							player.put("name", nameNormalized);
-//							player.put("price", player_data.getDouble(2));
-//							player.put("count", 0);
-//							player.put("id", playerIDs.getInt(1));
-//							option_table.put(player);
-//						}
-//					}
-//					
-//					fields.put("option_table", option_table);
-//					fields.put("salary_cap", salary_cap);
-//					fields.put("min_users", min_users);		            
-//					fields.put("max_users", max_users);		            
-//					fields.put("entries_per_user", entries_per_user);
-//					fields.put("roster_size", roster_size);	
-//					fields.put("score_header", score_header);		            
-//					
-//					MethodInstance method = new MethodInstance();
-//					JSONObject output = new JSONObject("{\"status\":\"0\"}");
-//					method.input = fields;
-//					method.output = output;
-//					method.session = null;
-//					method.sql_connection = sql_connection;
-//					try{
-//						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//						c.newInstance(method);
-//					}
-//					catch(Exception e){
-//						e.printStackTrace();
-//					}
-//				}
 //
-//	        } catch (Exception e) {
-//	            e.printStackTrace();
-//	        }
 				
 		} catch (Exception e) {
 			Server.exception(e);
@@ -446,113 +399,185 @@ public class ContestMethods extends Utils{
 	}
 	
 ////------------------------------------------------------------------------------------
-//
-//	public static void updateGolfContestField() {
-//		Connection sql_connection = null;
-//		try {
-//			sql_connection = Server.sql_connection();
-//			GolfBot golfBot = new GolfBot(sql_connection);
-//			boolean new_players = golfBot.appendLateAdditions();
-//			if(!new_players)
-//				log("no new golfers added to field");
-//		}
-//		catch (Exception e) {
-//			Server.exception(e);
-//		} 
-//		finally {
-//			if (sql_connection != null) {
-//				try {
-//					sql_connection.close();
-//					log("closing sql_connection");
-//					} 
-//				catch (SQLException ignore) {
-//					// ignore
-//				}
-//			}
-//		}
-//	}
-			
+
+	public static void updateGolfContestField() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			GolfBot golfBot = new GolfBot(sql_connection);
+			boolean new_players = golfBot.appendLateAdditions();
+			if(!new_players)
+				log("no new golfers added to field");
+		}
+		catch (Exception e) {
+			Server.exception(e);
+		} 
+		finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					log("closing sql_connection");
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}
 	
 //------------------------------------------------------------------------------------
 	
-//	public static void checkGolfContests() {
-//		Connection sql_connection = null;
-//		try {
-//			sql_connection = Server.sql_connection();
-//			DB db_connection = new DB(sql_connection);
-//			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "GOLF", "ROSTER");
-//			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("GOLF", "PARI-MUTUEL");
-//
-//			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
-//				GolfBot golfBot = new GolfBot(sql_connection);
-//				log("Golf Contest is in play and minute is multiple of 20");
-//				String tourneyID = golfBot.getLiveTourneyID();
-//				boolean finished = golfBot.scrapeScores(tourneyID);
-//				
-//				//check to see if Pari-Mutuels are ready to be settled
-//				golfBot.checkPariMutuelStatus(pari_contest_ids);
-//				JSONArray player_map = golfBot.updateScoresDB();
-//
-//				for(Integer contest_id : roster_contest_ids ){
-//
-//					JSONObject fields = new JSONObject();
-//					fields.put("contest_id", contest_id);
-//					fields.put("normalization_scheme", "INTEGER-INVERT");
-//					fields.put("player_scores", player_map);
-//
-//					MethodInstance method = new MethodInstance();
-//					JSONObject output = new JSONObject("{\"status\":\"0\"}");
-//					method.input = fields;
-//					method.output = output;
-//					method.session = null;
-//					method.sql_connection = sql_connection;
-//					try{
-//						Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
-//						c.newInstance(method);
-//					}
-//					catch(Exception e){
-//						e.printStackTrace();
-//					}
-//					
-//				}
-//				if(finished){
-//					log("Golf tournament has ended");
-//					for(Integer contest_id : roster_contest_ids){
+	public static void checkGolfContests() {
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db_connection = new DB(sql_connection);
+			JSONObject roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
+			JSONObject pari_contests = db_connection.get_active_pari_mutuels("GOLFPROPS", "PARI-MUTUEL");
+
+			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
+				GolfBot golfBot = new GolfBot(sql_connection);
+				log("Golf tournament is in play and minute is multiple of 20");
+				String gameID = golfBot.getLiveTourneyID();
+				JSONObject tournament_status = golfBot.scrapeScores(gameID);
+
+				Iterator<?> roster_contest_ids = roster_contests.keys();
+				while(roster_contest_ids.hasNext()){
+					String c_id = (String) roster_contest_ids.next();
+					String scoring_rules_string = roster_contests.getJSONObject(c_id).getString("scoring_rules");
+					String when = roster_contests.getJSONObject(c_id).getString("when");
+					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+					
+					JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
+					JSONObject fields = new JSONObject();
+					fields.put("contest_id", Integer.parseInt(c_id));
+					fields.put("normalization_scheme", "INTEGER");
+					fields.put("player_scores", player_scores);
+					
+					MethodInstance method = new MethodInstance();
+					JSONObject output = new JSONObject("{\"status\":\"0\"}");
+					method.input = fields;
+					method.output = output;
+					method.session = null;
+					method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
+						c.newInstance(method);
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
+					
+				}
+				if(tournament_status.getBoolean("tournament")){
+					log("golf tournament has ended. Settling tournament contests now...");
+					roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
+					roster_contest_ids = roster_contests.keys();
+					while(roster_contest_ids.hasNext()){
+						String c_id = (String) roster_contest_ids.next();
+						String scoring_rules_string = roster_contests.getJSONObject(c_id).getString("scoring_rules");
+						String when = roster_contests.getJSONObject(c_id).getString("when");
+						if(when.equals("tournament")){
+							JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+							JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
+							JSONObject fields = new JSONObject();
+							fields.put("contest_id", Integer.parseInt(c_id));
+							fields.put("normalization_scheme", "INTEGER");
+							fields.put("player_scores", player_scores);
+							
+							MethodInstance method = new MethodInstance();
+							JSONObject output = new JSONObject("{\"status\":\"0\"}");
+							method.input = fields;
+							method.output = output;
+							method.session = null;
+							method.sql_connection = sql_connection;
+							try{
+								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+								c.newInstance(method);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+				for(int i = 1; i <= 4; i++){
+					if(tournament_status.getBoolean(String.valueOf(i))){
+						log("golf round " + String.valueOf(i) + " has ended. Settling round contests now...");
+						roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
+						roster_contest_ids = roster_contests.keys();
+						while(roster_contest_ids.hasNext()){
+							String c_id = (String) roster_contest_ids.next();
+							String scoring_rules_string = roster_contests.getJSONObject(c_id).getString("scoring_rules");
+							String when = roster_contests.getJSONObject(c_id).getString("when");
+							if(when.equals(String.valueOf(i))){
+								JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+								JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
+								JSONObject fields = new JSONObject();
+								fields.put("contest_id", Integer.parseInt(c_id));
+								fields.put("normalization_scheme", "INTEGER");
+								fields.put("player_scores", player_scores);
+								
+								MethodInstance method = new MethodInstance();
+								JSONObject output = new JSONObject("{\"status\":\"0\"}");
+								method.input = fields;
+								method.output = output;
+								method.session = null;
+								method.sql_connection = sql_connection;
+								try{
+									Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+									c.newInstance(method);
+								}
+								catch(Exception e){
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+				}
+			}
+
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}
+					
+//					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
+//					pari_contests = db_connection.get_active_pari_mutuels("BASEBALLPROPS", "PARI-MUTUEL");
+//					Iterator<?> pari_contest_ids = pari_contests.keys();	
+//					while(pari_contest_ids.hasNext()){
+//						String c_id = (String) pari_contest_ids.next();
 //						
-//						JSONObject fields = new JSONObject();
-//						fields.put("contest_id", contest_id);
-//						fields.put("normalization_scheme", "INTEGER-INVERT");
-//						fields.put("player_scores", player_map);
-//						
-//						MethodInstance method = new MethodInstance();
-//						JSONObject output = new JSONObject("{\"status\":\"0\"}");
-//						method.input = fields;
-//						method.output = output;
-//						method.session = null;
-//						method.sql_connection = sql_connection;
+//						JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
+//						JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
+//						JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
+//
+//						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
+//						MethodInstance pari_method = new MethodInstance();
+//						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+//						pari_method.input = pari_fields;
+//						pari_method.output = pari_output;
+//						pari_method.session = null;
+//						pari_method.sql_connection = sql_connection;
 //						try{
 //							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-//							c.newInstance(method);
+//							c.newInstance(pari_method);
 //						}
 //						catch(Exception e){
 //							e.printStackTrace();
-//						}
+//						}		
 //					}
-//				}
-//			}
-//		} catch (Exception e) {
-//			Server.exception(e);
-//		} finally {
-//			if (sql_connection != null) {
-//				try {
-//					sql_connection.close();
-//					} 
-//				catch (SQLException ignore) {
-//					// ignore
-//				}
-//			}
-//		}
-//	}	
+			
+
 		
 	//------------------------------------------------------------------------------------
 
@@ -623,7 +648,7 @@ public class ContestMethods extends Utils{
 					player.put("name", options.getString(2) + " " + options.getString(3));
 					player.put("price", options.getDouble(4));
 					player.put("count", 0);
-					player.put("id", options.getInt(1));
+					player.put("id", options.getString(1));
 					option_table.put(player);
 				}
 				contest.put("option_table", option_table);
@@ -767,6 +792,24 @@ public class ContestMethods extends Utils{
 				}
 			}
 		}
-	}	
+	}
+	
+	
+	/*
+	 * SUN = 1
+	 * MON = 2
+	 * TUES = 3
+	 * WED = 4
+	 * THUR = 5
+	 * FRI = 6
+	 * SAT = 7
+	 */
+	public static int getToday(){
+		Calendar c = Calendar.getInstance();        		
+		int today = c.get(Calendar.DAY_OF_WEEK);
+		return today;
+	}
+	
+	
 	
 }
