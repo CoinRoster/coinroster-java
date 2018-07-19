@@ -1374,6 +1374,21 @@ public class DB
 	}
 	
 //------------------------------------------------------------------------------------
+	public ArrayList<Integer> get_pending_voting_contests() {
+		ArrayList<Integer> voting_contests = new ArrayList<>();
+		try {
+			PreparedStatement pending_voting_contests = sql_connection.prepareStatement("select id from voting where status = '5'");
+			ResultSet result_set = pending_voting_contests.executeQuery();		
+			while (result_set.next()) voting_contests.add(result_set.getInt(1));
+		}
+		catch(Exception e){
+			Utils.log(e.toString());
+			e.printStackTrace(System.out);
+		}
+		return voting_contests;
+	}
+	
+//------------------------------------------------------------------------------------
 	
 
 }

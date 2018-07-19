@@ -71,6 +71,7 @@ public class CrowdSettleBot extends Utils{
 				}
 			}
 
+			fields.put("entries", entries);
 			fields.put("winning_outcome", winning_outcome);
 			log("winning outcome for crowd settled contest: " + winning_outcome);
 		}
