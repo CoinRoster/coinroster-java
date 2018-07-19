@@ -113,8 +113,8 @@ public class SettleContest extends Utils
 					
 					JSONArray player_scores;
 					
-					Map<Integer, Double> score_map = new TreeMap<Integer, Double>();
-					Map<Integer, String> raw_score_map = new TreeMap<Integer, String>();
+					Map<String, Double> score_map = new TreeMap<String, Double>();
+					Map<String, String> raw_score_map = new TreeMap<String, String>();
 					
 					//--------------------------------------------------------------------------------------------------------------
 				
@@ -170,7 +170,7 @@ public class SettleContest extends Utils
 								{
 								JSONObject player = player_scores.getJSONObject(i);
 								
-								int player_id = player.getInt("id");
+								String player_id = player.getString("id");
 								double score_normalized = player.getDouble("score_normalized");
 								String score_raw = player.getString("score_raw");
 								
@@ -185,7 +185,7 @@ public class SettleContest extends Utils
 								{
 								JSONObject player = option_table.getJSONObject(i);
 								
-								int player_id = player.getInt("id");
+								String player_id = player.getString("id");
 								
 								if (!score_map.containsKey(player_id))
 								{
@@ -934,7 +934,7 @@ public class SettleContest extends Utils
 								for (int i=0; i<entry_data.length(); i++)
 									{
 									JSONObject player = entry_data.getJSONObject(i);
-									int player_id = player.getInt("id");
+									String player_id = player.getString("id");
 									double player_score = 0;
 									try{
 										player_score = score_map.get(player_id);
