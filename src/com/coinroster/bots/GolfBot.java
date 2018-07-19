@@ -34,7 +34,7 @@ public class GolfBot extends Utils {
 
 	public static String method_level = "admin";
 	public String year = "2018";
-	protected Map<Integer, Player> players_list;
+	protected Map<String, Player> players_list;
 	private String tourneyID;
 	private String tourneyName;
 	private long startDate;
@@ -47,7 +47,7 @@ public class GolfBot extends Utils {
 		db = new DB(sql_connection);
 	}
 	
-	public Map<Integer, Player> getPlayerHashMap(){
+	public Map<String, Player> getPlayerHashMap(){
 		return players_list;
 	}
 	public String getTourneyName(){
@@ -102,10 +102,10 @@ public class GolfBot extends Utils {
 			return false;
 		}
 		
-		ArrayList<Integer> existing_ids = new ArrayList<Integer>();
+		ArrayList<String> existing_ids = new ArrayList<String>();
 		ResultSet all_existing_players = db.getAllPlayerIDs(this.sport);
 		while(all_existing_players.next()){
-			existing_ids.add(all_existing_players.getInt(1));
+			existing_ids.add(all_existing_players.getString(1));
 		}
 		
 		boolean flag = false;
@@ -123,11 +123,11 @@ public class GolfBot extends Utils {
 			JSONArray option_table = entry.getValue();
 			
 			//check if any players in DB's player table didn't make it in:
-			for(Integer existing_id : existing_ids){
+			for(String existing_id : existing_ids){
 				boolean in_option_table = false;
 				for(int option_table_index = 0; option_table_index < option_table.length(); option_table_index++){
-					int p_id = option_table.getJSONObject(option_table_index).getInt("id");
-					if(p_id == existing_id){
+					String p_id = option_table.getJSONObject(option_table_index).getString("id");
+					if(p_id.equals(existing_id)){
 						in_option_table = true;
 						break;
 					}
@@ -136,7 +136,7 @@ public class GolfBot extends Utils {
 				if(!in_option_table){
 					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=?");
 					get_data.setString(1, this.sport);
-					get_data.setInt(2, existing_id);
+					get_data.setString(2, existing_id);
 					ResultSet player_data = get_data.executeQuery();
 					while(player_data.next()){
 						String name = player_data.getString(1);
@@ -159,7 +159,7 @@ public class GolfBot extends Utils {
 			
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
-				int id = Integer.parseInt(player.getString("TournamentPlayerId"));
+				String id = player.getString("TournamentPlayerId");
 				
 				if(!existing_ids.contains(id)){
 					flag = true;
@@ -180,7 +180,7 @@ public class GolfBot extends Utils {
 					double salary = 0;
 					for(int q=0; q < ranked_players.length(); q++){
 						JSONObject r_player = ranked_players.getJSONObject(q);
-						if(id == Integer.parseInt(r_player.getString("plrNum"))){
+						if(id.equals(r_player.getString("plrNum"))){
 							String points = r_player.getJSONObject("statValues").getString("statValue2");
 							country = r_player.getJSONObject("statValues").getString("statValue5");
 							if(country.isEmpty())
@@ -202,7 +202,7 @@ public class GolfBot extends Utils {
 						JSONObject data = p.getDashboardData(this.year);
 						// add player to player table
 						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )");
-						add_player.setInt(1, id);
+						add_player.setString(1, id);
 						add_player.setString(2, name_fl);
 						add_player.setString(3, this.sport);
 						add_player.setString(4, gameID);
@@ -240,8 +240,8 @@ public class GolfBot extends Utils {
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
 		Calendar c = Calendar.getInstance();        		
 		// GO BACK TO 3 //
-		//c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs
-		c.add(Calendar.DATE, 1);  // add 3 days to get to Thurs
+		c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs
+		//c.add(Calendar.DATE, 1);  // add 3 days to get to Thurs
 		String thursday = (String)(formattedDate.format(c.getTime()));
 		c.set(Calendar.HOUR_OF_DAY, 7);
 		c.set(Calendar.MINUTE, 0);
@@ -265,13 +265,13 @@ public class GolfBot extends Utils {
 		}
 	}
 	
-	public String getCountry(int id) throws JSONException, IOException{
+	public String getCountry(String id) throws JSONException, IOException{
 		String country = "";
 		String all_players_url = "https://statdata.pgatour.com/players/player.json";
 		JSONArray all_players = JsonReader.readJsonFromUrl(all_players_url).getJSONArray("plrs");
 		for(int p=0; p<all_players.length(); p++){
 			JSONObject pl = all_players.getJSONObject(p);
-			if(id == Integer.parseInt(pl.getString("pid"))){
+			if(id.equals(pl.getString("pid"))){
 				country = pl.getString("ct");
 				return country;
 			}
@@ -279,15 +279,15 @@ public class GolfBot extends Utils {
 		return country;
 	}
 	
-	public Map<Integer, Player> setup() throws IOException, JSONException, SQLException {
-		Map<Integer, Player> players = new HashMap<Integer, Player>();
+	public Map<String, Player> setup() throws IOException, JSONException, SQLException {
+		Map<String, Player> players = new HashMap<String, Player>();
 		if(this.tourneyID != null){
 			String url = "https://statdata.pgatour.com/r/" + tourneyID + "/field.json";
 			JSONObject field = JsonReader.readJsonFromUrl(url);
 			JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
-				int id = Integer.parseInt(player.getString("TournamentPlayerId"));
+				String id = player.getString("TournamentPlayerId");
 				String name = player.getString("PlayerName");
 				String names[] = name.split(", ");
 				String name_fl;
@@ -305,7 +305,7 @@ public class GolfBot extends Utils {
 				double salary = 0;
 				for(int q=0; q < ranked_players.length(); q++){
 					JSONObject r_player = ranked_players.getJSONObject(q);
-					if(id == Integer.parseInt(r_player.getString("plrNum"))){
+					if(id.equals(r_player.getString("plrNum"))){
 						String points = r_player.getJSONObject("statValues").getString("statValue2");
 						country = r_player.getJSONObject("statValues").getString("statValue5");
 						if(country.isEmpty())
@@ -360,7 +360,7 @@ public class GolfBot extends Utils {
 			for(Player player : this.getPlayerHashMap().values()){
 				
 				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-				save_player.setInt(1, player.getPGA_ID());
+				save_player.setString(1, player.getPGA_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, sport);
 				save_player.setString(4, player.getTourneyID());
@@ -446,12 +446,12 @@ public class GolfBot extends Utils {
 		ResultSet playerScores = db.getPlayerScores(this.sport);
 		while(playerScores.next()){
 			boolean in_leaderboard = false;
-			int id = playerScores.getInt(1);
+			String id = playerScores.getString(1);
 			int score;
 			for(int i=0; i < players.length(); i++){
 				JSONObject player = players.getJSONObject(i);
-				int player_id = Integer.parseInt(player.getString("player_id"));
-				if(id == player_id){
+				String player_id = player.getString("player_id");
+				if(id.equals(player_id)){
 					
 					JSONObject data = new JSONObject(playerScores.getString(2));
 					JSONObject scores_to_edit = data.getJSONObject(String.valueOf(round));
@@ -539,7 +539,7 @@ public class GolfBot extends Utils {
 			
 			while(playerScores.next()){
 				JSONObject player = new JSONObject();
-				int id = playerScores.getInt(1);
+				String id = playerScores.getString(1);
 				JSONObject data = new JSONObject(playerScores.getString(2));
 				int status = playerScores.getInt(3);
 				int score_db = playerScores.getInt(4);
@@ -621,7 +621,7 @@ public class GolfBot extends Utils {
 		else{
 			while(playerScores.next()){
 				JSONObject player = new JSONObject();
-				int id = playerScores.getInt(1);
+				String id = playerScores.getString(1);
 				JSONObject data = new JSONObject(playerScores.getString(2));
 				//int status = playerScores.getInt(3);
 				int score_db = playerScores.getInt(4);
@@ -739,7 +739,7 @@ public class GolfBot extends Utils {
 			
 			while(top_players.next()){
 				int row = top_players.getRow();
-				String id = String.valueOf(top_players.getInt(1));
+				String id = top_players.getString(1);
 				String name = top_players.getString(2);
 				ArrayList<String> golfer = new ArrayList<>();
 				golfer.add(id);
@@ -755,7 +755,7 @@ public class GolfBot extends Utils {
 				JSONObject team = new JSONObject();
 				team.put("id", i);
 				ArrayList<String> names = new ArrayList<>();
-				ArrayList<Integer> golfer_ids = new ArrayList<>();
+				ArrayList<String> golfer_ids = new ArrayList<>();
 				for(int round=1; round<=rounds; round++){
 					int pick;
 					//snake draft picking algorithm
@@ -765,7 +765,7 @@ public class GolfBot extends Utils {
 						pick = ((round - 1) * num_teams) + i;
 					
 					ArrayList<String> golfer = players.get(pick);
-					int id = Integer.parseInt(golfer.get(0));
+					String id = golfer.get(0);
 					golfer_ids.add(id);
 					String name = golfer.get(1);
 					names.add(name);
@@ -847,7 +847,7 @@ public class GolfBot extends Utils {
 				String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
 				player.put("description", nameNormalized);
 				player.put("id", index);
-				player.put("player_id", top_players.getInt(1));
+				player.put("player_id", top_players.getString(1));
 				option_table.put(player);
 				index += 1;
 			}
@@ -909,13 +909,14 @@ public class GolfBot extends Utils {
 		log("par for the course is " + par);
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
 		int best_score = 500;
-		ArrayList<Integer> best_players = new ArrayList<Integer>();
+		ArrayList<String> best_players = new ArrayList<String>();
 		for(int i=0; i < players.length(); i++){
 			JSONObject player = players.getJSONObject(i);
-			int player_id = Integer.parseInt(player.getString("player_id"));
+			String player_id = player.getString("player_id");
 			int score = 999;
 			try{
-				if(player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("round_number") == Integer.parseInt(round) && !player.getString("status").equals("wd") && !player.getString("status").equals("cut") )
+				if(player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("round_number") == Integer.parseInt(round) 
+						&& !player.getString("status").equals("wd") && !player.getString("status").equals("cut") && !player.getString("status").equals("dq") )
 					score = (player.getJSONArray("rounds").getJSONObject(Integer.parseInt(round) - 1).getInt("strokes") - par);
 			}
 			catch(JSONException e){
@@ -946,13 +947,13 @@ public class GolfBot extends Utils {
 			return fields;
 		}
 		else{
-			for(Integer player_table_ID : best_players){
+			for(String player_table_ID : best_players){
 				for (int i=0; i<option_table.length(); i++){
 					JSONObject option = option_table.getJSONObject(i);
 					int option_id = option.getInt("id");
 					try{
-						int player_id = option.getInt("player_id");
-						if(player_id == player_table_ID){
+						String player_id = option.getString("player_id");
+						if(player_id.equals(player_table_ID)){
 							winning_outcome = option_id;
 							fields.put("winning_outcome", winning_outcome);
 							log("winning outcome is " + option.getString("description"));
@@ -975,7 +976,7 @@ public class GolfBot extends Utils {
 		public String method_level = "admin";
 		private String name;
 		private String country;
-		private int pga_id;
+		private String pga_id;
 		private String tourney_ID;
 		private double fantasy_points = 0;
 		private double salary;
@@ -984,7 +985,7 @@ public class GolfBot extends Utils {
 		private JSONObject bio;
 		
 		// constructor
-		public Player(int id, String n, String tourney_ID){
+		public Player(String id, String n, String tourney_ID){
 			this.pga_id = id;
 			this.name = n;
 			this.tourney_ID = tourney_ID;
@@ -1003,7 +1004,7 @@ public class GolfBot extends Utils {
 		public String getCountry(){
 			return country;
 		}
-		public int getPGA_ID(){
+		public String getPGA_ID(){
 			return pga_id;
 		}
 		public String getTourneyID(){
@@ -1027,41 +1028,71 @@ public class GolfBot extends Utils {
 		
 		public JSONObject getDashboardData(String year) throws JSONException, IOException{
 			
-			String weight = "", height = "", birthday, age, birthPlace, birthString = "";
+			String weight = "", height = "", birthday = "", age = "", birthPlace = "", birthString = "";
 			Document page = Jsoup.connect("https://www.pgatour.com/players/player." + String.valueOf(this.pga_id) + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 				      .referrer("http://www.google.com").timeout(6000).get();
 			
-			Element outer_div = page.getElementsByClass("s-col-left").first();
-			Elements divs = outer_div.getElementsByClass("s-col__row");
 			try{
-				height = divs.get(2).getElementsByTag("p").get(0).text().replace("  ft,", "\"").replace("  in", "'");
-				weight = divs.get(3).getElementsByTag("p").get(0).text();
-				birthday = divs.get(4).getElementsByTag("p").get(0).text();
-				age = divs.get(5).getElementsByTag("p").get(0).text();
-				birthPlace = divs.get(6).getElementsByTag("p").get(0).text();
-				birthString = birthday + " in " + birthPlace + " (Age: " + age + ")";
+				Element outer_div = page.getElementsByClass("s-col-left").first();
+				Elements divs = outer_div.getElementsByClass("s-col__row");
+				try{
+					for(Element d : divs){
+						if(d.getElementsByTag("p").last().text().equals("Weight"))
+							weight = d.getElementsByTag("p").get(0).text();
+						else if(d.getElementsByTag("p").last().text().equals("Height")){
+							height = d.getElementsByTag("p").get(0).text();
+							height = height.replace("  ft,", "'").replace("  in", "\"");
+							log(height);
+						}
+						else if(d.getElementsByTag("p").last().text().equals("Birthday"))
+							birthday = d.getElementsByTag("p").get(0).text();
+						else if(d.getElementsByTag("p").last().text().equals("AGE"))
+							age = d.getElementsByTag("p").get(0).text();
+						else if(d.getElementsByTag("p").last().text().equals("Birthplace"))
+							birthPlace = d.getElementsByTag("p").get(0).text();
+					}
+					if(!birthday.isEmpty() && !birthPlace.isEmpty() && !age.isEmpty())
+						birthString = birthday + " in " + birthPlace + " (Age: " + age + ")";
+					
+				}catch(Exception e){
+					log(e.toString());
+				}
 			}catch(Exception e){
 				log(e.toString());
+				log(e.getMessage());
+				log(this.getName() + " - " + this.pga_id + ": unable to grab bio data - most likely not available on pgatour.com");
 			}
-
-			String data_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "stat.json";
-			JSONObject data = JsonReader.readJsonFromUrl(data_url);
+			JSONArray last_five_tournaments = new JSONArray();
 			JSONArray stats = new JSONArray();
-			JSONArray json_stats = data.getJSONArray("plrs").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("statCats").getJSONObject(0).getJSONArray("stats");
-			List<String> options = Arrays.asList("101", "102", "103", "105", "155", "156", "120", "111", "109", "186");
-			for(int i = 0; i < json_stats.length(); i++){
-				String statID = json_stats.getJSONObject(i).getString("statID");
-				if(options.contains(statID))
-					stats.put(json_stats.getJSONObject(i));
+			
+			try{
+				String data_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "stat.json";
+				JSONObject data = JsonReader.readJsonFromUrl(data_url);
+				JSONArray json_stats = data.getJSONArray("plrs").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("statCats").getJSONObject(0).getJSONArray("stats");
+				List<String> options = Arrays.asList("101", "102", "103", "105", "155", "156", "120", "111", "109", "186");
+				for(int i = 0; i < json_stats.length(); i++){
+					String statID = json_stats.getJSONObject(i).getString("statID");
+					if(options.contains(statID))
+						stats.put(json_stats.getJSONObject(i));
+				}
+			}catch(Exception e){
+				log(e.toString());
+				log(e.getMessage());
+				log(this.getName() + " - " + this.pga_id + ": unable to get stats");
 			}
 			
-			String results_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "results.json";
-			JSONObject results = JsonReader.readJsonFromUrl(results_url);
-			JSONArray tourneys = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trnDetails");
-			int num_tourneys = tourneys.length();
-			JSONArray last_five_tournaments = new JSONArray();
-			for(int i = num_tourneys - 1; i >= num_tourneys - 5; i--){
-				last_five_tournaments.put(tourneys.getJSONObject(i));	
+			try{
+				String results_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "results.json";
+				JSONObject results = JsonReader.readJsonFromUrl(results_url);
+				JSONArray tourneys = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trnDetails");
+				int num_tourneys = tourneys.length();
+				for(int i = num_tourneys - 1; i >= (num_tourneys - 5) && i >= 0; i--){
+					last_five_tournaments.put(tourneys.getJSONObject(i));	
+				}
+			}catch(Exception e){
+				log(e.toString());
+				log(e.getMessage());
+				log(this.getName() + " - " + this.pga_id + ": unable to get past tournament results");
 			}
 			
 			JSONObject bio = new JSONObject();
@@ -1076,6 +1107,7 @@ public class GolfBot extends Utils {
 			this.bio = bio;	
 			return bio;
 		}
+		
 		public JSONObject getBio(){
 			return this.bio;
 		}
