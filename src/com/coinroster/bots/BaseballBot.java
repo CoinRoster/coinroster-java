@@ -337,7 +337,6 @@ public class BaseballBot extends Utils {
 			JSONObject player = new JSONObject();
 			String id = playerScores.getString(1);
 			JSONObject data = new JSONObject(playerScores.getString(2));
-			player.put("id", id);
 			String data_to_display = "";
 			Double points = 0.0;
 			Iterator<?> keys = scoring_rules.keys();
@@ -352,7 +351,8 @@ public class BaseballBot extends Utils {
 			
 			player.put("score_raw", data_to_display);
 			player.put("score_normalized", points);
-			player.put("player_id", id);
+			player.put("id", id);
+
 			player_map.put(player);
 		}
 		return player_map;

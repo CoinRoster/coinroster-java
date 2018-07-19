@@ -123,39 +123,39 @@ public class GolfBot extends Utils {
 			JSONArray option_table = entry.getValue();
 			
 			//check if any players in DB's player table didn't make it in:
-			for(String existing_id : existing_ids){
-				boolean in_option_table = false;
-				for(int option_table_index = 0; option_table_index < option_table.length(); option_table_index++){
-					String p_id = option_table.getJSONObject(option_table_index).getString("id");
-					if(p_id.equals(existing_id)){
-						in_option_table = true;
-						break;
-					}
-				}
-				//add player from player table to option table
-				if(!in_option_table){
-					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=?");
-					get_data.setString(1, this.sport);
-					get_data.setString(2, existing_id);
-					ResultSet player_data = get_data.executeQuery();
-					while(player_data.next()){
-						String name = player_data.getString(1);
-						String country = player_data.getString(2);
-						double price = player_data.getDouble(3);
-						JSONObject p = new JSONObject();
-						p.put("id", existing_id);
-						p.put("name", name + " " + country);
-						p.put("count",0);
-						p.put("price", price);
-						option_table.put(p);
-						log("appending " + name + " to contest " + contest_id);
-						PreparedStatement update_contest = sql_connection.prepareStatement("UPDATE contest SET option_table = ? where id = ?");
-						update_contest.setString(1, option_table.toString());
-						update_contest.setInt(2, contest_id);
-						update_contest.executeUpdate();
-					}
-				}
-			}
+//			for(String existing_id : existing_ids){
+//				boolean in_option_table = false;
+//				for(int option_table_index = 0; option_table_index < option_table.length(); option_table_index++){
+//					String p_id = option_table.getJSONObject(option_table_index).getString("id");
+//					if(p_id.equals(existing_id)){
+//						in_option_table = true;
+//						break;
+//					}
+//				}
+//				//add player from player table to option table
+//				if(!in_option_table){
+//					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=?");
+//					get_data.setString(1, this.sport);
+//					get_data.setString(2, existing_id);
+//					ResultSet player_data = get_data.executeQuery();
+//					while(player_data.next()){
+//						String name = player_data.getString(1);
+//						String country = player_data.getString(2);
+//						double price = player_data.getDouble(3);
+//						JSONObject p = new JSONObject();
+//						p.put("id", existing_id);
+//						p.put("name", name + " " + country);
+//						p.put("count",0);
+//						p.put("price", price);
+//						option_table.put(p);
+//						log("appending " + name + " to contest " + contest_id);
+//						PreparedStatement update_contest = sql_connection.prepareStatement("UPDATE contest SET option_table = ? where id = ?");
+//						update_contest.setString(1, option_table.toString());
+//						update_contest.setInt(2, contest_id);
+//						update_contest.executeUpdate();
+//					}
+//				}
+//			}
 			
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
@@ -234,14 +234,19 @@ public class GolfBot extends Utils {
 		return flag;
 	}
 	
-	public void scrapeTourneyID() throws IOException, JSONException{
+	public void scrapeTourneyID(int today) throws IOException, JSONException{
 		// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
 		Calendar c = Calendar.getInstance();        		
-		// GO BACK TO 3 //
-		c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs
-		//c.add(Calendar.DATE, 1);  // add 3 days to get to Thurs
+		
+		if(today == 2)
+			c.add(Calendar.DATE, 3);
+		else if(today == 6)
+			c.add(Calendar.DATE, -1);
+		else if(today == 7)
+			c.add(Calendar.DATE, -2);
+		
 		String thursday = (String)(formattedDate.format(c.getTime()));
 		c.set(Calendar.HOUR_OF_DAY, 7);
 		c.set(Calendar.MINUTE, 0);
@@ -970,6 +975,37 @@ public class GolfBot extends Utils {
 		fields.put("winning_outcome", winning_outcome);
 		log("winning outcome is any other player");
 		return fields;
+	}
+	
+	public void createGolfRosterContest( JSONObject contest, String when) throws JSONException, SQLException{
+		JSONObject prop_data = new JSONObject(contest.get("prop_data"));
+		if(prop_data.get("when").equals(when)){
+			String title = this.getTourneyName() + " | " + contest.getString("title");
+			contest.put("title", title);
+			log(title);
+			contest.put("odds_source", "n/a");
+			contest.put("gameIDs", this.getTourneyID());
+			if(when.equals("tournament") || when.equals("1"))
+				contest.put("registration_deadline", this.getDeadline());
+			else
+				contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
+            JSONArray option_table = db.getGolfRosterOptionTable();
+			contest.put("option_table", option_table);
+			MethodInstance method = new MethodInstance();
+			JSONObject output = new JSONObject("{\"status\":\"0\"}");
+			method.input = contest;
+			method.output = output;
+			method.session = null;
+			method.sql_connection = sql_connection;
+			try{
+				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+				c.newInstance(method);
+			}
+			catch(Exception e){
+				log(e.toString());
+				log(e.getMessage());
+			}	
+		}
 	}
 	
 	class Player {

@@ -11,6 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.internal.UserMail;
+import java.text.Normalizer;
 
 
 public class DB 
@@ -308,7 +309,6 @@ public class DB
 
 	
 	// CHECK IF CONTESTS ARE IN PLAY
-
 	public JSONObject check_if_in_play(String category, String sub_category, String contest_type) throws Exception
 	{
 
@@ -327,6 +327,33 @@ public class DB
 	}
 	
 //------------------------------------------------------------------------------------
+	
+	public JSONObject checkGolfRosterInPlay(String category, String sub_category, String contest_type) throws Exception
+	{
+
+		JSONObject contests = new JSONObject();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
+		get_live_contests.setString(1, category);
+		get_live_contests.setString(2, sub_category);
+		get_live_contests.setString(3, contest_type);
+	
+		ResultSet result_set = get_live_contests.executeQuery();
+		
+		while (result_set.next()){
+			JSONObject data = new JSONObject();
+			data.put("scoring_rules", result_set.getString(2));
+			JSONObject prop_data = new JSONObject(result_set.getString(3));
+			data.put("when", prop_data.getString("when"));
+			contests.put(String.valueOf(result_set.getInt(1)), data);
+		}
+			
+
+		return contests;
+	}
+	
+//------------------------------------------------------------------------------------
+
+	
 	
 	//get ids from voting table
 	public ArrayList<Integer> check_if_in_play() throws Exception
@@ -1343,6 +1370,25 @@ public class DB
 		update_points.executeUpdate();
 	}
 
+//------------------------------------------------------------------------------------
+
+	public JSONArray getGolfRosterOptionTable() throws SQLException, JSONException{
+		JSONArray option_table = new JSONArray();
+		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = GOLF and filter_on = 4");
+		ResultSet players = get_players.executeQuery();
+		while(players.next()){
+			JSONObject p = new JSONObject();
+			p.put("id", players.getString(1));
+			String name = players.getString(2);
+			String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
+			String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
+			p.put("name", nameNormalized + " " + players.getString(3));
+			p.put("price", players.getDouble(4));
+			option_table.put(p);
+		}
+		return option_table;
+	}
+	
 //------------------------------------------------------------------------------------
 	
 	public int get_original_contest(Integer contest_id) {
