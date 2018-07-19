@@ -1374,7 +1374,9 @@ public class DB
 
 	public JSONArray getGolfRosterOptionTable() throws SQLException, JSONException{
 		JSONArray option_table = new JSONArray();
-		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = GOLF and filter_on = 4");
+		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = ? and filter_on = ?");
+		get_players.setString(1, "GOLF");
+		get_players.setInt(2, 4);
 		ResultSet players = get_players.executeQuery();
 		while(players.next()){
 			JSONObject p = new JSONObject();
