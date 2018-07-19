@@ -978,11 +978,10 @@ public class GolfBot extends Utils {
 	}
 	
 	public void createGolfRosterContest( JSONObject contest, String when) throws JSONException, SQLException{
-		JSONObject prop_data = new JSONObject(contest.get("prop_data"));
-		if(prop_data.get("when").equals(when)){
+		JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
+		if(prop_data.getString("when").equals(when)){
 			String title = this.getTourneyName() + " | " + contest.getString("title");
 			contest.put("title", title);
-			log(title);
 			contest.put("odds_source", "n/a");
 			contest.put("gameIDs", this.getTourneyID());
 			if(when.equals("tournament") || when.equals("1"))
