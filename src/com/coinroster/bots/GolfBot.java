@@ -9,8 +9,11 @@ import java.sql.SQLException;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import com.coinroster.DB;
@@ -21,11 +24,16 @@ import com.coinroster.internal.JsonReader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.json.JSONArray;
 
 public class GolfBot extends Utils {
 
 	public static String method_level = "admin";
+	public String year = "2018";
 	protected Map<Integer, Player> players_list;
 	private String tourneyID;
 	private String tourneyName;
@@ -126,16 +134,17 @@ public class GolfBot extends Utils {
 				}
 				//add player from player table to option table
 				if(!in_option_table){
-					PreparedStatement get_data = sql_connection.prepareStatement("select name, salary from player where sport_type=? and id=?");
+					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=?");
 					get_data.setString(1, this.sport);
 					get_data.setInt(2, existing_id);
 					ResultSet player_data = get_data.executeQuery();
 					while(player_data.next()){
 						String name = player_data.getString(1);
-						double price = player_data.getDouble(2);
+						String country = player_data.getString(2);
+						double price = player_data.getDouble(3);
 						JSONObject p = new JSONObject();
 						p.put("id", existing_id);
-						p.put("name", name);
+						p.put("name", name + " " + country);
 						p.put("count",0);
 						p.put("price", price);
 						option_table.put(p);
@@ -156,7 +165,7 @@ public class GolfBot extends Utils {
 					flag = true;
 					String name = player.getString("PlayerName");
 					String names[] = name.split(", ");
-					String name_fl;
+					String name_fl, country = "";
 					try{
 						name_fl = names[1] + " " + names[0];
 					}
@@ -167,14 +176,15 @@ public class GolfBot extends Utils {
 					JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
 					JSONArray ranked_players = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
 					boolean checked = false;
-					String name_with_country = name_fl;
+					
 					double salary = 0;
 					for(int q=0; q < ranked_players.length(); q++){
 						JSONObject r_player = ranked_players.getJSONObject(q);
 						if(id == Integer.parseInt(r_player.getString("plrNum"))){
 							String points = r_player.getJSONObject("statValues").getString("statValue2");
-							String country = r_player.getJSONObject("statValues").getString("statValue5");
-							name_with_country = name_fl + " " + country;
+							country = r_player.getJSONObject("statValues").getString("statValue5");
+							if(country.isEmpty())
+								country = getCountry(id);
 							salary = Math.round(Double.parseDouble(points) * 10);
 							if(salary < 80.0)
 								salary = 80.0;
@@ -187,16 +197,21 @@ public class GolfBot extends Utils {
 					}
 			
 					if(!player_table_updated){
+						Player p = new Player(id, name_fl, gameID);
+						p.setCountry(country);
+						JSONObject data = p.getDashboardData(this.year);
 						// add player to player table
-						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, points, bioJSON) VALUES (?, ?, ?, ?, ?, ?, ?, ? )");
+						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )");
 						add_player.setInt(1, id);
-						add_player.setString(2, name_with_country);
+						add_player.setString(2, name_fl);
 						add_player.setString(3, this.sport);
 						add_player.setString(4, gameID);
-						add_player.setString(5, "n/a");
+						add_player.setString(5, country);
 						add_player.setDouble(6, salary);
-						add_player.setDouble(7, 0.0);
-						add_player.setString(8, "{}");
+						add_player.setString(7, initializeGolferScores().toString());
+						add_player.setDouble(8, 0.0);
+						add_player.setString(9, data.toString());
+						add_player.setInt(10, 4);
 						add_player.executeUpdate();
 					}
 					
@@ -204,9 +219,9 @@ public class GolfBot extends Utils {
 					JSONObject p = new JSONObject();
 					p.put("price", salary);
 					p.put("count", 0);
-					p.put("name", name_with_country);
+					p.put("name", name_fl + " " + country);
 					p.put("id", id);
-					log("appending " + name_with_country + " to contest " + contest_id );
+					log("appending " + name_fl + " to contest " + contest_id );
 					option_table.put(p);	
 				}
 			}
@@ -223,8 +238,10 @@ public class GolfBot extends Utils {
 		// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
-		Calendar c = Calendar.getInstance();        
-		c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs
+		Calendar c = Calendar.getInstance();        		
+		// GO BACK TO 3 //
+		//c.add(Calendar.DATE, 3);  // add 3 days to get to Thurs
+		c.add(Calendar.DATE, 1);  // add 3 days to get to Thurs
 		String thursday = (String)(formattedDate.format(c.getTime()));
 		c.set(Calendar.HOUR_OF_DAY, 7);
 		c.set(Calendar.MINUTE, 0);
@@ -246,6 +263,20 @@ public class GolfBot extends Utils {
 				break;
 			}
 		}
+	}
+	
+	public String getCountry(int id) throws JSONException, IOException{
+		String country = "";
+		String all_players_url = "https://statdata.pgatour.com/players/player.json";
+		JSONArray all_players = JsonReader.readJsonFromUrl(all_players_url).getJSONArray("plrs");
+		for(int p=0; p<all_players.length(); p++){
+			JSONObject pl = all_players.getJSONObject(p);
+			if(id == Integer.parseInt(pl.getString("pid"))){
+				country = pl.getString("ct");
+				return country;
+			}
+		}
+		return country;
 	}
 	
 	public Map<Integer, Player> setup() throws IOException, JSONException, SQLException {
@@ -277,6 +308,8 @@ public class GolfBot extends Utils {
 					if(id == Integer.parseInt(r_player.getString("plrNum"))){
 						String points = r_player.getJSONObject("statValues").getString("statValue2");
 						country = r_player.getJSONObject("statValues").getString("statValue5");
+						if(country.isEmpty())
+							country = getCountry(id);
 						salary = Math.round(Double.parseDouble(points) * 10);
 						if(salary < 80.0)
 							salary = 80.0;
@@ -298,6 +331,22 @@ public class GolfBot extends Utils {
 		return players;
 	}
 	
+	public JSONObject initializeGolferScores() throws JSONException{
+		JSONObject data = new JSONObject();
+		for(int i = 1; i <= 4; i++){
+			JSONObject round = new JSONObject();
+			round.put("eagles+", 0);
+			round.put("double-bogeys+", 0);
+			round.put("bogeys", 0);
+			round.put("pars", 0);
+			round.put("birdies", 0);
+			round.put("today", 0);
+			data.put(String.valueOf(i), round);
+		}
+		data.put("overall", 0);
+		return data;
+	}
+	
 	public void savePlayers(){
 		try {
 			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
@@ -310,16 +359,18 @@ public class GolfBot extends Utils {
 			
 			for(Player player : this.getPlayerHashMap().values()){
 				
-				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setInt(1, player.getPGA_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, sport);
 				save_player.setString(4, player.getTourneyID());
 				save_player.setString(5, player.getCountry());
 				save_player.setDouble(6, player.getSalary());
-				save_player.setDouble(7, player.getPoints());
-				JSONObject emptyJSON = new JSONObject();
-				save_player.setString(8, emptyJSON.toString());
+				save_player.setString(7, initializeGolferScores().toString());
+				save_player.setDouble(8, player.getPoints());
+				JSONObject data = player.getDashboardData(this.year);
+				save_player.setString(9, data.toString());
+				save_player.setInt(10, 4);
 				save_player.executeUpdate();	
 			}
 			
@@ -329,34 +380,93 @@ public class GolfBot extends Utils {
 			Server.exception(e);
 		}
 	}
+	
+	/*
+	 * INACTIVE = 0
+	 * WD = 1
+	 * DQ = 2 
+	 * CUT = 3
+	 * ACTIVE = 4
+	 */
+	public static int setStatusInt(String status){
+		int status_int = 0;
+		switch(status){
+			case "active":
+				status_int = 4;
+				break;
+			case "cut": 
+				status_int = 3;
+				break;
+			case "dq":
+				status_int = 2;
+				break;
+			case "wd":
+				status_int = 1;
+				break;
+			//not in leaderboard
+			default:
+				status_int = 0;
+				break;
+		}
+		return status_int;
+	}
 
-	public boolean scrapeScores(String tourneyID) throws JSONException, IOException, SQLException{
+	public JSONObject scrapeScores(String tourneyID) throws JSONException, IOException, SQLException{
+		JSONObject tournament_statuses = new JSONObject();
+		
+		tournament_statuses.put("1", false);
+		tournament_statuses.put("2", false);
+		tournament_statuses.put("3", false);
+		tournament_statuses.put("4", false);
+		tournament_statuses.put("tournament", false);
+		
 		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/2018/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		if(leaderboard == null){
 			log("couldn't connect to pgatour API");
-			return false;
+			return tournament_statuses;
 		}
 		boolean finished = leaderboard.getJSONObject("leaderboard").getBoolean("is_finished");
+		int round = leaderboard.getJSONObject("leaderboard").getInt("current_round");
+		String round_state = leaderboard.getJSONObject("leaderboard").getString("round_state");
+		
+		if(finished){
+			tournament_statuses.put("1", true);
+			tournament_statuses.put("2", true);
+			tournament_statuses.put("3", true);
+			tournament_statuses.put("4", true);
+			tournament_statuses.put("tournament", true);
+		}else if(round_state.equals("Official")){
+			for(int i = round; i >= 1; i--){
+				tournament_statuses.put(String.valueOf(i), true);
+			}
+		}
+
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
 		ResultSet playerScores = db.getPlayerScores(this.sport);
 		while(playerScores.next()){
-			int score;
 			boolean in_leaderboard = false;
 			int id = playerScores.getInt(1);
+			int score;
 			for(int i=0; i < players.length(); i++){
 				JSONObject player = players.getJSONObject(i);
 				int player_id = Integer.parseInt(player.getString("player_id"));
 				if(id == player_id){
+					
+					JSONObject data = new JSONObject(playerScores.getString(2));
+					JSONObject scores_to_edit = data.getJSONObject(String.valueOf(round));
 					in_leaderboard = true;
 					String status = player.getString("status");
-					JSONObject data = new JSONObject();
-					JSONObject empty = new JSONObject();
-					data.put("1", empty);
-					data.put("2", empty);
-					data.put("3", empty);
-					data.put("4", empty);
-					data.put("overall", 0);
+					int status_int = setStatusInt(status);
+					
+					scores_to_edit.put("eagles+", (player.getJSONObject("par_performance").getInt("double_eagles") + player.getJSONObject("par_performance").getInt("eagles")));
+					scores_to_edit.put("double-bogeys+", (player.getJSONObject("par_performance").getInt("double_bogeys") + player.getJSONObject("par_performance").getInt("more_bogeys")));
+					scores_to_edit.put("birdies", player.getJSONObject("par_performance").getInt("birdies"));
+					scores_to_edit.put("bogeys", player.getJSONObject("par_performance").getInt("bogeys"));
+					scores_to_edit.put("pars", player.getJSONObject("par_performance").getInt("par"));
+					scores_to_edit.put("today", player.get("today"));
+					data.put(String.valueOf(round), scores_to_edit);
+
 					if(status.equals("cut"))
 						score = -888;
 					else if(status.equals("wd"))
@@ -368,71 +478,201 @@ public class GolfBot extends Utils {
 							score = player.getInt("total");
 						}
 						catch(JSONException e){
-							e.printStackTrace();
 							score = -888;
 						}
-					}	
-//					db.editPoints(score, player_id, this.sport);
+					}
+					data.put("overall", score);
+					db.editData(data.toString(), player_id, this.sport);
+					db.updateOverallScore(score, player_id, this.sport);
+					db.setGolfStatus(status_int, player_id, status);
 					break;
 				}
 			}
 			if(!in_leaderboard){
 				score = -777;
-//				db.editPoints(score, id, this.sport);	
+				JSONObject data = new JSONObject(playerScores.getString(2));
+				data.put("overall", score);
+				db.editData(data.toString(), id, this.sport);
+				db.updateOverallScore(score, id, this.sport);
+				db.setGolfStatus(0, id, this.sport);
 			}
 		}
-		return finished;		
+		return tournament_statuses;		
 	}
 	
-	public JSONArray updateScoresDB() throws SQLException, JSONException{
-		
-		PreparedStatement worst_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points DESC limit 1");
-		worst_score.setString(1, "GOLF");
-		ResultSet score = worst_score.executeQuery();
+	public int findWorstScore(String when) throws SQLException, JSONException{
 		int worstScore = 0;
-		while(score.next()){
-			worstScore = score.getInt(1);
+		if(when.equals("tournament")){
+			PreparedStatement worst_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points DESC limit 1");
+			worst_score.setString(1, "GOLF");
+			ResultSet score = worst_score.executeQuery();
+			while(score.next()){
+				worstScore = score.getInt(1);
+			}
 		}
-		log("worst score in tournament: " + worstScore);
-		log("normalizing scores...");
+		else{
+			int worst = -999;
+			ResultSet all_player_scores = db.getPlayerScores("GOLF");
+			while(all_player_scores.next()){
+				JSONObject scores = new JSONObject(all_player_scores.getString(2));
+				int score = scores.getJSONObject(when).getInt("today");
+				if(score > worst)
+					worst = score;
+			}
+			worstScore = worst;
+		}
+		return worstScore;
+	}
+	
+	public JSONArray updateScores(JSONObject scoring_rules, String when) throws SQLException, JSONException{
 		
-		ResultSet playerScores = db.getPlayerScores(this.sport);
+		ResultSet playerScores = db.getPlayerScoresAndStatus(this.sport);
 		JSONArray player_map = new JSONArray();
-		while(playerScores.next()){
-			JSONObject player = new JSONObject();
-			int id = playerScores.getInt(1);
-			int points = (int) playerScores.getDouble(2);
+		// no scoring rules = score to par tournament
+		if(scoring_rules.length() == 0 | scoring_rules == null){
 			
-			// -999 means WD
-			if(points==-999){
-				player.put("id", id);
-				player.put("score_raw", "WD");
-				player.put("score_normalized", 0);
-				player_map.put(player);
+			log("updating option table for score-to-par contests...");
+			// get worst score relative to when (tournament or round)
+			int worstScore = findWorstScore(when);
+			log("worst score in" + when + ": " + worstScore);
+			log("normalizing scores...");
+			
+			while(playerScores.next()){
+				JSONObject player = new JSONObject();
+				int id = playerScores.getInt(1);
+				JSONObject data = new JSONObject(playerScores.getString(2));
+				int status = playerScores.getInt(3);
+				int score_db = playerScores.getInt(4);
+				
+				// TOURNAMENT ROSTER CONTEST
+				if(when.equals("tournament")){
+					if(score_db == -999){
+						player.put("id", id);
+						player.put("score_raw", "WD");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}
+					else if(score_db == -888){
+						player.put("id", id);
+						player.put("score_raw", "CUT");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}
+					else if(score_db == -777){
+						player.put("id", id);
+						player.put("score_raw", "INACTIVE");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}
+					else if(score_db == -666){
+						player.put("id", id);
+						player.put("score_raw", "DQ");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}
+					else{
+						int normalizedScore = normalizeScore(score_db, worstScore);
+						player.put("id", id);
+						player.put("score_raw", Integer.toString(score_db));
+						player.put("score_normalized", normalizedScore);
+						player_map.put(player);
+					}
+				}
+				
+				// ROUND ROSTER CONTEST
+				else{
+					if(status == 4){
+						int score = data.getJSONObject(when).getInt("today");
+						int normalizedScore = normalizeScore(score, worstScore);
+						player.put("id", id);
+						player.put("score_raw", Integer.toString(score_db));
+						player.put("score_normalized", normalizedScore);
+						player_map.put(player);
+					}
+					
+					else if(status == 0){
+						player.put("id", id);
+						player.put("score_raw", "INACTIVE");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}
+					else if(status == 1){
+						player.put("id", id);
+						player.put("score_raw", "WD");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}
+					else if(status == 2){
+						player.put("id", id);
+						player.put("score_raw", "DQ");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}
+					else if(status == 3){
+						player.put("id", id);
+						player.put("score_raw", "CUT");
+						player.put("score_normalized", 0);
+						player_map.put(player);
+					}		
+				}
 			}
-			else if(points==-888){
+		}
+		//there are contest rules so its a fantasy points contest
+		else{
+			while(playerScores.next()){
+				JSONObject player = new JSONObject();
+				int id = playerScores.getInt(1);
+				JSONObject data = new JSONObject(playerScores.getString(2));
+				//int status = playerScores.getInt(3);
+				int score_db = playerScores.getInt(4);
+				String data_to_display = "";
+				Double points = 0.0;
+				Iterator<?> keys = scoring_rules.keys();
+				while(keys.hasNext()){
+					String key = (String) keys.next();
+					int multiplier = scoring_rules.getInt(key);
+					
+					// deal with top-score seperately
+					if(key.equals("top-score")){
+						if(when.equals("tournament")){
+							boolean top_score = checkTopScore(score_db, when);
+							if(top_score){
+								points += ((double) multiplier);
+								data_to_display += key.toUpperCase() + ", ";
+							}
+						}
+						else{
+							int score;
+							try{
+								score = data.getJSONObject(when).getInt("today");
+								boolean top_score = checkTopScore(score, when);
+								if(top_score){
+									points += ((double) multiplier);
+									data_to_display += key.toUpperCase() + ", ";
+								}
+							}catch(JSONException e){
+							}	
+						}
+					}
+					else{
+						if(when.equals("tournament")){
+							int total_shots = 0;
+							for(int i = 1; i <= 4; i++){
+								total_shots += data.getJSONObject(String.valueOf(i)).getInt(key);
+							}
+							data_to_display += key.toUpperCase() + ": " + String.valueOf(total_shots) + ", ";
+							points += ((double) (total_shots * multiplier));
+						}else{
+							data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getJSONObject(when).getInt(key)) + ", ";
+							points += ((double) (data.getInt(key) * multiplier));		
+						}
+					}
+				}
+				// chop off ", " from end of string
+				data_to_display = data_to_display.substring(0, data_to_display.length() - 2);
+				player.put("score_raw", data_to_display);
+				player.put("score_normalized", points);
 				player.put("id", id);
-				player.put("score_raw", "CUT");
-				player.put("score_normalized", 0);
-				player_map.put(player);
-			}
-			else if(points== -777){
-				player.put("id", id);
-				player.put("score_raw", "INACTIVE");
-				player.put("score_normalized", 0);
-				player_map.put(player);
-			}
-			else if(points== -666){
-				player.put("id", id);
-				player.put("score_raw", "DQ");
-				player.put("score_normalized", 0);
-				player_map.put(player);
-			}
-			else{
-				int normalizedScore = normalizeScore(points, worstScore);
-				player.put("id", id);
-				player.put("score_raw", Integer.toString(points));
-				player.put("score_normalized", normalizedScore);
 				player_map.put(player);
 			}
 		}
@@ -442,6 +682,38 @@ public class GolfBot extends Utils {
 	public int normalizeScore(int score, int worstScore){
 		int normalizedScore = worstScore - score + 1;
 		return normalizedScore;
+	}
+	
+	public boolean checkTopScore(int score, String when) throws SQLException, JSONException{
+		int topScore = 999;
+		//check points column in `player` table since its a tournament contest
+		if(when.equals("tournament")){
+			PreparedStatement best_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points ASC limit 1");
+			best_score.setString(1, "GOLF");
+			ResultSet res = best_score.executeQuery();
+			while(res.next()){
+				topScore = res.getInt(1);
+			}
+			if(score == topScore) return true;
+			else return false;
+		}
+		//need to loop through all players scores since its a round contest
+		else{
+			topScore = 999;
+			ResultSet all_player_scores = db.getPlayerScores("GOLF");
+			while(all_player_scores.next()){
+				JSONObject scores = new JSONObject(all_player_scores.getString(2));
+				try{
+					int today = scores.getJSONObject(when).getInt("today");
+					if(today > topScore)
+						topScore = today;
+				}catch(JSONException e){
+					continue;
+				}
+			}
+			if(score == topScore) return true;
+			else return false;
+		}
 	}
 	
 	public JSONObject createTeamsPariMutuel(Long deadline) throws JSONException{
@@ -707,13 +979,8 @@ public class GolfBot extends Utils {
 		private String tourney_ID;
 		private double fantasy_points = 0;
 		private double salary;
-		private String birthString;
 		private String height;
 		private String weight;
-		private String pos;
-		private JSONArray last_five_games;
-		private JSONObject career_stats;
-		private JSONObject year_stats;
 		private JSONObject bio;
 		
 		// constructor
@@ -727,56 +994,26 @@ public class GolfBot extends Utils {
 		public double getPoints(){
 			return fantasy_points;
 		}
-		
 		public void setCountry(String c){
 			this.country = c;
 		}
-		
 		public void setScore(double score){
 			this.fantasy_points = score;
 		}
-		
 		public String getCountry(){
 			return country;
 		}
-		
 		public int getPGA_ID(){
 			return pga_id;
 		}
 		public String getTourneyID(){
 			return tourney_ID;
 		}
-		
 		public double getSalary(){
 			return salary;
 		}
-		
 		public String getName(){
 			return name;
-		}
-		
-		public JSONArray getGameLogs(){
-			return last_five_games;
-		}
-		
-		public JSONObject getCareerStats(){
-			if(career_stats == null){
-				return null;
-			}
-			return career_stats;
-		}
-		
-		public JSONObject getYearStats(){
-			if(year_stats == null){
-				return null;
-			}
-			return year_stats;
-		}
-		public String getBirthString(){
-			return birthString;
-		}
-		public String getPosition(){
-			return pos;
 		}
 		public String getHeight(){
 			return height;
@@ -787,21 +1024,60 @@ public class GolfBot extends Utils {
 		public void set_ppg_salary(double pts){
 			this.salary = pts;
 		}
-		public void createBio() throws JSONException{
+		
+		public JSONObject getDashboardData(String year) throws JSONException, IOException{
+			
+			String weight = "", height = "", birthday, age, birthPlace, birthString = "";
+			Document page = Jsoup.connect("https://www.pgatour.com/players/player." + String.valueOf(this.pga_id) + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+				      .referrer("http://www.google.com").timeout(6000).get();
+			
+			Element outer_div = page.getElementsByClass("s-col-left").first();
+			Elements divs = outer_div.getElementsByClass("s-col__row");
+			try{
+				height = divs.get(2).getElementsByTag("p").get(0).text().replace("  ft,", "\"").replace("  in", "'");
+				weight = divs.get(3).getElementsByTag("p").get(0).text();
+				birthday = divs.get(4).getElementsByTag("p").get(0).text();
+				age = divs.get(5).getElementsByTag("p").get(0).text();
+				birthPlace = divs.get(6).getElementsByTag("p").get(0).text();
+				birthString = birthday + " in " + birthPlace + " (Age: " + age + ")";
+			}catch(Exception e){
+				log(e.toString());
+			}
+
+			String data_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "stat.json";
+			JSONObject data = JsonReader.readJsonFromUrl(data_url);
+			JSONArray stats = new JSONArray();
+			JSONArray json_stats = data.getJSONArray("plrs").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("statCats").getJSONObject(0).getJSONArray("stats");
+			List<String> options = Arrays.asList("101", "102", "103", "105", "155", "156", "120", "111", "109", "186");
+			for(int i = 0; i < json_stats.length(); i++){
+				String statID = json_stats.getJSONObject(i).getString("statID");
+				if(options.contains(statID))
+					stats.put(json_stats.getJSONObject(i));
+			}
+			
+			String results_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "results.json";
+			JSONObject results = JsonReader.readJsonFromUrl(results_url);
+			JSONArray tourneys = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trnDetails");
+			int num_tourneys = tourneys.length();
+			JSONArray last_five_tournaments = new JSONArray();
+			for(int i = num_tourneys - 1; i >= num_tourneys - 5; i--){
+				last_five_tournaments.put(tourneys.getJSONObject(i));	
+			}
+			
 			JSONObject bio = new JSONObject();
-			bio.put("birthString", this.getBirthString());
-			bio.put("height", this.getHeight());
-			bio.put("Weight", this.getWeight());
-			bio.put("pos", this.getPosition());
-			bio.put("last_five_games", this.getGameLogs());
-			bio.put("career_stats", this.getCareerStats());
-			bio.put("year_stats", this.getYearStats());
-	
-			this.bio = bio;		
+			bio.put("birthString", birthString);
+			bio.put("country_abr", this.getCountry());
+			bio.put("height", height);
+			bio.put("Weight", weight);
+			bio.put("last_five_tournaments", last_five_tournaments);
+			bio.put("stats", stats);
+			bio.put("pga_id", this.getPGA_ID());
+			bio.put("name", this.getName());
+			this.bio = bio;	
+			return bio;
 		}
 		public JSONObject getBio(){
 			return this.bio;
 		}
-			
 	}
 }
