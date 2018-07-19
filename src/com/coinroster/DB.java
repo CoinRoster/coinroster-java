@@ -1243,7 +1243,7 @@ public class DB
 		while(result_set.next()){
 			JSONObject p = new JSONObject();
 			p.put("name", result_set.getString(2) + " " + result_set.getString(3));
-			p.put("player_id", result_set.getInt(1));
+			p.put("player_id", result_set.getString(1));
 			players.put(p);
 		}
 		return players;
@@ -1315,12 +1315,12 @@ public class DB
 	}
 //------------------------------------------------------------------------------------
 
-	public JSONObject getPlayerScores(int player_id, String sport) throws SQLException, JSONException{
+	public JSONObject getPlayerScores(String player_id, String sport) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
 			PreparedStatement get_players = sql_connection.prepareStatement("select data from player where sport_type= ? and id = ?");
 			get_players.setString(1, sport);
-			get_players.setInt(2, player_id);
+			get_players.setString(2, player_id);
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
@@ -1335,16 +1335,16 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public void editData(String data, int id, String sport) throws SQLException{
+	public void editData(String data, String id, String sport) throws SQLException{
 		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ?");
 		update_points.setString(1, data);
-		update_points.setInt(2, id);
+		update_points.setString(2, id);
 		update_points.setString(3, sport);
 		update_points.executeUpdate();
 	}
 
 //------------------------------------------------------------------------------------
-
+	
 	public int get_original_contest(Integer contest_id) {
 		int original_contest_id = 0;
 		try {
@@ -1361,20 +1361,20 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	public void setGolfStatus(int status, int id, String sport) throws SQLException{
+	public void setGolfStatus(int status, String id, String sport) throws SQLException{
 		PreparedStatement update_points = sql_connection.prepareStatement("update player set filter_on = ? where id = ? and sport_type = ?");
 		update_points.setInt(1, status);
-		update_points.setInt(2, id);
+		update_points.setString(2, id);
 		update_points.setString(3, sport);
 		update_points.executeUpdate();
 	}
 	
 //------------------------------------------------------------------------------------
 	
-	public void updateOverallScore(int score, int id, String sport) throws SQLException{
+	public void updateOverallScore(int score, String id, String sport) throws SQLException{
 		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ? and sport_type = ?");
 		update_points.setInt(1, score);
-		update_points.setInt(2, id);
+		update_points.setString(2, id);
 		update_points.setString(3, sport);
 		update_points.executeUpdate();
 	}
@@ -1457,12 +1457,12 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
-	public String get_player_info(String sport, int player_id) throws SQLException{
+	public String get_player_info(String sport, String player_id) throws SQLException{
 		ResultSet result_set = null;
 		try {
 			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr from player where sport_type = ? and id = ?");
 			get_players.setString(1, sport);
-			get_players.setInt(2, player_id);
+			get_players.setString(2, player_id);
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){

@@ -84,7 +84,7 @@ public class SetupPropBet extends Utils{
 						int index = 2;
 						JSONArray players = prop_data.getJSONArray("players");
 						for(int i=0; i < players.length(); i++){
-							int player_id = players.getInt(i);
+							String player_id = players.getString(i);
 							String name = db.get_player_info(sport, player_id);
 							JSONObject p = new JSONObject();
 							p.put("description", name);
@@ -123,7 +123,7 @@ public class SetupPropBet extends Utils{
 						under.put("description", "Under " + String.valueOf(prop_data.getDouble("over_under_value")));
 						under.put("id", 2);
 						option_table.put(under);
-						String name = db.get_player_info(sport, prop_data.getInt("player_id"));
+						String name = db.get_player_info(sport, prop_data.getString("player_id"));
 						
 						
 						if(scoring_rules.length() == 1){

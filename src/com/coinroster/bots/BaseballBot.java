@@ -32,7 +32,7 @@ public class BaseballBot extends Utils {
 
 	// instance variables
 	protected ArrayList<String> game_IDs;
-	private Map<Integer, Player> players_list;
+	private Map<String, Player> players_list;
 	private long earliest_game;
 	public String sport = "BASEBALL";
 	private DB db;
@@ -86,7 +86,7 @@ public class BaseballBot extends Utils {
 		}
 	}
 	
-	public Map<Integer, Player> getPlayerHashMap(){
+	public Map<String, Player> getPlayerHashMap(){
 		return players_list;
 	}
 	
@@ -115,7 +115,7 @@ public class BaseballBot extends Utils {
 				JSONObject player = new JSONObject();
 				player.put("description", top_players.getString(2) + " " + top_players.getString(3));
 				player.put("id", index);
-				player.put("player_id", top_players.getInt(1));
+				player.put("player_id", top_players.getString(1));
 				option_table.put(player);
 				index += 1;
 			}
@@ -139,7 +139,7 @@ public class BaseballBot extends Utils {
 		
 			case "MOST": 
 				double max_points = -999.0;
-				ArrayList<Integer> top_players = new ArrayList<Integer>();
+				ArrayList<String> top_players = new ArrayList<String>();
 				winning_outcome = 1;
 				ResultSet all_players = null;
 				try{
@@ -149,7 +149,7 @@ public class BaseballBot extends Utils {
 				}
 				// loop through players and compile ArrayList<Integer> of player_ids with top score
 				while(all_players.next()){
-					int player_id = all_players.getInt(1);
+					String player_id = all_players.getString(1);
 					JSONObject data = new JSONObject(all_players.getString(2));
 					Double points = 0.0;
 					Iterator<?> keys = scoring_rules.keys();
@@ -179,13 +179,13 @@ public class BaseballBot extends Utils {
 					return fields;
 				}
 				else{
-					for(Integer player_table_ID : top_players){
+					for(String player_table_ID : top_players){
 						for (int i=0; i<option_table.length(); i++){
 							JSONObject option = option_table.getJSONObject(i);
 							int option_id = option.getInt("id");
 							try{
-								int player_id = option.getInt("player_id");
-								if(player_id == player_table_ID){
+								String player_id = option.getString("player_id");
+								if(player_id.equals(player_table_ID)){
 									winning_outcome = option_id;
 									fields.put("winning_outcome", winning_outcome);
 									log("winning outcome is " + option.getString("description"));
@@ -204,11 +204,11 @@ public class BaseballBot extends Utils {
 		
 			case "MATCH_PLAY":
 				max_points = -999.0;
-				top_players = new ArrayList<Integer>();
+				top_players = new ArrayList<String>();
 				for(int i = 0; i < option_table.length(); i++){
 					JSONObject player = option_table.getJSONObject(i);
 					try{
-						int player_id = player.getInt("player_id");
+						String player_id = player.getString("player_id");
 					
 						JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
 						Double points = 0.0;
@@ -238,14 +238,14 @@ public class BaseballBot extends Utils {
 					return fields;
 				}
 				else{
-					int winner_id = top_players.get(0);
+					String winner_id = top_players.get(0);
 					log("player id of winner: " + winner_id);
 					for(int i=0; i<option_table.length(); i++){
 						JSONObject option = option_table.getJSONObject(i);
 						int option_id = option.getInt("id");
 						try{
-							int p_id = option.getInt("player_id");
-							if(winner_id == p_id){
+							String p_id = option.getString("player_id");
+							if(winner_id.equals(p_id)){
 								winning_outcome = option_id;
 								fields.put("winning_outcome", winning_outcome);
 								log("winning outcome is " + option.getString("description"));
@@ -260,7 +260,7 @@ public class BaseballBot extends Utils {
 				break;
 			
 			case "OVER_UNDER":
-				int player_id = prop_data.getInt("player_id");
+				String player_id = prop_data.getString("player_id");
 				JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
 				Double points = 0.0;
 				Iterator<?> keys = scoring_rules.keys();
@@ -310,7 +310,7 @@ public class BaseballBot extends Utils {
 			for(Player player : this.getPlayerHashMap().values()){
 				
 				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-				save_player.setInt(1, player.getESPN_ID());
+				save_player.setString(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
@@ -335,7 +335,7 @@ public class BaseballBot extends Utils {
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
-			int id = playerScores.getInt(1);
+			String id = playerScores.getString(1);
 			JSONObject data = new JSONObject(playerScores.getString(2));
 			player.put("id", id);
 			String data_to_display = "";
@@ -352,14 +352,15 @@ public class BaseballBot extends Utils {
 			
 			player.put("score_raw", data_to_display);
 			player.put("score_normalized", points);
+			player.put("player_id", id);
 			player_map.put(player);
 		}
 		return player_map;
 	}
 	
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
-		public Map<Integer, Player> setup() throws IOException, JSONException, SQLException{
-			Map<Integer, Player> players = new HashMap<Integer,Player>();
+		public Map<String, Player> setup() throws IOException, JSONException, SQLException{
+			Map<String, Player> players = new HashMap<String,Player>();
 			if(this.game_IDs == null){
 				log("No games scheduled");
 				this.players_list = null;
@@ -384,7 +385,7 @@ public class BaseballBot extends Utils {
 							String name = cols.get(0).select("a").text();
 							String team_name = team_abr.toUpperCase();
 							try{
-								int ESPN_id = Integer.parseInt(cols.get(0).select("a").attr("href").split("/")[7]);
+								String ESPN_id = cols.get(0).select("a").attr("href").split("/")[7];
 								double batting_avg = Double.parseDouble(cols.get(13).text());
 								int at_bats = Integer.parseInt(cols.get(2).text());
 								double price = (batting_avg * 1000);
@@ -425,7 +426,7 @@ public class BaseballBot extends Utils {
 							for (Element row : rows){
 								String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
 								if(!espn_ID_url.isEmpty()){
-									int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);		
+									String espn_ID = espn_ID_url.split("/")[7];		
 									String hits_string = row.getElementsByClass("batting-stats-h").text();
 									String runs_string = row.getElementsByClass("batting-stats-r").text();
 									String rbi_string = row.getElementsByClass("batting-stats-rbi").text();
@@ -478,7 +479,7 @@ public class BaseballBot extends Utils {
 		public String method_level = "admin";
 		private String name;
 		private String team_abr;
-		private int ESPN_ID;
+		private String ESPN_ID;
 		private double fantasy_points = 0;
 		private double ppg;
 		private double salary;
@@ -494,7 +495,7 @@ public class BaseballBot extends Utils {
 		private int filter;
 		
 		// constructor
-		public Player(int id, String n, String team){
+		public Player(String id, String n, String team){
 			this.ESPN_ID = id;
 			this.name = n;
 			this.team_abr = team;
@@ -505,7 +506,7 @@ public class BaseballBot extends Utils {
 		public double getPoints(){
 			return fantasy_points;
 		}
-		public int getESPN_ID(){
+		public String getESPN_ID(){
 			return ESPN_ID;
 		}
 		public String getGameID(){
