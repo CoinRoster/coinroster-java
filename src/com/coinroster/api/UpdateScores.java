@@ -93,7 +93,6 @@ public class UpdateScores extends Utils
 					String normalization_scheme = input.getString("normalization_scheme");
 
 					JSONArray option_table = new JSONArray(contest.getString("option_table"));
-					
 					// populate map of player scores 
 						
 					player_scores = input.getJSONArray("player_scores");
