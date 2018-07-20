@@ -542,7 +542,7 @@ public class ContestMethods extends Utils{
 					GolfBot golfBot = new GolfBot(sql_connection);
 					log("No current CoinRoster contests but Golf tournament is in play and minute is multiple of 20");
 					String gameID = golfBot.getLiveTourneyID();
-					JSONObject tournament_status = golfBot.scrapeScores(gameID);
+					golfBot.scrapeScores(gameID);
 				}
 			}
 
@@ -705,7 +705,6 @@ public class ContestMethods extends Utils{
 				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
 				boolean games_ended;
 				games_ended = baseball_bot.scrape(gameIDs);
-				log("finsihed scraping");
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
 					

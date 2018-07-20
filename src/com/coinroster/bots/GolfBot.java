@@ -532,14 +532,19 @@ public class GolfBot extends Utils {
 		
 		ResultSet playerScores = db.getPlayerScoresAndStatus(this.sport);
 		JSONArray player_map = new JSONArray();
-		log(scoring_rules.toString());
+		
 		// no scoring rules = score to par tournament
 		if(scoring_rules.length() == 0 || scoring_rules == null){
 			
 			log("updating option table for score-to-par contests...");
 			// get worst score relative to when (tournament or round)
 			int worstScore = findWorstScore(when);
-			log("worst score in " + when + ": " + worstScore);
+			
+			if(when.equals("tournament"))
+				log("worst score in " + when + ": " + worstScore);
+			else
+				log("worst score in round " + when + ": " + worstScore);
+			
 			log("normalizing scores...");
 			
 			while(playerScores.next()){
