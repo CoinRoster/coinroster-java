@@ -59,7 +59,7 @@ public class SettleContest extends Utils
 			// lock it all
 			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write, voting write, control write");
+			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write, voting write, categories wrie, control write");
 
 			try {
 				lock : {
