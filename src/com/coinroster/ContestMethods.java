@@ -402,24 +402,27 @@ public class ContestMethods extends Utils{
 
 	public static void updateGolfContestField() {
 		Connection sql_connection = null;
-		try {
-			sql_connection = Server.sql_connection();
-			GolfBot golfBot = new GolfBot(sql_connection);
-			boolean new_players = golfBot.appendLateAdditions();
-			if(!new_players)
-				log("no new golfers added to field");
-		}
-		catch (Exception e) {
-			Server.exception(e);
-		} 
-		finally {
-			if (sql_connection != null) {
-				try {
-					sql_connection.close();
-					log("closing sql_connection");
-					} 
-				catch (SQLException ignore) {
-					// ignore
+		int today = getToday();
+		if(today == 2 || today == 3 || today == 4){
+			try {
+				sql_connection = Server.sql_connection();
+				GolfBot golfBot = new GolfBot(sql_connection);
+				boolean new_players = golfBot.appendLateAdditions();
+				if(!new_players)
+					log("no new golfers added to field");
+			}
+			catch (Exception e) {
+				Server.exception(e);
+			} 
+			finally {
+				if (sql_connection != null) {
+					try {
+						sql_connection.close();
+						log("closing sql_connection");
+						} 
+					catch (SQLException ignore) {
+						// ignore
+					}
 				}
 			}
 		}
