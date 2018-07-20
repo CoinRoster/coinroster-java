@@ -125,7 +125,7 @@ public class BackoutContest extends Utils {
 				statement.execute("unlock tables");
 				}
 			
-			String subject = contest.getString("contest_title") + " has been cancelled";
+			String subject = contest.getString("title") + " has been cancelled";
 			
 			String message_body  = "Hi <b><!--USERNAME--></b>";
 			message_body += "<br/>";
