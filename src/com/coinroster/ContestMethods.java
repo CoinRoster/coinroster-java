@@ -401,7 +401,7 @@ public class ContestMethods extends Utils{
 		}
 	}
 	
-////------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
 
 	public static void updateGolfContestField() {
 		Connection sql_connection = null;
@@ -567,9 +567,9 @@ public class ContestMethods extends Utils{
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
 					String c_id = (String) roster_contest_ids.next();
-					String scoring_rules_string = roster_contests.getJSONObject(c_id).getString("scoring_rules");
 					String when = roster_contests.getJSONObject(c_id).getString("when");
-					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
+					log("scoring_rules_json: " + scoring_rules.toString());
 					
 					JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
 					JSONObject fields = new JSONObject();
@@ -657,6 +657,15 @@ public class ContestMethods extends Utils{
 							}
 						}
 					}
+				}
+			}
+			else{
+				int today = getToday();
+				if(today == 1 || today == 5 || today == 6 || today == 7){
+					GolfBot golfBot = new GolfBot(sql_connection);
+					log("No current CoinRoster contests but Golf tournament is in play and minute is multiple of 20");
+					String gameID = golfBot.getLiveTourneyID();
+					JSONObject tournament_status = golfBot.scrapeScores(gameID);
 				}
 			}
 
@@ -783,6 +792,7 @@ public class ContestMethods extends Utils{
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
 			JSONObject roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASEBALL", "ROSTER");
+			log(roster_contests.toString());
 			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BASEBALLPROPS", "PARI-MUTUEL");
 
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
@@ -791,13 +801,15 @@ public class ContestMethods extends Utils{
 				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
 				boolean games_ended;
 				games_ended = baseball_bot.scrape(gameIDs);
-
+				log("finsihed scraping");
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
+					
 					String c_id = (String) roster_contest_ids.next();
+					log("contest: " + c_id);
 					String scoring_rules_string = roster_contests.getString(c_id);
 					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-					
+					log(scoring_rules.toString());
 					JSONArray player_scores = baseball_bot.updateScores(scoring_rules);
 					JSONObject fields = new JSONObject();
 					fields.put("contest_id", Integer.parseInt(c_id));

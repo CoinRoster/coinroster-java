@@ -73,16 +73,13 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 		
 		if((minute%20)==0){
-			
-//			new CloseContestRegistration();
-			
 			// see if contests are in play (status=2) and live update scores if applicable
 			// also settle the contests when applicable
 //			ContestMethods.checkBasketballContests();
-//			ContestMethods.checkGolfContests();
+			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
-//			ContestMethods.checkCrowdContests();
 		}
+		
 		if((hour%6==0) && (minute==30)){
 //			ContestMethods.updateGolfContestField();
 		}

@@ -393,7 +393,7 @@ public class GolfBot extends Utils {
 	 * CUT = 3
 	 * ACTIVE = 4
 	 */
-	public static int setStatusInt(String status){
+	public int setStatusInt(String status){
 		int status_int = 0;
 		switch(status){
 			case "active":
@@ -457,13 +457,11 @@ public class GolfBot extends Utils {
 				JSONObject player = players.getJSONObject(i);
 				String player_id = player.getString("player_id");
 				if(id.equals(player_id)){
-					
 					JSONObject data = new JSONObject(playerScores.getString(2));
 					JSONObject scores_to_edit = data.getJSONObject(String.valueOf(round));
 					in_leaderboard = true;
 					String status = player.getString("status");
 					int status_int = setStatusInt(status);
-					
 					scores_to_edit.put("eagles+", (player.getJSONObject("par_performance").getInt("double_eagles") + player.getJSONObject("par_performance").getInt("eagles")));
 					scores_to_edit.put("double-bogeys+", (player.getJSONObject("par_performance").getInt("double_bogeys") + player.getJSONObject("par_performance").getInt("more_bogeys")));
 					scores_to_edit.put("birdies", player.getJSONObject("par_performance").getInt("birdies"));
@@ -487,9 +485,7 @@ public class GolfBot extends Utils {
 						}
 					}
 					data.put("overall", score);
-					db.editData(data.toString(), player_id, this.sport);
-					db.updateOverallScore(score, player_id, this.sport);
-					db.setGolfStatus(status_int, player_id, status);
+					db.updateGolferScore(player_id, this.sport, data.toString(), score, status_int);
 					break;
 				}
 			}
@@ -497,9 +493,8 @@ public class GolfBot extends Utils {
 				score = -777;
 				JSONObject data = new JSONObject(playerScores.getString(2));
 				data.put("overall", score);
-				db.editData(data.toString(), id, this.sport);
-				db.updateOverallScore(score, id, this.sport);
-				db.setGolfStatus(0, id, this.sport);
+				db.updateGolferScore(id, this.sport, data.toString(), score, 0);
+
 			}
 		}
 		return tournament_statuses;		
@@ -520,9 +515,13 @@ public class GolfBot extends Utils {
 			ResultSet all_player_scores = db.getPlayerScores("GOLF");
 			while(all_player_scores.next()){
 				JSONObject scores = new JSONObject(all_player_scores.getString(2));
-				int score = scores.getJSONObject(when).getInt("today");
-				if(score > worst)
-					worst = score;
+				try{
+					int score = scores.getJSONObject(when).getInt("today");
+					if(score > worst)
+						worst = score;
+				}catch(JSONException e){
+					continue;
+				}
 			}
 			worstScore = worst;
 		}
@@ -533,13 +532,14 @@ public class GolfBot extends Utils {
 		
 		ResultSet playerScores = db.getPlayerScoresAndStatus(this.sport);
 		JSONArray player_map = new JSONArray();
+		log(scoring_rules.toString());
 		// no scoring rules = score to par tournament
-		if(scoring_rules.length() == 0 | scoring_rules == null){
+		if(scoring_rules.length() == 0 || scoring_rules == null){
 			
 			log("updating option table for score-to-par contests...");
 			// get worst score relative to when (tournament or round)
 			int worstScore = findWorstScore(when);
-			log("worst score in" + when + ": " + worstScore);
+			log("worst score in " + when + ": " + worstScore);
 			log("normalizing scores...");
 			
 			while(playerScores.next()){
@@ -590,7 +590,7 @@ public class GolfBot extends Utils {
 						int score = data.getJSONObject(when).getInt("today");
 						int normalizedScore = normalizeScore(score, worstScore);
 						player.put("id", id);
-						player.put("score_raw", Integer.toString(score_db));
+						player.put("score_raw", Integer.toString(score));
 						player.put("score_normalized", normalizedScore);
 						player_map.put(player);
 					}
@@ -624,6 +624,7 @@ public class GolfBot extends Utils {
 		}
 		//there are contest rules so its a fantasy points contest
 		else{
+			log("updating option table for multi-stat contests...");
 			while(playerScores.next()){
 				JSONObject player = new JSONObject();
 				String id = playerScores.getString(1);
@@ -640,8 +641,8 @@ public class GolfBot extends Utils {
 					// deal with top-score seperately
 					if(key.equals("top-score")){
 						if(when.equals("tournament")){
-							boolean top_score = checkTopScore(score_db, when);
-							if(top_score){
+							int top_score = getTopScore(when);
+							if(score_db == top_score){
 								points += ((double) multiplier);
 								data_to_display += key.toUpperCase() + ", ";
 							}
@@ -650,8 +651,8 @@ public class GolfBot extends Utils {
 							int score;
 							try{
 								score = data.getJSONObject(when).getInt("today");
-								boolean top_score = checkTopScore(score, when);
-								if(top_score){
+								int top_score = getTopScore(when);
+								if(score == top_score){
 									points += ((double) multiplier);
 									data_to_display += key.toUpperCase() + ", ";
 								}
@@ -669,7 +670,7 @@ public class GolfBot extends Utils {
 							points += ((double) (total_shots * multiplier));
 						}else{
 							data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getJSONObject(when).getInt(key)) + ", ";
-							points += ((double) (data.getInt(key) * multiplier));		
+							points += ((double) (data.getJSONObject(when).getInt(key) * multiplier));		
 						}
 					}
 				}
@@ -689,7 +690,7 @@ public class GolfBot extends Utils {
 		return normalizedScore;
 	}
 	
-	public boolean checkTopScore(int score, String when) throws SQLException, JSONException{
+	public int getTopScore(String when) throws SQLException, JSONException{
 		int topScore = 999;
 		//check points column in `player` table since its a tournament contest
 		if(when.equals("tournament")){
@@ -699,8 +700,7 @@ public class GolfBot extends Utils {
 			while(res.next()){
 				topScore = res.getInt(1);
 			}
-			if(score == topScore) return true;
-			else return false;
+			return topScore;
 		}
 		//need to loop through all players scores since its a round contest
 		else{
@@ -710,14 +710,13 @@ public class GolfBot extends Utils {
 				JSONObject scores = new JSONObject(all_player_scores.getString(2));
 				try{
 					int today = scores.getJSONObject(when).getInt("today");
-					if(today > topScore)
+					if(today < topScore)
 						topScore = today;
 				}catch(JSONException e){
 					continue;
 				}
 			}
-			if(score == topScore) return true;
-			else return false;
+			return topScore;
 		}
 	}
 	

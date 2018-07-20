@@ -313,7 +313,7 @@ public class DB
 	{
 
 		JSONObject contests = new JSONObject();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where category = ? and sub_category = ? and contest_type = ? and status = 2");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
 		get_live_contests.setString(3, contest_type);
@@ -341,13 +341,36 @@ public class DB
 		
 		while (result_set.next()){
 			JSONObject data = new JSONObject();
-			data.put("scoring_rules", result_set.getString(2));
-			JSONObject prop_data = new JSONObject(result_set.getString(3));
-			data.put("when", prop_data.getString("when"));
-			contests.put(String.valueOf(result_set.getInt(1)), data);
-		}
+			String scoring_rules, prop_data;
+			JSONObject scoring_rules_json, prop_data_json;
+			try{
+				scoring_rules = result_set.getString(2);
+				Utils.log("scoring_rules: " + scoring_rules);
+				if(scoring_rules.isEmpty())
+					scoring_rules_json = new JSONObject();
+				else
+					scoring_rules_json = new JSONObject(scoring_rules);
+				
+				prop_data = result_set.getString(3);
+				if(prop_data.isEmpty() || prop_data == null){
+					prop_data_json = new JSONObject();
+					data.put("when", "");
+				}
+					
+				else{
+					prop_data_json = new JSONObject(prop_data);
+					data.put("when", prop_data_json.getString("when"));
+				}
+				
+				data.put("scoring_rules", scoring_rules_json);
+				contests.put(String.valueOf(result_set.getInt(1)), data);
+				
+			}catch(Exception e){
+				Utils.log(e.getMessage());
+				Utils.log(e.toString());
+			}
 			
-
+		}
 		return contests;
 	}
 	
@@ -1393,6 +1416,28 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
+	public void setGolfStatus(int status, String id, String sport) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set filter_on = ? where id = ? and sport_type = ?");
+		update_points.setInt(1, status);
+		update_points.setString(2, id);
+		update_points.setString(3, sport);
+		update_points.executeUpdate();
+	}
+	
+//------------------------------------------------------------------------------------
+
+	public void updateGolferScore(String id, String sport, String data, int score, int status) throws SQLException{
+		PreparedStatement update = sql_connection.prepareStatement("update player set data = ?, points = ?, filter_on = ? where id = ? and sport_type = ?");
+		update.setString(1, data);
+		update.setInt(2, score);
+		update.setInt(3, status);
+		update.setString(4,  id);
+		update.setString(5, sport);
+		update.executeUpdate();
+	}
+	
+//------------------------------------------------------------------------------------
+
 	public int get_original_contest(Integer contest_id) {
 		int original_contest_id = 0;
 		try {
@@ -1407,26 +1452,6 @@ public class DB
 		return original_contest_id;
 	}	
 
-//------------------------------------------------------------------------------------
-
-	public void setGolfStatus(int status, String id, String sport) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set filter_on = ? where id = ? and sport_type = ?");
-		update_points.setInt(1, status);
-		update_points.setString(2, id);
-		update_points.setString(3, sport);
-		update_points.executeUpdate();
-	}
-	
-//------------------------------------------------------------------------------------
-	
-	public void updateOverallScore(int score, String id, String sport) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set points = ? where id = ? and sport_type = ?");
-		update_points.setInt(1, score);
-		update_points.setString(2, id);
-		update_points.setString(3, sport);
-		update_points.executeUpdate();
-	}
-	
 //------------------------------------------------------------------------------------
 
 	public JSONArray getRosterTemplates(String sub_category) throws SQLException{

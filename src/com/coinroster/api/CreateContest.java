@@ -55,14 +55,18 @@ public class CreateContest extends Utils
             String madeBy = "";
 			String scoring_rules, prop_data;
 			try{
-				scoring_rules = input.getString("scoring_rules");
-				prop_data = input.getString("prop_data");
-				
+				scoring_rules = input.getString("scoring_rules").toString();
 			}catch(Exception e){
 				scoring_rules = null;
+			}
+			try{
+				prop_data = input.getString("prop_data").toString();
+			}catch(Exception e){
 				prop_data = null;
 			}
             
+			
+			
             // validate common fields
             
             if (title.length() > 255)
@@ -129,7 +133,9 @@ public class CreateContest extends Utils
             log("rake: " + rake);
             log("cost_per_entry: " + cost_per_entry);
             log("settlement_type: " + settlement_type);
-            
+            log("scoring_rules: " + scoring_rules);
+            log("prop_data: " + prop_data);
+
             if (contest_type.equals("ROSTER"))
 	            {
 	            int salary_cap = input.getInt("salary_cap");
@@ -322,7 +328,9 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, "
+	            		+ "rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, "
+	            		+ "odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, prop_data) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
@@ -381,6 +389,8 @@ public class CreateContest extends Utils
 				create_contest.setString(21, score_header);
 				create_contest.setString(22, gameIDs);
 				create_contest.setString(23, scoring_rules);
+				create_contest.setString(26, prop_data);
+
 	            create_contest.executeUpdate();
 
 	        }
@@ -418,10 +428,7 @@ public class CreateContest extends Utils
 	            		break method;
 						}
 					}
-
-            	log("scoring rules: " + scoring_rules);
-				log("prop_data: " + prop_data);
-				
+            	
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
             																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
