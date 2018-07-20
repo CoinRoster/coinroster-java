@@ -405,24 +405,27 @@ public class ContestMethods extends Utils{
 
 	public static void updateGolfContestField() {
 		Connection sql_connection = null;
-		try {
-			sql_connection = Server.sql_connection();
-			GolfBot golfBot = new GolfBot(sql_connection);
-			boolean new_players = golfBot.appendLateAdditions();
-			if(!new_players)
-				log("no new golfers added to field");
-		}
-		catch (Exception e) {
-			Server.exception(e);
-		} 
-		finally {
-			if (sql_connection != null) {
-				try {
-					sql_connection.close();
-					log("closing sql_connection");
-					} 
-				catch (SQLException ignore) {
-					// ignore
+		int today = getToday();
+		if(today == 2 || today == 3 || today == 4){
+			try {
+				sql_connection = Server.sql_connection();
+				GolfBot golfBot = new GolfBot(sql_connection);
+				boolean new_players = golfBot.appendLateAdditions();
+				if(!new_players)
+					log("no new golfers added to field");
+			}
+			catch (Exception e) {
+				Server.exception(e);
+			} 
+			finally {
+				if (sql_connection != null) {
+					try {
+						sql_connection.close();
+						log("closing sql_connection");
+						} 
+					catch (SQLException ignore) {
+						// ignore
+					}
 				}
 			}
 		}
@@ -598,10 +601,9 @@ public class ContestMethods extends Utils{
 					roster_contest_ids = roster_contests.keys();
 					while(roster_contest_ids.hasNext()){
 						String c_id = (String) roster_contest_ids.next();
-						String scoring_rules_string = roster_contests.getJSONObject(c_id).getString("scoring_rules");
+						JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
 						String when = roster_contests.getJSONObject(c_id).getString("when");
 						if(when.equals("tournament")){
-							JSONObject scoring_rules = new JSONObject(scoring_rules_string);
 							JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
 							JSONObject fields = new JSONObject();
 							fields.put("contest_id", Integer.parseInt(c_id));
@@ -631,10 +633,9 @@ public class ContestMethods extends Utils{
 						roster_contest_ids = roster_contests.keys();
 						while(roster_contest_ids.hasNext()){
 							String c_id = (String) roster_contest_ids.next();
-							String scoring_rules_string = roster_contests.getJSONObject(c_id).getString("scoring_rules");
+							JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
 							String when = roster_contests.getJSONObject(c_id).getString("when");
 							if(when.equals(String.valueOf(i))){
-								JSONObject scoring_rules = new JSONObject(scoring_rules_string);
 								JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
 								JSONObject fields = new JSONObject();
 								fields.put("contest_id", Integer.parseInt(c_id));
