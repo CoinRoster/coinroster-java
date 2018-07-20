@@ -55,13 +55,17 @@ public class CreateContest extends Utils
 			String scoring_rules, prop_data;
 			try{
 				scoring_rules = input.getString("scoring_rules").toString();
-				prop_data = input.getString("prop_data").toString();
-				
 			}catch(Exception e){
 				scoring_rules = null;
+			}
+			try{
+				prop_data = input.getString("prop_data").toString();
+			}catch(Exception e){
 				prop_data = null;
 			}
             
+			
+			
             // validate common fields
             
             if (title.length() > 255)
@@ -127,6 +131,8 @@ public class CreateContest extends Utils
             log("registration_deadline: " + registration_deadline);
             log("rake: " + rake);
             log("cost_per_entry: " + cost_per_entry);
+            log("scoring_rules: " + scoring_rules);
+            log("prop_data: " + prop_data);
             
             if (contest_type.equals("ROSTER"))
 	            {
@@ -381,13 +387,7 @@ public class CreateContest extends Utils
 				create_contest.setString(21, score_header);
 				create_contest.setString(22, gameIDs);
 				create_contest.setString(23, scoring_rules);
-				
-				if(prop_data == null){
-					create_contest.setNull(26, java.sql.Types.NULL);
-				}else{
-					create_contest.setString(26, prop_data);
-				}
-				
+				create_contest.setString(26, prop_data);
 	            create_contest.executeUpdate();
 
 	        }
@@ -425,9 +425,6 @@ public class CreateContest extends Utils
 	            		break method;
 						}
 					}
-            
-            	log("scoring rules: " + scoring_rules);
-				log("prop_data: " + prop_data);
 				
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "

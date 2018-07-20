@@ -398,7 +398,7 @@ public class ContestMethods extends Utils{
 		}
 	}
 	
-////------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
 
 	public static void updateGolfContestField() {
 		Connection sql_connection = null;
@@ -445,7 +445,6 @@ public class ContestMethods extends Utils{
 				while(roster_contest_ids.hasNext()){
 					String c_id = (String) roster_contest_ids.next();
 					String when = roster_contests.getJSONObject(c_id).getString("when");
-					log(roster_contests.getJSONObject(c_id).toString());
 					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
 					log("scoring_rules_json: " + scoring_rules.toString());
 					
@@ -535,6 +534,15 @@ public class ContestMethods extends Utils{
 							}
 						}
 					}
+				}
+			}
+			else{
+				int today = getToday();
+				if(today == 1 || today == 5 || today == 6 || today == 7){
+					GolfBot golfBot = new GolfBot(sql_connection);
+					log("No current CoinRoster contests but Golf tournament is in play and minute is multiple of 20");
+					String gameID = golfBot.getLiveTourneyID();
+					JSONObject tournament_status = golfBot.scrapeScores(gameID);
 				}
 			}
 

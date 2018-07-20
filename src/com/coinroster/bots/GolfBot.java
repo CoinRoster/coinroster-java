@@ -457,7 +457,6 @@ public class GolfBot extends Utils {
 				JSONObject player = players.getJSONObject(i);
 				String player_id = player.getString("player_id");
 				if(id.equals(player_id)){
-					log(player_id);
 					JSONObject data = new JSONObject(playerScores.getString(2));
 					JSONObject scores_to_edit = data.getJSONObject(String.valueOf(round));
 					in_leaderboard = true;
@@ -540,7 +539,7 @@ public class GolfBot extends Utils {
 			log("updating option table for score-to-par contests...");
 			// get worst score relative to when (tournament or round)
 			int worstScore = findWorstScore(when);
-			log("worst score in" + when + ": " + worstScore);
+			log("worst score in " + when + ": " + worstScore);
 			log("normalizing scores...");
 			
 			while(playerScores.next()){
@@ -625,7 +624,7 @@ public class GolfBot extends Utils {
 		}
 		//there are contest rules so its a fantasy points contest
 		else{
-			log("multi-stat contest");
+			log("updating option table for multi-stat contests...");
 			while(playerScores.next()){
 				JSONObject player = new JSONObject();
 				String id = playerScores.getString(1);
@@ -650,7 +649,6 @@ public class GolfBot extends Utils {
 						}
 						else{
 							int score;
-							log("checking if top score");
 							try{
 								score = data.getJSONObject(when).getInt("today");
 								int top_score = getTopScore(when);
@@ -718,7 +716,6 @@ public class GolfBot extends Utils {
 					continue;
 				}
 			}
-			log(topScore);
 			return topScore;
 		}
 	}
