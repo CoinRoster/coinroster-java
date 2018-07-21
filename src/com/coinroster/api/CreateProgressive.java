@@ -44,30 +44,35 @@ public class CreateProgressive extends Utils
            
             if (code.equals("")) 
             	{
+            	log("Code cannot be empty");
                 output.put("error", "Code cannot be empty");
             	break method;
             	}
 
             if (code.length() > 20) 
             	{
+            	log("Code cannot be more than 20 chars");
                 output.put("error", "Code cannot be more than 20 chars");
             	break method;
             	}
             
             if (db.select_progressive(code) != null)
             	{
+            	log("Code has already been used");
                 output.put("error", "Code has already been used");
             	break method;
             	}
             
             if (payout_info.equals("")) 
 	        	{
+            	log("Payout info cannot be empty");
 	            output.put("error", "Payout info cannot be empty");
 	        	break method;
 	        	}
 
             if (payout_info.length() > 500) 
 	        	{
+            	log("Payout info cannot be more than 500 chars");
 	            output.put("error", "Payout info cannot be more than 500 chars");
 	        	break method;
 	        	}
