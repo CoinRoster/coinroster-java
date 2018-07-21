@@ -118,6 +118,7 @@ public class CloseContestRegistration extends Utils
 							method.output = output;
 							method.session = null;
 							method.sql_connection = sql_connection;
+
 							try{
 								log("Creating progressive for voting round");
 								Constructor<?> c = Class.forName("com.coinroster.api." + "CreateProgressive").getConstructor(MethodInstance.class);

@@ -67,7 +67,7 @@ public class CreateProgressive extends Utils
 	            output.put("error", "Payout info cannot be more than 500 chars");
 	        	break method;
 	        	}
-            
+            log("test1");
             PreparedStatement select_category = sql_connection.prepareStatement("select * from category where code = ?");
             select_category.setString(1, category);
             ResultSet category_rs = select_category.executeQuery();
@@ -77,6 +77,7 @@ public class CreateProgressive extends Utils
 	            output.put("error", "Invalid category");
 	        	break method;
             	}
+            log("test2");
 
             PreparedStatement select_sub_category = sql_connection.prepareStatement("select * from sub_category where code = ?");
             select_sub_category.setString(1, sub_category);
@@ -87,6 +88,7 @@ public class CreateProgressive extends Utils
 	            output.put("error", "Invalid sub-category");
 	        	break method;
             	}
+            log("test3");
 
             PreparedStatement create_progressive = sql_connection.prepareStatement("insert into progressive(created, created_by, category, sub_category, code, payout_info) values(?, ?, ?, ?, ?, ?)");
 			create_progressive.setLong(1, System.currentTimeMillis());
@@ -96,7 +98,8 @@ public class CreateProgressive extends Utils
 			create_progressive.setString(5, code);
 			create_progressive.setString(6, payout_info);
 			create_progressive.executeUpdate();
-            
+
+            log("test4");
             output.put("status", "1");
 			
 //------------------------------------------------------------------------------------
