@@ -145,7 +145,7 @@ public class CloseContestRegistration extends Utils
 							log("Contest creator commission: " + contest_creator_commission);
 							
 							JSONObject fund_progressive_input = new JSONObject();
-							fund_progressive_input.put("code", Utils.SHA1(contest.getString("title") + contest.getInt("contest_id")));
+							fund_progressive_input.put("code", Utils.SHA1(contest.getString("title") + contest.getInt("contest_id")).substring(0, 19));
 							fund_progressive_input.put("amount_to_add", contest_creator_commission);
 							
 							MethodInstance fund_method = new MethodInstance();
