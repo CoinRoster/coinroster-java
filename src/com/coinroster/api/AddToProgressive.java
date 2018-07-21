@@ -44,7 +44,7 @@ public class AddToProgressive extends Utils
 			from_currency = "BTC",
 			to_currency = "BTC";
 			
-			if (session.user_id() == null) {
+			if (session == null) {
 				created_by = "Crowd-Contest-Bot";
 			} else {
 				created_by = session.user_id();

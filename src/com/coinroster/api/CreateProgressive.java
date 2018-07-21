@@ -21,6 +21,8 @@ public class CreateProgressive extends Utils
 		input = method.input,
 		output = method.output;
 		
+        log("test1");
+		
 		Session session = method.session;
 		
 		Connection sql_connection = method.sql_connection;
@@ -30,7 +32,9 @@ public class CreateProgressive extends Utils
 		method : {
 			
 //------------------------------------------------------------------------------------
-		
+
+            log("test1");
+            
             String
             
             category = input.getString("category"),
