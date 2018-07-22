@@ -591,7 +591,13 @@ public class GolfBot extends Utils {
 				// ROUND ROSTER CONTEST
 				else{
 					if(status == 4){
-						int score = data.getJSONObject(when).getInt("today");
+						int score = 0;
+						try{
+							score = data.getJSONObject(when).getInt("today");
+						}catch(Exception e){
+							log(e.getMessage());
+							log("player id: " + id);
+						}
 						int normalizedScore = normalizeScore(score, worstScore);
 						player.put("id", id);
 						player.put("score_raw", Integer.toString(score));
@@ -1010,6 +1016,23 @@ public class GolfBot extends Utils {
 		}
 	}
 	
+	public JSONObject replaceInactive(String id, double salary) throws SQLException, JSONException{
+		JSONObject player = new JSONObject();
+		PreparedStatement get_player = sql_connection.prepareStatement("SELECT id, name, salary from player where id != ? "
+																	+ "and sport_type = \"GOLF\" and filter_on = 4 and salary <= ? "
+																	+ "order by salary desc, name asc limit 1");
+		get_player.setString(1,  id);
+		get_player.setDouble(2, salary);
+		ResultSet rtn = get_player.executeQuery();
+		if(rtn.next()){
+			player.put("id", rtn.getString(1));
+			player.put("name", rtn.getString(2));
+			player.put("price", rtn.getDouble(3));
+		}
+		return player;
+	}
+	
+	
 	class Player {
 		public String method_level = "admin";
 		private String name;
@@ -1080,7 +1103,6 @@ public class GolfBot extends Utils {
 						else if(d.getElementsByTag("p").last().text().equals("Height")){
 							height = d.getElementsByTag("p").get(0).text();
 							height = height.replace("  ft,", "'").replace("  in", "\"");
-							log(height);
 						}
 						else if(d.getElementsByTag("p").last().text().equals("Birthday"))
 							birthday = d.getElementsByTag("p").get(0).text();
