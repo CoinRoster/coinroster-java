@@ -447,6 +447,9 @@ public class ContestMethods extends Utils{
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
 					String c_id = (String) roster_contest_ids.next();
+					int today = getToday();
+					if(today == 5)
+						golfBot.checkForInactives(Integer.parseInt(c_id));
 					String when = roster_contests.getJSONObject(c_id).getString("when");
 					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
 					log("scoring_rules_json: " + scoring_rules.toString());
