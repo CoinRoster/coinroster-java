@@ -56,10 +56,9 @@ public class SettleContest extends Utils
 			new Backup();
 
 			// lock it all
-			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write");
-
+			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write, voting write, category write, control write");
+			
 			try {
 				lock : {
 				

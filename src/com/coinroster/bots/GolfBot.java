@@ -592,7 +592,13 @@ public class GolfBot extends Utils {
 				// ROUND ROSTER CONTEST
 				else{
 					if(status == 4){
-						int score = data.getJSONObject(when).getInt("today");
+						int score = 0;
+						try{
+							score = data.getJSONObject(when).getInt("today");
+						}catch(Exception e){
+							log(e.getMessage());
+							log("player id: " + id);
+						}
 						int normalizedScore = normalizeScore(score, worstScore);
 						player.put("id", id);
 						player.put("score_raw", Integer.toString(score));
@@ -1098,7 +1104,6 @@ public class GolfBot extends Utils {
 						else if(d.getElementsByTag("p").last().text().equals("Height")){
 							height = d.getElementsByTag("p").get(0).text();
 							height = height.replace("  ft,", "'").replace("  in", "\"");
-							log(height);
 						}
 						else if(d.getElementsByTag("p").last().text().equals("Birthday"))
 							birthday = d.getElementsByTag("p").get(0).text();

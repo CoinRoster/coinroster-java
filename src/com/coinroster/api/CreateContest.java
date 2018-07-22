@@ -55,16 +55,17 @@ public class CreateContest extends Utils
 			String scoring_rules, prop_data;
 			try{
 				scoring_rules = input.getString("scoring_rules").toString();
+				log("scoring rules: " + scoring_rules);
 			}catch(Exception e){
 				scoring_rules = null;
 			}
 			try{
 				prop_data = input.getString("prop_data").toString();
+				log("prop data: " + prop_data);
 			}catch(Exception e){
 				prop_data = null;
 			}
             
-			
 			
             // validate common fields
             

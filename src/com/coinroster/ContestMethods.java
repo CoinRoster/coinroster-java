@@ -518,7 +518,6 @@ public class ContestMethods extends Utils{
 								fields.put("contest_id", Integer.parseInt(c_id));
 								fields.put("normalization_scheme", "INTEGER");
 								fields.put("player_scores", player_scores);
-								
 								MethodInstance method = new MethodInstance();
 								JSONObject output = new JSONObject("{\"status\":\"0\"}");
 								method.input = fields;
@@ -530,7 +529,7 @@ public class ContestMethods extends Utils{
 									c.newInstance(method);
 								}
 								catch(Exception e){
-									e.printStackTrace();
+									log(e.getMessage());
 								}
 							}
 						}
@@ -710,10 +709,10 @@ public class ContestMethods extends Utils{
 				while(roster_contest_ids.hasNext()){
 					
 					String c_id = (String) roster_contest_ids.next();
-					log("contest: " + c_id);
+					log("baseball contest: " + c_id);
 					String scoring_rules_string = roster_contests.getString(c_id);
 					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-					log(scoring_rules.toString());
+					log("scoring rules: " + scoring_rules.toString());
 					JSONArray player_scores = baseball_bot.updateScores(scoring_rules);
 					JSONObject fields = new JSONObject();
 					fields.put("contest_id", Integer.parseInt(c_id));
@@ -774,7 +773,7 @@ public class ContestMethods extends Utils{
 						JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
 						JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
 						JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
-
+						
 						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
 						MethodInstance pari_method = new MethodInstance();
 						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
