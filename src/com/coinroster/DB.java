@@ -1385,6 +1385,46 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	public int getGolferStatus(String player_id, String sport) throws SQLException, JSONException{
+		ResultSet result_set = null;
+		int status = 0;
+		try {
+			PreparedStatement get_player = sql_connection.prepareStatement("select filter_on from player where sport_type = ? and id = ?");
+			get_player.setString(1, sport);
+			get_player.setString(2, player_id);
+			result_set = get_player.executeQuery();		
+		}
+		catch(Exception e){
+			Utils.log(e.getMessage());
+		}
+		if(result_set.next()){
+			status = result_set.getInt(1);
+		}
+		return status;
+	}
+	
+//------------------------------------------------------------------------------------
+
+	public String getPlayerName(String player_id, String sport) throws SQLException, JSONException{
+		ResultSet result_set = null;
+		String name = null;
+		try {
+			PreparedStatement get_player = sql_connection.prepareStatement("select name from player where sport_type = ? and id = ?");
+			get_player.setString(1, sport);
+			get_player.setString(2, player_id);
+			result_set = get_player.executeQuery();		
+		}
+		catch(Exception e){
+			Utils.log(e.getMessage());
+		}
+		if(result_set.next()){
+			name = result_set.getString(1);
+		}
+		return name;
+	}
+	
+//------------------------------------------------------------------------------------
+
 	public void editData(String data, String id, String sport) throws SQLException{
 		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ?");
 		update_points.setString(1, data);
@@ -1559,6 +1599,24 @@ public class DB
 		if(result_set.next()) return result_set.getString(1) + " " + result_set.getString(2);
 		else return null;
 	}
+	
+//------------------------------------------------------------------------------------
 
+	public void notify_user_roster_player_replacement(String username, String email_address, String replaced_player, String replacement_player, int roster_id, String contest_name, int contest_id) throws Exception
+	{
+	String
+	subject = "Your roster has been adjusted!",
+
+	message_body = "Hello <b>" + username + "</b>!";
+	message_body += "<br/>";
+	message_body += "We have made an important change to your roster (id: " + roster_id + ") in " + contest_name + " (id: " + contest_id + ")";
+	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player;
+	message_body += "View your updated roster <a href='" + Server.host + "/contests/entries.html?contest_id" + contest_id + "'>here</a>";
+	message_body += "<br/>";
+	message_body += "Best of luck!";
+
+	Server.send_mail(email_address, username, subject, message_body);
+	}
+	
 }
 

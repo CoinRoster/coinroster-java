@@ -1016,9 +1016,38 @@ public class GolfBot extends Utils {
 		}
 	}
 	
-	public JSONObject replaceInactive(String id, double salary) throws SQLException, JSONException{
+	public void checkForInactives(int contest_id) throws Exception{
+		JSONArray entries = db.select_contest_entries(contest_id);
+		for(int i = 0; i < entries.length(); i++){
+			JSONObject entry = entries.getJSONObject(i);
+			JSONArray entry_data = new JSONArray(entry.getString("entry_data"));
+			for(int q = 0; q < entry_data.length(); q++){
+				JSONObject player = entry_data.getJSONObject(q);
+				int status = db.getGolferStatus(player.getString("id"), this.sport);
+				// Roster contains INACTIVE player
+				if(status == 0){
+					// get next available player (one player cheaper)
+					JSONObject new_player = replaceInactivePlayer(player.getString("id"), player.getDouble("price"));
+					// remove inactive player from roster
+					entry_data.remove(q);
+					// put in new one
+					entry_data.put(new_player);
+					log("replacing INACTIVE rostered golfer " + player.getString("id") + " with " + new_player.toString());
+					String title = db.get_contest_title(contest_id);
+					JSONObject user = db.select_user("id", entry.getString("user_id"));
+					// email user to notify
+					db.notify_user_roster_player_replacement(user.getString("username"), user.getString("email_address"), 
+							db.getPlayerName(player.getString("id"), this.sport), db.getPlayerName(new_player.getString("id"), this.sport), 
+							entry.getInt("entry_id"), title, contest_id);
+					
+				}
+			}
+		}
+	}
+	
+	public JSONObject replaceInactivePlayer(String id, double salary) throws SQLException, JSONException{
 		JSONObject player = new JSONObject();
-		PreparedStatement get_player = sql_connection.prepareStatement("SELECT id, name, salary from player where id != ? "
+		PreparedStatement get_player = sql_connection.prepareStatement("SELECT id, salary from player where id != ? "
 																	+ "and sport_type = \"GOLF\" and filter_on = 4 and salary <= ? "
 																	+ "order by salary desc, name asc limit 1");
 		get_player.setString(1,  id);
@@ -1026,8 +1055,7 @@ public class GolfBot extends Utils {
 		ResultSet rtn = get_player.executeQuery();
 		if(rtn.next()){
 			player.put("id", rtn.getString(1));
-			player.put("name", rtn.getString(2));
-			player.put("price", rtn.getDouble(3));
+			player.put("price", rtn.getDouble(2));
 		}
 		return player;
 	}
