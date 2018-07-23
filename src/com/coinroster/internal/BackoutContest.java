@@ -130,7 +130,7 @@ public class BackoutContest extends Utils {
 			String message_body  = "Hi <b><!--USERNAME--></b>";
 			message_body += "<br/>";
 			message_body += "<br/>";
-			message_body += "You were participating in the contest: <b>" + contest.getString("contest_title")  + "</b>";
+			message_body += "You were participating in the contest: <b>" + contest.getString("title")  + "</b>";
 			message_body += "<br/>";
 			message_body += "<br/>";
 			message_body += "The contest has been cancelled and your entry fees have been credited back to your account.";

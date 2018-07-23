@@ -102,6 +102,9 @@ public class AddToProgressive extends Utils
 
             output.put("status", "1");
             
-			} method.response.send(output);
+			} 		
+			if (session != null) {
+				method.response.send(method.output);
+			}
 		}
 	}
