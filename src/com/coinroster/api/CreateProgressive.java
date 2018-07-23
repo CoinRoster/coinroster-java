@@ -40,7 +40,14 @@ public class CreateProgressive extends Utils
             category = input.getString("category"),
             sub_category = input.getString("sub_category"),
             code = input.getString("code"),
-            payout_info = input.getString("payout_info");
+            payout_info = input.getString("payout_info"),
+            created_by = null;
+            
+			if (session == null) {
+				created_by = "Crowd-Contest-Bot";
+			} else {
+				created_by = session.user_id();
+			}
            
             if (code.equals("")) 
             	{
@@ -101,7 +108,7 @@ public class CreateProgressive extends Utils
 
             PreparedStatement create_progressive = sql_connection.prepareStatement("insert into progressive(created, created_by, category, sub_category, code, payout_info) values(?, ?, ?, ?, ?, ?)");
 			create_progressive.setLong(1, System.currentTimeMillis());
-			create_progressive.setString(2, session.user_id());
+			create_progressive.setString(2, created_by);
 			create_progressive.setString(3, category);
 			create_progressive.setString(4, sub_category);
 			create_progressive.setString(5, code);
