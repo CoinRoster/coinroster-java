@@ -78,7 +78,7 @@ public class GolfBot extends Utils {
 		return id;
 	}
 	
-	public boolean appendLateAdditions() throws SQLException, JSONException, IOException{
+	public boolean appendLateAdditions() throws SQLException, JSONException, IOException, InterruptedException{
 		
 		String gameID = this.getLiveTourneyID();
 		Map<Integer, JSONArray> contest_players = new HashMap<Integer, JSONArray>();
@@ -234,7 +234,7 @@ public class GolfBot extends Utils {
 		return flag;
 	}
 	
-	public void scrapeTourneyID(int today) throws IOException, JSONException{
+	public void scrapeTourneyID(int today) throws IOException, JSONException, InterruptedException{
 		// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
@@ -270,7 +270,7 @@ public class GolfBot extends Utils {
 		}
 	}
 	
-	public String getCountry(String id) throws JSONException, IOException{
+	public String getCountry(String id) throws JSONException, IOException, InterruptedException{
 		String country = "";
 		String all_players_url = "https://statdata.pgatour.com/players/player.json";
 		JSONArray all_players = JsonReader.readJsonFromUrl(all_players_url).getJSONArray("plrs");
@@ -284,7 +284,7 @@ public class GolfBot extends Utils {
 		return country;
 	}
 	
-	public Map<String, Player> setup() throws IOException, JSONException, SQLException {
+	public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException {
 		Map<String, Player> players = new HashMap<String, Player>();
 		if(this.tourneyID != null){
 			String url = "https://statdata.pgatour.com/r/" + tourneyID + "/field.json";
@@ -369,11 +369,11 @@ public class GolfBot extends Utils {
 				save_player.setString(2, player.getName());
 				save_player.setString(3, sport);
 				save_player.setString(4, player.getTourneyID());
-				save_player.setString(5, player.getCountry());
 				save_player.setDouble(6, player.getSalary());
 				save_player.setString(7, initializeGolferScores().toString());
 				save_player.setDouble(8, player.getPoints());
 				JSONObject data = player.getDashboardData(this.year);
+				save_player.setString(5, player.getCountry());
 				save_player.setString(9, data.toString());
 				save_player.setInt(10, 4);
 				save_player.executeUpdate();	
@@ -416,7 +416,7 @@ public class GolfBot extends Utils {
 		return status_int;
 	}
 
-	public JSONObject scrapeScores(String tourneyID) throws JSONException, IOException, SQLException{
+	public JSONObject scrapeScores(String tourneyID) throws JSONException, IOException, SQLException, InterruptedException{
 		JSONObject tournament_statuses = new JSONObject();
 		
 		tournament_statuses.put("1", false);
@@ -1118,10 +1118,17 @@ public class GolfBot extends Utils {
 		public JSONObject getDashboardData(String year) throws JSONException, IOException{
 			
 			String weight = "", height = "", birthday = "", age = "", birthPlace = "", birthString = "", cut_percentage = "";
-			Document page = Jsoup.connect("https://www.pgatour.com/players/player." + String.valueOf(this.pga_id) + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+			Document page = Jsoup.connect("https://www.pgatour.com/players/player." + this.pga_id + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 				      .referrer("http://www.google.com").timeout(6000).get();
 			
 			try{
+				if(this.country == "" || this.country == null){
+					Element country_img = page.getElementsByClass("country").first().getElementsByTag("span")
+							.first().getElementsByTag("img").first();
+					String country_code = country_img.attr("src").split("/")[7].replace(".png", "");
+					this.country = country_code;
+				}
+				
 				Element outer_div = page.getElementsByClass("s-col-left").first();
 				Elements divs = outer_div.getElementsByClass("s-col__row");
 				try{
@@ -1145,26 +1152,20 @@ public class GolfBot extends Utils {
 				}catch(Exception e){
 					log(e.toString());
 				}
-				try{
-					if(this.country == "" || this.country == null){
-						Element country_img = page.getElementsByClass("country").first().getElementsByTag("span")
-								.first().getElementsByTag("img").first();
-						String country_code = country_img.attr("src").split("/")[7].replace(".png", "");
-						this.country = country_code;
-					}
-				}catch(Exception e){
-				}
 			}catch(Exception e){
 				log(e.toString());
 				log(e.getMessage());
 				log(this.getName() + " - " + this.pga_id + ": unable to grab bio data - most likely not available on pgatour.com");
 			}
+			
 			JSONArray last_five_tournaments = new JSONArray();
 			JSONArray stats = new JSONArray();
 			
 			try{
 				String data_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "stat.json";
-				JSONObject data = JsonReader.readJsonFromUrl(data_url);
+				page = Jsoup.connect(data_url).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+						.ignoreContentType(true).referrer("http://www.google.com").timeout(6000).get(); 
+				JSONObject data = new JSONObject(page.text().replace(" \"\" : \"\",", ""));
 				JSONArray json_stats = data.getJSONArray("plrs").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("statCats").getJSONObject(0).getJSONArray("stats");
 				List<String> options = Arrays.asList("101", "102", "103", "105", "155", "156", "120", "186");
 				for(int i = 0; i < json_stats.length(); i++){
@@ -1180,7 +1181,9 @@ public class GolfBot extends Utils {
 			
 			try{
 				String results_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "results.json";
-				JSONObject results = JsonReader.readJsonFromUrl(results_url);
+				page = Jsoup.connect(results_url).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+						.ignoreContentType(true).referrer("http://www.google.com").timeout(6000).get(); 
+				JSONObject results = new JSONObject(page.text().replace(" \"\" : \"\",", ""));
 				JSONArray tourneys = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trnDetails");
 				int num_tourneys = tourneys.length();
 				for(int i = num_tourneys - 1; i >= (num_tourneys - 5) && i >= 0; i--){
@@ -1188,8 +1191,8 @@ public class GolfBot extends Utils {
 				}
 				try{
 					JSONObject totals = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONObject("totals");
-					int cuts_made = Integer.parseInt(totals.getString("cutsMade"));
-					int cuts_missed = Integer.parseInt(totals.getString("cutsMissed"));
+					double cuts_made = Double.parseDouble(totals.getString("cutsMade"));
+					double cuts_missed = Double.parseDouble(totals.getString("cutsMissed"));
 					if(cuts_missed != 0){
 						double cuts_per = (cuts_made / (cuts_made + cuts_missed)) * 100;
 						cut_percentage = String.valueOf(cuts_per);

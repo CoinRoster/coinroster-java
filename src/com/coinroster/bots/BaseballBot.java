@@ -52,7 +52,7 @@ public class BaseballBot extends Utils {
 	public long getEarliestGame(){
 		return earliest_game;
 	}
-	public String scrapeGameIDs() throws IOException, JSONException{
+	public String scrapeGameIDs() throws IOException, JSONException, InterruptedException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
