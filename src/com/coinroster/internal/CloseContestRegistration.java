@@ -108,7 +108,7 @@ public class CloseContestRegistration extends Utils
 							
 							JSONObject progressive_input = new JSONObject();
 							progressive_input.put("category", contest.getString("category"));
-							progressive_input.put("sub_category", contest.getString("category"));
+							progressive_input.put("sub_category", contest.getString("sub_category"));
 							progressive_input.put("code", Utils.SHA1(contest.getString("title") + contest.getInt("contest_id")).substring(0, 15));
 							progressive_input.put("payout_info", "Voting Round Commission");
 							
