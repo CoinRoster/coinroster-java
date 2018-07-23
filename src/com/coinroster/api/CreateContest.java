@@ -43,6 +43,13 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
+            boolean is_private = input.getBoolean("private");
+			boolean is_admin = false;
+			
+			if (session != null && input.getString("request_source") != null) {
+				is_admin = session.user_level() != null && session.user_level().equals("1") && input.getString("request_source").equals("admin_panel");	
+			}
+			
 
             String settlement_type = input.getString("settlement_type");
             PreparedStatement create_contest = null;
@@ -136,7 +143,19 @@ public class CreateContest extends Utils
             log("settlement_type: " + settlement_type);
             log("scoring_rules: " + scoring_rules);
             log("prop_data: " + prop_data);
-
+            log("private: " + is_private);
+            
+            // if private, generate hash for unique url and add user as a participant
+            JSONObject participants = new JSONObject();
+            if (is_private) {
+            	JSONArray users = new JSONArray();
+            	users.put(session.user_id());
+            	
+            	String code = Utils.SHA1(title + registration_deadline).substring(0, 8);
+            	
+            	participants.put("code", code);
+            	participants.put("users", users);
+            }
             if (contest_type.equals("ROSTER"))
 	            {
 	            int salary_cap = input.getInt("salary_cap");
@@ -331,7 +350,8 @@ public class CreateContest extends Utils
 	            
 	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, "
 	            		+ "rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, "
-	            		+ "odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, prop_data) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+	            		+ "odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, prop_data, participants) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+
 
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
@@ -392,6 +412,12 @@ public class CreateContest extends Utils
 				create_contest.setString(23, scoring_rules);
 				create_contest.setString(26, prop_data);
 
+				if (is_private) {
+					create_contest.setString(27, participants.toString());
+				} else {
+					create_contest.setNull(27, java.sql.Types.VARCHAR);
+				}
+				
 	            create_contest.executeUpdate();
 
 	        }
@@ -479,7 +505,7 @@ public class CreateContest extends Utils
 						create_contest.setLong(16, settlement_deadline);
 		            	
 						// exclude admins from seeking approval
-		            	if(session.user_level() != "1") 
+		            	if(is_admin) 
 		            		create_contest.setInt(15, 5);            		
 		            	else
 		            		create_contest.setInt(15, 1);     
@@ -490,12 +516,18 @@ public class CreateContest extends Utils
 						create_contest.setInt(15, 1);     
 						create_contest.setNull(16, java.sql.Types.BIGINT);
 					}		
-					
             	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
 				create_contest.setString(17, scoring_rules);
 				create_contest.setString(18, prop_data);
+				
+				if (is_private) {
+					create_contest.setString(19, participants.toString());
+				} else {
+					create_contest.setNull(19, java.sql.Types.VARCHAR);
+				}
+				
             	create_contest.executeUpdate();
             }
             
