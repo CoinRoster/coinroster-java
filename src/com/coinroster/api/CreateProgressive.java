@@ -117,13 +117,8 @@ public class CreateProgressive extends Utils
 
 			} 
 		
-			try {	
-				log("method: " + method.response.toString());
+			if (session != null) {
 				method.response.send(method.output);
-			} catch (Exception e){
-				log(method.toString());
-				e.printStackTrace(System.out);
 			}
-		
 		}
 	}
