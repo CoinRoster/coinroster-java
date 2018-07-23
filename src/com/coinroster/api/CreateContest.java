@@ -43,6 +43,13 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
+            boolean is_private = input.getBoolean("private");
+			boolean is_admin = false;
+			
+			if (session != null && input.getString("request_source") != null) {
+				is_admin = session.user_level() != null && session.user_level().equals("1") && input.getString("request_source").equals("admin_panel");	
+			}
+			
 
             String settlement_type = input.getString("settlement_type");
             PreparedStatement create_contest = null;
@@ -126,6 +133,19 @@ public class CreateContest extends Utils
             log("rake: " + rake);
             log("cost_per_entry: " + cost_per_entry);
             log("settlement_type: " + settlement_type);
+            log("private: " + is_private);
+            
+            // if private, generate hash for unique url and add user as a participant
+            JSONObject participants = new JSONObject();
+            if (is_private) {
+            	JSONArray users = new JSONArray();
+            	users.put(session.user_id());
+            	
+            	String code = Utils.SHA1(title + registration_deadline).substring(0, 8);
+            	
+            	participants.put("code", code);
+            	participants.put("users", users);
+            }
             
             if (contest_type.equals("ROSTER"))
 	            {
@@ -319,7 +339,7 @@ public class CreateContest extends Utils
 	            //log("pay_table: " + pay_table);
 	            //log("option_table: " + option_table);
 	            
-	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, participants) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
@@ -378,6 +398,12 @@ public class CreateContest extends Utils
 				create_contest.setString(21, score_header);
 				create_contest.setString(22, gameIDs);
 				create_contest.setString(23, scoring_rules);
+				if (is_private) {
+					create_contest.setString(24, participants.toString());
+				} else {
+					create_contest.setNull(24, java.sql.Types.VARCHAR);
+				}
+				
 	            create_contest.executeUpdate();
 
 	        }
@@ -445,7 +471,7 @@ public class CreateContest extends Utils
 						create_contest.setLong(16, settlement_deadline);
 		            	
 						// exclude admins from seeking approval
-		            	if(session.user_level() != "1") 
+		            	if(is_admin) 
 		            		create_contest.setInt(15, 5);            		
 		            	else
 		            		create_contest.setInt(15, 1);     
@@ -459,6 +485,13 @@ public class CreateContest extends Utils
 					create_contest.setInt(14, auto);
 					create_contest.setNull(17, java.sql.Types.VARCHAR);
 				}
+				
+				if (is_private) {
+					create_contest.setString(18, participants.toString());
+				} else {
+					create_contest.setNull(18, java.sql.Types.VARCHAR);
+				}
+				
 				create_contest.executeUpdate();
             }
             
