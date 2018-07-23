@@ -21,8 +21,6 @@ public class CreateProgressive extends Utils
 		input = method.input,
 		output = method.output;
 		
-        log("test1");
-		
 		Session session = method.session;
 		
 		Connection sql_connection = method.sql_connection;
@@ -33,8 +31,6 @@ public class CreateProgressive extends Utils
 			
 //------------------------------------------------------------------------------------
 
-            log("test1");
-            
             String
             
             category = input.getString("category"),
@@ -83,7 +79,6 @@ public class CreateProgressive extends Utils
 	            output.put("error", "Payout info cannot be more than 500 chars");
 	        	break method;
 	        	}
-            log("test1");
             PreparedStatement select_category = sql_connection.prepareStatement("select * from category where code = ?");
             select_category.setString(1, category);
             ResultSet category_rs = select_category.executeQuery();
@@ -93,7 +88,6 @@ public class CreateProgressive extends Utils
 	            output.put("error", "Invalid category");
 	        	break method;
             	}
-            log("test2");
 
             PreparedStatement select_sub_category = sql_connection.prepareStatement("select * from sub_category where code = ?");
             select_sub_category.setString(1, sub_category);
@@ -104,7 +98,6 @@ public class CreateProgressive extends Utils
 	            output.put("error", "Invalid sub-category");
 	        	break method;
             	}
-            log("test3");
 
             PreparedStatement create_progressive = sql_connection.prepareStatement("insert into progressive(created, created_by, category, sub_category, code, payout_info) values(?, ?, ?, ?, ?, ?)");
 			create_progressive.setLong(1, System.currentTimeMillis());
@@ -115,16 +108,17 @@ public class CreateProgressive extends Utils
 			create_progressive.setString(6, payout_info);
 			create_progressive.executeUpdate();
 
-            log("test4");
             output.put("status", "1");
             log("test5");
+			log(method.output.toString());
+			log(output.toString());
 			
 //------------------------------------------------------------------------------------
 
 			} 
 		
 			try {	
-				log("method: " + method.toString());
+				log("method: " + method.response.toString());
 				method.response.send(method.output);
 			} catch (Exception e){
 				log(method.toString());
