@@ -117,9 +117,17 @@ public class CreateProgressive extends Utils
 
             log("test4");
             output.put("status", "1");
+            log("test5");
 			
 //------------------------------------------------------------------------------------
 
-			} method.response.send(output);
+			} 
+		
+			try {	
+				method.response.send(output);
+			} catch (Exception e){
+				e.printStackTrace(System.out);
+			}
+		
 		}
 	}
