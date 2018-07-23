@@ -1192,8 +1192,8 @@ public class GolfBot extends Utils {
 				}
 				try{
 					JSONObject totals = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONObject("totals");
-					int cuts_made = Integer.parseInt(totals.getString("cutsMade"));
-					int cuts_missed = Integer.parseInt(totals.getString("cutsMissed"));
+					double cuts_made = Double.parseDouble(totals.getString("cutsMade"));
+					double cuts_missed = Double.parseDouble(totals.getString("cutsMissed"));
 					if(cuts_missed != 0){
 						double cuts_per = (cuts_made / (cuts_made + cuts_missed)) * 100;
 						cut_percentage = String.valueOf(cuts_per);
