@@ -238,10 +238,10 @@ public class GolfBot extends Utils {
 		// get the Thursday date in yyyy-MM-dd format
 		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
-		Calendar c = Calendar.getInstance();        		
+		Calendar c = Calendar.getInstance();
 		
 		if(today == 2)
-			c.add(Calendar.DATE, 3);
+			c.add(Calendar.DATE, 2); //c.add(Calendar.DATE, 3);
 		else if(today == 6)
 			c.add(Calendar.DATE, -1);
 		else if(today == 7)
@@ -367,9 +367,9 @@ public class GolfBot extends Utils {
 				save_player.setDouble(6, player.getSalary());
 				save_player.setString(7, initializeGolferScores().toString());
 				save_player.setDouble(8, player.getPoints());
-				JSONObject data = player.getDashboardData(this.year);
+				//JSONObject data = player.getDashboardData(this.year);
 				save_player.setString(5, player.getCountry());
-				save_player.setString(9, data.toString());
+				save_player.setString(9, "{}");
 				save_player.setInt(10, 4);
 				save_player.executeUpdate();	
 			}
@@ -877,7 +877,7 @@ public class GolfBot extends Utils {
 					}
 					String title = this.getTourneyName() + " | " + contest.getString("title");
 					contest.put("title", title);
-					contest.put("option_table", option_table.toString());
+					contest.put("option_table", option_table);
 					
 					break;
 					
@@ -908,7 +908,7 @@ public class GolfBot extends Utils {
 					}
 					title = this.getTourneyName() + " | " + contest.getString("title");
 					contest.put("title", title);
-					contest.put("option_table", option_table.toString());
+					contest.put("option_table", option_table);
 					break;
 					
 				case "MAKE_CUT":
@@ -926,6 +926,25 @@ public class GolfBot extends Utils {
 						player.put("name", result_set.getString(1) + " " + result_set.getString(2));
 						player.put("id", result_set.getString(3));
 						contest = this.createMakeCutProp(contest, player);
+						
+						log("FINAL CONTEST JSON: " + contest.toString());
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = contest;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							log("ERROR!!!!");
+							log(e.toString());
+							log(e.getMessage());
+							log(e.getClass());
+							log(e.getCause());
+						}	
 					}
 					break;
 					
@@ -943,7 +962,7 @@ public class GolfBot extends Utils {
 					no.put("description", "No");
 					no.put("id", 2);
 					option_table.put(no);
-					contest.put("option_table", option_table.toString());
+					contest.put("option_table", option_table);
 					break;
 					
 				case "TEAM_SNAKE":
@@ -954,26 +973,33 @@ public class GolfBot extends Utils {
 					return 0;
 
 			}
-							
-			MethodInstance method = new MethodInstance();
-			JSONObject output = new JSONObject("{\"status\":\"0\"}");
-			method.input = contest;
-			method.output = output;
-			method.session = null;
-			method.sql_connection = sql_connection;
-			try{
-				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-				c.newInstance(method);
+			
+			if(!prop_data.getString("prop_type").equals("MAKE_CUT")){
+				log("FINAL CONTEST JSON: " + contest.toString());
+				MethodInstance method = new MethodInstance();
+				JSONObject output = new JSONObject("{\"status\":\"0\"}");
+				method.input = contest;
+				method.output = output;
+				method.session = null;
+				method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(method);
+				}
+				catch(Exception e){
+					log("ERROR!!!!");
+					log(e.toString());
+					log(e.getMessage());
+					log(e.getClass());
+					log(e.getCause());
+				}	
 			}
-			catch(Exception e){
-				log(e.toString());
-				log(e.getMessage());
-			}	
 		}
 		
 		// CREATE A WINNER contest on THURS, FRI, SAT (all of them settle sunday)
 		else if(prop_data.getString("prop_type").equals("WINNER") && !when.equals("1")){
 			
+			log("line 999");
 			JSONArray option_table = new JSONArray();
 			PreparedStatement get_players;	
 			get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by points asc desc limit 20");
@@ -1000,7 +1026,7 @@ public class GolfBot extends Utils {
 			}
 			String title = this.getTourneyName() + " | " + contest.getString("title");
 			contest.put("title", title);
-			contest.put("option_table", option_table.toString());
+			contest.put("option_table", option_table);
 			contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
 			contest.put("odds_source", "n/a");
 			contest.put("gameIDs", this.getTourneyID());
@@ -1024,6 +1050,7 @@ public class GolfBot extends Utils {
 		// CREATE A PLAYOFF contest on THURS, FRI, SAT (all of them settle sunday)
 		else if(prop_data.getString("prop_type").equals("PLAYOFF") && !when.equals("1")){
 			
+			log("line 1050");
 			String title = this.getTourneyName() + " " + contest.getString("title");
 			contest.put("title", title);
 
@@ -1036,7 +1063,7 @@ public class GolfBot extends Utils {
 			no.put("description", "No");
 			no.put("id", 2);
 			option_table.put(no);
-			contest.put("option_table", option_table.toString());
+			contest.put("option_table", option_table);
 			contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
 			contest.put("odds_source", "n/a");
 			contest.put("gameIDs", this.getTourneyID());
@@ -1360,7 +1387,7 @@ public class GolfBot extends Utils {
 		no.put("description", "No");
 		no.put("id", 2);
 		option_table.put(no);
-		fields.put("option_table", option_table.toString());
+		fields.put("option_table", option_table);
 		
 		return fields;
 		
@@ -1441,7 +1468,7 @@ public class GolfBot extends Utils {
 			
 			String weight = "", height = "", birthday = "", age = "", birthPlace = "", birthString = "", cut_percentage = "";
 			Document page = Jsoup.connect("https://www.pgatour.com/players/player." + this.pga_id + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-				      .referrer("http://www.google.com").timeout(6000).get();
+				      .referrer("http://www.google.com").timeout(12000).get();
 			
 			try{
 				Element outer_div = page.getElementsByClass("s-col-left").first();
