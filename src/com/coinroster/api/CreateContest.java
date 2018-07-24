@@ -45,8 +45,6 @@ public class CreateContest extends Utils
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
             
-            log("made it to 48");
-            
             boolean is_private = false;
             try{
             	is_private = input.getBoolean("private");
@@ -72,13 +70,13 @@ public class CreateContest extends Utils
 				scoring_rules = input.getString("scoring_rules").toString();
 				log("scoring rules: " + scoring_rules);
 			}catch(Exception e){
-				scoring_rules = null;
+				scoring_rules = "";
 			}
 			try{
 				prop_data = input.getString("prop_data").toString();
 				log("prop data: " + prop_data);
 			}catch(Exception e){
-				prop_data = null;
+				prop_data = "";
 			}
             
 			
@@ -528,21 +526,17 @@ public class CreateContest extends Utils
             	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
-				log("scoring_data: " + scoring_rules);
-				log("prop_data: " + prop_data);
 
 				create_contest.setString(17, scoring_rules);
-
 				create_contest.setString(18, prop_data);
 				
-				
-				log("made it to 532");
+
 				if (is_private) {
 					create_contest.setString(19, participants.toString());
 				} else {
 					create_contest.setNull(19, java.sql.Types.VARCHAR);
 				}
-				log("made it to 538");
+
 			
             	create_contest.executeUpdate();
             }
