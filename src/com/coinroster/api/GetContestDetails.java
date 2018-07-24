@@ -3,6 +3,7 @@ package com.coinroster.api;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Iterator;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -68,6 +69,7 @@ public class GetContestDetails extends Utils
 					if (participants.getString("code").equals(code)) {
 						// check if user is already a participant; add them if not
 						JSONArray users = participants.getJSONArray("users");
+						Utils.log(users.toString());
 						int i = 0;
 						while (users.getString(i) != session.user_id() && i != users.length()) {
 							i++;
@@ -82,7 +84,6 @@ public class GetContestDetails extends Utils
 						}
 
 						// user is clear to proceed
-						
 					} else {						
 						Utils.log("attempting to access private contest with incorrect code");
 						output.put("error", "Invalid code for private contest");
