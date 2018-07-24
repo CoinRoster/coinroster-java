@@ -71,8 +71,12 @@ public class GetContestDetails extends Utils
 						JSONArray users = participants.getJSONArray("users");
 						Utils.log(users.length());
 						int i = 0;
-						while (users.getString(i) != session.user_id() && i != users.length()) {
-							i++;
+						while (i != users.length()) {
+							if (users.getString(i) != session.user_id()) {
+								i++;
+							} else {
+								break;
+							}
 						}
 						if (i == users.length()) {
 							users.put(session.user_id());
