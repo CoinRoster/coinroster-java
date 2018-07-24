@@ -635,8 +635,7 @@ public class ContestMethods extends Utils{
 					Iterator<?> pari_contest_ids = pari_contests.keys();
 					while(pari_contest_ids.hasNext()){
 						String c_id = (String) pari_contest_ids.next();
-						JSONObject prop_data = pari_contests.getJSONObject(c_id).getJSONObject("prop_data");
-						String when = prop_data.getString("when");
+						String when = pari_contests.getJSONObject(c_id).getJSONObject("prop_data").getString("when");
 						if(when.equals("tournament")){
 							int winning_outcome = golfBot.settlePropBet(pari_contests.getJSONObject(c_id));
 							JSONObject fields = new JSONObject();
@@ -699,8 +698,7 @@ public class ContestMethods extends Utils{
 						Iterator<?> pari_contest_ids = pari_contests.keys();
 						while(pari_contest_ids.hasNext()){
 							String c_id = (String) pari_contest_ids.next();
-							JSONObject prop_data = pari_contests.getJSONObject(c_id).getJSONObject("prop_data");
-							String when = prop_data.getString("when");
+							String when = pari_contests.getJSONObject(c_id).getJSONObject("prop_data").getString("when");
 							if(when.equals("tournament")){
 								int winning_outcome = golfBot.settlePropBet(pari_contests.getJSONObject(c_id));
 								JSONObject fields = new JSONObject();
