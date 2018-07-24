@@ -69,7 +69,7 @@ public class GetContestDetails extends Utils
 					if (participants.getString("code").equals(code)) {
 						// check if user is already a participant; add them if not
 						JSONArray users = participants.getJSONArray("users");
-						Utils.log(users.toString());
+						Utils.log(users.length());
 						int i = 0;
 						while (users.getString(i) != session.user_id() && i != users.length()) {
 							i++;
