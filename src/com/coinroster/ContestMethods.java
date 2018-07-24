@@ -294,6 +294,7 @@ public class ContestMethods extends Utils{
 			GolfBot golfBot = new GolfBot(sql_connection);
 			DB db = new DB(sql_connection);
 			JSONArray roster_contests = db.getRosterTemplates("GOLF");
+			JSONArray prop_contests = db.getRosterTemplates("GOLFPROPS");
 			int today = getToday();
 			switch(today){
 			
@@ -313,7 +314,14 @@ public class ContestMethods extends Utils{
 						JSONObject contest = roster_contests.getJSONObject(index);
 						golfBot.createGolfRosterContest(contest, "tournament");
 						golfBot.createGolfRosterContest(contest, "1");
-					}		
+					}
+					
+					for(int index = 0; index < prop_contests.length(); index++){
+						// check if the contest is a round 1 contest or tournament contest:
+						JSONObject contest = prop_contests.getJSONObject(index);
+						golfBot.createGolfPropBet(contest, "tournament");
+						golfBot.createGolfPropBet(contest, "1");
+					}
 					break;
 				
 				// THURSDAY
@@ -327,7 +335,12 @@ public class ContestMethods extends Utils{
 						// check if the contest is a round 2 contest:
 						JSONObject contest = roster_contests.getJSONObject(index);
 						golfBot.createGolfRosterContest(contest, "2");
-					}		
+					}
+					for(int index = 0; index < prop_contests.length(); index++){
+						// check if the contest is a round 1 contest or tournament contest:
+						JSONObject contest = prop_contests.getJSONObject(index);
+						golfBot.createGolfPropBet(contest, "2");
+					}
 					break;
 					
 				// FRIDAY
@@ -342,6 +355,11 @@ public class ContestMethods extends Utils{
 						JSONObject contest = roster_contests.getJSONObject(index);
 						golfBot.createGolfRosterContest(contest, "3");
 					}		
+					for(int index = 0; index < prop_contests.length(); index++){
+						// check if the contest is a round 1 contest or tournament contest:
+						JSONObject contest = prop_contests.getJSONObject(index);
+						golfBot.createGolfPropBet(contest, "3");
+					}
 					break;
 					
 				// SATURDAY
@@ -355,37 +373,17 @@ public class ContestMethods extends Utils{
 						// check if the contest is a round 2 contest:
 						JSONObject contest = roster_contests.getJSONObject(index);
 						golfBot.createGolfRosterContest(contest, "4");
-					}		
+					}	
+					for(int index = 0; index < prop_contests.length(); index++){
+						// check if the contest is a round 1 contest or tournament contest:
+						JSONObject contest = prop_contests.getJSONObject(index);
+						golfBot.createGolfPropBet(contest, "4");
+					}
 					break;
 				
 				default:
 					break;
 			}
-			
-
-//			//create Pari-Mutuel contest for most points
-//			Calendar cal = Calendar.getInstance();
-//			for(int round = 1; round <=4; round++){
-//				cal.setTimeInMillis(deadline);
-//				cal.add(Calendar.DATE, round-1);
-//				long round_deadline = cal.getTimeInMillis();
-//				JSONObject pari_mutuel_data = golfBot.createPariMutuel(round_deadline, String.valueOf(round));
-//	            MethodInstance pari_method = new MethodInstance();
-//				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//				pari_method.input = pari_mutuel_data;
-//				pari_method.output = pari_output;
-//				pari_method.session = null;
-//				pari_method.sql_connection = sql_connection;
-//				try{
-//					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//					c.newInstance(pari_method);
-//				}
-//				catch(Exception e){
-//					log(pari_method.output.toString());
-//					e.printStackTrace();
-//				}	
-//			}
-//
 				
 		} catch (Exception e) {
 			Server.exception(e);

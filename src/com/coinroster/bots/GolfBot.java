@@ -271,17 +271,12 @@ public class GolfBot extends Utils {
 	}
 	
 	public String getCountry(String id) throws JSONException, IOException, InterruptedException{
-		String country = "";
-		String all_players_url = "https://statdata.pgatour.com/players/player.json";
-		JSONArray all_players = JsonReader.readJsonFromUrl(all_players_url).getJSONArray("plrs");
-		for(int p=0; p<all_players.length(); p++){
-			JSONObject pl = all_players.getJSONObject(p);
-			if(id.equals(pl.getString("pid"))){
-				country = pl.getString("ct");
-				return country;
-			}
-		}
-		return country;
+		Document page = Jsoup.connect("https://www.pgatour.com/players/player." + id + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+			      .referrer("http://www.google.com").timeout(6000).get();
+		Element country_img = page.getElementsByClass("country").first().getElementsByTag("span")
+				.first().getElementsByTag("img").first();
+		String country_code = country_img.attr("src").split("/")[7].replace(".png", "");
+		return country_code;
 	}
 	
 	public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException {
@@ -648,7 +643,7 @@ public class GolfBot extends Utils {
 					String key = (String) keys.next();
 					int multiplier = scoring_rules.getInt(key);
 					
-					// deal with top-score seperately
+					// deal with top-score separately
 					if(key.equals("top-score")){
 						if(when.equals("tournament")){
 							int top_score = getTopScore(when);
@@ -747,7 +742,7 @@ public class GolfBot extends Utils {
 		Map<Integer, ArrayList<String>> players = new HashMap<>();
 		ResultSet top_players = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name from player where sport_type=? order by salary DESC limit 30");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit 30");
 			get_players.setString(1, "GOLF");
 			top_players = get_players.executeQuery();
 			
@@ -755,9 +750,10 @@ public class GolfBot extends Utils {
 				int row = top_players.getRow();
 				String id = top_players.getString(1);
 				String name = top_players.getString(2);
+				String country = top_players.getString(3);
 				ArrayList<String> golfer = new ArrayList<>();
 				golfer.add(id);
-				golfer.add(name);
+				golfer.add(name + " " + country);
 				players.put(row, golfer);
 			}
 			
@@ -797,82 +793,14 @@ public class GolfBot extends Utils {
 			fields.put("option_table", teams);
 		}
 		catch(Exception e){
-			e.printStackTrace();
+			log(e.toString());
+			log(e.getMessage());
 		}
 		
 		return fields;
 	}
 	
 	
-	public JSONObject createPariMutuel(Long deadline, String round) throws JSONException{
-		JSONObject fields = new JSONObject();
-		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", "GOLFPROPS");
-		fields.put("contest_type", "PARI-MUTUEL");
-		
-		String progressive;
-		switch(round){
-	        case "1":
-	            progressive = "THURSDAY";
-	            break;
-	        case "2":
-	        	progressive = "FRIDAY";
-	        	break;
-	        case "3":
-	        	progressive = "SATURDAY";
-	        	break;
-	        case "4":
-	        	progressive = "SUNDAY";
-	        	break;
-	        default:
-	        	progressive = "";
-	        	break;
-		}
-		
-		fields.put("progressive", progressive);
-		String title = this.getTourneyName() + " - Top Score in Round " + round;
-		fields.put("title", title);
-		fields.put("description", "Place your bet on who you will think will have the top score in round " + round);
-		fields.put("rake", 5);
-		fields.put("cost_per_entry", 0.00000001);
-		fields.put("registration_deadline", deadline);
-		JSONArray option_table = new JSONArray(); 
-		ResultSet top_players = null;
-		
-		JSONObject none_above = new JSONObject();
-		none_above.put("description", "Any Other Golfer");
-		none_above.put("id", 1);
-		option_table.put(none_above);
-		
-		JSONObject tie = new JSONObject();
-		tie.put("description", "Tie");
-		tie.put("id", 2);
-		option_table.put(tie);
-	
-		int index = 3;
-		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name from player where sport_type=? order by salary DESC limit 40");
-			get_players.setString(1, "GOLF");
-			top_players = get_players.executeQuery();
-			while(top_players.next()){
-				JSONObject player = new JSONObject();
-				String name = top_players.getString(2);
-				String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
-				String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
-				player.put("description", nameNormalized);
-				player.put("id", index);
-				player.put("player_id", top_players.getString(1));
-				option_table.put(player);
-				index += 1;
-			}
-			fields.put("option_table", option_table);
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		
-		return fields;
-	}
 	
 	public void checkPariMutuelStatus(ArrayList<Integer> pari_contest_ids) throws Exception{
 
@@ -1016,6 +944,116 @@ public class GolfBot extends Utils {
 		}
 	}
 	
+	
+	public void createGolfPropBet( JSONObject contest, String when) throws JSONException, SQLException{
+		JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
+		
+		if(prop_data.getString("when").equals(when)){
+			contest.put("odds_source", "n/a");
+			contest.put("gameIDs", this.getTourneyID());
+			
+			if(when.equals("tournament") || when.equals("1"))
+				contest.put("registration_deadline", this.getDeadline());
+			else
+				contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
+           
+			switch(prop_data.getString("prop_type")){
+			
+				case "MOST":
+				case "WINNER":
+					JSONArray option_table = new JSONArray();
+					PreparedStatement get_players;
+					if(when.equals("tournament") || when.equals("1")){
+						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc limit 20");
+					}else{
+						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by points asc desc limit 20");
+					}
+					get_players.setString(1, this.sport);
+					ResultSet players = get_players.executeQuery();
+					
+					JSONObject none_above = new JSONObject();
+					none_above.put("description", "Any Other Golfer");
+					none_above.put("id", 1);
+					option_table.put(none_above);
+					
+					JSONObject tie = new JSONObject();
+					tie.put("description", "Tie");
+					tie.put("id", 2);
+					option_table.put(tie);
+					
+					int index = 3;
+					while(players.next()){
+						
+						JSONObject p = new JSONObject();
+						p.put("id", index);
+						p.put("player_id", players.getString(1));
+						String name = players.getString(2);
+						String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
+						String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
+						p.put("name", nameNormalized + " " + players.getString(3));
+						option_table.put(p);
+						index += 1;
+					}
+					String title = this.getTourneyName() + " | " + contest.getString("title");
+					contest.put("title", title);
+					contest.put("option_table", option_table.toString());
+					
+					break;
+					
+				case "MAKE_CUT":
+					ResultSet result_set = null;
+					try {
+						get_players = sql_connection.prepareStatement("select name, team_abr, id from player where sport_type = ? order by salary desc limit 5");
+						get_players.setString(1, this.sport);
+						result_set = get_players.executeQuery();		
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}
+					while(result_set.next()){
+						JSONObject player = new JSONObject();
+						player.put("name", result_set.getString(1) + " " + result_set.getString(2));
+						player.put("id", result_set.getString(3));
+						contest = this.createMakeCutProp(contest, player);
+					}
+					break;
+				
+				case "PLAYOFF":
+					title = this.getTourneyName() + " | Will there be a Playoff?";
+					contest.put("title", title);
+					contest.put("description", "Place your bet on whether or not there will be a playoff!");
+		
+					option_table = new JSONArray(); 
+					JSONObject yes = new JSONObject();
+					yes.put("description", "Yes");
+					yes.put("id", 1);
+					option_table.put(yes);
+					JSONObject no = new JSONObject();
+					no.put("description", "No");
+					no.put("id", 2);
+					option_table.put(no);
+					contest.put("option_table", option_table.toString());
+					
+					break;
+			}
+							
+			MethodInstance method = new MethodInstance();
+			JSONObject output = new JSONObject("{\"status\":\"0\"}");
+			method.input = contest;
+			method.output = output;
+			method.session = null;
+			method.sql_connection = sql_connection;
+			try{
+				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+				c.newInstance(method);
+			}
+			catch(Exception e){
+				log(e.toString());
+				log(e.getMessage());
+			}	
+		}
+	}
+	
 	public void checkForInactives(int contest_id) throws Exception{
 		JSONArray entries = db.select_contest_entries(contest_id);
 		for(int i = 0; i < entries.length(); i++){
@@ -1045,13 +1083,39 @@ public class GolfBot extends Utils {
 		}
 	}
 	
+	public JSONObject createMakeCutProp(JSONObject fields, JSONObject player) throws JSONException{
+		
+		String title = this.getTourneyName() + " | Will " + player.getString("name") + " Make the Cut?";
+		fields.put("title", title);
+		fields.put("description", "Place your bet on whether or not " + player.getString("name") + " will make the cut!");
+		
+		JSONObject prop_data = new JSONObject(fields.get("prop_data").toString());
+		prop_data.put("player_id", player.getString("id"));
+		fields.put("prop_data", prop_data.toString());
+		
+		JSONArray option_table = new JSONArray(); 
+		JSONObject yes = new JSONObject();
+		yes.put("description", "Yes");
+		yes.put("id", 1);
+		option_table.put(yes);
+		JSONObject no = new JSONObject();
+		no.put("description", "No");
+		no.put("id", 2);
+		option_table.put(no);
+		fields.put("option_table", option_table.toString());
+		
+		return fields;
+		
+	}
+	
 	public JSONObject replaceInactivePlayer(String id, double salary) throws SQLException, JSONException{
 		JSONObject player = new JSONObject();
 		PreparedStatement get_player = sql_connection.prepareStatement("SELECT id, salary from player where id != ? "
-																	+ "and sport_type = \"GOLF\" and filter_on = 4 and salary <= ? "
+																	+ "and sport_type = ? and filter_on = 4 and salary <= ? "
 																	+ "order by salary desc, name asc limit 1");
 		get_player.setString(1,  id);
-		get_player.setDouble(2, salary);
+		get_player.setString(2, this.sport);
+		get_player.setDouble(3, salary);
 		ResultSet rtn = get_player.executeQuery();
 		if(rtn.next()){
 			player.put("id", rtn.getString(1));
@@ -1122,13 +1186,6 @@ public class GolfBot extends Utils {
 				      .referrer("http://www.google.com").timeout(6000).get();
 			
 			try{
-				if(this.country == "" || this.country == null){
-					Element country_img = page.getElementsByClass("country").first().getElementsByTag("span")
-							.first().getElementsByTag("img").first();
-					String country_code = country_img.attr("src").split("/")[7].replace(".png", "");
-					this.country = country_code;
-				}
-				
 				Element outer_div = page.getElementsByClass("s-col-left").first();
 				Elements divs = outer_div.getElementsByClass("s-col__row");
 				try{
