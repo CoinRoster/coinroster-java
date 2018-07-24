@@ -75,10 +75,12 @@ public class GetContestDetails extends Utils
 							if (users.getString(i) != session.user_id()) {
 								i++;
 							} else {
+								Utils.log("broken loop");
 								break;
 							}
 						}
 						if (i == users.length()) {
+							Utils.log("new participant");
 							users.put(session.user_id());
 							
 							// replace old json array with new
