@@ -65,35 +65,34 @@ public class GetContestDetails extends Utils
 				// check if contest is private
 				if (!contest.getString("participants").equals("")) {
 					participants = new JSONObject(contest.getString("participants"));
-					
-					if (participants.getString("code").equals(code)) {
-						// check if user is already a participant; add them if not
-						JSONArray users = participants.getJSONArray("users");
-						Utils.log(users.length());
-						int i = 0;
-						while (i != users.length()) {
-							if (!users.getString(i).equals(session.user_id())) {
-								i++;
-							} else {
-								Utils.log("broken loop");
-								break;
-							}
+
+					// check if user is already a participant; no need to check for code if they are
+					JSONArray users = participants.getJSONArray("users");
+					Utils.log(users.length());
+					int i = 0;
+					while (i != users.length()) {
+						if (!users.getString(i).equals(session.user_id())) {
+							i++;
+						} else {
+							break;
 						}
-						if (i == users.length()) {
-							Utils.log("new participant");
+					}
+					// if not a participant, add them if they have the correct URL code
+					if (i == users.length()) {
+						if (participants.getString("code").equals(code)) {
 							users.put(session.user_id());
 							
 							// replace old json array with new
 							participants.remove("users");
 							participants.put("users", users);
 							db.update_private_contest_users(contest_id, participants);
+							
+							// user is clear to proceed
+						} else {						
+							Utils.log("attempting to access private contest with incorrect code");
+							output.put("error", "Invalid code for private contest");
+							break method;
 						}
-
-						// user is clear to proceed
-					} else {						
-						Utils.log("attempting to access private contest with incorrect code");
-						output.put("error", "Invalid code for private contest");
-						break method;
 					}
 				}
 
