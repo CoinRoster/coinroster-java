@@ -104,6 +104,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 		if(hour==6){
 			ContestMethods.createGolfContests();
 		}
+		
+		// update currencies once a day at 1am
+		if(Server.dev_server && hour==1){
+			UpdateCurrencies();			
+		}
 	}
 	
 	@SuppressWarnings("unused")
@@ -118,7 +123,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 		{
 			UpdateBTCUSD();
 			SessionExpiry();
-			UpdateCurrencies();			
 		}
 	}
 
