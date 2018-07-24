@@ -101,7 +101,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 //			ContestMethods.createBasketballContests();
 			ContestMethods.createBaseballContests();
 		}
-		if(hour==17){
+		if(hour==6){
 			ContestMethods.createGolfContests();
 		}
 	}

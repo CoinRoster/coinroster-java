@@ -32,7 +32,6 @@ public class CreateContest extends Utils
 			
 //------------------------------------------------------------------------------------
 		
-			Utils.log("starting CreateContest");
 			// get common fields:
 			String category = input.getString("category");
 			String sub_category = input.getString("sub_category");

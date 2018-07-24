@@ -295,8 +295,7 @@ public class ContestMethods extends Utils{
 			DB db = new DB(sql_connection);
 			JSONArray roster_contests = db.getRosterTemplates("GOLF");
 			JSONArray prop_contests = db.getRosterTemplates("GOLFPROPS");
-			//int today = getToday();
-			int today = 2;
+			int today = getToday();
 			switch(today){
 			
 				// MONDAY
@@ -305,21 +304,19 @@ public class ContestMethods extends Utils{
 					golfBot.scrapeTourneyID(today);
 					if(golfBot.getTourneyID() == null)
 						return;
-//					golfBot.setup();
-//					golfBot.savePlayers();
+					golfBot.setup();
+					golfBot.savePlayers();
 					
 					//generate tournament ROSTER contests
-//					for(int index = 0; index < roster_contests.length(); index++){
-//						
-//						// check if the contest is a round 1 contest or tournament contest:
-//						JSONObject contest = roster_contests.getJSONObject(index);
-//						golfBot.createGolfRosterContest(contest, "tournament");
-//						golfBot.createGolfRosterContest(contest, "1");
-//					}
+					for(int index = 0; index < roster_contests.length(); index++){
+						// check if the contest is a round 1 contest or tournament contest:
+						JSONObject contest = roster_contests.getJSONObject(index);
+						golfBot.createGolfRosterContest(contest, "tournament");
+						golfBot.createGolfRosterContest(contest, "1");
+					}
 					
 					for(int index = 0; index < prop_contests.length(); index++){
 						// check if the contest is a round 1 contest or tournament contest:
-
 						JSONObject contest = prop_contests.getJSONObject(index);						
 						golfBot.createGolfPropBet(contest, "tournament");
 						golfBot.createGolfPropBet(contest, "1");
