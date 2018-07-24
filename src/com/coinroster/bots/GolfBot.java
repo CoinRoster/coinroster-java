@@ -726,18 +726,10 @@ public class GolfBot extends Utils {
 		}
 	}
 	
-	public JSONObject createTeamsPariMutuel(Long deadline) throws JSONException{
-		JSONObject fields = new JSONObject();
-		fields.put("category", "FANTASYSPORTS");
-		fields.put("sub_category", "GOLF");
-		fields.put("contest_type", "PARI-MUTUEL");
-		fields.put("progressive", "");
-		String title = this.getTourneyName() + " | Team Competition";
-		fields.put("title", title);
-		fields.put("description", "Place your bet on which team will accumulate the best score!");
-		fields.put("rake", 5);
-		fields.put("cost_per_entry", 0.00000001);
-		fields.put("registration_deadline", deadline);
+	public JSONObject createTeamsPariMutuel(JSONObject contest, Long deadline) throws JSONException{
+		String title = this.getTourneyName() + " | " + contest.getString("title");
+		contest.put("title", title);
+		contest.put("registration_deadline", deadline);
 		
 		//get 30 most expensive golfers
 		Map<Integer, ArrayList<String>> players = new HashMap<>();
@@ -791,55 +783,197 @@ public class GolfBot extends Utils {
 			tie.put("description", "Tie");
 			teams.put(tie);
 			
-			fields.put("option_table", teams);
+			contest.put("option_table", teams);
 		}
 		catch(Exception e){
 			log(e.toString());
 			log(e.getMessage());
 		}
 		
-		return fields;
+		return contest;
 	}
 	
-	
-	
-	public void checkPariMutuelStatus(ArrayList<Integer> pari_contest_ids) throws Exception{
-
-		for(Integer contest_id : pari_contest_ids){
-			// get the round for the contest
-			PreparedStatement getRound = sql_connection.prepareStatement("select title from contest where id=?");
-			getRound.setInt(1, contest_id);
-			ResultSet result = getRound.executeQuery();
-			String title = null;
-			while(result.next()){
-				title = result.getString(1);
-			}
-			String round = title.split(" - Top Score in Round ")[1];
+	public int settlePropBet(JSONObject contest) throws JSONException, SQLException, IOException{
+		
+		JSONObject scoring_rules = contest.getJSONObject("scoring_rules");
+		JSONObject prop_data = contest.getJSONObject("prop_data");
+		JSONArray option_table = contest.getJSONArray("option_table");
+		
+		String url = "https://statdata.pgatour.com/r/" + this.getLiveTourneyID() + "/2018/leaderboard-v2.json";
+		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
+		
+		int winning_outcome = 0;
+		
+		switch(prop_data.getString("prop_type")){
+		
+			case "WINNER":
+				String winner_id = leaderboard.getJSONObject("leaderboard").getJSONArray("players").getJSONObject(0).getString("player_id");
+				for(int i = 0; i < option_table.length(); i++){
+					try{
+						JSONObject option = option_table.getJSONObject(i);
+						String player_id = option.getString("player_id");
+						if(player_id.equals(winner_id)){
+							winning_outcome = option.getInt("id");
+							return winning_outcome;
+						}
+					}catch(Exception e){
+						continue;
+					}
+				}
+				return 1; // must be "Any Other Golfer (1)
+				
 			
-			String url = "https://statdata.pgatour.com/r/" + this.getLiveTourneyID() + "/2018/leaderboard-v2.json";
-			JSONObject leaderboard = JsonReader.readJsonFromUrl(url).getJSONObject("leaderboard");
-			String roundStatus = leaderboard.getString("round_state");
-			// if the round status is complete/official get the round
-			if(roundStatus.equals("Official") && String.valueOf(leaderboard.getInt("current_round")).equals(round)){
+			case "PLAYOFF":
+				int first = leaderboard.getJSONObject("leaderboard").getJSONArray("players").getJSONObject(0).getInt("total_strokes");
+				int second = leaderboard.getJSONObject("leaderboard").getJSONArray("players").getJSONObject(1).getInt("total_strokes");
+				if(first == second){
+					winning_outcome = 1;
+				}
+				else
+					winning_outcome = 2;
+				
+				return winning_outcome;
+				
 			
-				log("settling contest with id " + contest_id + " (Round " + round + ")");
-				JSONObject pari_fields = this.settlePariMutuel(contest_id, round);
-				MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-				pari_method.input = pari_fields;
-				pari_method.output = pari_output;
-				pari_method.session = null;
-				pari_method.sql_connection = sql_connection;
+			case "TOP_SCORE":
+				int top_score = this.getTopScore(prop_data.getString("when"));
+				ResultSet players = db.getPlayerScoresAndStatus(this.sport);
+				
+				ArrayList<String> best_players = new ArrayList<String>();
+				
+				if(prop_data.getString("when").equals("tournament")){
+					while(players.next()){
+						if(players.getInt(4) == top_score){
+							best_players.add(players.getString(1));
+						}
+					}
+				}
+				else{
+					while(players.next()){
+						int score;
+						JSONObject data = new JSONObject(players.getString(2));
+						try{
+							score = data.getJSONObject(prop_data.getString("when")).getInt("today");
+							if(score == top_score){
+								best_players.add(players.getString(1));
+							}
+						}catch(JSONException e){
+						}	
+					}
+				}
+				
+				winning_outcome = 1;
+				if(best_players.size() > 1){
+					//tie is correct answer;
+					winning_outcome = 2;
+					log("winning outcome = 2 because of tie");
+					return winning_outcome;
+				}
+				else{
+					for(String player_table_ID : best_players){
+						for (int i=0; i<option_table.length(); i++){
+							JSONObject option = option_table.getJSONObject(i);
+							int option_id = option.getInt("id");
+							try{
+								String player_id = option.getString("player_id");
+								if(player_id.equals(player_table_ID)){
+									winning_outcome = option_id;
+									return winning_outcome;
+								}
+							}	
+							catch(Exception e){
+								continue;
+							}			
+						}
+					}
+					return winning_outcome;
+				}
+				
+			
+			case "MAKE_CUT":
+				
+				String player_id = prop_data.getString("player_id");
+				int status = db.getGolferStatus(player_id, this.sport);
+				if(status == 4)
+					winning_outcome = 1;
+				else
+					winning_outcome = 2;
+				return winning_outcome;
+				
+			
+			case "MOST":
+				
+				double max_points = -999.0;
+				ArrayList<String> top_players = new ArrayList<String>();
+				winning_outcome = 1;
+				ResultSet all_players = null;
 				try{
-					Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-					c.newInstance(pari_method);
+					all_players = db.getPlayerScores("GOLF");
+				}catch(Exception e){
+					log(e.toString());
 				}
-				catch(Exception e){
-					e.printStackTrace();
+				// loop through players and compile ArrayList<Integer> of player_ids with top score
+				while(all_players.next()){
+					player_id = all_players.getString(1);
+					JSONObject data = new JSONObject(all_players.getString(2));
+					Double points = 0.0;
+					Iterator<?> keys = scoring_rules.keys();
+					while(keys.hasNext()){
+						String key = (String) keys.next();
+						int multiplier = scoring_rules.getInt(key);
+						points += ((double) (data.getInt(key) * multiplier));
+					}
+					if(points > max_points){
+						max_points = points;
+						top_players.clear();
+						top_players.add(player_id);
+						log("clearing top_players");
+						log("adding " + player_id + " to top_players array with points = " + points);
+					}
+					else if(points == max_points){
+						log("adding " + player_id + " to top_players array with points = " + points);
+						top_players.add(player_id);
+					}
 				}
-			}
+				
+				log("TOP PLAYERS: " + top_players.toString());
+			
+				if(top_players.size() >= 2){
+					//tie is correct answer;
+					winning_outcome = 2;
+					log("winning outcome=2 because of tie");
+					return winning_outcome;
+				}
+				else{
+					for(String player_table_ID : top_players){
+						for (int i=0; i<option_table.length(); i++){
+							JSONObject option = option_table.getJSONObject(i);
+							int option_id = option.getInt("id");
+							try{
+								player_id = option.getString("player_id");
+								if(player_id.equals(player_table_ID)){
+									winning_outcome = option_id;
+									log("winning outcome is " + option.getString("description"));
+									return winning_outcome;
+								}
+							}	
+							catch(Exception e){
+								continue;
+							}			
+						}
+					}
+				}
+				return winning_outcome;	// any other golfer
+			
+			case "MATCH_PLAY":
+			case "OVER_UNDER":
+			case "NUMBER_SHOTS":
+				break;
+
 		}
-	}	
+		
+		return 0;
+	}
 	
 	public JSONObject settlePariMutuel(int contest_id, String round) throws Exception{
 		JSONObject fields = new JSONObject();
@@ -946,7 +1080,7 @@ public class GolfBot extends Utils {
 	}
 	
 	
-	public void createGolfPropBet( JSONObject contest, String when) throws JSONException, SQLException{
+	public int createGolfPropBet( JSONObject contest, String when) throws JSONException, SQLException{
 		JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
 		
 		if(prop_data.getString("when").equals(when)){
@@ -961,7 +1095,7 @@ public class GolfBot extends Utils {
 			switch(prop_data.getString("prop_type")){
 			
 				case "MOST":
-				case "WINNER":
+				case "TOP_SCORE":
 					JSONArray option_table = new JSONArray();
 					PreparedStatement get_players;
 					if(when.equals("tournament") || when.equals("1")){
@@ -1001,6 +1135,36 @@ public class GolfBot extends Utils {
 					
 					break;
 					
+					
+				case "WINNER":
+					option_table = new JSONArray();
+					get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc limit 20");
+					get_players.setString(1, this.sport);
+					players = get_players.executeQuery();
+					
+					none_above = new JSONObject();
+					none_above.put("description", "Any Other Golfer");
+					none_above.put("id", 1);
+					option_table.put(none_above);
+					
+					index = 2;
+					while(players.next()){
+						
+						JSONObject p = new JSONObject();
+						p.put("id", index);
+						p.put("player_id", players.getString(1));
+						String name = players.getString(2);
+						String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
+						String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
+						p.put("name", nameNormalized + " " + players.getString(3));
+						option_table.put(p);
+						index += 1;
+					}
+					title = this.getTourneyName() + " | " + contest.getString("title");
+					contest.put("title", title);
+					contest.put("option_table", option_table.toString());
+					break;
+					
 				case "MAKE_CUT":
 					ResultSet result_set = null;
 					try {
@@ -1018,12 +1182,12 @@ public class GolfBot extends Utils {
 						contest = this.createMakeCutProp(contest, player);
 					}
 					break;
-				
+					
 				case "PLAYOFF":
-					title = this.getTourneyName() + " | Will there be a Playoff?";
+					
+					title = this.getTourneyName() + " " + contest.getString("title");
 					contest.put("title", title);
-					contest.put("description", "Place your bet on whether or not there will be a playoff!");
-		
+
 					option_table = new JSONArray(); 
 					JSONObject yes = new JSONObject();
 					yes.put("description", "Yes");
@@ -1034,8 +1198,15 @@ public class GolfBot extends Utils {
 					no.put("id", 2);
 					option_table.put(no);
 					contest.put("option_table", option_table.toString());
-					
 					break;
+					
+				case "TEAM_SNAKE":
+					contest = this.createTeamsPariMutuel(contest, this.getDeadline());
+					break;
+					
+				default:
+					return 0;
+
 			}
 							
 			MethodInstance method = new MethodInstance();
@@ -1053,6 +1224,93 @@ public class GolfBot extends Utils {
 				log(e.getMessage());
 			}	
 		}
+		
+		// CREATE A WINNER contest on THURS, FRI, SAT (all of them settle sunday)
+		else if(prop_data.getString("prop_type").equals("WINNER") && !when.equals("1")){
+			
+			JSONArray option_table = new JSONArray();
+			PreparedStatement get_players;	
+			get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by points asc desc limit 20");
+			get_players.setString(1, this.sport);
+			ResultSet players = get_players.executeQuery();
+			
+			JSONObject none_above = new JSONObject();
+			none_above.put("description", "Any Other Golfer");
+			none_above.put("id", 1);
+			option_table.put(none_above);
+	
+			int index = 2;
+			while(players.next()){
+				
+				JSONObject p = new JSONObject();
+				p.put("id", index);
+				p.put("player_id", players.getString(1));
+				String name = players.getString(2);
+				String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
+				String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
+				p.put("name", nameNormalized + " " + players.getString(3));
+				option_table.put(p);
+				index += 1;
+			}
+			String title = this.getTourneyName() + " | " + contest.getString("title");
+			contest.put("title", title);
+			contest.put("option_table", option_table.toString());
+			contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
+			contest.put("odds_source", "n/a");
+			contest.put("gameIDs", this.getTourneyID());
+			
+			MethodInstance method = new MethodInstance();
+			JSONObject output = new JSONObject("{\"status\":\"0\"}");
+			method.input = contest;
+			method.output = output;
+			method.session = null;
+			method.sql_connection = sql_connection;
+			try{
+				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+				c.newInstance(method);
+			}
+			catch(Exception e){
+				log(e.toString());
+				log(e.getMessage());
+			}	
+		}
+		
+		// CREATE A PLAYOFF contest on THURS, FRI, SAT (all of them settle sunday)
+		else if(prop_data.getString("prop_type").equals("PLAYOFF") && !when.equals("1")){
+			
+			String title = this.getTourneyName() + " " + contest.getString("title");
+			contest.put("title", title);
+
+			JSONArray option_table = new JSONArray(); 
+			JSONObject yes = new JSONObject();
+			yes.put("description", "Yes");
+			yes.put("id", 1);
+			option_table.put(yes);
+			JSONObject no = new JSONObject();
+			no.put("description", "No");
+			no.put("id", 2);
+			option_table.put(no);
+			contest.put("option_table", option_table.toString());
+			contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
+			contest.put("odds_source", "n/a");
+			contest.put("gameIDs", this.getTourneyID());
+			
+			MethodInstance method = new MethodInstance();
+			JSONObject output = new JSONObject("{\"status\":\"0\"}");
+			method.input = contest;
+			method.output = output;
+			method.session = null;
+			method.sql_connection = sql_connection;
+			try{
+				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+				c.newInstance(method);
+			}
+			catch(Exception e){
+				log(e.toString());
+				log(e.getMessage());
+			}	
+		}
+		return 1;
 	}
 	
 	public void checkForInactives(int contest_id) throws Exception{

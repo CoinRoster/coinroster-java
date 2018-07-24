@@ -43,6 +43,18 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
+            
+            boolean is_private = false;
+            try{
+            	is_private = input.getBoolean("private");
+            }catch(Exception e){
+            }
+            
+			boolean is_admin = false;
+			if (session != null && input.getString("request_source") != null) {
+				is_admin = session.user_level() != null && session.user_level().equals("1") && input.getString("request_source").equals("admin_panel");	
+			}
+
             String settlement_type = input.getString("settlement_type");
             PreparedStatement create_contest = null;
             Long settlement_deadline = null;

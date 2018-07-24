@@ -434,7 +434,7 @@ public class ContestMethods extends Utils{
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
 			JSONObject roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
-			JSONObject pari_contests = db_connection.get_active_pari_mutuels("GOLFPROPS", "PARI-MUTUEL");
+			JSONObject pari_contests = db_connection.checkGolfPropInPlay("FANTASYSPORTS", "GOLFPROPS", "PARI-MUTUEL");
 
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				GolfBot golfBot = new GolfBot(sql_connection);
@@ -474,8 +474,12 @@ public class ContestMethods extends Utils{
 					
 				}
 				if(tournament_status.getBoolean("tournament")){
+					
 					log("golf tournament has ended. Settling tournament contests now...");
 					roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
+					pari_contests = db_connection.checkGolfPropInPlay("FANTASYSPORTS", "GOLFPROPS", "PARI-MUTUEL");					
+					
+					// settle ROSTER contests 
 					roster_contest_ids = roster_contests.keys();
 					while(roster_contest_ids.hasNext()){
 						String c_id = (String) roster_contest_ids.next();
@@ -503,10 +507,42 @@ public class ContestMethods extends Utils{
 							}
 						}
 					}
+					
+					// settle PROP contests 
+					Iterator<?> pari_contest_ids = pari_contests.keys();
+					while(pari_contest_ids.hasNext()){
+						String c_id = (String) pari_contest_ids.next();
+						JSONObject prop_data = pari_contests.getJSONObject(c_id).getJSONObject("prop_data");
+						String when = prop_data.getString("when");
+						if(when.equals("tournament")){
+							int winning_outcome = golfBot.settlePropBet(pari_contests.getJSONObject(c_id));
+							JSONObject fields = new JSONObject();
+							fields.put("contest_id", Integer.parseInt(c_id));
+							fields.put("normalization_scheme", "INTEGER");
+							fields.put("winning_outcome", winning_outcome);
+							
+							MethodInstance method = new MethodInstance();
+							JSONObject output = new JSONObject("{\"status\":\"0\"}");
+							method.input = fields;
+							method.output = output;
+							method.session = null;
+							method.sql_connection = sql_connection;
+							try{
+								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+								c.newInstance(method);
+							}
+							catch(Exception e){
+								e.printStackTrace();
+							}
+						}
+					}
 				}
+				
 				for(int i = 1; i <= 4; i++){
 					if(tournament_status.getBoolean(String.valueOf(i))){
 						log("golf round " + String.valueOf(i) + " has ended. Settling round contests now...");
+						
+						// Settle ROSTER contests for round
 						roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
 						roster_contest_ids = roster_contests.keys();
 						while(roster_contest_ids.hasNext()){
@@ -531,6 +567,36 @@ public class ContestMethods extends Utils{
 								}
 								catch(Exception e){
 									log(e.getMessage());
+								}
+							}
+						}
+						
+						// Settle PROP contests for round
+						pari_contests = db_connection.checkGolfPropInPlay("FANTASYSPORTS", "GOLFPROPS", "PARI-MUTUEL");					
+						Iterator<?> pari_contest_ids = pari_contests.keys();
+						while(pari_contest_ids.hasNext()){
+							String c_id = (String) pari_contest_ids.next();
+							JSONObject prop_data = pari_contests.getJSONObject(c_id).getJSONObject("prop_data");
+							String when = prop_data.getString("when");
+							if(when.equals("tournament")){
+								int winning_outcome = golfBot.settlePropBet(pari_contests.getJSONObject(c_id));
+								JSONObject fields = new JSONObject();
+								fields.put("contest_id", Integer.parseInt(c_id));
+								fields.put("normalization_scheme", "INTEGER");
+								fields.put("winning_outcome", winning_outcome);
+								
+								MethodInstance method = new MethodInstance();
+								JSONObject output = new JSONObject("{\"status\":\"0\"}");
+								method.input = fields;
+								method.output = output;
+								method.session = null;
+								method.sql_connection = sql_connection;
+								try{
+									Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+									c.newInstance(method);
+								}
+								catch(Exception e){
+									e.printStackTrace();
 								}
 							}
 						}

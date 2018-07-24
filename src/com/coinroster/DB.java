@@ -376,8 +376,51 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	public JSONObject checkGolfPropInPlay(String category, String sub_category, String contest_type) throws Exception
+	{
+
+		JSONObject contests = new JSONObject();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table from contest where category = ? "
+				+ "and sub_category = ? and contest_type = ? and status=2 and auto_settle = 1");
+		get_live_contests.setString(1, category);
+		get_live_contests.setString(2, sub_category);
+		get_live_contests.setString(3, contest_type);
 	
+		ResultSet result_set = get_live_contests.executeQuery();
+		
+		while (result_set.next()){
+			JSONObject data = new JSONObject();
+			String scoring_rules, prop_data;
+			JSONObject scoring_rules_json, prop_data_json;
+			try{
+				scoring_rules = result_set.getString(2);
+				if(scoring_rules.isEmpty())
+					scoring_rules_json = new JSONObject();
+				else
+					scoring_rules_json = new JSONObject(scoring_rules);
+				
+				prop_data = result_set.getString(3);
+				if(prop_data.isEmpty() || prop_data == null)
+					prop_data_json = new JSONObject();
+				else
+					prop_data_json = new JSONObject(prop_data);
+				
+				
+				data.put("scoring_rules", scoring_rules_json);
+				data.put("prop_data", prop_data_json);
+				data.put("option_table", new JSONArray(result_set.getString(4)));
+				contests.put(String.valueOf(result_set.getInt(1)), data);
+				
+			}catch(Exception e){
+				Utils.log(e.getMessage());
+				Utils.log(e.toString());
+			}
+		}
+		return contests;
+	}
 	
+//------------------------------------------------------------------------------------
+
 	//get ids from voting table
 	public ArrayList<Integer> check_if_in_play() throws Exception
 	{
