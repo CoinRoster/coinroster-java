@@ -32,6 +32,7 @@ public class CreateContest extends Utils
 			
 //------------------------------------------------------------------------------------
 		
+			Utils.log("starting CreateContest");
 			// get common fields:
 			String category = input.getString("category");
 			String sub_category = input.getString("sub_category");
@@ -43,6 +44,8 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
+            
+            log("made it to 48");
             
             boolean is_private = false;
             try{
@@ -447,6 +450,7 @@ public class CreateContest extends Utils
 					if (id - last_id != 1)
 						{
 						output.put("error", "Invalid ids in option table");
+						log(output.get("error"));
 	            		break method;
 						}
 					last_id = id;
@@ -456,6 +460,7 @@ public class CreateContest extends Utils
 					if (option_description.equals(""))
 						{
 						output.put("error", "Option " + id + " has no description");
+						log(output.get("error"));
 	            		break method;
 						}
 					}
@@ -523,15 +528,22 @@ public class CreateContest extends Utils
             	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
+				log("scoring_data: " + scoring_rules);
+				log("prop_data: " + prop_data);
+
 				create_contest.setString(17, scoring_rules);
+
 				create_contest.setString(18, prop_data);
 				
+				
+				log("made it to 532");
 				if (is_private) {
 					create_contest.setString(19, participants.toString());
 				} else {
 					create_contest.setNull(19, java.sql.Types.VARCHAR);
 				}
-				
+				log("made it to 538");
+			
             	create_contest.executeUpdate();
             }
             
