@@ -521,7 +521,13 @@ public class DB
 			String progressive = result_set.getString(28);
 			double progressive_paid = result_set.getDouble(29);
 			Long settlement_deadline = result_set.getLong(32);
+			
 			String participants = result_set.getString(34);
+			Utils.log(participants);
+			
+			if (participants == null) {
+				participants = "";
+			}
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
