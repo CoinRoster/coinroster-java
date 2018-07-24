@@ -523,7 +523,6 @@ public class DB
 			Long settlement_deadline = result_set.getLong(32);
 			
 			String participants = result_set.getString(34);
-			Utils.log(participants);
 			
 			if (participants == null) {
 				participants = "";
