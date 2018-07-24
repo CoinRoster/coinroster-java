@@ -1103,6 +1103,7 @@ public class GolfBot extends Utils {
 				
 			
 			case "TOP_SCORE":
+				log("settling top score prop...");
 				int top_score = this.getTopScore(prop_data.getString("when"));
 				ResultSet players = db.getPlayerScoresAndStatus(this.sport);
 				
@@ -1234,6 +1235,7 @@ public class GolfBot extends Utils {
 				for(int i = 0; i < option_table.length(); i++){
 					double team_score = 0.0;
 					JSONObject option = option_table.getJSONObject(i);
+					log("calculating scores from team with id = " + option.getInt("id"));
 					JSONArray golfers =  new JSONArray(option.getJSONArray("player_ids"));
 					for(int q = 0; q < golfers.length(); q++){
 						String id = golfers.getString(q);
@@ -1247,6 +1249,7 @@ public class GolfBot extends Utils {
 						double pts = this.calculateMultiStatPoints(prop_data.getString("when"), data, overall_score, scoring_rules);
 						team_score += pts;
 					}
+					log("team " + option.getInt("id") + " score: " + team_score);
 					if(team_score > top_score_team){
 						top_score_team = team_score;
 						winning_outcome = option.getInt("id");
@@ -1255,6 +1258,7 @@ public class GolfBot extends Utils {
 						winning_outcome = 6;
 					}
 				}
+				log("Winning team: " + winning_outcome);
 				return winning_outcome;
 			
 			case "MATCH_PLAY":
