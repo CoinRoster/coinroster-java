@@ -315,7 +315,8 @@ public class ContestMethods extends Utils{
 					
 					for(int index = 0; index < prop_contests.length(); index++){
 						// check if the contest is a round 1 contest or tournament contest:
-						JSONObject contest = prop_contests.getJSONObject(index);
+
+						JSONObject contest = prop_contests.getJSONObject(index);						
 						golfBot.createGolfPropBet(contest, "tournament");
 						golfBot.createGolfPropBet(contest, "1");
 					}

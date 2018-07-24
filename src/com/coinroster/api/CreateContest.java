@@ -43,7 +43,7 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
-            
+
             boolean is_private = false;
             try{
             	is_private = input.getBoolean("private");
@@ -69,13 +69,13 @@ public class CreateContest extends Utils
 				scoring_rules = input.getString("scoring_rules").toString();
 				log("scoring rules: " + scoring_rules);
 			}catch(Exception e){
-				scoring_rules = null;
+				scoring_rules = "";
 			}
 			try{
 				prop_data = input.getString("prop_data").toString();
 				log("prop data: " + prop_data);
 			}catch(Exception e){
-				prop_data = null;
+				prop_data = "";
 			}
             
 			
@@ -146,7 +146,19 @@ public class CreateContest extends Utils
             log("cost_per_entry: " + cost_per_entry);
             log("scoring_rules: " + scoring_rules);
             log("prop_data: " + prop_data);
+            log("private: " + is_private);
             
+            // if private, generate hash for unique url and add user as a participant
+            JSONObject participants = new JSONObject();
+            if (is_private) {
+            	JSONArray users = new JSONArray();
+            	users.put(session.user_id());
+            	
+            	String code = Utils.SHA1(title + registration_deadline).substring(0, 8);
+            	
+            	participants.put("code", code);
+            	participants.put("users", users);
+            }
             if (contest_type.equals("ROSTER"))
 	            {
 	            int salary_cap = input.getInt("salary_cap");
@@ -502,8 +514,16 @@ public class CreateContest extends Utils
             	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
+
 				create_contest.setString(17, scoring_rules);
 				create_contest.setString(18, prop_data);
+				
+				if (is_private) {
+					create_contest.setString(19, participants.toString());
+				} else {
+					create_contest.setNull(19, java.sql.Types.VARCHAR);
+				}
+			
             	create_contest.executeUpdate();
             }
 			

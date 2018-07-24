@@ -241,7 +241,7 @@ public class GolfBot extends Utils {
 		Calendar c = Calendar.getInstance();
 		
 		if(today == 2)
-			c.add(Calendar.DATE, 2); //c.add(Calendar.DATE, 3);
+			c.add(Calendar.DATE, 3);
 		else if(today == 6)
 			c.add(Calendar.DATE, -1);
 		else if(today == 7)
@@ -367,9 +367,9 @@ public class GolfBot extends Utils {
 				save_player.setDouble(6, player.getSalary());
 				save_player.setString(7, initializeGolferScores().toString());
 				save_player.setDouble(8, player.getPoints());
-				//JSONObject data = player.getDashboardData(this.year);
+				JSONObject data = player.getDashboardData(this.year);
 				save_player.setString(5, player.getCountry());
-				save_player.setString(9, "{}");
+				save_player.setString(9, data.toString());
 				save_player.setInt(10, 4);
 				save_player.executeUpdate();	
 			}
@@ -842,6 +842,7 @@ public class GolfBot extends Utils {
 			
 				case "MOST":
 				case "TOP_SCORE":
+					
 					JSONArray option_table = new JSONArray();
 					PreparedStatement get_players;
 					if(when.equals("tournament") || when.equals("1")){
@@ -871,17 +872,16 @@ public class GolfBot extends Utils {
 						String name = players.getString(2);
 						String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
 						String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
-						p.put("name", nameNormalized + " " + players.getString(3));
+						p.put("description", nameNormalized + " " + players.getString(3));
 						option_table.put(p);
 						index += 1;
 					}
 					String title = this.getTourneyName() + " | " + contest.getString("title");
 					contest.put("title", title);
 					contest.put("option_table", option_table);
-					
 					break;
-					
-					
+
+
 				case "WINNER":
 					option_table = new JSONArray();
 					get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc limit 20");
@@ -902,10 +902,11 @@ public class GolfBot extends Utils {
 						String name = players.getString(2);
 						String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
 						String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
-						p.put("name", nameNormalized + " " + players.getString(3));
+						p.put("description", nameNormalized + " " + players.getString(3));
 						option_table.put(p);
 						index += 1;
 					}
+					
 					title = this.getTourneyName() + " | " + contest.getString("title");
 					contest.put("title", title);
 					contest.put("option_table", option_table);
@@ -927,7 +928,6 @@ public class GolfBot extends Utils {
 						player.put("id", result_set.getString(3));
 						contest = this.createMakeCutProp(contest, player);
 						
-						log("FINAL CONTEST JSON: " + contest.toString());
 						MethodInstance method = new MethodInstance();
 						JSONObject output = new JSONObject("{\"status\":\"0\"}");
 						method.input = contest;
@@ -939,18 +939,19 @@ public class GolfBot extends Utils {
 							c.newInstance(method);
 						}
 						catch(Exception e){
-							log("ERROR!!!!");
+							Server.exception(e);
 							log(e.toString());
 							log(e.getMessage());
 							log(e.getClass());
 							log(e.getCause());
+							log(e.getStackTrace().toString());
 						}	
 					}
 					break;
 					
 				case "PLAYOFF":
 					
-					title = this.getTourneyName() + " " + contest.getString("title");
+					title = this.getTourneyName() + " | " + contest.getString("title");
 					contest.put("title", title);
 
 					option_table = new JSONArray(); 
@@ -975,7 +976,6 @@ public class GolfBot extends Utils {
 			}
 			
 			if(!prop_data.getString("prop_type").equals("MAKE_CUT")){
-				log("FINAL CONTEST JSON: " + contest.toString());
 				MethodInstance method = new MethodInstance();
 				JSONObject output = new JSONObject("{\"status\":\"0\"}");
 				method.input = contest;
@@ -987,7 +987,7 @@ public class GolfBot extends Utils {
 					c.newInstance(method);
 				}
 				catch(Exception e){
-					log("ERROR!!!!");
+					Server.exception(e);
 					log(e.toString());
 					log(e.getMessage());
 					log(e.getClass());
@@ -999,7 +999,6 @@ public class GolfBot extends Utils {
 		// CREATE A WINNER contest on THURS, FRI, SAT (all of them settle sunday)
 		else if(prop_data.getString("prop_type").equals("WINNER") && !when.equals("1")){
 			
-			log("line 999");
 			JSONArray option_table = new JSONArray();
 			PreparedStatement get_players;	
 			get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by points asc desc limit 20");
@@ -1050,8 +1049,7 @@ public class GolfBot extends Utils {
 		// CREATE A PLAYOFF contest on THURS, FRI, SAT (all of them settle sunday)
 		else if(prop_data.getString("prop_type").equals("PLAYOFF") && !when.equals("1")){
 			
-			log("line 1050");
-			String title = this.getTourneyName() + " " + contest.getString("title");
+			String title = this.getTourneyName() + " | " + contest.getString("title");
 			contest.put("title", title);
 
 			JSONArray option_table = new JSONArray(); 
@@ -1079,6 +1077,7 @@ public class GolfBot extends Utils {
 				c.newInstance(method);
 			}
 			catch(Exception e){
+				Server.exception(e);
 				log(e.toString());
 				log(e.getMessage());
 			}	
