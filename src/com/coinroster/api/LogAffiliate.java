@@ -35,7 +35,7 @@ public class LogAffiliate extends Utils
 		
             output.put("status", "1");
             
-			} 
+		} 
 		method.response.send(output);
 		}
 	}
