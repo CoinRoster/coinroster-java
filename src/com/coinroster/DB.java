@@ -876,7 +876,7 @@ public class DB
 	// UPDATE PRIVATE CONTEST PARTICIPANTS
 	
 	public void update_private_contest_users(int contest_id, JSONObject participants) throws Exception {
-		PreparedStatement update_users = sql_connection.prepareStatement("update contest set participants = ? where contest_id = ?");
+		PreparedStatement update_users = sql_connection.prepareStatement("update contest set participants = ? where id = ?");
 		update_users.setString(1, participants.toString());
 		update_users.setInt(2, contest_id);
 		

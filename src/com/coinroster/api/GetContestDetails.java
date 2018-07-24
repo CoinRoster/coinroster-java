@@ -72,7 +72,7 @@ public class GetContestDetails extends Utils
 						Utils.log(users.length());
 						int i = 0;
 						while (i != users.length()) {
-							if (users.getString(i) != session.user_id()) {
+							if (!users.getString(i).equals(session.user_id())) {
 								i++;
 							} else {
 								Utils.log("broken loop");
