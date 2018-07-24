@@ -521,6 +521,7 @@ public class DB
 			String progressive = result_set.getString(28);
 			double progressive_paid = result_set.getDouble(29);
 			Long settlement_deadline = result_set.getLong(32);
+			String participants = result_set.getString(34);
 			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
@@ -552,6 +553,7 @@ public class DB
 			contest.put("progressive", progressive);
 			contest.put("progressive_paid", progressive_paid);
 			contest.put("settlement_deadline", settlement_deadline);
+			contest.put("participants", participants);
 			}
 
 		return contest;
@@ -853,7 +855,34 @@ public class DB
 		if(voting_rs.next()) return true;
 		return false;
 		}
+	
+//------------------------------------------------------------------------------------
 
+	// CHECK IF CONTEST IS PRIVATE
+	
+	public boolean is_private_contest(int contest_id) throws Exception {
+		PreparedStatement check_private = sql_connection.prepareStatement("select participants from contest where contest_id = ?");
+		check_private.setInt(1, contest_id);
+		
+		ResultSet private_rs = check_private.executeQuery();
+		if(private_rs.next()) {
+			if(!private_rs.getString(1).equals("")) return true;
+		}
+		return false;
+	}
+
+//------------------------------------------------------------------------------------
+
+	// UPDATE PRIVATE CONTEST PARTICIPANTS
+	
+	public void update_private_contest_users(int contest_id, JSONObject participants) throws Exception {
+		PreparedStatement update_users = sql_connection.prepareStatement("update contest set participants = ? where contest_id = ?");
+		update_users.setString(1, participants.toString());
+		update_users.setInt(2, contest_id);
+		
+		update_users.executeUpdate();
+	}
+		
 //------------------------------------------------------------------------------------
 	
 	// UPDATE CGS BALANCE

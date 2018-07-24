@@ -536,7 +536,12 @@ public class CreateContest extends Utils
             }
             
             new BuildLobby(sql_connection);
-			output.put("status", "1");	
+            
+            if (is_private) {
+            	output.put("code", participants.getString("code"));
+            }
+			
+            output.put("status", "1");	
 		}
 		method.response.send(output);
 	}
