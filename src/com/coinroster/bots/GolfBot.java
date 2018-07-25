@@ -730,13 +730,16 @@ public class GolfBot extends Utils {
 		String title = this.getTourneyName() + " | " + contest.getString("title");
 		contest.put("title", title);
 		contest.put("registration_deadline", deadline);
-		
+		int num_teams = contest.getJSONObject("prop_data").getInt("num_teams");
+		int players_per_team = contest.getJSONObject("prop_data").getInt("players_per_team");
+		int limit = num_teams * players_per_team;
 		//get 30 most expensive golfers
 		Map<Integer, ArrayList<String>> players = new HashMap<>();
 		ResultSet top_players = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit 30");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit ?");
 			get_players.setString(1, "GOLF");
+			get_players.setInt(2, limit);
 			top_players = get_players.executeQuery();
 			
 			while(top_players.next()){
@@ -751,8 +754,7 @@ public class GolfBot extends Utils {
 			}
 			
 			JSONArray teams = new JSONArray();
-			int num_teams = 5;
-			int rounds = 6;
+			int rounds = players_per_team;
 			//create 5 teams, 6 rounds draft 
 			for(int i=1; i<=num_teams; i++){
 				JSONObject team = new JSONObject();
@@ -773,13 +775,19 @@ public class GolfBot extends Utils {
 					String name = golfer.get(1);
 					names.add(name);
 				}
-				String desc = names.get(0) + ", " + names.get(1) + ", " + names.get(2) + ", " + names.get(3) + ", " + names.get(4);
+				
+				String desc = "";
+				for(int p=0; p<rounds; p++){
+					desc += names.get(p) + ", ";
+				}
+				desc = desc.substring(0, desc.length()-2);
+				
 				team.put("description", desc);
 				team.put("player_ids", golfer_ids.toString());
 				teams.put(team);
 			}
 			JSONObject tie = new JSONObject();
-			tie.put("id", 6);
+			tie.put("id", num_teams+1);
 			tie.put("description", "Tie");
 			teams.put(tie);
 			
