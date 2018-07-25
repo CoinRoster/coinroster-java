@@ -242,6 +242,10 @@ public class GolfBot extends Utils {
 		
 		if(today == 2)
 			c.add(Calendar.DATE, 3);
+		else if(today == 3)
+			c.add(Calendar.DATE, 2);
+		else if(today == 4)
+			c.add(Calendar.DATE, 1);
 		else if(today == 6)
 			c.add(Calendar.DATE, -1);
 		else if(today == 7)
