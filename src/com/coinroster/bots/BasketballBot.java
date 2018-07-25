@@ -453,6 +453,7 @@ public class BasketballBot extends Utils {
 			bio.put("last_five_games", this.getGameLogs());
 			bio.put("career_stats", this.getCareerStats());
 			bio.put("year_stats", this.getYearStats());
+			bio.put("team_abr", this.getTeam());
 
 			this.bio = bio;		
 		}

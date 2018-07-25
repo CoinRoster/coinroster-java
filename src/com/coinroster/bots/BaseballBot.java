@@ -577,6 +577,7 @@ public class BaseballBot extends Utils {
 			bio.put("year_stats", this.getYearStats());
 			bio.put("name", this.name);
 			bio.put("id", this.getESPN_ID());
+			bio.put("team_abr", this.getTeam());
 
 			this.bio = bio;		
 		}
