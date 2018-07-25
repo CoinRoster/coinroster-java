@@ -1575,7 +1575,7 @@ public class DB
 				if(result_set.getObject(20) == null)
 					entry.put("progressive", "");
 				else
-					entry.put("progressive", result_set.getObject(20));
+					entry.put("progressive", result_set.getObject(20).toString());
 				
 				if(result_set.getObject(22) == null)
 					entry.put("filter", 0);
