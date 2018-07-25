@@ -318,7 +318,7 @@ public class BaseballBot extends Utils {
 				save_player.setDouble(6, player.getSalary());
 				save_player.setString(7, empty_data_json.toString());
 				save_player.setDouble(8, player.getPoints());
-				save_player.setString(9, "{}");
+				save_player.setString(9, player.getBio().toString());
 				save_player.setInt(10, player.get_filter());
 				save_player.executeUpdate();	
 			}
@@ -393,11 +393,11 @@ public class BaseballBot extends Utils {
 									price = 80;
 								// create a player object, save it to the hashmap
 								Player p = new Player(ESPN_id, name, team_name);
-								//p.scrape_info();
+								p.scrape_info();
 								p.gameID = this.game_IDs.get(i);
 								p.set_salary(price);
 								p.set_filter(at_bats);
-								//p.createBio();		
+								p.createBio();		
 								players.put(ESPN_id, p);
 							}
 							catch(ArrayIndexOutOfBoundsException e){
@@ -487,7 +487,7 @@ public class BaseballBot extends Utils {
 		private String height;
 		private String weight;
 		private String pos;
-		private JSONArray last_five_games;
+		private JSONArray game_log;
 		private JSONObject career_stats;
 		private JSONObject year_stats;
 		private JSONObject bio;
@@ -528,7 +528,7 @@ public class BaseballBot extends Utils {
 			return team_abr;
 		}
 		public JSONArray getGameLogs(){
-			return last_five_games;
+			return game_log;
 		}
 		public JSONObject getCareerStats(){
 			if(career_stats == null){
@@ -568,11 +568,13 @@ public class BaseballBot extends Utils {
 			JSONObject bio = new JSONObject();
 			bio.put("birthString", this.getBirthString());
 			bio.put("height", this.getHeight());
-			bio.put("Weight", this.getWeight());
+			bio.put("weight", this.getWeight());
 			bio.put("pos", this.getPosition());
-			bio.put("last_five_games", this.getGameLogs());
+			bio.put("last_ten_games", this.getGameLogs());
 			bio.put("career_stats", this.getCareerStats());
 			bio.put("year_stats", this.getYearStats());
+			bio.put("name", this.name);
+			bio.put("id", this.getESPN_ID());
 
 			this.bio = bio;		
 		}
@@ -582,88 +584,96 @@ public class BaseballBot extends Utils {
 		
 		public void scrape_info() throws IOException, JSONException{
 			
-//			Document page = Jsoup.connect("http://www.espn.com/nba/player/_/id/"+Integer.toString(this.getESPN_ID())).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-//				      .referrer("http://www.google.com").timeout(6000).get();
-//			Elements bio_divs = page.getElementsByClass("player-bio");
-//			
-//			// parse bio-bio div to get pos, weight, height, birthString
-//			for(Element bio : bio_divs){
-//				Elements general_info = bio.getElementsByClass("general-info");
-//				String[] info = general_info.first().text().split(" ");
-//				String pos = info[1];
-//				this.pos = pos;
-//				String height = info[2] + " " + info[3].replace(",", "");
-//				String weight = info[4] + " " + info[5];
-//				this.height = height;
-//				this.weight = weight;
-//				Elements player_metadata = bio.getElementsByClass("player-metadata");
-//				Element item = player_metadata.first();
-//				Elements lis = item.children();
-//				String born_string = lis.first().text().replace("Born", "");
-//				this.birthString = born_string;
-//			}
-//			String[] stats = {"STAT_TYPE","GP","MPG","FGM-FGA","FG%","3PM-3PA","3P%","FTM-FTA","FT%","RPG","APG","BLKPG","STLPG","PFPG","TOPG","PPG"};
-//			Elements tables = page.getElementsByClass("tablehead");
-//			Element stats_table;
-//			try{
-//				stats_table = tables.get(1);
-//			}
-//			catch (Exception e){
-//				log("No available data for " + this.getName() + " - " + this.getESPN_ID() + " so he will not be available in contests");
-//				return;
-//			}
-//			Elements stats_rows = stats_table.getElementsByTag("tr");
-//			try{
-//				for(Element row : stats_rows){
-//					if(row.className().contains("oddrow") || row.className().contains("evenrow")){
-//						JSONObject stat = new JSONObject();
-//						Elements cols = row.getElementsByTag("td");
-//						int index = 0;
-//						for(Element data : cols){
-//							stat.put(stats[index], data.text());
-//							index = index + 1;
-//						}
-//						
-//						if(stat.get("STAT_TYPE").equals("Career")){
-//							this.career_stats = stat;
-//						}
-//						else{
-//							this.year_stats = stat;
-//						}
-//					}
-//				}
-//			}
-//			catch (java.lang.ArrayIndexOutOfBoundsException e){
-//			}
-//		
-//			String[] game_log_stats = {"DATE","OPP","SCORE","MIN","FGM-FGA","FG%","3PM-3PA","3P%","FTM-FTA","FT%","REB","AST","BLK","STL","PF","TO","PTS"};
-//			Element game_log_table;
-//			try{
-//				game_log_table = tables.get(2);
-//			}
-//			catch(java.lang.IndexOutOfBoundsException e){
-//				//player does not have a year and career stats table, so his game logs is second table on page, not third
-//				game_log_table = tables.get(1);
-//			}
-//			Elements rows = game_log_table.getElementsByTag("tr");
-//			JSONArray game_logs = new JSONArray();
-//			for(Element row : rows){
-//				if(row.className().contains("oddrow") || row.className().contains("evenrow")){
-//					if(row.children().size() < 2){
-//						// skip the extra row in the game log - usually exists when player has been traded.
-//						continue;
-//					}
-//					JSONObject game = new JSONObject();
-//					Elements cols = row.getElementsByTag("td");
-//					int index = 0;
-//					for(Element data : cols){
-//						game.put(game_log_stats[index], data.text());
-//						index = index + 1;
-//					}
-//					game_logs.put(game);
-//				}	
-//			}
-//			this.last_five_games = game_logs;
+			Document page = Jsoup.connect("http://www.espn.com/myl/player/_/id/" + this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+				      .referrer("http://www.google.com").timeout(10000).get();
+			Element bio = page.getElementsByClass("player-bio").first();
+			
+			// parse bio-bio div to get pos, weight, height, birthString
+			Element general_info = bio.getElementsByClass("general-info").first();
+			String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
+			this.pos = pos;
+			
+			String birthDate = "", birthPlace = "", height = "", weight = "";
+			Elements player_metadata = bio.getElementsByClass("player-metadata").first().getElementsByTag("li");
+			for(Element li : player_metadata){
+				if(li.getElementsByTag("span").first().text().equals("Birth Date")){
+					birthDate = li.text().replace("Birth Date", "");
+				}
+				else if(li.getElementsByTag("span").first().text().equals("Birthplace")){
+					birthPlace = li.text().replace("Birthplace", "");
+				}
+				else if(li.getElementsByTag("span").first().text().equals("Ht/Wt")){
+					String ht_wt = li.text().replace("Ht/Wt", "");
+					height = ht_wt.split(", ")[0].replace("-", "'") + "\"";
+					weight = ht_wt.split(", ")[1].replace(".", "");
+				}
+			}
+			this.birthString = birthDate.split("\\(")[0] + "in " + birthPlace + " (" + birthDate.split("\\(")[1];
+			this.height = height;
+			this.weight = weight;
+			
+			String[] stats = {"STAT_TYPE","GP","AB","R","H","2B","3B","HR","RBI","BB","K","SB","CS","AVG","OBP","SLG", "OPS"};
+			Elements tables = page.getElementsByClass("tablehead");
+			Element stats_table;
+			try{
+				stats_table = tables.get(1);
+			}
+			catch (Exception e){
+				log("No available data for " + this.getName() + " - " + this.getESPN_ID() + " so he will not be available in contests");
+				return;
+			}
+			Elements stats_rows = stats_table.getElementsByTag("tr");
+			try{
+				for(Element row : stats_rows){
+					if((row.className().contains("oddrow") || row.className().contains("evenrow")) && !row.getElementsByTag("td").first().text().equals("Projected")){
+						JSONObject stat = new JSONObject();
+						Elements cols = row.getElementsByTag("td");
+						int index = 0;
+						for(Element data : cols){
+							stat.put(stats[index], data.text());
+							index = index + 1;
+						}
+						
+						if(stat.get("STAT_TYPE").equals("Career")){
+							this.career_stats = stat;
+						}
+						else{
+							this.year_stats = stat;
+						}
+					}
+				}
+			}
+			catch (java.lang.ArrayIndexOutOfBoundsException e){
+			}
+		
+			String[] game_log_stats = {"DATE","OPP","SCORE","AB","R","H","2B","3B","HR","RBI","BB","K","SB","AVG"};
+			Element game_log_table;
+			try{
+				game_log_table = tables.get(2);
+			}
+			catch(java.lang.IndexOutOfBoundsException e){
+				//player does not have a year and career stats table, so his game logs is second table on page, not third
+				game_log_table = tables.get(1);
+			}
+			Elements rows = game_log_table.getElementsByTag("tr");
+			JSONArray game_logs = new JSONArray();
+			for(Element row : rows){
+				if(row.className().contains("oddrow") || row.className().contains("evenrow")){
+					if(row.children().size() < 2){
+						// skip the extra row in the game log - usually exists when player has been traded.
+						continue;
+					}
+					JSONObject game = new JSONObject();
+					Elements cols = row.getElementsByTag("td");
+					int index = 0;
+					for(Element data : cols){
+						game.put(game_log_stats[index], data.text());
+						index = index + 1;
+					}
+					game_logs.put(game);
+				}	
+			}
+			this.game_log = game_logs;
 		}
 	}	
 }

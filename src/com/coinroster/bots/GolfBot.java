@@ -921,6 +921,7 @@ public class GolfBot extends Utils {
 					title = this.getTourneyName() + " | " + contest.getString("title");
 					contest.put("title", title);
 					contest.put("option_table", option_table);
+					contest.put("progressive", "TOURNWINNERMON");
 					break;
 					
 				case "MAKE_CUT":
@@ -1016,6 +1017,22 @@ public class GolfBot extends Utils {
 			get_players.setString(1, this.sport);
 			ResultSet players = get_players.executeQuery();
 			
+			String progressive = "";
+			switch(when){
+				case "2":
+					progressive = "TOURNWINNERTHURS";
+					break;
+				case "3":
+					progressive = "TOURNWINNERFRI";
+					break;
+				case "4":
+					progressive = "TOURNWINNERSAT";
+					break;
+				default:
+					break;
+			}
+			contest.put("progressive", progressive);
+			
 			JSONObject none_above = new JSONObject();
 			none_above.put("description", "Any Other Golfer");
 			none_above.put("id", 1);
@@ -1034,6 +1051,7 @@ public class GolfBot extends Utils {
 				option_table.put(p);
 				index += 1;
 			}
+			
 			String title = this.getTourneyName() + " | " + contest.getString("title");
 			contest.put("title", title);
 			contest.put("option_table", option_table);
