@@ -105,10 +105,8 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.createGolfContests();
 		}
 		
-		// update currencies once a day at 1am
-		if(Server.dev_server && hour==1){
+		if(hour==1 && Server.dev_server)
 			UpdateCurrencies();			
-		}
 	}
 	
 	@SuppressWarnings("unused")
