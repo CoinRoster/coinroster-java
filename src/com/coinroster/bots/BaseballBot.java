@@ -393,12 +393,14 @@ public class BaseballBot extends Utils {
 									price = 80;
 								// create a player object, save it to the hashmap
 								Player p = new Player(ESPN_id, name, team_name);
-								p.scrape_info();
-								p.gameID = this.game_IDs.get(i);
-								p.set_salary(price);
-								p.set_filter(at_bats);
-								p.createBio();		
-								players.put(ESPN_id, p);
+								int return_value = p.scrape_info();
+								if(return_value == 1){
+									p.gameID = this.game_IDs.get(i);
+									p.set_salary(price);
+									p.set_filter(at_bats);
+									p.createBio();		
+									players.put(ESPN_id, p);
+								}
 							}
 							catch(ArrayIndexOutOfBoundsException e){
 								continue;
@@ -582,16 +584,21 @@ public class BaseballBot extends Utils {
 			return this.bio;
 		}
 		
-		public void scrape_info() throws IOException, JSONException{
+		public int scrape_info() throws IOException, JSONException{
 			
-			Document page = Jsoup.connect("http://www.espn.com/myl/player/_/id/" + this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+			Document page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 				      .referrer("http://www.google.com").timeout(10000).get();
 			Element bio = page.getElementsByClass("player-bio").first();
 			
 			// parse bio-bio div to get pos, weight, height, birthString
 			Element general_info = bio.getElementsByClass("general-info").first();
-			String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
-			this.pos = pos;
+			try{
+				String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
+				this.pos = pos;
+			}catch(NullPointerException e){
+				log("not enough data - probably a minor leaguer - exclude from contests");
+				return 0;
+			}
 			
 			String birthDate = "", birthPlace = "", height = "", weight = "";
 			Elements player_metadata = bio.getElementsByClass("player-metadata").first().getElementsByTag("li");
@@ -620,7 +627,7 @@ public class BaseballBot extends Utils {
 			}
 			catch (Exception e){
 				log("No available data for " + this.getName() + " - " + this.getESPN_ID() + " so he will not be available in contests");
-				return;
+				return 0;
 			}
 			Elements stats_rows = stats_table.getElementsByTag("tr");
 			try{
@@ -674,6 +681,7 @@ public class BaseballBot extends Utils {
 				}	
 			}
 			this.game_log = game_logs;
+			return 1;
 		}
 	}	
 }
