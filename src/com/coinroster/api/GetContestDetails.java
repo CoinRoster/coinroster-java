@@ -48,7 +48,11 @@ public class GetContestDetails extends Utils
 				break method;
 			}
 			
-			code = input.getString("code");
+			try{
+				code = input.getString("code");
+			}catch(JSONException e){
+				code = null;
+			}
 			
 			JSONObject contest = db.select_contest(contest_id);
 			
