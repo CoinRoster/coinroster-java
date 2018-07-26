@@ -401,7 +401,10 @@ public class CreateContest extends Utils
 			
 //------------------------------------------------------------------------------------
 
-			} method.response.send(output);
+			} 
+		
+		if(session != null)
+			method.response.send(output);
 			
 		}
 	}
