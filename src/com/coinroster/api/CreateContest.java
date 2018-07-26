@@ -356,7 +356,8 @@ public class CreateContest extends Utils
 	            
 	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, "
 	            		+ "rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, "
-	            		+ "odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, prop_data, participants) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+	            		+ "odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, prop_data, participants) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	            		Statement.RETURN_GENERATED_KEYS);				
 
 
 				create_contest.setString(1, category);
@@ -425,6 +426,15 @@ public class CreateContest extends Utils
 				}
 				
 	            create_contest.executeUpdate();
+	            
+            	
+            	ResultSet rs = create_contest.getGeneratedKeys();
+
+            	if(rs.next()) {
+            		output.put("contest_id", rs.getInt(1));
+            	} else {
+            		log("Generated keys query failed");
+            	}
 
 	        }
             else if (contest_type.equals("PARI-MUTUEL"))
@@ -542,7 +552,12 @@ public class CreateContest extends Utils
             	create_contest.executeUpdate();
             	
             	ResultSet rs = create_contest.getGeneratedKeys();
-            	if(rs.next()) log(rs.getInt(1));
+
+            	if(rs.next()) {
+            		output.put("contest_id", rs.getInt(1));
+            	} else {
+            		log("Generated keys query failed");
+            	}
             }
             
             new BuildLobby(sql_connection);
