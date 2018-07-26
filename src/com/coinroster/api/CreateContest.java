@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
@@ -52,9 +53,9 @@ public class CreateContest extends Utils
             }catch(Exception e){
             }
             
-			boolean is_admin = false;
-			if (session != null && input.getString("request_source") != null) {
-				is_admin = session.user_level() != null && session.user_level().equals("1") && input.getString("request_source").equals("admin_panel");	
+            boolean is_admin = false;
+			if (session != null){
+				is_admin = session.user_level() != null && session.user_level().equals("1"); 
 			}
 
             String settlement_type = input.getString("settlement_type");
@@ -524,9 +525,9 @@ public class CreateContest extends Utils
 		            	
 						// exclude admins from seeking approval
 		            	if(is_admin) 
-		            		create_contest.setInt(15, 5);            		
+		            		create_contest.setInt(15, 1);            		
 		            	else
-		            		create_contest.setInt(15, 1);     
+		            		create_contest.setInt(15, 5);     
 					}
 					
 					// admin created contest
