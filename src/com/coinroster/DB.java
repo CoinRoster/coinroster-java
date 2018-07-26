@@ -1619,9 +1619,9 @@ public class DB
 
 	message_body = "Hello <b>" + username + "</b>!";
 	message_body += "<br/>";
-	message_body += "We have made an important change to your roster (id: " + roster_id + ") in " + contest_name + "<br>";
-	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br>";
-	message_body += "View your updated roster <a href='" + Server.host + "/contests/entries.html?contest_id" + contest_id + "'>here</a>";
+	message_body += "We have made an <b>important change</b> to your roster (id: " + roster_id + ") in " + contest_name + "<br><br>";
+	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br><br>";
+	message_body += "View your updated roster <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>here</a>";
 	message_body += "<br/>";
 	message_body += "Best of luck!";
 

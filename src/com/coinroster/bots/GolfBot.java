@@ -706,7 +706,7 @@ public class GolfBot extends Utils {
 		int topScore = 999;
 		//check points column in `player` table since its a tournament contest
 		if(when.equals("tournament")){
-			PreparedStatement best_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points ASC limit 1");
+			PreparedStatement best_score = sql_connection.prepareStatement("select points from player where sport_type=? and points > -200 order by points ASC limit 1");
 			best_score.setString(1, "GOLF");
 			ResultSet res = best_score.executeQuery();
 			while(res.next()){
@@ -862,7 +862,7 @@ public class GolfBot extends Utils {
 					if(when.equals("tournament") || when.equals("1")){
 						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc limit 20");
 					}else{
-						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by points asc desc limit 20");
+						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 and points > -200 order by points asc limit 20");
 					}
 					get_players.setString(1, this.sport);
 					ResultSet players = get_players.executeQuery();
@@ -1016,7 +1016,7 @@ public class GolfBot extends Utils {
 			
 			JSONArray option_table = new JSONArray();
 			PreparedStatement get_players;	
-			get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by points asc desc limit 20");
+			get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 and points > -200 order by points asc limit 20");
 			get_players.setString(1, this.sport);
 			ResultSet players = get_players.executeQuery();
 			
@@ -1375,13 +1375,19 @@ public class GolfBot extends Utils {
 		for(int i = 0; i < entries.length(); i++){
 			JSONObject entry = entries.getJSONObject(i);
 			JSONArray entry_data = new JSONArray(entry.getString("entry_data"));
+			List<String> existing_players = new ArrayList<String>();
+			for(int ex_p = 0; ex_p < entry_data.length(); ex_p++){
+				String p_id = entry_data.getJSONObject(ex_p).getString("id");
+				existing_players.add(p_id);
+			}
+			log("entry existing players: " + existing_players.toString());
 			for(int q = 0; q < entry_data.length(); q++){
 				JSONObject player = entry_data.getJSONObject(q);
 				int status = db.getGolferStatus(player.getString("id"), this.sport);
 				// Roster contains INACTIVE player
 				if(status == 0){
 					// get next available player (one player cheaper)
-					JSONObject new_player = replaceInactivePlayer(player.getString("id"), player.getDouble("price"));
+					JSONObject new_player = replaceInactivePlayer(player.getString("id"), player.getDouble("price"), existing_players);
 					// remove inactive player from roster
 					entry_data.remove(q);
 					// put in new one
@@ -1401,14 +1407,25 @@ public class GolfBot extends Utils {
 		}
 	}
 	
-	public JSONObject replaceInactivePlayer(String id, double salary) throws SQLException, JSONException{
+	public JSONObject replaceInactivePlayer(String id, double salary, List<String> existing_players) throws SQLException, JSONException{
 		JSONObject player = new JSONObject();
-		PreparedStatement get_player = sql_connection.prepareStatement("SELECT id, salary from player where id != ? "
-																	+ "and sport_type = ? and filter_on = 4 and salary <= ? "
-																	+ "order by salary desc, name asc limit 1");
+		String statement = "SELECT id, salary from player where id != ? and id NOT in (";
+		
+		for(int i = 0; i < existing_players.size(); i++){
+			statement += "?,";
+		}
+		statement = statement.substring(0, statement.length() - 1);
+		statement += ") and sport_type = ? and filter_on = 4 and salary <= ? order by salary desc, name asc limit 1";
+		
+		PreparedStatement get_player = sql_connection.prepareStatement(statement);
 		get_player.setString(1,  id);
-		get_player.setString(2, this.sport);
-		get_player.setDouble(3, salary);
+		int index = 2;
+		Iterator<?> players = existing_players.iterator();
+		while(players.hasNext()){
+		   get_player.setString(index++, (String) players.next()); // or whatever it applies 
+		}
+		get_player.setString(index++, this.sport);
+		get_player.setDouble(index++, salary);
 		ResultSet rtn = get_player.executeQuery();
 		if(rtn.next()){
 			player.put("id", rtn.getString(1));

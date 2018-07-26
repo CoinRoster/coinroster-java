@@ -46,6 +46,7 @@ public class GetContestDetails extends Utils
 				break method;
 			}
 			
+	
 			JSONObject contest = db.select_contest(contest_id);
 			
 			if (contest != null)
