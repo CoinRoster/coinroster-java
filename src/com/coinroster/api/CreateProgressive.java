@@ -109,13 +109,12 @@ public class CreateProgressive extends Utils
 			create_progressive.executeUpdate();
 
             output.put("status", "1");
-            log("test5");
-			log(method.output.toString());
-			log(output.toString());
 			
 //------------------------------------------------------------------------------------
 
 			} 
-			method.response.send(method.output);
+		
+		if(session != null)
+			method.response.send(output);
 		}
 	}

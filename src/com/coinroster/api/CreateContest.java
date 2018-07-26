@@ -565,10 +565,14 @@ public class CreateContest extends Utils
             if (is_private) {
             	output.put("code", participants.getString("code"));
             }
-			
-            output.put("status", "1");	
-		}
+            
+            output.put("status", "1");
+            
+		} 
+		
+	if(session != null)
 		method.response.send(output);
+	
 	}
 }
 	
