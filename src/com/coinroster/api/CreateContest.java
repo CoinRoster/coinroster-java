@@ -2,6 +2,7 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,6 +12,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
+import com.mysql.jdbc.Statement;
 
 public class CreateContest extends Utils
 	{
@@ -466,7 +468,7 @@ public class CreateContest extends Utils
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
             																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
             																		+ "scoring_rules, prop_data, participants) "
-            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -538,6 +540,9 @@ public class CreateContest extends Utils
 
 			
             	create_contest.executeUpdate();
+            	
+            	ResultSet rs = create_contest.getGeneratedKeys();
+            	if(rs.next()) log(rs.getInt(1));
             }
             
             new BuildLobby(sql_connection);
