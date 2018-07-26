@@ -14,6 +14,8 @@ import com.coinroster.bots.GolfBot;
 public class GetAvailableSports extends Utils {
 	
 	public static String method_level = "guest";
+	
+	@SuppressWarnings("unused")
 	public GetAvailableSports(MethodInstance method) throws Exception {
 		
 		JSONObject 
@@ -26,7 +28,7 @@ public class GetAvailableSports extends Utils {
 			
 			Calendar c = Calendar.getInstance();
 			Long now = c.getTimeInMillis();
-			int hour = c.get(Calendar.HOUR_OF_DAY);
+			int hour = c.get(Calendar.HOUR_OF_DAY);			
 						
 			// BASEBALL
 			boolean baseball = false;
@@ -59,27 +61,47 @@ public class GetAvailableSports extends Utils {
 			GolfBot golf_bot = new GolfBot(sql_connection);
 			int today = getToday();
 			golf_bot.scrapeTourneyID(today);
-			if(golf_bot.getTourneyID() != null){
-				Long tournament_start = golf_bot.getDeadline();
+			
+			// if MONDAY, make sure its past 6am
+			if(today == 2){
+				if(hour >= 6){
+					if(golf_bot.getTourneyID() != null){
+						Long tournament_start = golf_bot.getDeadline();
+						if(now < tournament_start){
+							golf_tournament = true;
+							r1 = true; 
+							r2 = true; 
+							r3 = true; 
+							r4 = true;
+						}
+					}
+				}
+			}
+			else{
+	
+				if(golf_bot.getTourneyID() != null){
 				
-				if(hour >= 6 && now < tournament_start){
-					golf_tournament = true;
-					r1 = true; 
-					r2 = true; 
-					r3 = true; 
-					r4 = true;
-				}
-				else if(now >= tournament_start && now < tournament_start + 86400000){
-					r2 = true;
-					r3 = true;
-					r4 = true;
-				}
-				else if(now >= tournament_start + 86400000 && now < tournament_start + (2 * 86400000)){
-					r3 = true;
-					r4 = true;
-				}
-				else if(now >= tournament_start + (2 * 86400000) && now < tournament_start + (3 * 86400000)){
-					r4 = true;
+					Long tournament_start = golf_bot.getDeadline();
+	
+					if(now < tournament_start){
+						golf_tournament = true;
+						r1 = true; 
+						r2 = true; 
+						r3 = true; 
+						r4 = true;
+					}
+					else if(now >= tournament_start && now < tournament_start + 86400000){
+						r2 = true;
+						r3 = true;
+						r4 = true;
+					}
+					else if(now >= tournament_start + 86400000 && now < tournament_start + (2 * 86400000)){
+						r3 = true;
+						r4 = true;
+					}
+					else if(now >= tournament_start + (2 * 86400000) && now < tournament_start + (3 * 86400000)){
+						r4 = true;
+					}
 				}
 			}
 			
