@@ -31,7 +31,6 @@ public class GetPromotionBalance {
 			JSONObject internal_promotions = db.select_user("username", "internal_promotions");
 			output.put("internal_promo_balance", internal_promotions.getDouble("btc_balance"));
 			output.put("status", "1");
-			System.out.println("balance: " + internal_promotions.getDouble("btc_balance"));
 //------------------------------------------------------------------------------------
 
 			} method.response.send(output);
