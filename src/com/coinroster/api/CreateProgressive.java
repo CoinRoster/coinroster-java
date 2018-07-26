@@ -116,9 +116,6 @@ public class CreateProgressive extends Utils
 //------------------------------------------------------------------------------------
 
 			} 
-		
-//			if (session != null) {
-				method.response.send(method.output);
-//			}
+			method.response.send(method.output);
 		}
 	}
