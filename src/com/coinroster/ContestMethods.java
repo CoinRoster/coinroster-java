@@ -604,9 +604,10 @@ public class ContestMethods extends Utils{
 			}
 			else{
 				int today = getToday();
-				if(today == 1 || today == 5 || today == 6 || today == 7){
+				int hour = Calendar.getInstance().get(Calendar.HOUR);
+				if((today == 1 || today == 5 || today == 6 || today == 7) && ((hour % 3) == 0)){
 					GolfBot golfBot = new GolfBot(sql_connection);
-					log("No current CoinRoster contests but Golf tournament is in play and minute is multiple of 20");
+					log("No current CoinRoster contests but Golf tournament is in play and hour is multiple of 3");
 					String gameID = golfBot.getLiveTourneyID();
 					golfBot.scrapeScores(gameID);
 				}
