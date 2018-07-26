@@ -594,9 +594,6 @@ public class GolfBot extends Utils {
 						try{
 							score = data.getJSONObject(when).getInt("today");
 						}catch(Exception e){
-							log(e.getMessage());
-							log("player id: " + id);
-							log("setting score to 0 becasue player is active but hasn't started yet");
 							score = 0;
 						}
 						int normalizedScore = normalizeScore(score, worstScore);
