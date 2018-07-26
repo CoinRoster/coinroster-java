@@ -597,6 +597,8 @@ public class GolfBot extends Utils {
 						}catch(Exception e){
 							log(e.getMessage());
 							log("player id: " + id);
+							log("setting score to 0 becasue player is active but hasn't started yet");
+							score = 0;
 						}
 						int normalizedScore = normalizeScore(score, worstScore);
 						player.put("id", id);
@@ -1385,6 +1387,8 @@ public class GolfBot extends Utils {
 					// put in new one
 					entry_data.put(new_player);
 					log("replacing INACTIVE rostered golfer " + player.getString("id") + " with " + new_player.toString());
+					
+					db.updateEntryWithActivePlayer(entry.getInt("entry_id"), entry_data.toString());
 					String title = db.get_contest_title(contest_id);
 					JSONObject user = db.select_user("id", entry.getString("user_id"));
 					// email user to notify
@@ -1396,6 +1400,23 @@ public class GolfBot extends Utils {
 			}
 		}
 	}
+	
+	public JSONObject replaceInactivePlayer(String id, double salary) throws SQLException, JSONException{
+		JSONObject player = new JSONObject();
+		PreparedStatement get_player = sql_connection.prepareStatement("SELECT id, salary from player where id != ? "
+																	+ "and sport_type = ? and filter_on = 4 and salary <= ? "
+																	+ "order by salary desc, name asc limit 1");
+		get_player.setString(1,  id);
+		get_player.setString(2, this.sport);
+		get_player.setDouble(3, salary);
+		ResultSet rtn = get_player.executeQuery();
+		if(rtn.next()){
+			player.put("id", rtn.getString(1));
+			player.put("price", rtn.getDouble(2));
+		}
+		return player;
+	}
+	
 	
 	public JSONObject createMakeCutProp(JSONObject fields, JSONObject player) throws JSONException{
 		
@@ -1421,23 +1442,6 @@ public class GolfBot extends Utils {
 		return fields;
 		
 	}
-	
-	public JSONObject replaceInactivePlayer(String id, double salary) throws SQLException, JSONException{
-		JSONObject player = new JSONObject();
-		PreparedStatement get_player = sql_connection.prepareStatement("SELECT id, salary from player where id != ? "
-																	+ "and sport_type = ? and filter_on = 4 and salary <= ? "
-																	+ "order by salary desc, name asc limit 1");
-		get_player.setString(1,  id);
-		get_player.setString(2, this.sport);
-		get_player.setDouble(3, salary);
-		ResultSet rtn = get_player.executeQuery();
-		if(rtn.next()){
-			player.put("id", rtn.getString(1));
-			player.put("price", rtn.getDouble(2));
-		}
-		return player;
-	}
-	
 	
 	class Player {
 		public String method_level = "admin";

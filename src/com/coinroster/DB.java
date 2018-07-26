@@ -1619,13 +1619,20 @@ public class DB
 
 	message_body = "Hello <b>" + username + "</b>!";
 	message_body += "<br/>";
-	message_body += "We have made an important change to your roster (id: " + roster_id + ") in " + contest_name + " (id: " + contest_id + ")";
-	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player;
+	message_body += "We have made an important change to your roster (id: " + roster_id + ") in " + contest_name + "<br>";
+	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br>";
 	message_body += "View your updated roster <a href='" + Server.host + "/contests/entries.html?contest_id" + contest_id + "'>here</a>";
 	message_body += "<br/>";
 	message_body += "Best of luck!";
 
 	Server.send_mail(email_address, username, subject, message_body);
+	}
+	
+	public void updateEntryWithActivePlayer(int entry_id, String entry_data) throws SQLException{
+		PreparedStatement update = sql_connection.prepareStatement("update entry set entry_data = ? where id = ?");
+		update.setString(1, entry_data);
+		update.setInt(2, entry_id);
+		update.executeUpdate();
 	}
 	
 }
