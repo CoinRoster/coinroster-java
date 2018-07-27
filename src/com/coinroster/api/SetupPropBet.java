@@ -40,10 +40,7 @@ public class SetupPropBet extends Utils{
 				String sub_category = data.getString("sub_category");
 				String sport = sub_category.replace("PROPS", "");
 				
-				/*
-				DO SOMETHING WITH THIS!
-				String public_private = input.getString("public_private");
-				*/
+				boolean priv = data.getBoolean("private");
 				
 				Long deadline = null;
 				switch(sport){
@@ -165,7 +162,7 @@ public class SetupPropBet extends Utils{
 				prop.put("auto_settle", auto_settle);
 				prop.put("scoring_rules", scoring_rules.toString());
 				prop.put("prop_data", prop_data.toString());
-				
+				prop.put("private", priv);
 				
 				MethodInstance prop_method = new MethodInstance();
 				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");

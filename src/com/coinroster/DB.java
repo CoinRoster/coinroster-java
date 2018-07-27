@@ -1425,7 +1425,7 @@ public class DB
 	public ResultSet getPlayerScoresData(String player_id, String sport) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select data, points from player where sport_type = ? and id = ?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select data, points, filter_on from player where sport_type = ? and id = ?");
 			get_players.setString(1, sport);
 			get_players.setString(2, player_id);
 			result_set = get_players.executeQuery();		

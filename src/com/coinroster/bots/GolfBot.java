@@ -20,6 +20,7 @@ import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
+import com.coinroster.internal.BackoutContest;
 import com.coinroster.internal.JsonReader;
 
 import org.json.JSONException;
@@ -1115,7 +1116,7 @@ public class GolfBot extends Utils {
 	}
 	
 	
-	public int settlePropBet(JSONObject contest) throws JSONException, SQLException, IOException{
+	public int settlePropBet(JSONObject contest, String contest_id) throws JSONException, SQLException, IOException{
 		
 		JSONObject scoring_rules = contest.getJSONObject("scoring_rules");
 		JSONObject prop_data = contest.getJSONObject("prop_data");
@@ -1424,8 +1425,88 @@ public class GolfBot extends Utils {
 
 			
 			case "OVER_UNDER":
+				double o_u = prop_data.getDouble("over_under_value");
+				player_id = prop_data.getString("player_id");
+				ResultSet rs = db.getPlayerScoresData(player_id, this.sport);
+				if(rs.next()){
+					JSONObject data = new JSONObject(rs.getString(1));
+					int overall_score = rs.getInt(2);
+					status = rs.getInt(3);
+					
+					//multi-stat over under
+					if(prop_data.getString("multi_stp").equals("multi-stat")){
+						Double pts = this.calculateMultiStatPoints(prop_data.getString("when"), data, overall_score, scoring_rules);
+						if(pts > o_u){
+							//over
+							winning_outcome = 1;
+							return winning_outcome;
+						}
+						else if (pts < o_u){
+							//under
+							winning_outcome = 2;
+							return winning_outcome;
+						}
+						// push
+						else{
+							log("Over/under contest " + contest_id + " pushed: backout initiated");
+							new BackoutContest(sql_connection, Integer.parseInt(contest_id));
+							break;
+						}
+					}
+					// score to par over under
+					else{
+						if(status == 4){
+							//player beat over/under value
+							if(overall_score < o_u){
+								winning_outcome = 1;
+								return winning_outcome;
+							}
+							// player did worse than over/under
+							else if(overall_score > o_u){
+								winning_outcome = 1;
+								return winning_outcome;
+							}
+							//push
+							else{
+								log("Over/under contest " + contest_id + " pushed: backout initiated");
+								new BackoutContest(sql_connection, Integer.parseInt(contest_id));
+								break;
+							}
+						}else{
+							log("player " + player_id + " status: " + status + " - backing out");
+							new BackoutContest(sql_connection, Integer.parseInt(contest_id));
+							break;
+						}
+					}
+				}
+				
+	
 			case "NUMBER_SHOTS":
-				break;
+				player_id = prop_data.getString("player_id");
+				String shot_type = prop_data.getString("shot");
+				String when = prop_data.getString("when");
+				JSONObject data = db.getPlayerScores(player_id, this.sport);
+				
+				int num_shots = 0;
+				if(when.equals("tournament")){
+					for(int i = 1; i <= 4; i++){
+						num_shots += data.getJSONObject(String.valueOf(i)).getInt(shot_type);
+					}
+				}else{
+					num_shots = data.getJSONObject(when).getInt(shot_type);
+				}
+				
+				log("player " + player_id + " shot " + num_shots + " " + shot_type + " for " + when);
+				for(int index = 0; index < option_table.length(); index++){
+					JSONObject option = option_table.getJSONObject(index);
+					if(option.getString("description").equals(String.valueOf(num_shots))){
+						winning_outcome = option.getInt("id");
+						return winning_outcome;
+					}
+				}
+				// any other number
+				winning_outcome = 1;
+				return winning_outcome;
 
 		}
 		
