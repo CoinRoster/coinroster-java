@@ -91,7 +91,6 @@ public class GetContestDetails extends Utils
 								db.update_private_contest_users(contest_id, participants);
 							} else {
 								Utils.log("cannot add user to private contest " + contest_id + "; no session");
-								break method;
 							}
 							
 							// user is clear to proceed
