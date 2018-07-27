@@ -1,6 +1,8 @@
 package com.coinroster.api;
 
 import java.sql.Connection;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 
 import org.json.JSONObject;
@@ -28,7 +30,9 @@ public class GetAvailableSports extends Utils {
 			
 			Calendar c = Calendar.getInstance();
 			Long now = c.getTimeInMillis();
-			int hour = c.get(Calendar.HOUR_OF_DAY);			
+			int hour = c.get(Calendar.HOUR_OF_DAY);
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd");
+			String today_str = LocalDate.now().format(formatter);
 						
 			// BASEBALL
 			boolean baseball = false;
@@ -38,6 +42,7 @@ public class GetAvailableSports extends Utils {
 				Long deadline = baseball_bot.getEarliestGame();
 				if(hour >= 7 && now < deadline){
 					baseball = true;
+					output.put("baseball_contest", "MLB | " + today_str);
 				}
 			}
 			
@@ -48,7 +53,9 @@ public class GetAvailableSports extends Utils {
 			if(basketball_bot.getGameIDs() != null){
 				Long deadline = basketball_bot.getEarliestGame();
 				if(hour >= 7 && now < deadline){
-					baseball = true;
+					basketball = true;
+					output.put("basketball_contest", "NBA | " + today_str);
+
 				}
 			}
 			
@@ -105,6 +112,9 @@ public class GetAvailableSports extends Utils {
 				}
 			}
 			
+			if(r4){
+				output.put("golf_contest", golf_bot.getTourneyName());
+			}
 			output.put("BASEBALL", baseball);
 			output.put("BASKETBALL", basketball);
 			output.put("GOLF_TOURNAMENT", golf_tournament);
