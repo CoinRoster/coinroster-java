@@ -1235,7 +1235,7 @@ public class GolfBot extends Utils {
 				}catch(Exception e){
 					log(e.toString());
 				}
-				// loop through players and compile ArrayList<Integer> of player_ids with top score
+				// loop through players and compile ArrayList<String> of player_ids with top score
 				while(all_players.next()){
 					player_id = all_players.getString(1);
 					JSONObject data = new JSONObject(all_players.getString(2));
@@ -1316,7 +1316,113 @@ public class GolfBot extends Utils {
 				log("Winning team: " + winning_outcome);
 				return winning_outcome;
 			
-			case "MATCH_PLAY":
+			
+			case "MATCH_PLAY":	
+				// Multi stat match play
+				if(prop_data.getString("multi_stp").equals("multi-stat")){
+					double most_pts = -100;
+					top_players = new ArrayList<String>();
+					for(int i = 0; i < option_table.length(); i++){
+						try{
+							player_id = option_table.getJSONObject(i).getString("player_id");
+							ResultSet rs = db.getPlayerScoresData(player_id, this.sport);
+							if(rs.next()){
+								JSONObject data = new JSONObject(rs.getString(1));
+								int overall_score = rs.getInt(2);
+								Double pts = this.calculateMultiStatPoints(prop_data.getString("when"), data, overall_score, scoring_rules);
+								if(pts > most_pts){
+									most_pts = pts;
+									top_players.clear();
+									top_players.add(player_id);
+								}
+								else if(pts == most_pts){
+									top_players.add(player_id);
+								}
+							}
+							
+						}catch(Exception e){
+							continue;
+						}
+					}
+					if(top_players.size() >= 2){
+						//tie is correct answer;
+						winning_outcome = 1;
+						log("winning outcome=1 because of tie");
+						return winning_outcome;
+					}
+					else{
+						for(String player_table_ID : top_players){
+							for (int i=0; i<option_table.length(); i++){
+								JSONObject option = option_table.getJSONObject(i);
+								int option_id = option.getInt("id");
+								try{
+									player_id = option.getString("player_id");
+									if(player_id.equals(player_table_ID)){
+										winning_outcome = option_id;
+										log("winning outcome is " + option.getString("description"));
+										return winning_outcome;
+									}
+								}	
+								catch(Exception e){
+									continue;
+								}			
+							}
+						}
+					}
+				}
+				
+				// score to par match play
+				else{
+					top_score = 300;
+					top_players = new ArrayList<String>();
+					for(int i = 0; i < option_table.length(); i++){
+						try{
+							player_id = option_table.getJSONObject(i).getString("player_id");
+							ResultSet rs = db.getPlayerScoresData(player_id, this.sport);
+							if(rs.next()){
+								int overall_score = rs.getInt(2);
+								if(overall_score < top_score && overall_score > -200){
+									top_score = overall_score;
+									top_players.clear();
+									top_players.add(player_id);
+								}
+								else if(overall_score == top_score && overall_score > -200){
+									top_players.add(player_id);
+								}
+							}
+							
+						}catch(Exception e){
+							continue;
+						}
+					}
+					if(top_players.size() >= 2){
+						//tie is correct answer;
+						winning_outcome = 1;
+						log("winning outcome=1 because of tie");
+						return winning_outcome;
+					}
+					else{
+						for(String player_table_ID : top_players){
+							for (int i=0; i<option_table.length(); i++){
+								JSONObject option = option_table.getJSONObject(i);
+								int option_id = option.getInt("id");
+								try{
+									player_id = option.getString("player_id");
+									if(player_id.equals(player_table_ID)){
+										winning_outcome = option_id;
+										log("winning outcome is " + option.getString("description"));
+										return winning_outcome;
+									}
+								}	
+								catch(Exception e){
+									continue;
+								}			
+							}
+						}
+					}
+				}
+
+			
 			case "OVER_UNDER":
 			case "NUMBER_SHOTS":
 				break;

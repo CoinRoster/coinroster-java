@@ -1314,7 +1314,12 @@ public class DB
 	public JSONArray get_all_players(String sport) throws JSONException, SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type= ? order by salary desc");
+			PreparedStatement get_players;
+			if(sport.equals("GOLF")){
+				get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc");
+			}else{
+				get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? order by salary desc");
+			}
 			get_players.setString(1, sport);
 			result_set = get_players.executeQuery();
 		}
