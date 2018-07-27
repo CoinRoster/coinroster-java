@@ -66,6 +66,10 @@ public class CronWorker extends Utils implements Callable<Integer>
 			SessionExpiry();
 			UpdateBTCUSD();
 		}
+		
+//		if ((minute % 2) == 0) {
+//			new com.coinroster.internal.BlastEmail();
+//		}
 	
 		if((minute%20)==0){
 			
