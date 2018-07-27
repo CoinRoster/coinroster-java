@@ -9,7 +9,6 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;

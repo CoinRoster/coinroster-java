@@ -3,7 +3,6 @@ package com.coinroster.api;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Iterator;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -83,7 +82,7 @@ public class GetContestDetails extends Utils
 					// if not a participant, add them if they have the correct URL code
 					if (i == users.length()) {
 						if (participants.getString("code").equals(code)) {
-							if (session != null) {
+							if (session.user_id() != null) {
 								users.put(session.user_id());
 								
 								// replace old json array with new
