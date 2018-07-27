@@ -72,7 +72,6 @@ public class GetContestDetails extends Utils
 
 					// check if user is already a participant; no need to check for code if they are
 					JSONArray users = participants.getJSONArray("users");
-					Utils.log(users.length());
 					int i = 0;
 					while (i != users.length()) {
 						if (!users.getString(i).equals(session.user_id())) {
@@ -84,12 +83,17 @@ public class GetContestDetails extends Utils
 					// if not a participant, add them if they have the correct URL code
 					if (i == users.length()) {
 						if (participants.getString("code").equals(code)) {
-							users.put(session.user_id());
-							
-							// replace old json array with new
-							participants.remove("users");
-							participants.put("users", users);
-							db.update_private_contest_users(contest_id, participants);
+							if (session != null) {
+								users.put(session.user_id());
+								
+								// replace old json array with new
+								participants.remove("users");
+								participants.put("users", users);
+								db.update_private_contest_users(contest_id, participants);
+							} else {
+								Utils.log("cannot add user to private contest " + contest_id + "; no session");
+								break method;
+							}
 							
 							// user is clear to proceed
 						} else {						
