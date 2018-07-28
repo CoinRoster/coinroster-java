@@ -74,7 +74,7 @@ public class BuildLobby extends Utils
 					
 					Long settled_cutoff = System.currentTimeMillis() - Server.lobby_settled_cutoff;
 					
-					PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(*) from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?))  group by status");
+					PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(*), participants from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?))  group by status");
 					count_contests.setString(1, category_code);
 					count_contests.setString(2, sub_category_code);
 					count_contests.setLong(3, settled_cutoff);
@@ -97,6 +97,8 @@ public class BuildLobby extends Utils
 						
 						contest_status = count_contests_rs.getInt(1),
 						number_of_contests = count_contests_rs.getInt(2);
+						
+						String participants = count_contests_rs.getString(3);
 						
 						switch (contest_status)
 			                {
