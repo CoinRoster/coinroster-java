@@ -446,6 +446,8 @@ public class GolfBot extends Utils {
 				tournament_statuses.put(String.valueOf(i), true);
 			}
 		}
+		
+		log("tournament status: " + tournament_statuses.toString());
 
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
 		ResultSet playerScores = db.getPlayerScores(this.sport);
@@ -1289,29 +1291,34 @@ public class GolfBot extends Utils {
 				double top_score_team = -999;
 				winning_outcome = 0;
 				for(int i = 0; i < option_table.length(); i++){
-					double team_score = 0.0;
-					JSONObject option = option_table.getJSONObject(i);
-					log("calculating scores from team with id = " + option.getInt("id"));
-					JSONArray golfers =  new JSONArray(option.getJSONArray("player_ids"));
-					for(int q = 0; q < golfers.length(); q++){
-						String id = golfers.getString(q);
-						ResultSet player_data = db.getPlayerScoresData(id, this.sport);
-						int overall_score = 0;
-						JSONObject data = new JSONObject();
-						if(player_data.next()){
-							data = new JSONObject(player_data.getString(1));
-							overall_score = player_data.getInt(2);
+					try{
+						double team_score = 0.0;
+						JSONObject option = option_table.getJSONObject(i);
+						log("calculating scores from team with id = " + option.getInt("id"));
+						JSONArray golfers =  new JSONArray(option.getJSONArray("player_ids"));
+						for(int q = 0; q < golfers.length(); q++){
+							String id = golfers.getString(q);
+							ResultSet player_data = db.getPlayerScoresData(id, this.sport);
+							int overall_score = 0;
+							JSONObject data = new JSONObject();
+							if(player_data.next()){
+								data = new JSONObject(player_data.getString(1));
+								overall_score = player_data.getInt(2);
+							}
+							double pts = this.calculateMultiStatPoints(prop_data.getString("when"), data, overall_score, scoring_rules);
+							team_score += pts;
 						}
-						double pts = this.calculateMultiStatPoints(prop_data.getString("when"), data, overall_score, scoring_rules);
-						team_score += pts;
-					}
-					log("team " + option.getInt("id") + " score: " + team_score);
-					if(team_score > top_score_team){
-						top_score_team = team_score;
-						winning_outcome = option.getInt("id");
-					}
-					else if(team_score == top_score_team){
-						winning_outcome = 6;
+					
+						log("team " + option.getInt("id") + " score: " + team_score);
+						if(team_score > top_score_team){
+							top_score_team = team_score;
+							winning_outcome = option.getInt("id");
+						}
+						else if(team_score == top_score_team){
+							winning_outcome = 6;
+						}
+					}catch(Exception e){
+						continue;
 					}
 				}
 				log("Winning team: " + winning_outcome);

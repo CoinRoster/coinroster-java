@@ -515,6 +515,7 @@ public class ContestMethods extends Utils{
 						String c_id = (String) pari_contest_ids.next();
 						String when = pari_contests.getJSONObject(c_id).getJSONObject("prop_data").getString("when");
 						if(when.equals("tournament")){
+							log("when equals tournament: " + when);
 							int winning_outcome = golfBot.settlePropBet(pari_contests.getJSONObject(c_id), c_id);
 							JSONObject fields = new JSONObject();
 							fields.put("contest_id", Integer.parseInt(c_id));
