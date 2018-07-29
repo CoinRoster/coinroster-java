@@ -104,7 +104,7 @@ public class GolfBot extends Utils {
 		}
 		
 		ArrayList<String> existing_ids = new ArrayList<String>();
-		ResultSet all_existing_players = db.getAllPlayerIDs(this.sport);
+		ResultSet all_existing_players = db.getAllPlayerIDs(this.sport, this.getTourneyID());
 		while(all_existing_players.next()){
 			existing_ids.add(all_existing_players.getString(1));
 		}
@@ -354,10 +354,6 @@ public class GolfBot extends Utils {
 	
 	public void savePlayers(){
 		try {
-			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
-			delete_old_rows.setString(1, this.sport);
-			delete_old_rows.executeUpdate();
-			log("deleted " + this.sport + " players from old contests");
 
 			if(this.getPlayerHashMap() == null)
 				return;
@@ -450,7 +446,7 @@ public class GolfBot extends Utils {
 		log("tournament status: " + tournament_statuses.toString());
 
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
-		ResultSet playerScores = db.getPlayerScores(this.sport);
+		ResultSet playerScores = db.getPlayerScores(this.sport, this.getTourneyID());
 		while(playerScores.next()){
 			boolean in_leaderboard = false;
 			String id = playerScores.getString(1);
@@ -487,7 +483,7 @@ public class GolfBot extends Utils {
 						}
 					}
 					data.put("overall", score);
-					db.updateGolferScore(player_id, this.sport, data.toString(), score, status_int);
+					db.updateGolferScore(player_id, this.sport, data.toString(), score, status_int, this.getTourneyID());
 					break;
 				}
 			}
@@ -495,7 +491,7 @@ public class GolfBot extends Utils {
 				score = -777;
 				JSONObject data = new JSONObject(playerScores.getString(2));
 				data.put("overall", score);
-				db.updateGolferScore(id, this.sport, data.toString(), score, 0);
+				db.updateGolferScore(id, this.sport, data.toString(), score, 0, this.getTourneyID());
 
 			}
 		}
@@ -514,7 +510,7 @@ public class GolfBot extends Utils {
 		}
 		else{
 			int worst = -999;
-			ResultSet all_player_scores = db.getPlayerScores("GOLF");
+			ResultSet all_player_scores = db.getPlayerScores(this.sport, this.getTourneyID());
 			while(all_player_scores.next()){
 				JSONObject scores = new JSONObject(all_player_scores.getString(2));
 				try{
@@ -532,7 +528,7 @@ public class GolfBot extends Utils {
 	
 	public JSONArray updateScores(JSONObject scoring_rules, String when) throws SQLException, JSONException{
 		
-		ResultSet playerScores = db.getPlayerScoresAndStatus(this.sport);
+		ResultSet playerScores = db.getPlayerScoresAndStatus(this.sport, this.getTourneyID());
 		JSONArray player_map = new JSONArray();
 		
 		// no scoring rules = score to par tournament
@@ -717,7 +713,7 @@ public class GolfBot extends Utils {
 		//need to loop through all players scores since its a round contest
 		else{
 			topScore = 999;
-			ResultSet all_player_scores = db.getPlayerScores("GOLF");
+			ResultSet all_player_scores = db.getPlayerScores(this.sport, this.getTourneyID());
 			while(all_player_scores.next()){
 				JSONObject scores = new JSONObject(all_player_scores.getString(2));
 				try{
@@ -820,7 +816,7 @@ public class GolfBot extends Utils {
 				contest.put("registration_deadline", this.getDeadline());
 			else
 				contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
-            JSONArray option_table = db.getGolfRosterOptionTable();
+            JSONArray option_table = db.getGolfRosterOptionTable(this.getTourneyID());
 			contest.put("option_table", option_table);
 			MethodInstance method = new MethodInstance();
 			JSONObject output = new JSONObject("{\"status\":\"0\"}");
@@ -1163,7 +1159,7 @@ public class GolfBot extends Utils {
 			case "TOP_SCORE":
 				log("settling top score prop...");
 				int top_score = this.getTopScore(prop_data.getString("when"));
-				ResultSet players = db.getPlayerScoresAndStatus(this.sport);
+				ResultSet players = db.getPlayerScoresAndStatus(this.sport, this.getTourneyID());
 				
 				ArrayList<String> best_players = new ArrayList<String>();
 				
@@ -1219,7 +1215,7 @@ public class GolfBot extends Utils {
 			case "MAKE_CUT":
 				
 				String player_id = prop_data.getString("player_id");
-				int status = db.getGolferStatus(player_id, this.sport);
+				int status = db.getGolferStatus(player_id, this.sport, this.getTourneyID());
 				if(status == 4)
 					winning_outcome = 1;
 				else
@@ -1234,7 +1230,7 @@ public class GolfBot extends Utils {
 				winning_outcome = 1;
 				ResultSet all_players = null;
 				try{
-					all_players = db.getPlayerScoresAndStatus("GOLF");
+					all_players = db.getPlayerScoresAndStatus(this.sport, this.getTourneyID());
 				}catch(Exception e){
 					log(e.toString());
 				}
@@ -1298,7 +1294,7 @@ public class GolfBot extends Utils {
 						JSONArray golfers =  new JSONArray(option.getJSONArray("player_ids"));
 						for(int q = 0; q < golfers.length(); q++){
 							String id = golfers.getString(q);
-							ResultSet player_data = db.getPlayerScoresData(id, this.sport);
+							ResultSet player_data = db.getPlayerScoresData(id, this.sport, this.getTourneyID());
 							int overall_score = 0;
 							JSONObject data = new JSONObject();
 							if(player_data.next()){
@@ -1333,7 +1329,7 @@ public class GolfBot extends Utils {
 					for(int i = 0; i < option_table.length(); i++){
 						try{
 							player_id = option_table.getJSONObject(i).getString("player_id");
-							ResultSet rs = db.getPlayerScoresData(player_id, this.sport);
+							ResultSet rs = db.getPlayerScoresData(player_id, this.sport, this.getTourneyID());
 							if(rs.next()){
 								JSONObject data = new JSONObject(rs.getString(1));
 								int overall_score = rs.getInt(2);
@@ -1386,7 +1382,7 @@ public class GolfBot extends Utils {
 					for(int i = 0; i < option_table.length(); i++){
 						try{
 							player_id = option_table.getJSONObject(i).getString("player_id");
-							ResultSet rs = db.getPlayerScoresData(player_id, this.sport);
+							ResultSet rs = db.getPlayerScoresData(player_id, this.sport, this.getTourneyID());
 							if(rs.next()){
 								int overall_score = rs.getInt(2);
 								if(overall_score < top_score && overall_score > -200){
@@ -1434,7 +1430,7 @@ public class GolfBot extends Utils {
 			case "OVER_UNDER":
 				double o_u = prop_data.getDouble("over_under_value");
 				player_id = prop_data.getString("player_id");
-				ResultSet rs = db.getPlayerScoresData(player_id, this.sport);
+				ResultSet rs = db.getPlayerScoresData(player_id, this.sport, this.getTourneyID());
 				if(rs.next()){
 					JSONObject data = new JSONObject(rs.getString(1));
 					int overall_score = rs.getInt(2);
@@ -1492,7 +1488,7 @@ public class GolfBot extends Utils {
 				player_id = prop_data.getString("player_id");
 				String shot_type = prop_data.getString("shot");
 				String when = prop_data.getString("when");
-				JSONObject data = db.getPlayerScores(player_id, this.sport);
+				JSONObject data = db.getPlayerScores(player_id, this.sport, this.getTourneyID());
 				
 				int num_shots = 0;
 				if(when.equals("tournament")){
@@ -1574,7 +1570,7 @@ public class GolfBot extends Utils {
 			log("entry existing players: " + existing_players.toString());
 			for(int q = 0; q < entry_data.length(); q++){
 				JSONObject player = entry_data.getJSONObject(q);
-				int status = db.getGolferStatus(player.getString("id"), this.sport);
+				int status = db.getGolferStatus(player.getString("id"), this.sport, this.getTourneyID());
 				// Roster contains INACTIVE player
 				if(status == 0){
 					// get next available player (one player cheaper)
@@ -1590,7 +1586,7 @@ public class GolfBot extends Utils {
 					JSONObject user = db.select_user("id", entry.getString("user_id"));
 					// email user to notify
 					db.notify_user_roster_player_replacement(user.getString("username"), user.getString("email_address"), 
-							db.getPlayerName(player.getString("id"), this.sport), db.getPlayerName(new_player.getString("id"), this.sport), 
+							db.getPlayerName(player.getString("id"), this.sport, this.getTourneyID()), db.getPlayerName(new_player.getString("id"), this.sport, this.getTourneyID()), 
 							entry.getInt("entry_id"), title, contest_id);
 					
 				}

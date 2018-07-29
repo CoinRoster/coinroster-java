@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.json.JSONArray;
@@ -43,10 +44,12 @@ public class SetupPropBet extends Utils{
 				boolean priv = data.getBoolean("private");
 				
 				Long deadline = null;
+				ArrayList<String> gameIDs = new ArrayList<String>();
 				switch(sport){
 					case "BASEBALL":
 						BaseballBot baseball_bot = new BaseballBot(sql_connection);
 						String gameID_array = baseball_bot.scrapeGameIDs();
+						gameIDs = baseball_bot.getGameIDs();
 						deadline = baseball_bot.getEarliestGame();
 						break;
 					case "GOLF":

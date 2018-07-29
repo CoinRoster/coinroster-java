@@ -1292,10 +1292,10 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public ResultSet getAllPlayerIDs(String sport){
+	public ResultSet getAllPlayerIDs(String sport, String gameID){
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type=?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type = ? and gameID = ?");
 			get_players.setString(1, sport);
 			result_set = get_players.executeQuery();
 			
@@ -1310,16 +1310,17 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public JSONArray get_all_players(String sport) throws JSONException, SQLException{
+	public JSONArray get_all_players(String sport, String gameID) throws JSONException, SQLException{
 		ResultSet result_set = null;
 		try {
 			PreparedStatement get_players;
 			if(sport.equals("GOLF")){
-				get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc");
+				get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 and gameID = ? order by salary desc");
 			}else{
-				get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? order by salary desc");
+				get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and gameID = ? order by salary desc");
 			}
 			get_players.setString(1, sport);
+			get_players.setString(2, gameID);
 			result_set = get_players.executeQuery();
 		}
 		catch(Exception e){
@@ -1372,11 +1373,12 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
-	public ResultSet getPlayerScores(String sport) throws SQLException{
+	public ResultSet getPlayerScores(String sport, String gameID) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, data from player where sport_type=?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, data from player where sport_type = ? and gameID = ? ");
 			get_players.setString(1, sport);
+			get_players.setString(2, gameID);
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
@@ -1387,11 +1389,12 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	public ResultSet getPlayerScoresAndStatus(String sport) throws SQLException{
+	public ResultSet getPlayerScoresAndStatus(String sport, String gameID) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, data, filter_on, points from player where sport_type=?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, data, filter_on, points from player where sport_type = ? and gameID = ?");
 			get_players.setString(1, sport);
+			get_players.setString(2, gameID);
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
@@ -1401,12 +1404,13 @@ public class DB
 	}
 //------------------------------------------------------------------------------------
 
-	public JSONObject getPlayerScores(String player_id, String sport) throws SQLException, JSONException{
+	public JSONObject getPlayerScores(String player_id, String sport, String gameID) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select data from player where sport_type= ? and id = ?");
+			PreparedStatement get_players = sql_connection.prepareStatement("select data from player where sport_type= ? and id = ? and gameID = ?");
 			get_players.setString(1, sport);
 			get_players.setString(2, player_id);
+			get_players.setString(3, gameID);
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
@@ -1421,12 +1425,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public ResultSet getPlayerScoresData(String player_id, String sport) throws SQLException, JSONException{
+	public ResultSet getPlayerScoresData(String player_id, String sport, String gameID) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select data, points, filter_on from player where sport_type = ? and id = ?");
-			get_players.setString(1, sport);
-			get_players.setString(2, player_id);
+			PreparedStatement get_players = sql_connection.prepareStatement("select data, points, filter_on from player where id = ? and sport_type = ? and gameID = ?");
+			get_players.setString(1, player_id);
+			get_players.setString(2, sport);
+			get_players.setString(3, gameID);
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
@@ -1441,13 +1446,14 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public int getGolferStatus(String player_id, String sport) throws SQLException, JSONException{
+	public int getGolferStatus(String player_id, String sport, String gameID) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		int status = 0;
 		try {
-			PreparedStatement get_player = sql_connection.prepareStatement("select filter_on from player where sport_type = ? and id = ?");
-			get_player.setString(1, sport);
-			get_player.setString(2, player_id);
+			PreparedStatement get_player = sql_connection.prepareStatement("select filter_on from player where id = ? and sport_type = ? and gameID = ?");
+			get_player.setString(1, player_id);
+			get_player.setString(2, sport);
+			get_player.setString(3, gameID);
 			result_set = get_player.executeQuery();		
 		}
 		catch(Exception e){
@@ -1461,13 +1467,14 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public String getPlayerName(String player_id, String sport) throws SQLException, JSONException{
+	public String getPlayerName(String player_id, String sport, String gameID) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		String name = null;
 		try {
-			PreparedStatement get_player = sql_connection.prepareStatement("select name from player where sport_type = ? and id = ?");
-			get_player.setString(1, sport);
-			get_player.setString(2, player_id);
+			PreparedStatement get_player = sql_connection.prepareStatement("select name from player where id = ? and sport_type = ? and gameID = ?");
+			get_player.setString(1, player_id);
+			get_player.setString(2, sport);
+			get_player.setString(3, gameID);
 			result_set = get_player.executeQuery();		
 		}
 		catch(Exception e){
@@ -1481,21 +1488,23 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public void editData(String data, String id, String sport) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ?");
+	public void editData(String data, String id, String sport, String gameID) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ? and gameID = ?");
 		update_points.setString(1, data);
 		update_points.setString(2, id);
 		update_points.setString(3, sport);
+		update_points.setString(4, gameID);
 		update_points.executeUpdate();
 	}
 
 //------------------------------------------------------------------------------------
 
-	public JSONArray getGolfRosterOptionTable() throws SQLException, JSONException{
+	public JSONArray getGolfRosterOptionTable(String gameID) throws SQLException, JSONException{
 		JSONArray option_table = new JSONArray();
-		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = ? and filter_on = ?");
+		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = ? and filter_on = ? and gameID = ?");
 		get_players.setString(1, "GOLF");
 		get_players.setInt(2, 4);
+		get_players.setString(3, gameID);
 		ResultSet players = get_players.executeQuery();
 		while(players.next()){
 			JSONObject p = new JSONObject();
@@ -1510,16 +1519,27 @@ public class DB
 		return option_table;
 	}
 	
+//------------------------------------------------------------------------------------
+	
+	public void setGolfStatus(int status, String id, String sport, String gameID) throws SQLException{
+		PreparedStatement update_points = sql_connection.prepareStatement("update player set filter_on = ? where id = ? and sport_type = ? and gameID = ?");
+		update_points.setInt(1, status);
+		update_points.setString(2, id);
+		update_points.setString(3, sport);
+		update_points.setString(4, gameID);
+		update_points.executeUpdate();
+	}
 	
 //------------------------------------------------------------------------------------
 
-	public void updateGolferScore(String id, String sport, String data, int score, int status) throws SQLException{
-		PreparedStatement update = sql_connection.prepareStatement("update player set data = ?, points = ?, filter_on = ? where id = ? and sport_type = ?");
+	public void updateGolferScore(String id, String sport, String data, int score, int status, String gameID) throws SQLException{
+		PreparedStatement update = sql_connection.prepareStatement("update player set data = ?, points = ?, filter_on = ? where id = ? and sport_type = ? and gameID = ?");
 		update.setString(1, data);
 		update.setInt(2, score);
 		update.setInt(3, status);
 		update.setString(4,  id);
 		update.setString(5, sport);
+		update.setString(6, gameID);
 		update.executeUpdate();
 	}
 	
@@ -1602,9 +1622,9 @@ public class DB
 	public String get_player_info(String sport, String player_id) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr from player where sport_type = ? and id = ?");
-			get_players.setString(1, sport);
-			get_players.setString(2, player_id);
+			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr from player where id = ? and sport_type = ? ");
+			get_players.setString(1, player_id);
+			get_players.setString(2, sport);
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
@@ -1623,7 +1643,7 @@ public class DB
 
 	message_body = "Hello <b>" + username + "</b>!";
 	message_body += "<br/>";
-	message_body += "We have made an <b>important change</b> to your roster (id: " + roster_id + ") in " + contest_name + "<br><br>";
+	message_body += "We have made an <b>important change</b> to your roster (id: " + roster_id + ") in <a href='" + Server.host + "/contest.html?id=" + contest_id + "'>" + contest_name + "</a><br><br>";
 	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br><br>";
 	message_body += "View your updated roster <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>here</a>";
 	message_body += "<br/>";
@@ -1637,6 +1657,17 @@ public class DB
 		update.setString(1, entry_data);
 		update.setInt(2, entry_id);
 		update.executeUpdate();
+	}
+	
+//------------------------------------------------------------------------------------
+
+	// DELETE PLAYERS FROM PLAYER TABLE
+	public void delete_old_players(String sport, String gameID) throws SQLException{
+		PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type = ? and gameID = ?");
+		delete_old_rows.setString(1, sport);
+		delete_old_rows.setString(2, gameID);
+		delete_old_rows.executeUpdate();
+		Utils.log("deleted " + sport + " players from player table - no longer necessary");
 	}
 	
 }
