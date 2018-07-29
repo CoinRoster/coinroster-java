@@ -345,7 +345,6 @@ public class DB
 			JSONObject scoring_rules_json, prop_data_json;
 			try{
 				scoring_rules = result_set.getString(2);
-				Utils.log("scoring_rules: " + scoring_rules);
 				if(scoring_rules.isEmpty())
 					scoring_rules_json = new JSONObject();
 				else

@@ -451,7 +451,6 @@ public class ContestMethods extends Utils{
 						golfBot.checkForInactives(Integer.parseInt(c_id));
 					String when = roster_contests.getJSONObject(c_id).getString("when");
 					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
-					log("scoring_rules_json: " + scoring_rules.toString());
 					
 					JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
 					JSONObject fields = new JSONObject();
@@ -515,7 +514,6 @@ public class ContestMethods extends Utils{
 						String c_id = (String) pari_contest_ids.next();
 						String when = pari_contests.getJSONObject(c_id).getJSONObject("prop_data").getString("when");
 						if(when.equals("tournament")){
-							log("when equals tournament: " + when);
 							int winning_outcome = golfBot.settlePropBet(pari_contests.getJSONObject(c_id), c_id);
 							JSONObject fields = new JSONObject();
 							fields.put("contest_id", Integer.parseInt(c_id));
