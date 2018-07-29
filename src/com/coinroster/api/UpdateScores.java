@@ -120,9 +120,6 @@ public class UpdateScores extends Utils
 						
 						if (!score_map.containsKey(player_id))
 						{
-							String error = "No score provided for " + player.getString("name");
-							log(error);
-							
 							// pga tour withdrawal
 							player.put("score", 0);
 							player.put("score_raw", "WD");
