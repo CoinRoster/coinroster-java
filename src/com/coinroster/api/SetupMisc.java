@@ -54,15 +54,16 @@ public class SetupMisc extends Utils{
 				prop_method.input = data;
 				prop_method.output = prop_output;
 				prop_method.session = method.session;
+				prop_method.internall_caller = true;
 				prop_method.sql_connection = sql_connection;
 				
 				try{
 					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 					c.newInstance(prop_method);
+					output = prop_method.output;
 				}
 				catch(Exception e){
-					log(prop_method.output.toString());
-					e.printStackTrace();
+					Server.exception(e);
 				}
 				
 				output.put("status", "1");

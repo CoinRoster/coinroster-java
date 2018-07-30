@@ -23,6 +23,7 @@ public class CreateContest extends Utils
 		output = method.output;
 		
 		Session session = method.session;
+		boolean internal_caller = method.internall_caller;
 		
 		Connection sql_connection = method.sql_connection;
 
@@ -528,8 +529,16 @@ public class CreateContest extends Utils
             }
 			
             new BuildLobby(sql_connection);
-			output.put("status", "1");	
-		}
+            
+            if (is_private) {
+            	output.put("code", participants.getString("code"));
+            }
+            
+            output.put("status", "1");
+            
+		} 
+		
+	if(session != null && !internal_caller)
 		method.response.send(output);
 	}
 }

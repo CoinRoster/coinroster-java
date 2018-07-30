@@ -732,12 +732,12 @@ public class GolfBot extends Utils {
 		}
 	}
 	
-	public JSONObject createTeamsPariMutuel(JSONObject contest, Long deadline) throws JSONException{
+	public JSONObject createTeamsPariMutuel(JSONObject contest, JSONObject prop_data, Long deadline) throws JSONException{
 		String title = this.getTourneyName() + " | " + contest.getString("title");
 		contest.put("title", title);
 		contest.put("registration_deadline", deadline);
-		int num_teams = contest.getJSONObject("prop_data").getInt("num_teams");
-		int players_per_team = contest.getJSONObject("prop_data").getInt("players_per_team");
+		int num_teams = prop_data.getInt("num_teams");
+		int players_per_team = prop_data.getInt("players_per_team");
 		int limit = num_teams * players_per_team;
 		//get 30 most expensive golfers
 		Map<Integer, ArrayList<String>> players = new HashMap<>();
@@ -809,7 +809,7 @@ public class GolfBot extends Utils {
 	}
 	
 	
-	
+
 	public void createGolfRosterContest( JSONObject contest, String when) throws JSONException, SQLException{
 		JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
 		if(prop_data.getString("when").equals(when)){
@@ -842,6 +842,7 @@ public class GolfBot extends Utils {
 	
 	
 	public int createGolfPropBet( JSONObject contest, String when) throws JSONException, SQLException{
+		
 		JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
 		
 		if(prop_data.getString("when").equals(when)){
@@ -987,7 +988,7 @@ public class GolfBot extends Utils {
 					break;
 					
 				case "TEAM_SNAKE":
-					contest = this.createTeamsPariMutuel(contest, this.getDeadline());
+					contest = this.createTeamsPariMutuel(contest, prop_data, this.getDeadline());
 					break;
 					
 				default:
