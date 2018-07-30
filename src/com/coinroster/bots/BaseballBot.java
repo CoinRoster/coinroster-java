@@ -105,12 +105,25 @@ public class BaseballBot extends Utils {
 		tie.put("id", 2);
 		option_table.put(tie);
 	
-		int index = 3;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit ?");
-			get_players.setString(1, "BASEBALL");
-			get_players.setInt(2, contest.getInt("filter"));
+			String stmt = "select id, name, team_abr from player where sport_type = ? and gameID in (";
+			
+			for(int i = 0; i < this.getGameIDs().size(); i++){
+				stmt += "?,";
+			}
+			stmt = stmt.substring(0, stmt.length() - 1);
+			stmt += ") order by salary DESC limit ?";
+			
+			PreparedStatement get_players = sql_connection.prepareStatement(stmt);
+			
+			get_players.setString(1, this.sport);
+			int index = 2;
+			for(String game : this.getGameIDs()){
+			   get_players.setString(index++, game); // or whatever it applies 
+			}
+			get_players.setInt(index++, contest.getInt("filter"));
 			top_players = get_players.executeQuery();
+			
 			while(top_players.next()){
 				JSONObject player = new JSONObject();
 				player.put("description", top_players.getString(2) + " " + top_players.getString(3));
@@ -143,7 +156,7 @@ public class BaseballBot extends Utils {
 				winning_outcome = 1;
 				ResultSet all_players = null;
 				try{
-					all_players = db.getPlayerScores("BASEBALL");
+					all_players = db.getPlayerScores(this.sport, this.getGameIDs());
 				}catch(Exception e){
 					log(e.toString());
 				}
@@ -210,7 +223,7 @@ public class BaseballBot extends Utils {
 					try{
 						String player_id = player.getString("player_id");
 					
-						JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
+						JSONObject player_data = db.getPlayerScores(player_id, this.sport, this.getGameIDs());
 						Double points = 0.0;
 						Iterator<?> keys = scoring_rules.keys();
 						while(keys.hasNext()){
@@ -261,7 +274,7 @@ public class BaseballBot extends Utils {
 			
 			case "OVER_UNDER":
 				String player_id = prop_data.getString("player_id");
-				JSONObject player_data = db.getPlayerScores(player_id, "BASEBALL");
+				JSONObject player_data = db.getPlayerScores(player_id, this.sport, this.getGameIDs());
 				Double points = 0.0;
 				Iterator<?> keys = scoring_rules.keys();
 				while(keys.hasNext()){
@@ -331,7 +344,7 @@ public class BaseballBot extends Utils {
 	
 	public JSONArray updateScores(JSONObject scoring_rules) throws SQLException, JSONException{
 		
-		ResultSet playerScores = db.getPlayerScores(this.sport);
+		ResultSet playerScores = db.getPlayerScores(this.sport, this.getGameIDs());
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
@@ -456,7 +469,7 @@ public class BaseballBot extends Utils {
 									}
 								
 									// look up player in HashMap with ESPN_ID, update his data in DB
-									db.editData(data.toString(), espn_ID, this.sport);
+									db.editData(data.toString(), espn_ID, this.sport, this.getGameIDs());
 								}			
 							}			
 						}

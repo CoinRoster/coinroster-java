@@ -41,6 +41,7 @@ public class GolfBot extends Utils {
 	private long startDate;
 	private DB db;
 	public String sport = "GOLF";
+	public ArrayList<String> gameIDs;
 	private static Connection sql_connection = null;
 	
 	public GolfBot(Connection sql_connection) throws IOException, JSONException{
@@ -270,6 +271,7 @@ public class GolfBot extends Utils {
 			if(tournament.getJSONObject("date").getString("start").equals(thursday) && tournament.getString("format").equals("Stroke") && tournament.getString("primaryEvent").equals("Y")){
 				this.tourneyName = tournament.getJSONObject("trnName").getString("official");
 				this.tourneyID = tournament.getString("permNum");
+				this.gameIDs.add(this.tourneyID);
 				this.startDate = milli;
 				break;
 			}
@@ -447,7 +449,7 @@ public class GolfBot extends Utils {
 		log("tournament status: " + tournament_statuses.toString());
 
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
-		ResultSet playerScores = db.getPlayerScores(this.sport, this.getTourneyID());
+		ResultSet playerScores = db.getPlayerScores(this.sport, this.gameIDs);
 		while(playerScores.next()){
 			boolean in_leaderboard = false;
 			String id = playerScores.getString(1);
@@ -512,7 +514,7 @@ public class GolfBot extends Utils {
 		}
 		else{
 			int worst = -999;
-			ResultSet all_player_scores = db.getPlayerScores(this.sport, this.getTourneyID());
+			ResultSet all_player_scores = db.getPlayerScores(this.sport, this.gameIDs);
 			while(all_player_scores.next()){
 				JSONObject scores = new JSONObject(all_player_scores.getString(2));
 				try{
@@ -717,7 +719,7 @@ public class GolfBot extends Utils {
 		//need to loop through all players scores since its a round contest
 		else{
 			topScore = 999;
-			ResultSet all_player_scores = db.getPlayerScores(this.sport, this.getTourneyID());
+			ResultSet all_player_scores = db.getPlayerScores(this.sport, this.gameIDs);
 			while(all_player_scores.next()){
 				JSONObject scores = new JSONObject(all_player_scores.getString(2));
 				try{
@@ -1500,7 +1502,7 @@ public class GolfBot extends Utils {
 				player_id = prop_data.getString("player_id");
 				String shot_type = prop_data.getString("shot");
 				String when = prop_data.getString("when");
-				JSONObject data = db.getPlayerScores(player_id, this.sport, this.getTourneyID());
+				JSONObject data = db.getPlayerScores(player_id, this.sport, this.gameIDs);
 				
 				int num_shots = 0;
 				if(when.equals("tournament")){

@@ -711,10 +711,10 @@ public class ContestMethods extends Utils{
 				contest.put("registration_deadline", deadline);
 				ResultSet options;
 				if(contest.getInt("filter") == 0){
-					options = db.getOptionTable(baseball_bot.sport, false, 0);
+					options = db.getOptionTable(baseball_bot.sport, false, 0, baseball_bot.getGameIDs());
 				}
 				else{
-					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"));
+					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"), baseball_bot.getGameIDs());
 				}
 					
 	            JSONArray option_table = new JSONArray();

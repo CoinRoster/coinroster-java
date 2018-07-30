@@ -170,14 +170,7 @@ public class CreateContest extends Utils
 	            String score_header = input.getString("score_header");
 	            JSONArray pay_table = new JSONArray(input.getString("pay_table"));
 	            JSONArray pay_table_final = new JSONArray();
-	            String tourneyID;
-	            try{
-	            	tourneyID = input.getString("tourneyID");
-	            }
-	            catch(Exception e){
-	            	tourneyID = "";
-	            }
-	                       
+	            
 	            if (min_users < 2)
 	            	{
 	        		output.put("error", "Invalid value for [min users]");
@@ -374,17 +367,14 @@ public class CreateContest extends Utils
 				create_contest.setString(16, option_table.toString());
 				create_contest.setLong(17, System.currentTimeMillis());
 				String gameIDs = null;
+				try{
+					gameIDs = input.getString("gameIDs");
+				}
+				catch(Exception e){
+					gameIDs = null;
+				}
+				
 				if(session == null){
-					String gameID_array;
-					// read gameIDs for baseball, basketball
-					try{
-						gameID_array = input.getString("gameIDs");
-						gameIDs = gameID_array;
-					}
-					// read tourneyID for golf
-					catch(Exception e){
-						gameIDs  = tourneyID;
-					}
 					madeBy = "ContestBot";
 					create_contest.setNull(24, java.sql.Types.BIGINT);
 					create_contest.setInt(25, 1);
@@ -396,16 +386,18 @@ public class CreateContest extends Utils
 						create_contest.setLong(24, settlement_deadline);
 		            	
 						// exclude admins from seeking approval
-		            	if(session.user_level() != "1") 
-		            		create_contest.setInt(25, 5);            		
+		            	if(is_admin) 
+		            		create_contest.setInt(25, 1);            		
 		            	else
-		            		create_contest.setInt(25, 1);     
+		            		create_contest.setInt(25, 5);     
 					}
 					else{
 						create_contest.setInt(25, 1);     
 						create_contest.setNull(24, java.sql.Types.BIGINT);
 					}					
 				}
+				
+				
 				
 				create_contest.setString(18, madeBy);
 				create_contest.setInt(19, roster_size);
@@ -500,10 +492,10 @@ public class CreateContest extends Utils
 						create_contest.setLong(16, settlement_deadline);
 		            	
 						// exclude admins from seeking approval
-		            	if(session.user_level() != "1") 
-		            		create_contest.setInt(15, 5);            		
+		            	if(is_admin) 
+		            		create_contest.setInt(15, 1);            		
 		            	else
-		            		create_contest.setInt(15, 1);     
+		            		create_contest.setInt(15, 5);     
 					}
 					
 					// admin created contest

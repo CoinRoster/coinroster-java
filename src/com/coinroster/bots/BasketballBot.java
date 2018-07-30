@@ -238,7 +238,7 @@ public class BasketballBot extends Utils {
 	
 	public JSONArray updateScores() throws SQLException, JSONException{
 		
-		ResultSet playerScores = db.getPlayerScores(this.sport);
+		ResultSet playerScores = db.getPlayerScores(this.sport, this.getGameIDs());
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();

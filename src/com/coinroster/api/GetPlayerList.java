@@ -55,13 +55,12 @@ public class GetPlayerList extends Utils{
 				
 				JSONArray players = new JSONArray();
 				
-				for(String id : gameIDs){
-					JSONArray p = db.get_all_players(sport, id);
+				for(String game : gameIDs){
+					JSONArray p = db.get_all_players(sport, game);
 					for(int i = 0; i < p.length(); i++){
 						players.put(p.get(i));
 					}
 				}
-				
 				
 				output.put("player_list", players);
 				output.put("status", "1");

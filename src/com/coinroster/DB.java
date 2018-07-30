@@ -1338,7 +1338,7 @@ public class DB
 		
 //------------------------------------------------------------------------------------
 
-	public ResultSet getOptionTable(String sport, boolean filtered, int filter) throws SQLException{
+	public ResultSet getOptionTable(String sport, boolean filtered, int filter, ArrayList<String> gameIDs) throws SQLException{
 		
 		ResultSet result_set = null;
 		
@@ -1359,8 +1359,21 @@ public class DB
 		}
 		else{
 			try {
-				PreparedStatement get_players = sql_connection.prepareStatement("SELECT id, name, team_abr, salary from player where sport_type = ?");
+				String stmt = "SELECT id, name, team_abr, salary from player where sport_type = ? and gameID in (";
+				
+				for(int i = 0; i < gameIDs.size(); i++){
+					stmt += "?,";
+				}
+				stmt = stmt.substring(0, stmt.length() - 1);
+				stmt += ")";
+				
+				PreparedStatement get_players = sql_connection.prepareStatement(stmt);
+				
 				get_players.setString(1, sport);
+				int index = 2;
+				for(String game : gameIDs){
+					get_players.setString(index++, game); 
+				}
 				result_set = get_players.executeQuery();
 			}
 			catch(Exception e){
@@ -1373,16 +1386,27 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
-	public ResultSet getPlayerScores(String sport, String gameID) throws SQLException{
+	public ResultSet getPlayerScores(String sport, ArrayList<String> gameIDs) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, data from player where sport_type = ? and gameID = ? ");
+			String stmt = "select id, data from player where sport_type = ? and gameID in (";
+			for(int i = 0; i < gameIDs.size(); i++){
+				stmt += "?,";
+			}
+			stmt = stmt.substring(0, stmt.length() - 1);
+			stmt += ")";
+			
+			PreparedStatement get_players = sql_connection.prepareStatement(stmt);
+			
 			get_players.setString(1, sport);
-			get_players.setString(2, gameID);
+			int index = 2;
+			for(String game : gameIDs){
+			   get_players.setString(index++, game); 
+			}
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
-			e.printStackTrace();
+			Server.exception(e);
 		}
 		return result_set;
 	}
@@ -1404,13 +1428,24 @@ public class DB
 	}
 //------------------------------------------------------------------------------------
 
-	public JSONObject getPlayerScores(String player_id, String sport, String gameID) throws SQLException, JSONException{
+	public JSONObject getPlayerScores(String player_id, String sport, ArrayList<String> gameIDs) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select data from player where sport_type= ? and id = ? and gameID = ?");
+			String stmt = "select data from player where sport_type = ? and id = ? and gameID in (";
+			for(int i = 0; i < gameIDs.size(); i++){
+				stmt += "?,";
+			}
+			stmt = stmt.substring(0, stmt.length() - 1);
+			stmt += ")";
+			
+			PreparedStatement get_players = sql_connection.prepareStatement(stmt);
+			
 			get_players.setString(1, sport);
 			get_players.setString(2, player_id);
-			get_players.setString(3, gameID);
+			int index = 3;
+			for(String game : gameIDs){
+			   get_players.setString(index++, game); 
+			}
 			result_set = get_players.executeQuery();		
 		}
 		catch(Exception e){
@@ -1485,13 +1520,29 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public void editData(String data, String id, String sport, String gameID) throws SQLException{
-		PreparedStatement update_points = sql_connection.prepareStatement("update player set data = ? where id = ? and sport_type = ? and gameID = ?");
-		update_points.setString(1, data);
-		update_points.setString(2, id);
-		update_points.setString(3, sport);
-		update_points.setString(4, gameID);
-		update_points.executeUpdate();
+	public void editData(String data, String id, String sport, ArrayList<String> gameIDs) throws SQLException{
+		try{
+			String stmt = "update player set data = ? where id = ? and sport_type = ? and gameID in (";
+			
+			for(int i = 0; i < gameIDs.size(); i++){
+				stmt += "?,";
+			}
+			stmt = stmt.substring(0, stmt.length() - 1);
+			stmt += ")";
+			
+			PreparedStatement update_points = sql_connection.prepareStatement(stmt);
+			
+			update_points.setString(1, data);
+			update_points.setString(2, id);
+			update_points.setString(3, sport);
+			int index = 4;
+			for(String game : gameIDs){
+				update_points.setString(index++, game); 
+			}
+			update_points.executeUpdate();
+		}catch(Exception e){
+			Server.exception(e);
+		}
 	}
 
 //------------------------------------------------------------------------------------
