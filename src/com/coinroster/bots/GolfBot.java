@@ -41,7 +41,7 @@ public class GolfBot extends Utils {
 	private long startDate;
 	private DB db;
 	public String sport = "GOLF";
-	public ArrayList<String> gameIDs;
+	public ArrayList<String> gameIDs = new ArrayList<String>();
 	private static Connection sql_connection = null;
 	
 	public GolfBot(Connection sql_connection) throws IOException, JSONException{

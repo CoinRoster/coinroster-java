@@ -42,6 +42,11 @@ public class SetupRoster extends Utils{
 				String today_str = LocalDate.now().format(formatter);
 				
 				JSONObject data = input.getJSONObject("data");
+				
+				log(data.toString());
+				log(data.getJSONObject("prop_data"));
+				log(data.getJSONObject("scoring_rules"));
+								
 				data.put("category", "FANTASYSPORTS");
 				data.put("progressive", "");
 				data.put("rake", 5);
@@ -49,6 +54,8 @@ public class SetupRoster extends Utils{
 				String desc = "Be careful not to include injured or inactive players<br>";
 				
 				data.put("odds_source", "");
+				JSONArray empty = new JSONArray();
+				
 				switch(data.getString("settlement_type")){
 					
 					case "JACKPOT":
@@ -65,9 +72,11 @@ public class SetupRoster extends Utils{
 						break;
 					
 					case "DOUBLE-UP":
+						data.put("pay_table", empty.toString());
 						break;
 					
 					case "HEADS-UP":
+						data.put("pay_table", empty.toString());
 						data.put("min_users", 2);
 						data.put("max_users", 2);
 						break;
@@ -98,7 +107,10 @@ public class SetupRoster extends Utils{
 							String desc_append = appendDescription(data.getJSONObject("scoring_rules"));
 							desc += desc_append;
 							
-						}	
+						}else{
+							output.put("error", "Basketball contests are not currently available");
+							break method;
+						}
 						break;
 						
 						
@@ -121,6 +133,9 @@ public class SetupRoster extends Utils{
 							String desc_append = appendDescription(data.getJSONObject("scoring_rules"));
 							desc += desc_append;
 							
+						}else{
+							output.put("error", "Basketball contests are not currently available");
+							break method;
 						}
 						break;
 						
@@ -151,7 +166,7 @@ public class SetupRoster extends Utils{
 							}
 							
 							data.put("score_header", score_header);
-							data.put("salary_cap", 1000);
+							data.put("salary_cap", 10000);
 							data.put("roster_size", 6);
 							
 							Long deadline = null;
@@ -184,10 +199,14 @@ public class SetupRoster extends Utils{
 							data.put("title", title);
 							option_table = db.getGolfRosterOptionTable(golf_bot.getTourneyID());
 						}
+						else{
+							output.put("error", "Basketball contests are not currently available");
+							break method;
+						}
 						break;		
 				}
 					
-				if(!data.getString("settlement_type").equals("GOLF")){	
+				if(!data.getString("sub_category").equals("GOLF")){	
 					option_table = new JSONArray();
 					while(options.next()){
 						JSONObject player = new JSONObject();
@@ -200,6 +219,9 @@ public class SetupRoster extends Utils{
 				
 				data.put("option_table", option_table);
 				data.put("description", desc);
+				
+				data.put("scoring_rules", data.getJSONObject("scoring_rules").toString());
+				data.put("prop_data", data.getJSONObject("prop_data").toString());
 				
 				MethodInstance prop_method = new MethodInstance();
 				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");
@@ -216,6 +238,7 @@ public class SetupRoster extends Utils{
 				}
 				catch(Exception e){
 					Server.exception(e);
+					output = prop_method.output;
 				}
 				
 				output.put("status", "1");
