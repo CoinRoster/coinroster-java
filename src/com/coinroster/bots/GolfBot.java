@@ -135,9 +135,10 @@ public class GolfBot extends Utils {
 				}
 				//add player from player table to option table
 				if(!in_option_table){
-					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=?");
+					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=? and gameID = ?");
 					get_data.setString(1, this.sport);
 					get_data.setString(2, existing_id);
+					get_data.setString(3, this.getTourneyID());
 					ResultSet player_data = get_data.executeQuery();
 					while(player_data.next()){
 						String name = player_data.getString(1);
@@ -501,8 +502,9 @@ public class GolfBot extends Utils {
 	public int findWorstScore(String when) throws SQLException, JSONException{
 		int worstScore = 0;
 		if(when.equals("tournament")){
-			PreparedStatement worst_score = sql_connection.prepareStatement("select points from player where sport_type=? order by points DESC limit 1");
-			worst_score.setString(1, "GOLF");
+			PreparedStatement worst_score = sql_connection.prepareStatement("select points from player where sport_type=? and gameID = ? order by points DESC limit 1");
+			worst_score.setString(1, this.sport);
+			worst_score.setString(2, this.getTourneyID());
 			ResultSet score = worst_score.executeQuery();
 			while(score.next()){
 				worstScore = score.getInt(1);
@@ -702,8 +704,10 @@ public class GolfBot extends Utils {
 		int topScore = 999;
 		//check points column in `player` table since its a tournament contest
 		if(when.equals("tournament")){
-			PreparedStatement best_score = sql_connection.prepareStatement("select points from player where sport_type=? and points > -200 order by points ASC limit 1");
-			best_score.setString(1, "GOLF");
+			PreparedStatement best_score = sql_connection.prepareStatement("select points from player where sport_type=? and points > -200 and gameID = ? order by points ASC limit 1");
+			best_score.setString(1, this.sport);
+			best_score.setString(2, this.getTourneyID());
+			
 			ResultSet res = best_score.executeQuery();
 			while(res.next()){
 				topScore = res.getInt(1);
@@ -739,9 +743,10 @@ public class GolfBot extends Utils {
 		Map<Integer, ArrayList<String>> players = new HashMap<>();
 		ResultSet top_players = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? order by salary DESC limit ?");
-			get_players.setString(1, "GOLF");
-			get_players.setInt(2, limit);
+			PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type=? and gameID = ? order by salary DESC limit ?");
+			get_players.setString(1, this.sport);
+			get_players.setString(2, this.getTourneyID());
+			get_players.setInt(3, limit);
 			top_players = get_players.executeQuery();
 			
 			while(top_players.next()){
@@ -785,7 +790,7 @@ public class GolfBot extends Utils {
 				desc = desc.substring(0, desc.length()-2);
 				
 				team.put("description", desc);
-				team.put("player_ids", golfer_ids.toString());
+				team.put("player_ids", golfer_ids);
 				teams.put(team);
 			}
 			JSONObject tie = new JSONObject();
@@ -856,11 +861,12 @@ public class GolfBot extends Utils {
 					JSONArray option_table = new JSONArray();
 					PreparedStatement get_players;
 					if(when.equals("tournament") || when.equals("1")){
-						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc limit 20");
+						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and gameID = ? and filter_on = 4 order by salary desc limit 20");
 					}else{
-						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 and points > -200 order by points asc limit 20");
+						get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and gameID = ? and filter_on = 4 and points > -200 order by points asc limit 20");
 					}
 					get_players.setString(1, this.sport);
+					get_players.setString(2, this.getTourneyID());
 					ResultSet players = get_players.executeQuery();
 					
 					JSONObject none_above = new JSONObject();
@@ -894,8 +900,9 @@ public class GolfBot extends Utils {
 
 				case "WINNER":
 					option_table = new JSONArray();
-					get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 order by salary desc limit 20");
+					get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and gameID = ? and filter_on = 4 order by salary desc limit 20");
 					get_players.setString(1, this.sport);
+					get_players.setString(2, this.getTourneyID());
 					players = get_players.executeQuery();
 					
 					none_above = new JSONObject();
@@ -926,8 +933,10 @@ public class GolfBot extends Utils {
 				case "MAKE_CUT":
 					ResultSet result_set = null;
 					try {
-						get_players = sql_connection.prepareStatement("select name, team_abr, id from player where sport_type = ? order by salary desc limit 5");
+						get_players = sql_connection.prepareStatement("select name, team_abr, id from player where sport_type = ? and gameID = ? order by salary desc limit 5");
 						get_players.setString(1, this.sport);
+						get_players.setString(2, this.getTourneyID());
+						
 						result_set = get_players.executeQuery();		
 					}
 					catch(Exception e){
@@ -1012,8 +1021,10 @@ public class GolfBot extends Utils {
 			
 			JSONArray option_table = new JSONArray();
 			PreparedStatement get_players;	
-			get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and filter_on = 4 and points > -200 order by points asc limit 20");
+			get_players = sql_connection.prepareStatement("select id, name, team_abr from player where sport_type = ? and gameID = ? and filter_on = 4 and points > -200 order by points asc limit 20");
 			get_players.setString(1, this.sport);
+			get_players.setString(2, this.getTourneyID());
+			
 			ResultSet players = get_players.executeQuery();
 			
 			String progressive = "";
@@ -1291,7 +1302,11 @@ public class GolfBot extends Utils {
 						double team_score = 0.0;
 						JSONObject option = option_table.getJSONObject(i);
 						log("calculating scores from team with id = " + option.getInt("id"));
+						String golfers_string = option.getString("player_ids");
+						log(golfers_string);
 						JSONArray golfers =  new JSONArray(option.getJSONArray("player_ids"));
+						log(2);
+						log(golfers.toString());
 						for(int q = 0; q < golfers.length(); q++){
 							String id = golfers.getString(q);
 							ResultSet player_data = db.getPlayerScoresData(id, this.sport, this.getTourneyID());
@@ -1596,7 +1611,7 @@ public class GolfBot extends Utils {
 	
 	public JSONObject replaceInactivePlayer(String id, double salary, List<String> existing_players) throws SQLException, JSONException{
 		JSONObject player = new JSONObject();
-		String statement = "SELECT id, salary from player where id != ? and id NOT in (";
+		String statement = "SELECT id, salary from player where id != ? and gameID = ? and id NOT in (";
 		
 		for(int i = 0; i < existing_players.size(); i++){
 			statement += "?,";
@@ -1606,7 +1621,9 @@ public class GolfBot extends Utils {
 		
 		PreparedStatement get_player = sql_connection.prepareStatement(statement);
 		get_player.setString(1,  id);
-		int index = 2;
+		get_player.setString(2,  this.getTourneyID());
+		
+		int index = 3;
 		Iterator<?> players = existing_players.iterator();
 		while(players.hasNext()){
 		   get_player.setString(index++, (String) players.next()); // or whatever it applies 
