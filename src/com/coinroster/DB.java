@@ -1437,10 +1437,7 @@ public class DB
 		catch(Exception e){
 			e.printStackTrace();
 		}
-		if(result_set.next()){
-			return result_set;
-		}
-		else return null;
+		return result_set;
 	}
 	
 	

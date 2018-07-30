@@ -1302,11 +1302,7 @@ public class GolfBot extends Utils {
 						double team_score = 0.0;
 						JSONObject option = option_table.getJSONObject(i);
 						log("calculating scores from team with id = " + option.getInt("id"));
-						String golfers_string = option.getString("player_ids");
-						log(golfers_string);
-						JSONArray golfers =  new JSONArray(option.getJSONArray("player_ids"));
-						log(2);
-						log(golfers.toString());
+						JSONArray golfers =  new JSONArray(option.getString("player_ids"));
 						for(int q = 0; q < golfers.length(); q++){
 							String id = golfers.getString(q);
 							ResultSet player_data = db.getPlayerScoresData(id, this.sport, this.getTourneyID());
