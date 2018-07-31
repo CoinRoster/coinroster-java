@@ -1514,7 +1514,7 @@ public class GolfBot extends Utils {
 				}
 				
 				log("player " + player_id + " shot " + num_shots + " " + shot_type + " for " + when);
-				for(int index = 0; index < option_table.length(); index++){
+				for(int index = 1; index < option_table.length(); index++){
 					JSONObject option = option_table.getJSONObject(index);
 					if(option.getString("description").equals(String.valueOf(num_shots))){
 						winning_outcome = option.getInt("id");

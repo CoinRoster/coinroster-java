@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.ContestMethods;
@@ -42,11 +43,8 @@ public class SetupRoster extends Utils{
 				String today_str = LocalDate.now().format(formatter);
 				
 				JSONObject data = input.getJSONObject("data");
-				
 				log(data.toString());
-				log(data.getJSONObject("prop_data"));
-				log(data.getJSONObject("scoring_rules"));
-								
+							
 				data.put("category", "FANTASYSPORTS");
 				data.put("progressive", "");
 				data.put("rake", 5);
@@ -134,7 +132,7 @@ public class SetupRoster extends Utils{
 							desc += desc_append;
 							
 						}else{
-							output.put("error", "Basketball contests are not currently available");
+							output.put("error", "Baseball contests are not currently available");
 							break method;
 						}
 						break;
@@ -170,6 +168,7 @@ public class SetupRoster extends Utils{
 							data.put("roster_size", 6);
 							
 							Long deadline = null;
+							
 							// figure out deadline
 							JSONObject prop_data = data.getJSONObject("prop_data");
 							switch(prop_data.getString("when")){
@@ -200,7 +199,7 @@ public class SetupRoster extends Utils{
 							option_table = db.getGolfRosterOptionTable(golf_bot.getTourneyID());
 						}
 						else{
-							output.put("error", "Basketball contests are not currently available");
+							output.put("error", "Golf contests are not currently available");
 							break method;
 						}
 						break;		
@@ -220,8 +219,16 @@ public class SetupRoster extends Utils{
 				data.put("option_table", option_table);
 				data.put("description", desc);
 				
-				data.put("scoring_rules", data.getJSONObject("scoring_rules").toString());
-				data.put("prop_data", data.getJSONObject("prop_data").toString());
+				try{
+					data.put("scoring_rules", data.getJSONObject("scoring_rules").toString());
+				}catch(JSONException e){
+					data.put("scoring_rules", "");
+				}
+				try{
+					data.put("prop_data", data.getJSONObject("prop_data").toString());
+				}catch(JSONException e){
+					data.put("prop_data", "");
+				}
 				
 				MethodInstance prop_method = new MethodInstance();
 				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");
