@@ -1,4 +1,4 @@
-package com.coinroster.api;
+	package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,6 +21,7 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.Backup;
 import com.coinroster.internal.BuildLobby;
+import com.coinroster.internal.UpdateContestStatus;
 import com.coinroster.internal.UserMail;
 
 public class SettleContest extends Utils
@@ -58,7 +59,7 @@ public class SettleContest extends Utils
 			// lock it all
 			Statement statement = sql_connection.createStatement();
 			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write, voting write, category write, control write");
-			
+
 			try {
 				lock : {
 				
@@ -70,9 +71,12 @@ public class SettleContest extends Utils
 					
 					contest_title = contest.getString("title"),
 					contest_type = contest.getString("contest_type");
+					
+					boolean voting_contest = db.is_voting_contest(contest_id);
 
 					log("Validating contest #" + contest_id);
 					log("Type: " + contest_type);
+					log("Voting contest: " + voting_contest);
 					
 					if (contest == null)
 						{
@@ -84,7 +88,7 @@ public class SettleContest extends Utils
 						break lock;
 						}
 					
-					if (contest.getInt("status") != 2)
+					if (contest.getInt("status") != 2 && !voting_contest)
 						{
 						String error = "Contest " + contest_id + " is not in play";
 						
@@ -284,18 +288,29 @@ public class SettleContest extends Utils
 					// at this stage, we convert all RC pulled from the contest into BTC
 					// later, we will convert the sum of all referrer payouts from BTC to RC
 
-					log("Swapping all RC to BTC");
-
 					double 
 					
 					btc_liability_balance = liability_account.getDouble("btc_balance"),
 					rc_liability_balance = liability_account.getDouble("rc_balance"),
 					opening_rc_liability_balance = rc_liability_balance; // used later to determine net swap
 					
-					btc_liability_balance = subtract(btc_liability_balance, rc_wagers_total, 0); // subtract increases liability
-					rc_liability_balance = add(rc_liability_balance, rc_wagers_total, 0); // add decreases liability
-
-					log("");
+					if(!voting_contest) {
+							
+						log("Swapping all RC to BTC");
+						
+						btc_liability_balance = subtract(btc_liability_balance, rc_wagers_total, 0); // subtract increases liability
+						rc_liability_balance = add(rc_liability_balance, rc_wagers_total, 0); // add decreases liability
+	
+						log("");
+					} else {
+						// if voting round, all payout is done using RC
+						log("VOTING ROUND: Swapping all BTC to RC");
+						
+						btc_liability_balance = add(btc_liability_balance, btc_wagers_total, 0); // add decreases liability
+						rc_liability_balance = subtract(rc_liability_balance, btc_wagers_total, 0); // subtract increases liability
+	
+						log("");
+					}
 					
 					//--------------------------------------------------------------------------------------------------------------
 
@@ -307,7 +322,60 @@ public class SettleContest extends Utils
 					rake_amount = multiply(rake, total_from_transactions, 0),
 					actual_rake_amount = total_from_transactions, // gets decremented every time something is paid out; remainder -> internal_asset
 					progressive_paid = 0,							
-					user_winnings_total = subtract(total_from_transactions, rake_amount, 0);
+					user_winnings_total = subtract(total_from_transactions, rake_amount, 0),
+					contest_creator_commission = 0;
+					
+					JSONObject internal_asset = db.select_user("username", "internal_asset");
+					
+					if(voting_contest && do_update) {
+						
+						// voting contest creator gets a 1% commission from the original contest's betting volume
+						
+						Integer original_contest = db.get_original_contest(contest_id);
+						
+						PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
+						get_original_total.setInt(1, original_contest);
+						ResultSet betting_total_rs = get_original_total.executeQuery();
+						betting_total_rs.next();
+						
+						Double 
+						
+						total_from_original = betting_total_rs.getDouble(1),
+						voting_contest_commission = 0.01; //db.get_voting_contest_commission();  ---> This isn't working for some reason
+						
+						
+						log("commission: " + total_from_original);
+						log("control commission: " + voting_contest_commission);
+						contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
+						log("Contest creator commission: " + contest_creator_commission);
+						
+						// account id that created the original crowd-settled contest
+						String to_account =  db.select_contest(original_contest).getString("created_by");
+						String from_account = db.get_id_for_username("internal_asset");
+						
+						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+						create_transaction.setLong(1, System.currentTimeMillis());
+						create_transaction.setString(2, contest_admin);
+						create_transaction.setString(3, "RC-VOTING-CONTEST-COMMISSION");
+						create_transaction.setString(4, from_account);
+						create_transaction.setString(5, to_account);
+						create_transaction.setDouble(6, contest_creator_commission);
+						create_transaction.setString(7, "RC");
+						create_transaction.setString(8, "RC");
+						create_transaction.setString(9, "Voting round creator commission");
+						create_transaction.setInt(10, contest_id);
+						create_transaction.executeUpdate();
+						
+						// update balances by debiting asset RC balance to user's RC balance
+						Double internal_asset_rc_balance = internal_asset.getDouble("rc_balance");
+						Double user_rc_balance = db.select_user("id", to_account).getDouble("rc_balance");
+						
+						internal_asset_rc_balance = subtract(internal_asset_rc_balance, contest_creator_commission, 0);
+						user_rc_balance = add(user_rc_balance, contest_creator_commission, 0);
+						
+						db.update_rc_balance(from_account, internal_asset_rc_balance);
+						db.update_rc_balance(to_account, user_rc_balance);
+					}
 					
 					log("Pool: " + total_from_transactions);
 					log("Rake: " + rake);
@@ -317,62 +385,215 @@ public class SettleContest extends Utils
 
 					//--------------------------------------------------------------------------------------------------------------
 
-					// calculate referral rewards / process rake credits
-
-					log("Calculating referral rewards...");
-
-					TreeMap<String, Double> referrer_map = new TreeMap<String, Double>();
-					
-					double total_referrer_payout = 0;
-					
 					JSONArray entries = db.select_contest_entries(contest_id);
 					
-					for (int i=0, limit=entries.length(); i<limit; i++)
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+					
+					// calculate referral rewards / process rake credits 
+					
+					/* IF NOT VOTING */
+
+					if (!voting_contest)
 						{
-						JSONObject entry = entries.getJSONObject(i);
-						
-						int entry_id = entry.getInt("entry_id");
-						String user_id = entry.getString("user_id");
+						log("Calculating referral rewards...");
 
-						JSONObject user = db.select_user("id", user_id);
+						TreeMap<String, Double> referrer_map = new TreeMap<String, Double>();
 						
-						int 
+						double total_referrer_payout = 0;
 						
-						free_play = user.getInt("free_play"),
-						withdrawal_locked = user.getInt("withdrawal_locked");
-	
-						double 
-						
-						user_btc_balance = user.getDouble("btc_balance"),
-						entry_amount = entry.getDouble("amount"),
-						user_raked_amount = multiply(entry_amount, rake, 0);
-
-						log("");
-						log("Entry ID: " + entry_id);
-						log("User ID: " + user_id);
-						log("Amount: " + entry_amount);
-						log("Raked amount: " + user_raked_amount);
-						
-						if (free_play == 1)
+						for (int i=0, limit=entries.length(); i<limit; i++)
 							{
-							log("Free play credit: " + user_raked_amount);
+							JSONObject entry = entries.getJSONObject(i);
 							
-							user_btc_balance = add(user_btc_balance, user_raked_amount, 0);
+							int entry_id = entry.getInt("entry_id");
+							String user_id = entry.getString("user_id");
+
+							JSONObject user = db.select_user("id", user_id);
 							
-							actual_rake_amount = subtract(actual_rake_amount, user_raked_amount, 0);
+							int 
 							
-							if (do_update) 
+							free_play = user.getInt("free_play"),
+							withdrawal_locked = user.getInt("withdrawal_locked");
+		
+							double 
+							
+							user_btc_balance = user.getDouble("btc_balance"),
+							entry_amount = entry.getDouble("amount"),
+							user_raked_amount = multiply(entry_amount, rake, 0);
+
+							log("");
+							log("Entry ID: " + entry_id);
+							log("User ID: " + user_id);
+							log("Amount: " + entry_amount);
+							log("Raked amount: " + user_raked_amount);
+							
+							if (free_play == 1)
 								{
-								db.update_btc_balance(user_id, user_btc_balance);
+								log("Free play credit: " + user_raked_amount);
 								
+								user_btc_balance = add(user_btc_balance, user_raked_amount, 0);
+								
+								actual_rake_amount = subtract(actual_rake_amount, user_raked_amount, 0);
+								
+								if (do_update) 
+									{
+									db.update_btc_balance(user_id, user_btc_balance);
+									
+									String 
+									
+									transaction_type = "BTC-RAKE-CREDIT",
+									from_account = contest_account_id,
+									to_account = user_id,
+									from_currency = "BTC",
+									to_currency = "BTC",
+									memo = "Rake credit (BTC) from: " + contest_title;
+									
+									PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+									create_transaction.setLong(1, System.currentTimeMillis());
+									create_transaction.setString(2, contest_admin);
+									create_transaction.setString(3, transaction_type);
+									create_transaction.setString(4, from_account);
+									create_transaction.setString(5, to_account);
+									create_transaction.setDouble(6, user_raked_amount);
+									create_transaction.setString(7, from_currency);
+									create_transaction.setString(8, to_currency);
+									create_transaction.setString(9, memo);
+									create_transaction.setInt(10, contest_id);
+									create_transaction.executeUpdate();
+									}
+								}
+							else if (withdrawal_locked == 0) // affiliates only earn on accounts that have met playing requirement
+								{
+								String referrer = user.getString("referrer");
+								
+								if (referrer.equals("")) continue;
+								
+								// process referral payout if applicable
+								
+								double 
+								
+								referral_program = user.getDouble("referral_program"),
+								referrer_payout = multiply(user_raked_amount, referral_program, 0);
+
+								actual_rake_amount = subtract(actual_rake_amount, referrer_payout, 0);
+								total_referrer_payout = add(total_referrer_payout, referrer_payout, 0);
+								
+								log("Referral payout for " + referrer + " : " + referrer_payout);
+								
+								if (referrer_map.containsKey(referrer))
+									{
+									referrer_payout = add(referrer_payout, referrer_map.get(referrer), 0);
+									referrer_map.put(referrer, referrer_payout);
+									}
+								else referrer_map.put(referrer, referrer_payout);
+								}
+							else if (withdrawal_locked == 1) db.credit_user_rollover_progress(user, entry_amount);
+							}
+						
+						log("");					
+
+						//--------------------------------------------------------------------------------------------------------------
+	
+						// we previously converted all RC to BTC; now we create RC to fund affiliate payouts
+						
+						log("Processing net swap ...");
+						
+						btc_liability_balance = add(btc_liability_balance, total_referrer_payout, 0); // add decreases liability
+						rc_liability_balance = subtract(rc_liability_balance, total_referrer_payout, 0); // subtract increases liability
+						
+						// at this point, we write out the updated liability balances
+						
+						if (do_update)
+							{
+							db.update_btc_balance(liability_account_id, btc_liability_balance);
+							db.update_rc_balance(liability_account_id, rc_liability_balance);
+							}
+	
+						// compare final rc_liability_balance against opening balance to determine net swap
+						
+						log("Opening RC liability balance: " + opening_rc_liability_balance);
+						log("New RC liability balance: " + rc_liability_balance);
+						
+						if (rc_liability_balance == opening_rc_liability_balance) log("No net swap");
+						else // net swap exists
+							{
+							String
+							
+							swap_trans_type = null,
+							swap_from_currency = null,
+							swap_to_currency = null,
+							swap_memo = "Net swap for contest #" + contest_id;
+							
+							double swap_amount = 0;
+							
+							if (rc_liability_balance < opening_rc_liability_balance) // rc liability has increased; net creation of RC
+								{
+								swap_trans_type = "BTC-SWAP-TO-RC";
+								swap_from_currency = "BTC";
+								swap_to_currency = "RC";
+								
+								swap_amount = subtract(opening_rc_liability_balance, rc_liability_balance, 0);
+								}
+							else if (rc_liability_balance > opening_rc_liability_balance) // rc liability has decreased; net destruction of RC
+								{
+								swap_trans_type = "RC-SWAP-TO-BTC";
+								swap_from_currency = "RC";
+								swap_to_currency = "BTC";
+								
+								swap_amount = subtract(rc_liability_balance, opening_rc_liability_balance, 0);
+								}
+							
+							log("Swap: " + swap_trans_type);
+							
+							if (do_update)
+								{			
+								PreparedStatement swap = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+								swap.setLong(1, System.currentTimeMillis());
+								swap.setString(2, contest_admin);
+								swap.setString(3, swap_trans_type);
+								swap.setString(4, liability_account_id);
+								swap.setString(5, liability_account_id);
+								swap.setDouble(6, swap_amount);
+								swap.setString(7, swap_from_currency);
+								swap.setString(8, swap_to_currency);
+								swap.setString(9, swap_memo);
+								swap.setInt(10, contest_id);
+								swap.executeUpdate();
+								}
+							}
+	
+						log("");
+						
+						//--------------------------------------------------------------------------------------------------------------
+	
+						// process referral rewards
+	
+						log("Processing referral rewards");
+					
+						for (Map.Entry<String, Double> entry : referrer_map.entrySet()) 
+							{
+							String user_id = entry.getKey();
+							double referrer_payout = entry.getValue();
+							
+							JSONObject user = db.select_user("id", user_id);
+			
+							double user_rc_balance = user.getDouble("rc_balance");
+							
+							user_rc_balance = add(user_rc_balance, referrer_payout, 0);
+			
+							if (do_update)
+								{
+								db.update_rc_balance(user_id, user_rc_balance);
+			
 								String 
 								
-								transaction_type = "BTC-RAKE-CREDIT",
-								from_account = contest_account_id,
+								transaction_type = "RC-REFERRAL-REVENUE",
+								from_account = liability_account_id,
 								to_account = user_id,
-								from_currency = "BTC",
-								to_currency = "BTC",
-								memo = "Rake credit (BTC) from: " + contest_title;
+								from_currency = "RC",
+								to_currency = "RC",
+								memo = "Referral revenue (RC) from: " + contest_title;
 								
 								PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 								create_transaction.setLong(1, System.currentTimeMillis());
@@ -380,174 +601,31 @@ public class SettleContest extends Utils
 								create_transaction.setString(3, transaction_type);
 								create_transaction.setString(4, from_account);
 								create_transaction.setString(5, to_account);
-								create_transaction.setDouble(6, user_raked_amount);
+								create_transaction.setDouble(6, referrer_payout);
 								create_transaction.setString(7, from_currency);
 								create_transaction.setString(8, to_currency);
 								create_transaction.setString(9, memo);
 								create_transaction.setInt(10, contest_id);
 								create_transaction.executeUpdate();
+								
+								String
+								
+								subject = "Referral revenue from: " + contest_title, 
+								message_body = "";
+								
+								message_body += "You earned <b>" + format_btc(referrer_payout) + " RC</b> in referral revenue from: <b>" + contest_title + "</b>";
+								message_body += "<br/>";
+								message_body += "<br/>";
+								message_body += "<a href='" + Server.host + "/account/transactions.html'>Click here</a> to view your transactions.";
+								
+								new UserMail(user, subject, message_body);
 								}
 							}
-						else if (withdrawal_locked == 0) // affiliates only earn on accounts that have met playing requirement
-							{
-							String referrer = user.getString("referrer");
-							
-							if (referrer.equals("")) continue;
-							
-							// process referral payout if applicable
-							
-							double 
-							
-							referral_program = user.getDouble("referral_program"),
-							referrer_payout = multiply(user_raked_amount, referral_program, 0);
-
-							actual_rake_amount = subtract(actual_rake_amount, referrer_payout, 0);
-							total_referrer_payout = add(total_referrer_payout, referrer_payout, 0);
-							
-							log("Referral payout for " + referrer + " : " + referrer_payout);
-							
-							if (referrer_map.containsKey(referrer))
-								{
-								referrer_payout = add(referrer_payout, referrer_map.get(referrer), 0);
-								referrer_map.put(referrer, referrer_payout);
-								}
-							else referrer_map.put(referrer, referrer_payout);
-							}
-						else if (withdrawal_locked == 1) db.credit_user_rollover_progress(user, entry_amount);
-						}
-					
-					log("");
-
-					//--------------------------------------------------------------------------------------------------------------
-
-					// we previously converted all RC to BTC; now we create RC to fund affiliate payouts
-					
-					log("Processing net swap ...");
-					
-					btc_liability_balance = add(btc_liability_balance, total_referrer_payout, 0); // add decreases liability
-					rc_liability_balance = subtract(rc_liability_balance, total_referrer_payout, 0); // subtract increases liability
-					
-					// at this point, we write out the updated liability balances
-					
-					if (do_update)
-						{
-						db.update_btc_balance(liability_account_id, btc_liability_balance);
-						db.update_rc_balance(liability_account_id, rc_liability_balance);
+	
+						log("");
 						}
 
-					// compare final rc_liability_balance against opening balance to determine net swap
-					
-					log("Opening RC liability balance: " + opening_rc_liability_balance);
-					log("New RC liability balance: " + rc_liability_balance);
-					
-					if (rc_liability_balance == opening_rc_liability_balance) log("No net swap");
-					else // net swap exists
-						{
-						String
-						
-						swap_trans_type = null,
-						swap_from_currency = null,
-						swap_to_currency = null,
-						swap_memo = "Net swap for contest #" + contest_id;
-						
-						double swap_amount = 0;
-						
-						if (rc_liability_balance < opening_rc_liability_balance) // rc liability has increased; net creation of RC
-							{
-							swap_trans_type = "BTC-SWAP-TO-RC";
-							swap_from_currency = "BTC";
-							swap_to_currency = "RC";
-							
-							swap_amount = subtract(opening_rc_liability_balance, rc_liability_balance, 0);
-							}
-						else if (rc_liability_balance > opening_rc_liability_balance) // rc liability has decreased; net destruction of RC
-							{
-							swap_trans_type = "RC-SWAP-TO-BTC";
-							swap_from_currency = "RC";
-							swap_to_currency = "BTC";
-							
-							swap_amount = subtract(rc_liability_balance, opening_rc_liability_balance, 0);
-							}
-						
-						log("Swap: " + swap_trans_type);
-						
-						if (do_update)
-							{			
-							PreparedStatement swap = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-							swap.setLong(1, System.currentTimeMillis());
-							swap.setString(2, contest_admin);
-							swap.setString(3, swap_trans_type);
-							swap.setString(4, liability_account_id);
-							swap.setString(5, liability_account_id);
-							swap.setDouble(6, swap_amount);
-							swap.setString(7, swap_from_currency);
-							swap.setString(8, swap_to_currency);
-							swap.setString(9, swap_memo);
-							swap.setInt(10, contest_id);
-							swap.executeUpdate();
-							}
-						}
-
-					log("");
-					
-					//--------------------------------------------------------------------------------------------------------------
-
-					// process referral rewards
-
-					log("Processing referral rewards");
-				
-					for (Map.Entry<String, Double> entry : referrer_map.entrySet()) 
-						{
-						String user_id = entry.getKey();
-						double referrer_payout = entry.getValue();
-						
-						JSONObject user = db.select_user("id", user_id);
-		
-						double user_rc_balance = user.getDouble("rc_balance");
-						
-						user_rc_balance = add(user_rc_balance, referrer_payout, 0);
-		
-						if (do_update)
-							{
-							db.update_rc_balance(user_id, user_rc_balance);
-		
-							String 
-							
-							transaction_type = "RC-REFERRAL-REVENUE",
-							from_account = liability_account_id,
-							to_account = user_id,
-							from_currency = "RC",
-							to_currency = "RC",
-							memo = "Referral revenue (RC) from: " + contest_title;
-							
-							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-							create_transaction.setLong(1, System.currentTimeMillis());
-							create_transaction.setString(2, contest_admin);
-							create_transaction.setString(3, transaction_type);
-							create_transaction.setString(4, from_account);
-							create_transaction.setString(5, to_account);
-							create_transaction.setDouble(6, referrer_payout);
-							create_transaction.setString(7, from_currency);
-							create_transaction.setString(8, to_currency);
-							create_transaction.setString(9, memo);
-							create_transaction.setInt(10, contest_id);
-							create_transaction.executeUpdate();
-							
-							String
-							
-							subject = "Referral revenue from: " + contest_title, 
-							message_body = "";
-							
-							message_body += "You earned <b>" + format_btc(referrer_payout) + " RC</b> in referral revenue from: <b>" + contest_title + "</b>";
-							message_body += "<br/>";
-							message_body += "<br/>";
-							message_body += "<a href='" + Server.host + "/account/transactions.html'>Click here</a> to view your transactions.";
-							
-							new UserMail(user, subject, message_body);
-							}
-						}
-
-					log("");
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 					
 					//--------------------------------------------------------------------------------------------------------------
 					
@@ -696,63 +774,126 @@ public class SettleContest extends Utils
 									String user_id = entry_rs.getString(1);
 									
 									JSONObject user = db.select_user("id", user_id);
+									double user_wager = entry_rs.getDouble(2);
 									
-									double 
+									if (!voting_contest) {
+										// payout in btc if not a voting round
+
+										double 
+										
+										user_btc_balance = user.getDouble("btc_balance"),
+										user_winnings = multiply(user_wager, payout_ratio, 0);
+										
+										log("");
+										log("User: " + user_id);
+										log("Wager: " + user_wager);
+										log("Winnings: " + user_winnings);
+										
+										user_btc_balance = add(user_btc_balance, user_winnings, 0);
+										
+										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
+										
+										if (do_update)
+											{
+											db.update_btc_balance(user_id, user_btc_balance);
+						
+											String 
+											
+											transaction_type = "BTC-CONTEST-WINNINGS",
+											from_account = contest_account_id,
+											to_account = user_id,
+											from_currency = "BTC",
+											to_currency = "BTC",
+											memo = "Winnings (BTC) from: " + contest_title;
+											
+											PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+											create_transaction.setLong(1, System.currentTimeMillis());
+											create_transaction.setString(2, contest_admin);
+											create_transaction.setString(3, transaction_type);
+											create_transaction.setString(4, from_account);
+											create_transaction.setString(5, to_account);
+											create_transaction.setDouble(6, user_winnings);
+											create_transaction.setString(7, from_currency);
+											create_transaction.setString(8, to_currency);
+											create_transaction.setString(9, memo);
+											create_transaction.setInt(10, contest_id);
+											create_transaction.executeUpdate();
+											
+											String
+											
+											subject = "You picked the correct outcome in: " + contest_title, 
+											message_body = "";
+											
+											message_body += "You picked the correct outcome in: <b>" + contest_title + "</b>";
+											message_body += "<br/>";
+											message_body += "<br/>";
+											message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
+											message_body += "<br/>";
+											message_body += "<br/>";
+											message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> for detailed results.";
+											
+											new UserMail(user, subject, message_body);
+											}
+									} else {
+										
+										double 
+										
+										user_rc_balance = user.getDouble("rc_balance"),
+										user_winnings = multiply(user_wager, payout_ratio, 0);
+										
+										log("");
+										log("User: " + user_id);
+										log("Wager: " + user_wager);
+										log("Winnings: " + user_winnings);
+										
+										// implicit conversion from BTC to RC
+										user_rc_balance = add(user_rc_balance, user_winnings, 0);
+										
+										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
+										
+										if (do_update)
+											{
+											db.update_rc_balance(user_id, user_rc_balance);
+						
+											String 
+											
+											transaction_type = "RC-VOTING-CONTEST-WINNINGS",
+											from_account = contest_account_id,
+											to_account = user_id,
+											from_currency = "BTC",
+											to_currency = "RC",
+											memo = "Winnings (RC) from: " + contest_title;
+											
+											PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+											create_transaction.setLong(1, System.currentTimeMillis());
+											create_transaction.setString(2, contest_admin);
+											create_transaction.setString(3, transaction_type);
+											create_transaction.setString(4, from_account);
+											create_transaction.setString(5, to_account);
+											create_transaction.setDouble(6, user_winnings);
+											create_transaction.setString(7, from_currency);
+											create_transaction.setString(8, to_currency);
+											create_transaction.setString(9, memo);
+											create_transaction.setInt(10, contest_id);
+											create_transaction.executeUpdate();
+											
+											String
+											
+											subject = "You picked the correct outcome in: " + contest_title, 
+											message_body = "";
+											
+											message_body += "You picked the correct outcome in: <b>" + contest_title + "</b>";
+											message_body += "<br/>";
+											message_body += "<br/>";
+											message_body += "Payout: <b>" + format_btc(user_winnings) + " Roster Coins</b>";
+											message_body += "<br/>";
+											message_body += "<br/>";
+											message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> for detailed results.";
+											
+											new UserMail(user, subject, message_body);
+											}
+									}
 									
-									user_wager = entry_rs.getDouble(2),
-									user_btc_balance = user.getDouble("btc_balance"),
-									user_winnings = multiply(user_wager, payout_ratio, 0);
-									
-									log("");
-									log("User: " + user_id);
-									log("Wager: " + user_wager);
-									log("Winnings: " + user_winnings);
-									
-									user_btc_balance = add(user_btc_balance, user_winnings, 0);
-									
-									actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
-									
-									if (do_update)
-										{
-										db.update_btc_balance(user_id, user_btc_balance);
-					
-										String 
-										
-										transaction_type = "BTC-CONTEST-WINNINGS",
-										from_account = contest_account_id,
-										to_account = user_id,
-										from_currency = "BTC",
-										to_currency = "BTC",
-										memo = "Winnings (BTC) from: " + contest_title;
-										
-										PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-										create_transaction.setLong(1, System.currentTimeMillis());
-										create_transaction.setString(2, contest_admin);
-										create_transaction.setString(3, transaction_type);
-										create_transaction.setString(4, from_account);
-										create_transaction.setString(5, to_account);
-										create_transaction.setDouble(6, user_winnings);
-										create_transaction.setString(7, from_currency);
-										create_transaction.setString(8, to_currency);
-										create_transaction.setString(9, memo);
-										create_transaction.setInt(10, contest_id);
-										create_transaction.executeUpdate();
-										
-										String
-										
-										subject = "You picked the correct outcome in: " + contest_title, 
-										message_body = "";
-										
-										message_body += "You picked the correct outcome in: <b>" + contest_title + "</b>";
-										message_body += "<br/>";
-										message_body += "<br/>";
-										message_body += "Payout: <b>" + format_btc(user_winnings) + " BTC</b>";
-										message_body += "<br/>";
-										message_body += "<br/>";
-										message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> for detailed results.";
-										
-										new UserMail(user, subject, message_body);
-										}
 									}
 								}
 							} break;
@@ -1302,8 +1443,6 @@ public class SettleContest extends Utils
 					// any funds that have not been paid out as winnings or referral revenue are credited to internal_asset
 
 					log("Crediting asset account: " + actual_rake_amount);
-				
-					JSONObject internal_asset = db.select_user("username", "internal_asset");
 					
 					String internal_asset_id = internal_asset.getString("user_id");
 					
@@ -1320,6 +1459,26 @@ public class SettleContest extends Utils
 					from_currency = "BTC",
 					to_currency = "BTC",
 					memo = "Rake (BTC) from contest #" + contest_id;
+					
+					// voting contests should theoretically not have any rake amount but in case it does, implicitly
+					// convert rc to btc within contest account and credit asset account accordingly
+					if (voting_contest) {
+						
+						/* destroy rc amount from internal_contest */
+						
+						//refresh data
+						contest_account = db.select_user("id", contest_account_id);
+						double rc_contest = contest_account.getDouble("rc_balance");
+						rc_contest = add(rc_contest, actual_rake_amount, 0);
+						db.update_rc_balance(contest_account_id, rc_contest);
+						
+						from_currency = "RC";
+						
+						/* create btc for same amount in internal_contest */
+						double btc_contest = contest_account.getDouble("btc_balance");
+						btc_contest = subtract(btc_contest, actual_rake_amount, 0);
+						db.update_btc_balance(contest_account_id, btc_contest);
+					}
 					
 					if (do_update)
 						{
@@ -1376,6 +1535,10 @@ public class SettleContest extends Utils
 								break;
 							}
 
+						if (voting_contest) {
+							new UpdateContestStatus(sql_connection, contest_id, 3);
+						}
+						
 						update_contest.executeUpdate();
 						}
 

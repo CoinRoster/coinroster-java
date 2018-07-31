@@ -110,8 +110,7 @@ public class ContestReport_Lobby extends Utils
 					String scoring_scheme = result_set.getString(27);
 					String progressive_code = result_set.getString(28);
 					double progressive_paid = result_set.getDouble(29);
-					
-					
+			
 					if (contest_status != 0 && status != contest_status) continue;
 					
 					created_by = db.get_username_for_id(created_by);
@@ -159,6 +158,7 @@ public class ContestReport_Lobby extends Utils
 					
 					if (category.equals("USERGENERATED")) 
 						{
+
 						contest.put("settlement_deadline", result_set.getLong(32));
 						}
 					

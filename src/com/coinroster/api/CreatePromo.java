@@ -59,7 +59,7 @@ public class CreatePromo extends Utils
 				from_account = user;
 				}
 
-			log(from_account.toString());
+
 			
 //------------------------------------------------------------------------------------
 		

@@ -103,6 +103,7 @@ public class CreateUser extends Utils
 					referrer = db.select_user("id", referrer_id);
 					}
 				}
+			
 			else
 				{
 				email_address = to_valid_email(input.getString("email_address"));
@@ -127,6 +128,12 @@ public class CreateUser extends Utils
 					else referral_program = referrer.getDouble("referral_offer");
 					}
 				}
+			
+			// check if the new user clicked a link with a referral
+			if (input.has("referrer")) {
+				referrer_id = db.get_id_for_username(input.getString("referrer"));
+			}
+			
 			// at this point we should have our referrer_id, referral_program, and promo object where applicable
 			
 			Statement statement = sql_connection.createStatement();

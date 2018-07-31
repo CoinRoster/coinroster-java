@@ -2,15 +2,18 @@ package com.coinroster.api;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
+import com.mysql.jdbc.Statement;
 
 public class CreateContest extends Utils
 	{
@@ -44,18 +47,19 @@ public class CreateContest extends Utils
             double cost_per_entry = input.getDouble("cost_per_entry");
             Long registration_deadline = input.getLong("registration_deadline");
             JSONArray option_table = input.getJSONArray("option_table");
-
+            
             boolean is_private = false;
             try{
             	is_private = input.getBoolean("private");
             }catch(Exception e){
             }
             
-			boolean is_admin = false;
-			if (session != null && input.getString("request_source") != null) {
-				is_admin = session.user_level() != null && session.user_level().equals("1") && input.getString("request_source").equals("admin_panel");	
+            boolean is_admin = false;
+			if (session != null){
+				is_admin = session.user_level() != null && session.user_level().equals("1"); 
 			}
 
+			int contest_id = 0;
             String settlement_type = input.getString("settlement_type");
             PreparedStatement create_contest = null;
             Long settlement_deadline = null;
@@ -145,6 +149,7 @@ public class CreateContest extends Utils
             log("registration_deadline: " + registration_deadline);
             log("rake: " + rake);
             log("cost_per_entry: " + cost_per_entry);
+            log("settlement_type: " + settlement_type);
             log("scoring_rules: " + scoring_rules);
             log("prop_data: " + prop_data);
             log("private: " + is_private);
@@ -347,7 +352,9 @@ public class CreateContest extends Utils
 	            
 	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, "
 	            		+ "rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, "
-	            		+ "odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, prop_data) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+	            		+ "odds_source, score_header, gameIDs, scoring_rules, settlement_deadline, status, prop_data, participants) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	            		Statement.RETURN_GENERATED_KEYS);				
+
 
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
@@ -406,7 +413,24 @@ public class CreateContest extends Utils
 				create_contest.setString(22, gameIDs);
 				create_contest.setString(23, scoring_rules);
 				create_contest.setString(26, prop_data);
+
+				if (is_private) {
+					create_contest.setString(27, participants.toString());
+				} else {
+					create_contest.setNull(27, java.sql.Types.VARCHAR);
+				}
+				
 	            create_contest.executeUpdate();
+	            
+            	
+            	ResultSet rs = create_contest.getGeneratedKeys();
+
+            	if(rs.next()) {
+            		output.put("contest_id", rs.getInt(1));
+            		contest_id = rs.getInt(1);
+            	} else {
+            		log("Generated keys query failed");
+            	}
 
 	        }
             else if (contest_type.equals("PARI-MUTUEL"))
@@ -431,6 +455,7 @@ public class CreateContest extends Utils
 					if (id - last_id != 1)
 						{
 						output.put("error", "Invalid ids in option table");
+						log(output.get("error"));
 	            		break method;
 						}
 					last_id = id;
@@ -440,15 +465,16 @@ public class CreateContest extends Utils
 					if (option_description.equals(""))
 						{
 						output.put("error", "Option " + id + " has no description");
+						log(output.get("error"));
 	            		break method;
 						}
 					}
-				
+            	
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
             																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
-            																		+ "scoring_rules, prop_data) "
-            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+            																		+ "scoring_rules, prop_data, participants) "
+            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -471,6 +497,7 @@ public class CreateContest extends Utils
 					create_contest.setNull(16, java.sql.Types.BIGINT);
 					
 				}
+
 				else{
 					madeBy = session.user_id();
 					
@@ -503,7 +530,6 @@ public class CreateContest extends Utils
 						create_contest.setInt(15, 1);     
 						create_contest.setNull(16, java.sql.Types.BIGINT);
 					}		
-					
             	}
 				create_contest.setString(13, madeBy);
 				create_contest.setInt(14, auto);
@@ -511,19 +537,32 @@ public class CreateContest extends Utils
 				create_contest.setString(17, scoring_rules);
 				create_contest.setString(18, prop_data);
 				
+
 				if (is_private) {
 					create_contest.setString(19, participants.toString());
 				} else {
 					create_contest.setNull(19, java.sql.Types.VARCHAR);
 				}
-			
+
             	create_contest.executeUpdate();
+            	
+            	ResultSet rs = create_contest.getGeneratedKeys();
+            	if(rs.next()) {
+            		output.put("contest_id", rs.getInt(1));
+            		contest_id = rs.getInt(1);
+            	} else {
+            		log("Generated keys query failed");
+            	}
             }
-			
+
             new BuildLobby(sql_connection);
             
             if (is_private) {
             	output.put("code", participants.getString("code"));
+            	output.put("url", Server.host + "/contest.html?id=" + contest_id + "&code=" + participants.getString("code"));
+            }
+            else{
+                output.put("url", Server.host + "/contest.html?id=" + contest_id);
             }
             
             output.put("status", "1");
@@ -532,6 +571,7 @@ public class CreateContest extends Utils
 		
 	if(session != null && !internal_caller)
 		method.response.send(output);
+	
 	}
 }
 	

@@ -541,7 +541,6 @@ public class GolfBot extends Utils {
 			log("updating option table for score-to-par contests...");
 			// get worst score relative to when (tournament or round)
 			int worstScore = findWorstScore(when);
-			
 			if(when.equals("tournament"))
 				log("worst score in " + when + ": " + worstScore);
 			else

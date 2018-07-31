@@ -22,6 +22,9 @@ import org.json.JSONObject;
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.GolfBot;
 
+import com.coinroster.bots.CrowdSettleBot;
+import com.coinroster.internal.BackoutContest;
+import com.coinroster.internal.UpdateContestStatus;
 
 public class ContestMethods extends Utils{
 
@@ -306,7 +309,6 @@ public class ContestMethods extends Utils{
 					
 					//generate tournament ROSTER contests
 					for(int index = 0; index < roster_contests.length(); index++){
-						
 						// check if the contest is a round 1 contest or tournament contest:
 						JSONObject contest = roster_contests.getJSONObject(index);
 						golfBot.createGolfRosterContest(contest, "tournament");
@@ -315,7 +317,6 @@ public class ContestMethods extends Utils{
 					
 					for(int index = 0; index < prop_contests.length(); index++){
 						// check if the contest is a round 1 contest or tournament contest:
-
 						JSONObject contest = prop_contests.getJSONObject(index);						
 						golfBot.createGolfPropBet(contest, "tournament");
 						golfBot.createGolfPropBet(contest, "1");
@@ -428,7 +429,127 @@ public class ContestMethods extends Utils{
 	}
 	
 //------------------------------------------------------------------------------------
+
+	public static void checkCrowdContests() {
 	
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
+			
+			// get voting round contests that have status 1
+			ArrayList<Integer> voting_contest_ids = db.check_if_in_play();
+			
+			if(!voting_contest_ids.isEmpty()){
+				CrowdSettleBot crowd_bot = new CrowdSettleBot(sql_connection);
+				
+				// iterate through list of ids and check for contests whose registration deadline expired
+				for(Integer contest_id : voting_contest_ids){
+					
+					JSONObject contest = db.select_contest(contest_id);
+					if(new Date().getTime() > contest.getLong("registration_deadline")) {
+						
+						// Settle Voting Round
+						log("Voting round for contest: " + contest_id + " has ended, settling");
+						JSONObject input = crowd_bot.settlePariMutuel(contest_id);
+						input.put("contest_id", contest_id);
+						log(input.toString());
+						
+						// no bets on voting round; back
+						if(input.getInt("winning_outcome") == 0 || input.has("multiple_winning_outcomes")) {
+							new BackoutContest(sql_connection, contest_id);
+							new BackoutContest(sql_connection, db.get_original_contest(contest_id));
+							
+							return;
+						}
+						
+						// multiple bets placed, notify admin
+						if(input.has("multiple_bets")) {
+							JSONObject cash_register = db.select_user("username", "internal_cash_register");
+							
+							String
+							
+							cash_register_email_address = cash_register.getString("email_address"),
+							cash_register_admin = "Cash Register Admin",
+							
+							subject_admin = "Crowd Settled Contest Has Multiple Entries",
+							message_body_admin = "";
+							
+							message_body_admin += "<br/>";
+							message_body_admin += "<br/>";
+							message_body_admin += "A crowd settled contest has entries that users have placed on multiple options. Please settle the contest below:";
+							message_body_admin += "<br/>";
+							message_body_admin += "<br/>";
+							message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
+							message_body_admin += "<br/>";
+							message_body_admin += "<br/>";
+							message_body_admin += "Please settle the contest from the admin panel.";
+							message_body_admin += "<br/>";
+			
+							Server.send_mail(cash_register_email_address, cash_register_admin, subject_admin, message_body_admin);
+							new UpdateContestStatus(sql_connection, contest_id, 5);
+							return;
+						}
+	
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = input;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							log("Settling voting round");
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+						input.remove("contest_id");
+						
+						log("Settling betting round");
+						
+						// get contest ID of contest that created voting round
+						
+						int original_contest_id = db.get_original_contest(contest_id);
+						
+						// settle original contest
+						input.put("contest_id", original_contest_id);							
+						
+						MethodInstance original_method = new MethodInstance();
+						original_method.input = input;
+						original_method.output = output;
+						original_method.session = null;
+						original_method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}catch (Exception e) {
+			Server.exception(e);
+		} 
+		finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+					log("closing sql_connection");
+					} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}
+
+
+//------------------------------------------------------------------------------------
+
 	public static void checkGolfContests() {
 		Connection sql_connection = null;
 		try {
@@ -624,38 +745,11 @@ public class ContestMethods extends Utils{
 				}
 			}
 		}
-	}
-					
-//					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
-//					pari_contests = db_connection.get_active_pari_mutuels("BASEBALLPROPS", "PARI-MUTUEL");
-//					Iterator<?> pari_contest_ids = pari_contests.keys();	
-//					while(pari_contest_ids.hasNext()){
-//						String c_id = (String) pari_contest_ids.next();
-//						
-//						JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
-//						JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
-//						JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
-//
-//						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
-//						MethodInstance pari_method = new MethodInstance();
-//						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//						pari_method.input = pari_fields;
-//						pari_method.output = pari_output;
-//						pari_method.session = null;
-//						pari_method.sql_connection = sql_connection;
-//						try{
-//							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-//							c.newInstance(pari_method);
-//						}
-//						catch(Exception e){
-//							e.printStackTrace();
-//						}		
-//					}
-			
+	}	
 
-		
-	//------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
 
+	
 	// create basketball contests reading from csv
 	public static void createBaseballContests() {
 		
@@ -699,7 +793,7 @@ public class ContestMethods extends Utils{
 					e.printStackTrace();
 				}
             }
-		
+
 			//read templates from `CONTEST_TEMPLATES` table
 			JSONArray roster_contests = db.getRosterTemplates("BASEBALL");
 			for(int index = 0; index < roster_contests.length(); index++){

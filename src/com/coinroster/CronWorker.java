@@ -68,6 +68,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 	
 		if((minute%5)==0){
+		    ContestMethods.checkCrowdContests();
 		    new CloseContestRegistration();
 		}
 		
@@ -103,6 +104,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		if(hour==6){
 			ContestMethods.createGolfContests();
 		}
+		
 		if(hour==1 && Server.dev_server)
 			UpdateCurrencies();			
 	}

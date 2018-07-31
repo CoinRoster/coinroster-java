@@ -36,13 +36,19 @@ public class AddToProgressive extends Utils
 			
 			String 
 
-			created_by = session.user_id(),
+			created_by = null, // session.user_id(),
 			code = input.getString("code"),
 			internal_promotions_id = db.get_id_for_username("internal_promotions"),
 			internal_progressive_id = db.get_id_for_username("internal_progressive"),
 			ext_address = "",
 			from_currency = "BTC",
 			to_currency = "BTC";
+			
+			if (session == null) {
+				created_by = "Crowd-Contest-Bot";
+			} else {
+				created_by = session.user_id();
+			}
 			
 			Long transaction_timestamp = System.currentTimeMillis();
 			
@@ -96,7 +102,7 @@ public class AddToProgressive extends Utils
 
             output.put("status", "1");
             
-			} 
+			} 		
 		
 		if(session != null)
 			method.response.send(output);

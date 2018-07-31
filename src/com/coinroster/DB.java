@@ -13,7 +13,6 @@ import org.json.JSONObject;
 import com.coinroster.internal.UserMail;
 import java.text.Normalizer;
 
-import sun.util.logging.resources.logging;
 
 public class DB 
 	{
@@ -37,7 +36,7 @@ public class DB
 		ResultSet result_set = select_username.executeQuery();
 
 		if (result_set.next()) username = result_set.getString(1);
-
+		
 		return username;
 		}
 
@@ -312,6 +311,7 @@ public class DB
 	// CHECK IF CONTESTS ARE IN PLAY
 	public JSONObject check_if_in_play(String category, String sub_category, String contest_type) throws Exception
 	{
+
 		JSONObject contests = new JSONObject();
 		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where category = ? and sub_category = ? and contest_type = ? and status = 2");
 		get_live_contests.setString(1, category);
@@ -434,7 +434,6 @@ public class DB
 		return contest_ids;
 		
 	}
-
 //------------------------------------------------------------------------------------
 
 	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
@@ -522,6 +521,12 @@ public class DB
 			double progressive_paid = result_set.getDouble(29);
 			Long settlement_deadline = result_set.getLong(32);
 			
+			String participants = result_set.getString(34);
+			
+			if (participants == null) {
+				participants = "";
+			}
+			
 			contest.put("contest_id", contest_id);
 			contest.put("created", created);
 			contest.put("created_by", created_by);
@@ -552,6 +557,7 @@ public class DB
 			contest.put("progressive", progressive);
 			contest.put("progressive_paid", progressive_paid);
 			contest.put("settlement_deadline", settlement_deadline);
+			contest.put("participants", participants);
 			}
 
 		return contest;
@@ -840,7 +846,47 @@ public class DB
 		update_rc_balance.setString(2, user_id);
 		update_rc_balance.executeUpdate();
 		}
+//------------------------------------------------------------------------------------
 
+	// CHECK IF CONTEST IS VOTING ROUND
+	
+	public boolean is_voting_contest(int contest_id) throws Exception
+		{
+		PreparedStatement check_voting = sql_connection.prepareStatement("select original_contest_id from voting where id = ?");
+		check_voting.setInt(1, contest_id);
+		
+		ResultSet voting_rs = check_voting.executeQuery();
+		if(voting_rs.next()) return true;
+		return false;
+		}
+	
+//------------------------------------------------------------------------------------
+
+	// CHECK IF CONTEST IS PRIVATE
+	
+	public boolean is_private_contest(int contest_id) throws Exception {
+		PreparedStatement check_private = sql_connection.prepareStatement("select participants from contest where contest_id = ?");
+		check_private.setInt(1, contest_id);
+		
+		ResultSet private_rs = check_private.executeQuery();
+		if(private_rs.next()) {
+			if(!private_rs.getString(1).equals("")) return true;
+		}
+		return false;
+	}
+
+//------------------------------------------------------------------------------------
+
+	// UPDATE PRIVATE CONTEST PARTICIPANTS
+	
+	public void update_private_contest_users(int contest_id, JSONObject participants) throws Exception {
+		PreparedStatement update_users = sql_connection.prepareStatement("update contest set participants = ? where id = ?");
+		update_users.setString(1, participants.toString());
+		update_users.setInt(2, contest_id);
+		
+		update_users.executeUpdate();
+	}
+		
 //------------------------------------------------------------------------------------
 	
 	// UPDATE CGS BALANCE
@@ -1298,7 +1344,6 @@ public class DB
 			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type = ? and gameID = ?");
 			get_players.setString(1, sport);
 			result_set = get_players.executeQuery();
-			
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -1617,11 +1662,12 @@ public class DB
 		try {
 			PreparedStatement get_contests = sql_connection.prepareStatement("select * from contest_template where sub_category = ? and active = 1");
 			get_contests.setString(1, sub_category);
-			result_set = get_contests.executeQuery();		
+			result_set = get_contests.executeQuery();	
 		}
 		catch(Exception e){
 			e.printStackTrace();
-		}
+		}	
+
 		while (result_set.next()){
 			JSONObject entry = new JSONObject();
 			try{
@@ -1664,6 +1710,38 @@ public class DB
 		return templates;
 	}
 
+
+//------------------------------------------------------------------------------------
+
+	public double get_voting_contest_commission() {
+		double voting_contest_creator_commission = 0;
+		try {
+			PreparedStatement voting_contest_commission = sql_connection.prepareStatement("select value from control where name='voting_contest_creator_commission'");
+			ResultSet result_set = voting_contest_commission.executeQuery();		
+			if (result_set.next()) voting_contest_creator_commission = result_set.getInt(1);
+		}
+		catch(Exception e){
+			Utils.log(e.toString());
+			e.printStackTrace(System.out);
+		}
+		Utils.log("creator commission: " + voting_contest_creator_commission);
+		return voting_contest_creator_commission;
+	}
+	
+//------------------------------------------------------------------------------------
+	public ArrayList<Integer> get_pending_voting_contests() {
+		ArrayList<Integer> voting_contests = new ArrayList<>();
+		try {
+			PreparedStatement pending_voting_contests = sql_connection.prepareStatement("select id from voting where status = '5'");
+			ResultSet result_set = pending_voting_contests.executeQuery();		
+			while (result_set.next()) voting_contests.add(result_set.getInt(1));
+		}
+		catch(Exception e){
+			Utils.log(e.toString());
+			e.printStackTrace(System.out);
+		}
+		return voting_contests;
+	}
 	
 //------------------------------------------------------------------------------------
 	

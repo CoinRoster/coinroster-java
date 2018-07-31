@@ -36,6 +36,7 @@ public class GetContestDetails extends Utils
 		
 			// method logic goes here
 			int contest_id;
+			String code;
 			
 			try{
 				contest_id = input.getInt("contest_id");
@@ -46,7 +47,12 @@ public class GetContestDetails extends Utils
 				break method;
 			}
 			
-	
+			try{
+				code = input.getString("code");
+			}catch(JSONException e){
+				code = null;
+			}
+			
 			JSONObject contest = db.select_contest(contest_id);
 			
 			if (contest != null)
@@ -55,7 +61,47 @@ public class GetContestDetails extends Utils
 				
 				contest_type = contest.getString("contest_type"),
 				category = contest.getString("category"),
-				sub_category = contest.getString("sub_category");;
+				sub_category = contest.getString("sub_category");
+				
+				JSONObject participants;
+				
+				// check if contest is private
+				if (!contest.getString("participants").equals("")) {
+					participants = new JSONObject(contest.getString("participants"));
+
+					// check if user is already a participant; no need to check for code if they are
+					JSONArray users = participants.getJSONArray("users");
+					int i = 0;
+					while (i != users.length()) {
+						if (!users.getString(i).equals(session.user_id())) {
+							i++;
+						} else {
+							break;
+						}
+					}
+					// if not a participant, add them if they have the correct URL code
+					if (i == users.length()) {
+						if (participants.getString("code").equals(code)) {
+							if (session.user_id() != null) {
+								users.put(session.user_id());
+								
+								// replace old json array with new
+								participants.remove("users");
+								participants.put("users", users);
+								db.update_private_contest_users(contest_id, participants);
+							} else {
+								Utils.log("cannot add user to private contest " + contest_id + "; no session");
+							}
+							
+							// user is clear to proceed
+						} else {						
+							Utils.log("attempting to access private contest with incorrect code");
+							output.put("error", "Invalid code for private contest");
+							break method;
+						}
+					}
+				}
+
 				
 				if (!contest.isNull("progressive"))
 					{
