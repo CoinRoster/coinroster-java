@@ -67,10 +67,12 @@ public class SetupRoster extends Utils{
 						}
 						log("pay table: " + pay_table.toString());
 						data.put("pay_table", pay_table.toString());
+						data.put("min_users", 2);
 						break;
 					
 					case "DOUBLE-UP":
 						data.put("pay_table", empty.toString());
+						data.put("min_users", 2);
 						break;
 					
 					case "HEADS-UP":
