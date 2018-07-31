@@ -96,29 +96,35 @@ public class SetupPropBet extends Utils{
 								sport_title = "Score to Par";
 							}
 							
-							// figure out deadline
-							switch(prop_data.getString("when")){
-								case "tournament":
-									deadline = golf_bot.getDeadline();
-									date_name_title = " | " + golf_bot.getTourneyName();
-									break;
-								case "1":
-									deadline = golf_bot.getDeadline();
-									date_name_title = " | " + golf_bot.getTourneyName() + " Round 1";
-									break;
-								case "2":
-									deadline = golf_bot.getDeadline() + 86400000;
-									date_name_title = " | " + golf_bot.getTourneyName() + " Round 2";
-									break;
-								case "3":
-									deadline = golf_bot.getDeadline() + (2 * 86400000);
-									date_name_title = " | " + golf_bot.getTourneyName() + " Round 3";
-									break;
-								case "4":
-									deadline = golf_bot.getDeadline() + (3 * 86400000);
-									date_name_title = " | " + golf_bot.getTourneyName() + " Round 4";
-									break;
+							try{
+								// figure out deadline
+								switch(prop_data.getString("when")){
+									case "tournament":
+										deadline = golf_bot.getDeadline();
+										date_name_title = " | " + golf_bot.getTourneyName();
+										break;
+									case "1":
+										deadline = golf_bot.getDeadline();
+										date_name_title = " | " + golf_bot.getTourneyName() + " Round 1";
+										break;
+									case "2":
+										deadline = golf_bot.getDeadline() + 86400000;
+										date_name_title = " | " + golf_bot.getTourneyName() + " Round 2";
+										break;
+									case "3":
+										deadline = golf_bot.getDeadline() + (2 * 86400000);
+										date_name_title = " | " + golf_bot.getTourneyName() + " Round 3";
+										break;
+									case "4":
+										deadline = golf_bot.getDeadline() + (3 * 86400000);
+										date_name_title = " | " + golf_bot.getTourneyName() + " Round 4";
+										break;
+								}
+							}catch(JSONException e){
+								deadline = golf_bot.getDeadline();
+								date_name_title = " | " + golf_bot.getTourneyName();
 							}
+							
 						}else{
 							output.put("error", "Golf contests are not currently available");
 							break method;
@@ -170,7 +176,7 @@ public class SetupPropBet extends Utils{
 							index += 1;
 						}
 						
-						if(sport.equals("GOLF") && prop_data.getString("multi-stp").equals("score_to_par")){
+						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
 							desc += "Place your bets on which of the following golfers will finish the contest with the top score to par";
 						}
 						else{
@@ -203,7 +209,7 @@ public class SetupPropBet extends Utils{
 						under.put("id", 2);
 						option_table.put(under);
 						
-						if(sport.equals("GOLF") && prop_data.getString("multi-stp").equals("score_to_par")){
+						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
 							desc += "Place your bets on if " + name + " will finish the contest over or under " + o_u ;
 						}
 						else{
@@ -272,6 +278,9 @@ public class SetupPropBet extends Utils{
 						sport_title = "";
 						contest_title = "Will " + name + " Make the Cut";
 						desc = "Place your bets on whether or not " + name + " will make the cut!";
+						
+						// pass in when: tournament
+						prop_data.put("when", "tournament");
 						break;
 					
 					
