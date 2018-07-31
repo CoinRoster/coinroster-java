@@ -109,8 +109,31 @@ public class ContestReport_Lobby extends Utils
 					Long scores_updated = result_set.getLong(26);
 					String scoring_scheme = result_set.getString(27);
 					String progressive_code = result_set.getString(28);
-					double progressive_paid = result_set.getDouble(29);
-			
+					double progressive_paid = result_set.getDouble(29);			
+					String participants = result_set.getString(34);
+					
+					JSONObject participants_json = null;
+					if (participants != null) {
+						participants_json = new JSONObject(participants);
+					}
+					
+					// if private, check if user is in the contest
+					if (participants_json != null) {
+						// check if user is already a participant; no need to check for code if they are
+						JSONArray users = participants_json.getJSONArray("users");
+						int i = 0;
+						while (i != users.length()) {
+							if (!users.getString(i).equals(session.user_id())) {
+								i++;
+							} else {
+								break;
+							}
+						}
+						// if not a participant, continue without adding the contest
+						if (i == users.length()) continue;
+					}
+						
+					
 					if (contest_status != 0 && status != contest_status) continue;
 					
 					created_by = db.get_username_for_id(created_by);
@@ -130,7 +153,7 @@ public class ContestReport_Lobby extends Utils
 							}
 						}
 					else if (progressive_paid > 0) total_prize_pool = add(total_prize_pool, progressive_paid, 0);
-						
+					
 					contest.put("id", id);
 					contest.put("created", created);
 					contest.put("category", category);
