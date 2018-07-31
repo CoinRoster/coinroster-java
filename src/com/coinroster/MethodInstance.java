@@ -10,4 +10,5 @@ public class MethodInstance
 	public JSONObject input, output;
 	public Session session;
 	public Connection sql_connection;
+	public boolean internall_caller = false;
 	}

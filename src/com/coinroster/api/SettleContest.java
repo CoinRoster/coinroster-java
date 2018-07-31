@@ -56,10 +56,9 @@ public class SettleContest extends Utils
 			new Backup();
 
 			// lock it all
-			
 			Statement statement = sql_connection.createStatement();
-			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write");
-
+			statement.execute("lock tables user write, contest write, entry write, transaction write, progressive write, voting write, category write, control write");
+			
 			try {
 				lock : {
 				
@@ -109,8 +108,8 @@ public class SettleContest extends Utils
 					
 					JSONArray player_scores;
 					
-					Map<Integer, Double> score_map = new TreeMap<Integer, Double>();
-					Map<Integer, String> raw_score_map = new TreeMap<Integer, String>();
+					Map<String, Double> score_map = new TreeMap<String, Double>();
+					Map<String, String> raw_score_map = new TreeMap<String, String>();
 					
 					//--------------------------------------------------------------------------------------------------------------
 				
@@ -166,7 +165,7 @@ public class SettleContest extends Utils
 								{
 								JSONObject player = player_scores.getJSONObject(i);
 								
-								int player_id = player.getInt("id");
+								String player_id = player.getString("id");
 								double score_normalized = player.getDouble("score_normalized");
 								String score_raw = player.getString("score_raw");
 								
@@ -181,16 +180,13 @@ public class SettleContest extends Utils
 								{
 								JSONObject player = option_table.getJSONObject(i);
 								
-								int player_id = player.getInt("id");
+								String player_id = player.getString("id");
 								
 								if (!score_map.containsKey(player_id))
 								{
-									String error = "No score provided for " + player.getString("name");
-									log(error);
-									
 									// pga tour withdrawal
 									player.put("score", 0);
-									player.put("score_raw", "WD");
+									player.put("score_raw", "INACTIVE");
 									
 									option_table.put(i, player);
 									
@@ -793,7 +789,7 @@ public class SettleContest extends Utils
 								for (int i=0; i<entry_data.length(); i++)
 									{
 									JSONObject player = entry_data.getJSONObject(i);
-									int player_id = player.getInt("id");
+									String player_id = player.getString("id");
 									double player_score = 0;
 									try{
 										player_score = score_map.get(player_id);

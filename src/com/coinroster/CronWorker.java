@@ -67,16 +67,18 @@ public class CronWorker extends Utils implements Callable<Integer>
 			UpdateBTCUSD();
 		}
 	
+		if((minute%5)==0){
+		    new CloseContestRegistration();
+		}
+		
 		if((minute%20)==0){
-			
-			new CloseContestRegistration();
-			
 			// see if contests are in play (status=2) and live update scores if applicable
 			// also settle the contests when applicable
-			ContestMethods.checkBasketballContests();
+//			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 		}
+		
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField();
 		}
@@ -95,10 +97,10 @@ public class CronWorker extends Utils implements Callable<Integer>
 //		new CheckPendingWithdrawals();
 	
 		if(hour==7){
-			ContestMethods.createBasketballContests();
+//			ContestMethods.createBasketballContests();
 			ContestMethods.createBaseballContests();
 		}
-		if(hour==8){
+		if(hour==6){
 			ContestMethods.createGolfContests();
 		}
 		if(hour==1 && Server.dev_server)

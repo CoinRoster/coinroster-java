@@ -16,7 +16,6 @@ import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -31,7 +30,7 @@ public class BasketballBot extends Utils {
 
 	// instance variables
 	protected ArrayList<String> game_IDs;
-	private Map<Integer, Player> players_list;
+	private Map<String, Player> players_list;
 	private long earliest_game;
 	public String sport = "BASKETBALL";
 	private DB db;
@@ -51,15 +50,15 @@ public class BasketballBot extends Utils {
 	public long getEarliestGame(){
 		return earliest_game;
 	}
-	public void scrapeGameIDs() throws IOException, JSONException{
+	public String scrapeGameIDs() throws IOException, JSONException, InterruptedException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
 		if(events.length() == 0){
-			log("No basketball games today");
 			this.game_IDs = null;
+			return null;
 		}
 		else{
 			String earliest_date = events.getJSONObject(0).getString("date");
@@ -80,10 +79,11 @@ public class BasketballBot extends Utils {
 				gameIDs.add(gameID.toString());
 			}
 			this.game_IDs = gameIDs;
+			return gameIDs.toString();
 		}
 	}
 	
-	public Map<Integer, Player> getPlayerHashMap(){
+	public Map<String, Player> getPlayerHashMap(){
 		return players_list;
 	}
 	
@@ -121,7 +121,7 @@ public class BasketballBot extends Utils {
 				JSONObject player = new JSONObject();
 				player.put("description", top_players.getString(2) + " " + top_players.getString(3));
 				player.put("id", index);
-				player.put("player_id", top_players.getInt(1));
+				player.put("player_id", top_players.getString(1));
 				option_table.put(player);
 				index += 1;
 			}
@@ -156,9 +156,9 @@ public class BasketballBot extends Utils {
 				get_players.setDouble(2, points);
 				players = get_players.executeQuery();
 				
-				ArrayList<Integer> IDs = new ArrayList<Integer>();
+				ArrayList<String> IDs = new ArrayList<String>();
 				while(players.next()){
-					IDs.add(players.getInt(1));
+					IDs.add(players.getString(1));
 				}
 				
 				log(IDs.toString());
@@ -170,14 +170,14 @@ public class BasketballBot extends Utils {
 					return fields;
 				}
 				else{
-					for(Integer player_table_ID : IDs){
+					for(String player_table_ID : IDs){
 						log(player_table_ID);
 						for (int i=0; i<option_table.length(); i++){
 							JSONObject option = option_table.getJSONObject(i);
 							int option_id = option.getInt("id");
 							try{
-								int player_id = option.getInt("player_id");
-								if(player_id == player_table_ID){
+								String player_id = option.getString("player_id");
+								if(player_id.equals(player_table_ID)){
 									winning_outcome = option_id;
 									fields.put("winning_outcome", winning_outcome);
 									log("winning outcome is " + option.getString("description"));
@@ -219,7 +219,7 @@ public class BasketballBot extends Utils {
 			for(Player player : this.getPlayerHashMap().values()){
 				
 				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?)");				
-				save_player.setInt(1, player.getESPN_ID());
+				save_player.setString(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
@@ -238,11 +238,11 @@ public class BasketballBot extends Utils {
 	
 	public JSONArray updateScores() throws SQLException, JSONException{
 		
-		ResultSet playerScores = db.getPlayerScores(this.sport);
+		ResultSet playerScores = db.getPlayerScores(this.sport, this.getGameIDs());
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
-			int id = playerScores.getInt(1);
+			String id = playerScores.getString(1);
 			double points = playerScores.getDouble(2);
 			player.put("id", id);
 			player.put("score_raw", Double.toString(points));
@@ -254,8 +254,8 @@ public class BasketballBot extends Utils {
 	
 
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
-	public Map<Integer, Player> setup() throws IOException, JSONException, SQLException{
-		Map<Integer, Player> players = new HashMap<Integer,Player>();
+	public Map<String, Player> setup() throws IOException, JSONException, SQLException{
+		Map<String, Player> players = new HashMap<String,Player>();
 		if(this.game_IDs == null){
 			log("No games scheduled");
 			this.players_list = null;
@@ -279,7 +279,7 @@ public class BasketballBot extends Utils {
 						Elements cols = row.getElementsByTag("td");
 						String name = cols.get(1).select("a").text();
 						String team_name = team_abr.toUpperCase();
-						int ESPN_id = Integer.parseInt(cols.get(1).select("a").attr("href").split("/")[7]);
+						String ESPN_id = cols.get(1).select("a").attr("href").split("/")[7];
 						// create a player object, save it to the hashmap
 						Player p = new Player(ESPN_id, name, team_name);
 						p.scrape_info();
@@ -313,7 +313,7 @@ public class BasketballBot extends Utils {
 						Elements spans = row.getElementsByClass("name").select("a").select("span");
 						String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
 						if(!espn_ID_url.isEmpty()){
-							int espn_ID = Integer.parseInt(espn_ID_url.split("/")[7]);
+							String espn_ID = espn_ID_url.split("/")[7];
 							if(spans.size() == 2){
 								String points_string = row.getElementsByClass("pts").text();
 								double pts;
@@ -326,7 +326,7 @@ public class BasketballBot extends Utils {
 									pts = 0.0;
 								}
 								// look up player in HashMap with ESPN_ID, update his points in DB
-								db.editPoints(pts, espn_ID, this.sport);
+								//db.editPoints(pts, espn_ID, this.sport);
 							}			
 						}			
 					}
@@ -351,7 +351,7 @@ public class BasketballBot extends Utils {
 		public String method_level = "admin";
 		private String name;
 		private String team_abr;
-		private int ESPN_ID;
+		private String ESPN_ID;
 		private double fantasy_points = 0;
 		private double ppg;
 		private double salary;
@@ -366,7 +366,7 @@ public class BasketballBot extends Utils {
 		private String gameID;
 		
 		// constructor
-		public Player(int id, String n, String team){
+		public Player(String id, String n, String team){
 			this.ESPN_ID = id;
 			this.name = n;
 			this.team_abr = team;
@@ -377,7 +377,7 @@ public class BasketballBot extends Utils {
 		public double getPoints(){
 			return fantasy_points;
 		}
-		public int getESPN_ID(){
+		public String getESPN_ID(){
 			return ESPN_ID;
 		}
 		public String getGameID(){
@@ -444,13 +444,16 @@ public class BasketballBot extends Utils {
 		}
 		public void createBio() throws JSONException{
 			JSONObject bio = new JSONObject();
+			bio.put("id", this.getESPN_ID());
+			bio.put("name", this.getName());
 			bio.put("birthString", this.getBirthString());
 			bio.put("height", this.getHeight());
-			bio.put("Weight", this.getWeight());
+			bio.put("weight", this.getWeight());
 			bio.put("pos", this.getPosition());
 			bio.put("last_five_games", this.getGameLogs());
 			bio.put("career_stats", this.getCareerStats());
 			bio.put("year_stats", this.getYearStats());
+			bio.put("team_abr", this.getTeam());
 
 			this.bio = bio;		
 		}
@@ -460,7 +463,7 @@ public class BasketballBot extends Utils {
 		
 		public void scrape_info() throws IOException, JSONException{
 			
-			Document page = Jsoup.connect("http://www.espn.com/nba/player/_/id/"+Integer.toString(this.getESPN_ID())).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+			Document page = Jsoup.connect("http://www.espn.com/nba/player/_/id/"+ this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 				      .referrer("http://www.google.com").timeout(6000).get();
 			Elements bio_divs = page.getElementsByClass("player-bio");
 			

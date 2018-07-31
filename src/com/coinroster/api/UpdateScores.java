@@ -87,13 +87,12 @@ public class UpdateScores extends Utils
 					
 					JSONArray player_scores;
 					
-					Map<Integer, Double> score_map = new TreeMap<Integer, Double>();
-					Map<Integer, String> raw_score_map = new TreeMap<Integer, String>();
+					Map<String, Double> score_map = new TreeMap<String, Double>();
+					Map<String, String> raw_score_map = new TreeMap<String, String>();
 
 					String normalization_scheme = input.getString("normalization_scheme");
 
 					JSONArray option_table = new JSONArray(contest.getString("option_table"));
-					
 					// populate map of player scores 
 						
 					player_scores = input.getJSONArray("player_scores");
@@ -102,7 +101,7 @@ public class UpdateScores extends Utils
 						{
 						JSONObject player = player_scores.getJSONObject(i);
 						
-						int player_id = player.getInt("id");
+						String player_id = player.getString("id");
 						double score_normalized = player.getDouble("score_normalized");
 						String score_raw = player.getString("score_raw");
 						
@@ -117,13 +116,10 @@ public class UpdateScores extends Utils
 						{
 						JSONObject player = option_table.getJSONObject(i);
 						
-						int player_id = player.getInt("id");
+						String player_id = player.getString("id");
 						
 						if (!score_map.containsKey(player_id))
 						{
-							String error = "No score provided for " + player.getString("name");
-							log(error);
-							
 							// pga tour withdrawal
 							player.put("score", 0);
 							player.put("score_raw", "WD");
