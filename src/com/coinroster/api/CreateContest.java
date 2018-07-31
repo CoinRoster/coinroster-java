@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
+import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
@@ -57,6 +58,7 @@ public class CreateContest extends Utils
 				is_admin = session.user_level() != null && session.user_level().equals("1"); 
 			}
 
+			int contest_id = 0;
             String settlement_type = input.getString("settlement_type");
             PreparedStatement create_contest = null;
             Long settlement_deadline = null;
@@ -432,6 +434,7 @@ public class CreateContest extends Utils
 
             	if(rs.next()) {
             		output.put("contest_id", rs.getInt(1));
+            		contest_id = rs.getInt(1);
             	} else {
             		log("Generated keys query failed");
             	}
@@ -552,9 +555,9 @@ public class CreateContest extends Utils
             	create_contest.executeUpdate();
             	
             	ResultSet rs = create_contest.getGeneratedKeys();
-
             	if(rs.next()) {
             		output.put("contest_id", rs.getInt(1));
+            		contest_id = rs.getInt(1);
             	} else {
             		log("Generated keys query failed");
             	}
@@ -564,6 +567,10 @@ public class CreateContest extends Utils
             
             if (is_private) {
             	output.put("code", participants.getString("code"));
+            	output.put("url", Server.host + "/contest.html?id=" + contest_id + "&code=" + participants.getString("code"));
+            }
+            else{
+                output.put("url", Server.host + "/contest.html?id=" + contest_id);
             }
             
             output.put("status", "1");
