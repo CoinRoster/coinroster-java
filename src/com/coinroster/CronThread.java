@@ -33,16 +33,9 @@ public class CronThread extends Thread
 			}
 		catch (TimeoutException e) // only fires if CronWorker hasn't yet returned
 			{
+			Utils.log("------------------------TASK TIMEOUT-------------------------");
 			task.cancel(true); // interrupt CronWorker task
-			Utils.log("--- TASK TIMEOUT ------------------------------------------------");
-			e.printStackTrace();
-			StackTraceElement[] elements = e.getStackTrace();
-			for(StackTraceElement el : elements){
-				Utils.log("class name: " + el.getClassName());
-				Utils.log("file name: " + el.getFileName());
-				Utils.log("line num: " + el.getLineNumber());
-				Utils.log("toString: " + el.toString());
-			}
+			Server.exception(e);
 			
 			}
 		catch (Exception e) 

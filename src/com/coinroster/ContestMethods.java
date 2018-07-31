@@ -418,7 +418,6 @@ public class ContestMethods extends Utils{
 				if (sql_connection != null) {
 					try {
 						sql_connection.close();
-						log("closing sql_connection");
 						} 
 					catch (SQLException ignore) {
 						// ignore
@@ -538,7 +537,6 @@ public class ContestMethods extends Utils{
 			if (sql_connection != null) {
 				try {
 					sql_connection.close();
-					log("closing sql_connection");
 					} 
 				catch (SQLException ignore) {
 					// ignore

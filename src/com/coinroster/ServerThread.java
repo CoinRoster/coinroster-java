@@ -30,19 +30,8 @@ public class ServerThread extends Thread
 		catch (TimeoutException e) // only fires if ServerWorker hasn't yet returned
 			{
 			task.cancel(true); // interrupt ServerWorker task
-			Utils.log("------------ TASK TIMEOUT -----------------------------------");
-			e.printStackTrace();
-			StackTraceElement[] stackTraceElements = e.getStackTrace();
-			Utils.log("looping through stack trace");
-			for (StackTraceElement element : stackTraceElements) {
-				Utils.log(element);
-				Utils.log(element.toString());
-				Utils.log("filename: " + element.getFileName());
-				Utils.log("classname: " + element.getClassName());
-				Utils.log("line num: " + element.getLineNumber());
-
-			}
-			// stack trace will get logged by Server.exception below
+			Utils.log("--------------------TASK TIMEOUT--------------------------");
+			Server.exception(e);
 			}
 		catch (Exception e) 
 			{

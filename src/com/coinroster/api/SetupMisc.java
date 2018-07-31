@@ -61,12 +61,14 @@ public class SetupMisc extends Utils{
 					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 					c.newInstance(prop_method);
 					output = prop_method.output;
+					output.put("status", "1");
+
 				}
 				catch(Exception e){
 					Server.exception(e);
+					output = prop_method.output;
 				}
 				
-				output.put("status", "1");
 				
 			}catch(Exception e){
 				Server.exception(e);

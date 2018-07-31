@@ -71,9 +71,7 @@ public class Login extends Utils
 				stored_password_hash = user.getString("stored_password_hash");
 				
 				int user_level = user.getInt("user_level");
-				
-				log("checking for cgs address" + user.getString("cgs_address") + "___");
-				
+								
 				// Call CGS -----------------------------------------------------------------
 				if (user.getString("cgs_address") == null || user.getString("cgs_address").equals(""))
 					{
