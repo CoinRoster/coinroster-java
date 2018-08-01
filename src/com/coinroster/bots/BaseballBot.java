@@ -117,20 +117,21 @@ public class BaseballBot extends Utils {
 			PreparedStatement get_players = sql_connection.prepareStatement(stmt);
 			
 			get_players.setString(1, this.sport);
-			int index = 3;
+			int index = 2;
 			for(String game : this.getGameIDs()){
 			   get_players.setString(index++, game); // or whatever it applies 
 			}
 			get_players.setInt(index++, contest.getInt("filter"));
 			top_players = get_players.executeQuery();
 			
+			int p_index = 3;
 			while(top_players.next()){
 				JSONObject player = new JSONObject();
 				player.put("description", top_players.getString(2) + " " + top_players.getString(3));
-				player.put("id", index);
+				player.put("id", p_index);
 				player.put("player_id", top_players.getString(1));
 				option_table.put(player);
-				index += 1;
+				p_index += 1;
 			}
 			contest.put("option_table", option_table);
 		}
