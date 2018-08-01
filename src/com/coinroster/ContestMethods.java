@@ -772,13 +772,19 @@ public class ContestMethods extends Utils{
             JSONArray prop_contests = db.getRosterTemplates("BASEBALLPROPS");
             for(int i = 0; i < prop_contests.length(); i++){
 				JSONObject contest = prop_contests.getJSONObject(i);
-				String title = contest.getString("title")  + " | " + date.toString(); 
+				String title = date.toString() + " | " + contest.getString("title");
 				contest.put("title", title);
 				contest.put("odds_source", "n/a");
 				contest.put("gameIDs", gameID_array);
 				contest.put("registration_deadline", deadline);
 				
-	            JSONObject pari_mutuel_data = baseball_bot.createPariMutuel(deadline, date.toString(), contest);
+				JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+				JSONObject pari_mutuel_data;
+				if(prop_data.getString("prop_type").equals("TEAM_SNAKE"))
+					pari_mutuel_data = baseball_bot.createTeamsPariMutuel(contest, prop_data);
+				else
+					pari_mutuel_data = baseball_bot.createPariMutuel(deadline, date.toString(), contest);
+				
 	            MethodInstance pari_method = new MethodInstance();
 				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 				pari_method.input = pari_mutuel_data;

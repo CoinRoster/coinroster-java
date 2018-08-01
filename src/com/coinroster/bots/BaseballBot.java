@@ -292,6 +292,46 @@ public class BaseballBot extends Utils {
 
 				fields.put("winning_outcome", winning_outcome);
 				break;
+			
+			case "TEAM_SNAKE":
+				
+				double top_score_team = -999;
+				winning_outcome = 0;
+				for(int i = 0; i < option_table.length(); i++){
+					try{
+						double team_score = 0.0;
+						JSONObject option = option_table.getJSONObject(i);
+						log("calculating scores from team with id = " + option.getInt("id"));
+						JSONArray players =  new JSONArray(option.getString("player_ids"));
+						for(int q = 0; q < players.length(); q++){
+							String id = players.getString(q);
+							
+							JSONObject data = db.getPlayerScores(id, this.sport, this.getGameIDs());
+							points = 0.0;
+							keys = scoring_rules.keys();
+							while(keys.hasNext()){
+								String key = (String) keys.next();
+								int multiplier = scoring_rules.getInt(key);
+								points += ((double) (data.getInt(key) * multiplier));
+							}
+							team_score += points;
+						}
+					
+						log("team " + option.getInt("id") + " score: " + team_score);
+						if(team_score > top_score_team){
+							top_score_team = team_score;
+							winning_outcome = option.getInt("id");
+						}
+						else if(team_score == top_score_team){
+							winning_outcome = 6;
+						}
+					}catch(Exception e){
+						continue;
+					}
+				}
+				log("Winning team: " + winning_outcome);
+				fields.put("winning_outcome", winning_outcome);
+				break;
 				
 			default:
 				log("error: prop_type not supported");
@@ -299,6 +339,94 @@ public class BaseballBot extends Utils {
 		}
 		return fields;
 	}
+	
+	
+	public JSONObject createTeamsPariMutuel(JSONObject contest, JSONObject prop_data) throws JSONException{
+		
+		int num_teams = prop_data.getInt("num_teams");
+		int players_per_team = prop_data.getInt("players_per_team");
+		int limit = num_teams * players_per_team;
+		
+		Map<Integer, ArrayList<String>> players = new HashMap<>();
+		ResultSet top_players = null;
+		try {
+			
+			String stmt = "select id, name, team_abr from player where sport_type=? and gameID in (";
+			
+			for(int i = 0; i < this.getGameIDs().size(); i++){
+				stmt += "?,";
+			}
+			stmt = stmt.substring(0, stmt.length() - 1);
+			stmt += ") order by salary DESC limit ?";
+			
+			PreparedStatement get_players = sql_connection.prepareStatement(stmt);
+			
+			get_players.setString(1, this.sport);
+			int index = 2;
+			for(String game : this.getGameIDs()){
+				get_players.setString(index++, game); // or whatever it applies 
+			}
+			get_players.setInt(index++, limit);
+			top_players = get_players.executeQuery();
+			
+			while(top_players.next()){
+				int row = top_players.getRow();
+				String id = top_players.getString(1);
+				String name = top_players.getString(2);
+				String team = top_players.getString(3);
+				ArrayList<String> player = new ArrayList<>();
+				player.add(id);
+				player.add(name + " " + team);
+				players.put(row, player);
+			}
+			
+			JSONArray teams = new JSONArray();
+			int rounds = players_per_team;
+			for(int i=1; i<=num_teams; i++){
+				JSONObject team = new JSONObject();
+				team.put("id", i);
+				ArrayList<String> names = new ArrayList<>();
+				JSONArray player_ids = new JSONArray();
+				for(int round=1; round<=rounds; round++){
+					int pick;
+					//snake draft picking algorithm
+					if(round % 2 == 0)
+						pick = (round * num_teams) - i + 1;
+					else
+						pick = ((round - 1) * num_teams) + i;
+					
+					ArrayList<String> player = players.get(pick);
+					String id = player.get(0);
+					player_ids.put(id);
+					String name = player.get(1);
+					names.add(name);
+				}
+				
+				String desc = "";
+				for(int p=0; p<rounds; p++){
+					desc += names.get(p) + ", ";
+				}
+				desc = desc.substring(0, desc.length()-2);
+				
+				team.put("description", desc);
+				team.put("player_ids", player_ids);
+				teams.put(team);
+			}
+			JSONObject tie = new JSONObject();
+			tie.put("id", num_teams+1);
+			tie.put("description", "Tie");
+			teams.put(tie);
+			
+			contest.put("option_table", teams);
+		}
+		catch(Exception e){
+			log(e.toString());
+			log(e.getMessage());
+		}
+		
+		return contest;
+	}
+	
 	
 	public void savePlayers(){
 		try {
