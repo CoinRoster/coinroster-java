@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.MethodInstance;
@@ -36,13 +37,19 @@ public class GetAvailableSports extends Utils {
 						
 			// BASEBALL
 			boolean baseball = false;
+			JSONArray games_to_offer = new JSONArray();
 			BaseballBot baseball_bot = new BaseballBot(sql_connection);
 			baseball_bot.scrapeGameIDs();
 			if(baseball_bot.getGameIDs() != null){
-				Long deadline = baseball_bot.getEarliestGame();
-				if(hour >= 7 && now < deadline){
-					baseball = true;
-					output.put("baseball_contest", "MLB | " + today_str);
+				JSONArray games = baseball_bot.getGames();
+				for(int i = 0; i < games.length(); i++){
+					JSONObject game = games.getJSONObject(i);
+					if(hour >= 7 && game.getLong("date_milli") > (now + 3600)){
+						games_to_offer.put(game);
+						baseball = true;
+						output.put("baseball_contest", "MLB | " + today_str);
+						output.put("baseball_games", games_to_offer);
+					}
 				}
 			}
 			

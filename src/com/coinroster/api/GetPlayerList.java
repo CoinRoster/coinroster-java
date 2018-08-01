@@ -1,8 +1,10 @@
 package com.coinroster.api;
 
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -26,9 +28,12 @@ public class GetPlayerList extends Utils{
 		Connection sql_connection = method.sql_connection;
 		DB db = new DB(sql_connection);
 
+		
 		method : {	
 //------------------------------------------------------------------------------------
 			try{
+				
+				Long now = Calendar.getInstance().getTimeInMillis();
 				String sport = input.getString("sport");
 				ArrayList<String> gameIDs = new ArrayList<String>();
 				
@@ -38,11 +43,18 @@ public class GetPlayerList extends Utils{
 					basketball_bot.scrapeGameIDs();
 					gameIDs = basketball_bot.getGameIDs();
 					break;
+					
 				case "BASEBALL":
 					BaseballBot baseball_bot = new BaseballBot(sql_connection);
 					baseball_bot.scrapeGameIDs();
-					gameIDs = baseball_bot.getGameIDs();
+					JSONArray games = baseball_bot.getGames();
+					for(int i = 0; i < games.length(); i++){
+						JSONObject game = games.getJSONObject(i);
+						if(game.getLong("date_milli") > (now + 3600))
+							gameIDs.add(game.getString("gameID"));
+					}
 					break;
+					
 				case "GOLF":
 					GolfBot golf_bot = new GolfBot(sql_connection);
 					int today = getToday();

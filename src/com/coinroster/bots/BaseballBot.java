@@ -18,6 +18,8 @@ import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
 
+import oracle.jrockit.jfr.settings.EventSetting;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -32,6 +34,7 @@ public class BaseballBot extends Utils {
 
 	// instance variables
 	protected ArrayList<String> game_IDs;
+	protected JSONArray games;
 	private Map<String, Player> players_list;
 	private long earliest_game;
 	public String sport = "BASEBALL";
@@ -52,20 +55,28 @@ public class BaseballBot extends Utils {
 	public long getEarliestGame(){
 		return earliest_game;
 	}
-	public String scrapeGameIDs() throws IOException, JSONException, InterruptedException{
+	
+	public JSONArray getGames(){
+		return games;
+	}
+	
+	public String scrapeGameIDs() throws IOException, JSONException, InterruptedException, ParseException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
+		JSONArray games = new JSONArray();
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
+		SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
 		if(events.length() == 0){
 			log("No baseball games today");
 			this.game_IDs = null;
+			this.games = null;
 			return null;
 		}
 		else{
 			String earliest_date = events.getJSONObject(0).getString("date");
-	        SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
+	        
 	        try {
 	            Date date = formatter1.parse(earliest_date.replaceAll("Z$", "+0000"));
 	            long milli = date.getTime();
@@ -75,13 +86,26 @@ public class BaseballBot extends Utils {
 	            e.printStackTrace();
 	        }
 
-			for(int i=0; i < events.length(); i++){	
-				JSONArray links = events.getJSONObject(i).getJSONArray("links");
+			for(int i=0; i < events.length(); i++){
+				JSONObject game = events.getJSONObject(i);
+				String name = game.getString("shortName");
+				Date game_date = formatter1.parse(game.getString("date").replaceAll("Z$", "+0000"));
+				Long game_milli = game_date.getTime();
+				JSONArray links = game.getJSONArray("links");
 				String href = links.getJSONObject(0).getString("href");
 				String gameID = href.split("=")[1].replace("&sourceLang", "");
+				
+				JSONObject game_obj = new JSONObject();
+				game_obj.put("name", name);
+				game_obj.put("date_milli", game_milli);
+				game_obj.put("date_local", game_date.toString());
+				game_obj.put("gameID", gameID);		
+				games.put(game_obj);
+				
 				gameIDs.add(gameID.toString());
 			}
 			this.game_IDs = gameIDs;
+			this.games = games;
 			return gameIDs.toString();
 		}
 	}
