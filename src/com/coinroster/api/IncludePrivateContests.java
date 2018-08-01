@@ -34,7 +34,6 @@ public class IncludePrivateContests extends Utils
 			for(int i = 0; i < active_subs.length(); i++){
 				
 				String sub_category_code = active_subs.getString(i).toUpperCase();
-				Utils.log("checking sub: " + sub_category_code);
 				PreparedStatement count_contests = sql_connection.prepareStatement("select status, participants from contest "
 																				 + "where sub_category = ? and (status = 1 or status = 2)");
 				count_contests.setString(1, sub_category_code);
@@ -91,9 +90,6 @@ public class IncludePrivateContests extends Utils
 				}catch(Exception e){
 					Server.exception(e);
 				}
-				
-				Utils.log(sub_category_code +  ": " + open_contests + " open");
-				Utils.log(sub_category_code +  ": " + in_play_contests + " in play");
 				
 				sub_cat.put("open", open_contests);
 				sub_cat.put("in_play", in_play_contests);
