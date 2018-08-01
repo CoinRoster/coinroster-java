@@ -794,47 +794,47 @@ public class ContestMethods extends Utils{
 				}
             }
 
-//			//read templates from `CONTEST_TEMPLATES` table
-//			JSONArray roster_contests = db.getRosterTemplates("BASEBALL");
-//			for(int index = 0; index < roster_contests.length(); index++){
-//				JSONObject contest = roster_contests.getJSONObject(index);
-//				String title = contest.getString("title")  + " | " + date.toString(); 
-//				contest.put("title", title);
-//				contest.put("odds_source", "n/a");
-//				contest.put("gameIDs", gameID_array);
-//				contest.put("registration_deadline", deadline);
-//				ResultSet options;
-//				if(contest.getInt("filter") == 0){
-//					options = db.getOptionTable(baseball_bot.sport, false, 0, baseball_bot.getGameIDs());
-//				}
-//				else{
-//					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"), baseball_bot.getGameIDs());
-//				}
-//					
-//	            JSONArray option_table = new JSONArray();
-//				while(options.next()){
-//					JSONObject player = new JSONObject();
-//					player.put("name", options.getString(2) + " " + options.getString(3));
-//					player.put("price", options.getDouble(4));
-//					player.put("count", 0);
-//					player.put("id", options.getString(1));
-//					option_table.put(player);
-//				}
-//				contest.put("option_table", option_table);
-//				MethodInstance method = new MethodInstance();
-//				JSONObject output = new JSONObject("{\"status\":\"0\"}");
-//				method.input = contest;
-//				method.output = output;
-//				method.session = null;
-//				method.sql_connection = sql_connection;
-//				try{
-//					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//					c.newInstance(method);
-//				}
-//				catch(Exception e){
-//					e.printStackTrace();
-//				}	
-//			}	
+			//read templates from `CONTEST_TEMPLATES` table
+			JSONArray roster_contests = db.getRosterTemplates("BASEBALL");
+			for(int index = 0; index < roster_contests.length(); index++){
+				JSONObject contest = roster_contests.getJSONObject(index);
+				String title = contest.getString("title")  + " | " + date.toString(); 
+				contest.put("title", title);
+				contest.put("odds_source", "n/a");
+				contest.put("gameIDs", gameID_array);
+				contest.put("registration_deadline", deadline);
+				ResultSet options;
+				if(contest.getInt("filter") == 0){
+					options = db.getOptionTable(baseball_bot.sport, false, 0, baseball_bot.getGameIDs());
+				}
+				else{
+					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"), baseball_bot.getGameIDs());
+				}
+					
+	            JSONArray option_table = new JSONArray();
+				while(options.next()){
+					JSONObject player = new JSONObject();
+					player.put("name", options.getString(2) + " " + options.getString(3));
+					player.put("price", options.getDouble(4));
+					player.put("count", 0);
+					player.put("id", options.getString(1));
+					option_table.put(player);
+				}
+				contest.put("option_table", option_table);
+				MethodInstance method = new MethodInstance();
+				JSONObject output = new JSONObject("{\"status\":\"0\"}");
+				method.input = contest;
+				method.output = output;
+				method.session = null;
+				method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(method);
+				}
+				catch(Exception e){
+					e.printStackTrace();
+				}	
+			}	
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {

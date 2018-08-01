@@ -35,7 +35,7 @@ public class IncludePrivateContests extends Utils
 				
 				String sub_category_code = active_subs.getString(i).toUpperCase();
 				Utils.log("checking sub: " + sub_category_code);
-				PreparedStatement count_contests = sql_connection.prepareStatement("select id, status, participants from contest "
+				PreparedStatement count_contests = sql_connection.prepareStatement("select status, participants from contest "
 																				 + "where sub_category = ? and (status = 1 or status = 2)");
 				count_contests.setString(1, sub_category_code);
 				ResultSet rs = count_contests.executeQuery();
@@ -52,7 +52,6 @@ public class IncludePrivateContests extends Utils
 				try{
 					while (rs.next()){
 						
-						int contest_id = rs.getInt(1);
 						int contest_status = rs.getInt(2);
 						
 						// look for participants column, if public count it, if private check if user is able to view it
@@ -69,7 +68,6 @@ public class IncludePrivateContests extends Utils
 									String user_id = users.getString(index);
 									// user is allowed to see private contest
 									if(user_id.equals(session.user_id())){
-										Utils.log(session.user_id() + " / " + session.username() + " is able to see private contest with id = " + contest_id);
 										count_it = true;
 										break;
 									}
