@@ -102,7 +102,7 @@ public class SetupRoster extends Utils{
 							data.put("roster_size", 0);
 							
 							data.put("score_header", "Fantasy Points");
-							title = "NBA " + data.getString("settlement_type") + " | " + today_str;
+							title = today_str + " | " + data.getString("settlement_type");
 							data.put("title", title);
 							String desc_append = appendDescription(data.getJSONObject("scoring_rules"));
 							desc += desc_append;
@@ -128,7 +128,7 @@ public class SetupRoster extends Utils{
 							
 							data.put("score_header", "Fantasy Points");
 							
-							title = "MLB " + data.getString("settlement_type") + " | " + today_str;
+							title = today_str + " | " + data.getString("settlement_type");
 							data.put("title", title);	
 							String desc_append = appendDescription(data.getJSONObject("scoring_rules"));
 							desc += desc_append;
@@ -145,7 +145,7 @@ public class SetupRoster extends Utils{
 						int today = ContestMethods.getToday();
 						golf_bot.scrapeTourneyID(today);
 						if(golf_bot.getTourneyID() != null){
-							title = golf_bot.getTourneyName() + " " + data.getString("settlement_type");
+							title = golf_bot.getTourneyName() + " | ";
 						
 							data.put("gameIDs", golf_bot.getTourneyID());
 							
@@ -176,23 +176,23 @@ public class SetupRoster extends Utils{
 							switch(prop_data.getString("when")){
 								case "tournament":
 									deadline = golf_bot.getDeadline();
-									title += " " + title_type;
+									title += "Full Tournament | " + title_type;
 									break;
 								case "1":
 									deadline = golf_bot.getDeadline();
-									title += " " + title_type + " | Round 1";
+									title += "Round 1 | " + title_type;
 									break;
 								case "2":
 									deadline = golf_bot.getDeadline() + 86400000;
-									title += " " + title_type + " | Round 2";
+									title += "Round 2 | " + title_type;
 									break;
 								case "3":
 									deadline = golf_bot.getDeadline() + (2 * 86400000);
-									title += " " + title_type + " | Round 3";
+									title += "Round 3 | " + title_type;
 									break;
 								case "4":
 									deadline = golf_bot.getDeadline() + (3 * 86400000);
-									title += " " + title_type + " | Round 4";
+									title += "Round 4 | " + title_type;
 									break;
 							}
 							

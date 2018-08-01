@@ -349,7 +349,7 @@ public class GolfBot extends Utils {
 		for(int i = 1; i <= 4; i++){
 			JSONObject round = new JSONObject();
 			round.put("eagles+", 0);
-			round.put("double-bogeys+", 0);
+			round.put("double-bogeys-", 0);
 			round.put("bogeys", 0);
 			round.put("pars", 0);
 			round.put("birdies", 0);
@@ -469,7 +469,7 @@ public class GolfBot extends Utils {
 					String status = player.getString("status");
 					int status_int = setStatusInt(status);
 					scores_to_edit.put("eagles+", (player.getJSONObject("par_performance").getInt("double_eagles") + player.getJSONObject("par_performance").getInt("eagles")));
-					scores_to_edit.put("double-bogeys+", (player.getJSONObject("par_performance").getInt("double_bogeys") + player.getJSONObject("par_performance").getInt("more_bogeys")));
+					scores_to_edit.put("double-bogeys-", (player.getJSONObject("par_performance").getInt("double_bogeys") + player.getJSONObject("par_performance").getInt("more_bogeys")));
 					scores_to_edit.put("birdies", player.getJSONObject("par_performance").getInt("birdies"));
 					scores_to_edit.put("bogeys", player.getJSONObject("par_performance").getInt("bogeys"));
 					scores_to_edit.put("pars", player.getJSONObject("par_performance").getInt("par"));
