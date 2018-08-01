@@ -22,6 +22,7 @@ import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.BackoutContest;
 import com.coinroster.internal.JsonReader;
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -82,17 +83,16 @@ public class GolfBot extends Utils {
 	
 	public boolean appendLateAdditions() throws SQLException, JSONException, IOException, InterruptedException{
 		
-		String gameID = this.getLiveTourneyID();
 		Map<Integer, JSONArray> contest_players = new HashMap<Integer, JSONArray>();
 		ResultSet result_set = null;
 		
 		try {
 			PreparedStatement get_contests = sql_connection.prepareStatement("select id, option_table from contest where gameIDs=? and contest_type='ROSTER' and status=1");
-			get_contests.setString(1, gameID);
+			get_contests.setString(1, this.getTourneyID());
 			result_set = get_contests.executeQuery();		
 		}
 		catch(Exception e){
-			e.printStackTrace();
+			Server.exception(e);
 		}
 		while(result_set.next()){
 			int id = result_set.getInt(1);
@@ -107,16 +107,15 @@ public class GolfBot extends Utils {
 		ArrayList<String> existing_ids = new ArrayList<String>();
 		try{
 			ResultSet all_existing_players = db.getAllPlayerIDs(this.sport, this.getTourneyID());
-			log(all_existing_players.toString());
 			while(all_existing_players.next()){
-				log(all_existing_players.toString());
 				existing_ids.add(all_existing_players.getString(1));
 			}
 		}catch(Exception e){		
 			Server.exception(e);
 		}
+		
 		boolean flag = false;
-		String url = "https://statdata.pgatour.com/r/" + gameID + "/field.json";
+		String url = "https://statdata.pgatour.com/r/" + this.getTourneyID() + "/field.json";
 		JSONObject field = JsonReader.readJsonFromUrl(url);
 		if(field == null){
 			log("Unable to connect to pgatour API");
@@ -205,22 +204,28 @@ public class GolfBot extends Utils {
 					}
 			
 					if(!player_table_updated){
-						Player p = new Player(id, name_fl, gameID);
+						Player p = new Player(id, name_fl, this.getTourneyID());
 						p.setCountry(country);
 						JSONObject data = p.getDashboardData(this.year);
 						// add player to player table
-						PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )");
-						add_player.setString(1, id);
-						add_player.setString(2, name_fl);
-						add_player.setString(3, this.sport);
-						add_player.setString(4, gameID);
-						add_player.setString(5, country);
-						add_player.setDouble(6, salary);
-						add_player.setString(7, initializeGolferScores().toString());
-						add_player.setDouble(8, 0.0);
-						add_player.setString(9, data.toString());
-						add_player.setInt(10, 4);
-						add_player.executeUpdate();
+						try{
+							PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )");
+						
+							add_player.setString(1, id);
+							add_player.setString(2, name_fl);
+							add_player.setString(3, this.sport);
+							add_player.setString(4, this.getTourneyID());
+							add_player.setString(5, country);
+							add_player.setDouble(6, salary);
+							add_player.setString(7, initializeGolferScores().toString());
+							add_player.setDouble(8, 0.0);
+							add_player.setString(9, data.toString());
+							add_player.setInt(10, 4);
+							add_player.executeUpdate();
+						}
+						catch(MySQLIntegrityConstraintViolationException e){
+							log("player with id " + id + " is already in the player table");
+						}
 					}
 					
 					//create JSONObject to add to option table

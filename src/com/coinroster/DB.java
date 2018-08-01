@@ -1343,9 +1343,8 @@ public class DB
 			result_set = get_players.executeQuery();
 		}
 		catch(Exception e){
-			e.printStackTrace();
+			Server.exception(e);
 		}
-		
 		return result_set;
 	}
 	

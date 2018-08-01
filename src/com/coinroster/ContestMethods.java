@@ -407,6 +407,7 @@ public class ContestMethods extends Utils{
 			try {
 				sql_connection = Server.sql_connection();
 				GolfBot golfBot = new GolfBot(sql_connection);
+				golfBot.scrapeTourneyID(today);
 				boolean new_players = golfBot.appendLateAdditions();
 				if(!new_players)
 					log("no new golfers added to field");
