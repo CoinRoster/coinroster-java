@@ -110,7 +110,29 @@ public class ContestReport_Lobby extends Utils
 					String scoring_scheme = result_set.getString(27);
 					String progressive_code = result_set.getString(28);
 					double progressive_paid = result_set.getDouble(29);
+					
+					// check for public private
+					boolean count_it = false;
+					String participants = result_set.getString(34);
+					if(result_set.wasNull())
+						count_it = true;
+					else{
+						if(session.active()){
+							JSONObject participants_json = new JSONObject(participants);
+							JSONArray users = participants_json.getJSONArray("users");
+							for(int index = 0; index < users.length(); index++){
+								String user_id = users.getString(index);
+								// user is allowed to see private contest
+								if(user_id.equals(session.user_id())){
+									count_it = true;
+									break;
+								}
+							}
+						}
+					}
+					if(!count_it) continue;
 			
+					
 					if (contest_status != 0 && status != contest_status) continue;
 					
 					created_by = db.get_username_for_id(created_by);
