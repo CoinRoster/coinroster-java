@@ -52,11 +52,11 @@ public class IncludePrivateContests extends Utils
 				try{
 					while (rs.next()){
 						
-						int contest_status = rs.getInt(2);
+						int contest_status = rs.getInt(1);
 						
 						// look for participants column, if public count it, if private check if user is able to view it
 						boolean count_it = false;
-						String participants = rs.getString(3);
+						String participants = rs.getString(2);
 						
 						if(rs.wasNull())
 							count_it = true;

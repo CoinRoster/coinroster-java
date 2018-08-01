@@ -200,7 +200,7 @@ public class BuildLobby extends Utils
 						
 	        Utils.write_to_string(domain_directory + "/lobby.html", lobby_template.replace("<!-- factory:lobby_html -->", lobby_html));
 	        Utils.write_to_string(domain_directory + "/sitemap.xml", sitemap_xml);
-	        Utils.write_to_string(domain_directory + "/js/contest_counts.js",  "<script>window.contest_counts = " + contest_counts.toString() + ";</script>");
+//	        Utils.write_to_string(domain_directory + "/js/contest_counts.js",  "<script>window.contest_counts = " + contest_counts.toString() + ";</script>");
 			}
 		catch (Exception e)
 			{
