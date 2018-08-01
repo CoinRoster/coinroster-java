@@ -74,49 +74,49 @@ public class BuildLobby extends Utils
 					
 					Long settled_cutoff = System.currentTimeMillis() - Server.lobby_settled_cutoff;
 					
-					PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(*), participants from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?))  group by status");
-					count_contests.setString(1, category_code);
-					count_contests.setString(2, sub_category_code);
-					count_contests.setLong(3, settled_cutoff);
-					ResultSet count_contests_rs = count_contests.executeQuery();
-
-					int 
+//					PreparedStatement count_contests = sql_connection.prepareStatement("select status, count(*), participants from contest where category = ? and sub_category = ? and (status = 1 or status = 2 or (status = 3 and settled > ?))  group by status");
+//					count_contests.setString(1, category_code);
+//					count_contests.setString(2, sub_category_code);
+//					count_contests.setLong(3, settled_cutoff);
+//					ResultSet count_contests_rs = count_contests.executeQuery();
+//
+//					int 
+//					
+//					open_contests = 0,
+//					in_play_contests = 0;
+//					
+//					JSONObject sub_category_counts = new JSONObject();
+//
+//					sub_category_counts.put("open", 0);
+//					sub_category_counts.put("in_play", 0);
+//					sub_category_counts.put("settled", 0);
+//					
+//					while (count_contests_rs.next())
+//						{
+//						int 
+//						
+//						contest_status = count_contests_rs.getInt(1),
+//						number_of_contests = count_contests_rs.getInt(2);
+//						
+//						String participants = count_contests_rs.getString(3);
+//						
+//						switch (contest_status)
+//			                {
+//			                case 1: // Reg open
+//			                	open_contests = number_of_contests;
+//			                	sub_category_counts.put("open", number_of_contests);
+//			                    break;
+//			                case 2: // In play
+//			                	in_play_contests = number_of_contests;
+//			                	sub_category_counts.put("in_play", number_of_contests);
+//			                    break;
+//			                case 3: // Settled
+//			                	sub_category_counts.put("settled", number_of_contests);
+//			                    break;
+//			                }
+//						}
 					
-					open_contests = 0,
-					in_play_contests = 0;
-					
-					JSONObject sub_category_counts = new JSONObject();
-
-					sub_category_counts.put("open", 0);
-					sub_category_counts.put("in_play", 0);
-					sub_category_counts.put("settled", 0);
-					
-					while (count_contests_rs.next())
-						{
-						int 
-						
-						contest_status = count_contests_rs.getInt(1),
-						number_of_contests = count_contests_rs.getInt(2);
-						
-						String participants = count_contests_rs.getString(3);
-						
-						switch (contest_status)
-			                {
-			                case 1: // Reg open
-			                	open_contests = number_of_contests;
-			                	sub_category_counts.put("open", number_of_contests);
-			                    break;
-			                case 2: // In play
-			                	in_play_contests = number_of_contests;
-			                	sub_category_counts.put("in_play", number_of_contests);
-			                    break;
-			                case 3: // Settled
-			                	sub_category_counts.put("settled", number_of_contests);
-			                    break;
-			                }
-						}
-					
-					contest_counts.put(category_code + "_" + sub_category_code, sub_category_counts);
+//					contest_counts.put(category_code + "_" + sub_category_code, sub_category_counts);
 					
 					if (active_flag == 0) continue;
 					
@@ -140,13 +140,13 @@ public class BuildLobby extends Utils
 					//String open_contests_string = " open contests";
 					//if (open_contests == 1) open_contests_string = " open contest";
 					
-					String open_contests_string = " open";
-					sub_category_html = sub_category_html.replace("<!-- factory:open_contests -->", open_contests + open_contests_string);
-					if (open_contests > 0) sub_category_html = sub_category_html.replace("open_contests_class", "green");
-
-					sub_category_html = sub_category_html.replace("<!-- factory:in_play_contests -->", in_play_contests + " in play");
-					if (in_play_contests > 0) sub_category_html = sub_category_html.replace("in_play_detail", "in_play_detail orange");
-					
+//					String open_contests_string = " open";
+//					sub_category_html = sub_category_html.replace("<!-- factory:open_contests -->", open_contests + open_contests_string);
+//					if (open_contests > 0) sub_category_html = sub_category_html.replace("open_contests_class", "green");
+//
+//					sub_category_html = sub_category_html.replace("<!-- factory:in_play_contests -->", in_play_contests + " in play");
+//					if (in_play_contests > 0) sub_category_html = sub_category_html.replace("in_play_detail", "in_play_detail orange");
+//					
 					category_html.append(sub_category_html);
 					uncategorized_lobby.append(sub_category_html);
 					}
