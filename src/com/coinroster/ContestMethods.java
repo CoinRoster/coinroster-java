@@ -678,13 +678,14 @@ public class ContestMethods extends Utils{
 								method.input = fields;
 								method.output = output;
 								method.session = null;
+								method.internal_caller = true;
 								method.sql_connection = sql_connection;
 								try{
 									Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
 									c.newInstance(method);
 								}
 								catch(Exception e){
-									log(e.getMessage());
+									Server.exception(e);
 								}
 							}
 						}
@@ -705,6 +706,7 @@ public class ContestMethods extends Utils{
 								MethodInstance method = new MethodInstance();
 								JSONObject output = new JSONObject("{\"status\":\"0\"}");
 								method.input = fields;
+								method.internal_caller = true;
 								method.output = output;
 								method.session = null;
 								method.sql_connection = sql_connection;
@@ -854,7 +856,6 @@ public class ContestMethods extends Utils{
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
 			JSONObject roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASEBALL", "ROSTER");
-			log(roster_contests.toString());
 			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BASEBALLPROPS", "PARI-MUTUEL");
 
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){

@@ -1,6 +1,5 @@
 package com.coinroster.api;
 
-import java.awt.List;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -10,21 +9,20 @@ import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-import com.coinroster.Session;
+import com.coinroster.Server;
 import com.coinroster.Utils;
-import com.coinroster.bots.*;
+import com.coinroster.bots.BasketballBot;
+import com.coinroster.bots.BaseballBot;
+import com.coinroster.bots.GolfBot;
 
 public class GetPlayerList extends Utils{
 	public static String method_level = "standard";
-	@SuppressWarnings("unused")
+
 	public GetPlayerList(MethodInstance method) throws Exception {
 		JSONObject 
 		
 		input = method.input,
-		output = method.output;
-		
-		Session session = method.session;
-		
+		output = method.output;		
 		Connection sql_connection = method.sql_connection;
 		DB db = new DB(sql_connection);
 
@@ -65,7 +63,7 @@ public class GetPlayerList extends Utils{
 				output.put("player_list", players);
 				output.put("status", "1");
 			}catch(Exception e){
-				log(e.toString());
+				Server.exception(e);
 				output.put("error", e.toString());
 				output.put("status", "0");
 			}
@@ -73,6 +71,7 @@ public class GetPlayerList extends Utils{
 		}
 		method.response.send(output);
 	}
+	
 	public static int getToday(){
 		Calendar c = Calendar.getInstance();        		
 		int today = c.get(Calendar.DAY_OF_WEEK);

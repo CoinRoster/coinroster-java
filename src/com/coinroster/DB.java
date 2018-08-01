@@ -365,8 +365,7 @@ public class DB
 				contests.put(String.valueOf(result_set.getInt(1)), data);
 				
 			}catch(Exception e){
-				Utils.log(e.getMessage());
-				Utils.log(e.toString());
+				Server.exception(e);
 			}
 			
 		}
@@ -404,15 +403,13 @@ public class DB
 				else
 					prop_data_json = new JSONObject(prop_data);
 				
-				
 				data.put("scoring_rules", scoring_rules_json);
 				data.put("prop_data", prop_data_json);
 				data.put("option_table", new JSONArray(result_set.getString(4)));
 				contests.put(String.valueOf(result_set.getInt(1)), data);
 				
 			}catch(Exception e){
-				Utils.log(e.getMessage());
-				Utils.log(e.toString());
+				Server.exception(e);
 			}
 		}
 		return contests;

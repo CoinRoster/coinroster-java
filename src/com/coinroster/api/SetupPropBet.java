@@ -74,7 +74,7 @@ public class SetupPropBet extends Utils{
 						if(baseball_bot.getGameIDs() != null){
 							deadline = baseball_bot.getEarliestGame();
 							gameIDs = baseball_bot.getGameIDs().toString();
-							date_name_title = " | " + Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate().toString();
+							date_name_title = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate().toString();
 							
 						}else{
 							output.put("error", "Baseball contests are not currently available");
@@ -90,10 +90,10 @@ public class SetupPropBet extends Utils{
 							
 							try{
 								 scoring_rules = data.getJSONObject("scoring_rules");
-								 sport_title = "Multi-Stat";
+								 sport_title = " | Multi-Stat";
 								
 							}catch(Exception e){
-								sport_title = "Score to Par";
+								sport_title = " | Score to Par";
 							}
 							
 							try{
@@ -101,23 +101,23 @@ public class SetupPropBet extends Utils{
 								switch(prop_data.getString("when")){
 									case "tournament":
 										deadline = golf_bot.getDeadline();
-										date_name_title = " | " + golf_bot.getTourneyName();
+										date_name_title = golf_bot.getTourneyName() + " | Full Tournament";
 										break;
 									case "1":
 										deadline = golf_bot.getDeadline();
-										date_name_title = " | " + golf_bot.getTourneyName() + " Round 1";
+										date_name_title =golf_bot.getTourneyName() + " | Round 1";
 										break;
 									case "2":
 										deadline = golf_bot.getDeadline() + 86400000;
-										date_name_title = " | " + golf_bot.getTourneyName() + " Round 2";
+										date_name_title = golf_bot.getTourneyName() + " | Round 2";
 										break;
 									case "3":
 										deadline = golf_bot.getDeadline() + (2 * 86400000);
-										date_name_title = " | " + golf_bot.getTourneyName() + " Round 3";
+										date_name_title = golf_bot.getTourneyName() + " | Round 3";
 										break;
 									case "4":
 										deadline = golf_bot.getDeadline() + (3 * 86400000);
-										date_name_title = " | " + golf_bot.getTourneyName() + " Round 4";
+										date_name_title = golf_bot.getTourneyName() + " | Round 4";
 										break;
 								}
 							}catch(JSONException e){
@@ -137,7 +137,7 @@ public class SetupPropBet extends Utils{
 						if(basketball_bot.getGameIDs() != null){
 							deadline = basketball_bot.getEarliestGame();
 							gameIDs = basketball_bot.getGameIDs().toString();
-							date_name_title =  " | " + Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate().toString();
+							date_name_title = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate().toString();
 
 						}else{
 							output.put("error", "Basketball contests are not currently available");
@@ -197,7 +197,7 @@ public class SetupPropBet extends Utils{
 					case "OVER_UNDER":
 						
 						String name = db.get_player_info(sport, prop_data.getString("player_id"));
-						contest_title = name + " OVER/UNDER";
+						contest_title = name + " Over/Under";
 						String o_u = String.valueOf(prop_data.getDouble("over_under_value"));
 						
 						JSONObject over = new JSONObject();
@@ -227,7 +227,6 @@ public class SetupPropBet extends Utils{
 						break;
 						
 					case "NUMBER_SHOTS":
-						
 						
 						name = db.get_player_info(sport, prop_data.getString("player_id"));
 						String when = prop_data.getString("when");
@@ -276,7 +275,7 @@ public class SetupPropBet extends Utils{
 						option_table.put(no);
 						
 						sport_title = "";
-						contest_title = "Will " + name + " Make the Cut";
+						contest_title = "Will " + name + " Make the Cut?";
 						desc = "Place your bets on whether or not " + name + " will make the cut!";
 						
 						// pass in when: tournament
@@ -291,7 +290,7 @@ public class SetupPropBet extends Utils{
 				
 				}
 				
-				String title = sport + " " + contest_title + " " + sport_title + date_name_title;
+				String title = date_name_title + " | " + contest_title + sport_title;
 				
 				JSONObject prop = new JSONObject();
 				prop.put("category", category);
@@ -315,7 +314,7 @@ public class SetupPropBet extends Utils{
 				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");
 				prop_method.input = prop;
 				prop_method.output = prop_output;
-				prop_method.internall_caller = true;
+				prop_method.internal_caller = true;
 				prop_method.session =  session;
 				prop_method.sql_connection = sql_connection;
 				

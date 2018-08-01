@@ -117,7 +117,7 @@ public class BaseballBot extends Utils {
 			PreparedStatement get_players = sql_connection.prepareStatement(stmt);
 			
 			get_players.setString(1, this.sport);
-			int index = 2;
+			int index = 3;
 			for(String game : this.getGameIDs()){
 			   get_players.setString(index++, game); // or whatever it applies 
 			}
@@ -610,7 +610,6 @@ public class BaseballBot extends Utils {
 				String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
 				this.pos = pos;
 			}catch(NullPointerException e){
-				log("not enough data - probably a minor leaguer - exclude from contests");
 				return 0;
 			}
 			

@@ -105,11 +105,16 @@ public class GolfBot extends Utils {
 		}
 		
 		ArrayList<String> existing_ids = new ArrayList<String>();
-		ResultSet all_existing_players = db.getAllPlayerIDs(this.sport, this.getTourneyID());
-		while(all_existing_players.next()){
-			existing_ids.add(all_existing_players.getString(1));
+		try{
+			ResultSet all_existing_players = db.getAllPlayerIDs(this.sport, this.getTourneyID());
+			log(all_existing_players.toString());
+			while(all_existing_players.next()){
+				log(all_existing_players.toString());
+				existing_ids.add(all_existing_players.getString(1));
+			}
+		}catch(Exception e){		
+			Server.exception(e);
 		}
-		
 		boolean flag = false;
 		String url = "https://statdata.pgatour.com/r/" + gameID + "/field.json";
 		JSONObject field = JsonReader.readJsonFromUrl(url);
@@ -734,13 +739,13 @@ public class GolfBot extends Utils {
 	}
 	
 	public JSONObject createTeamsPariMutuel(JSONObject contest, JSONObject prop_data, Long deadline) throws JSONException{
-		String title = this.getTourneyName() + " | " + contest.getString("title");
+		String title = this.getTourneyName() + " | Full Tournament | " + contest.getString("title");
 		contest.put("title", title);
 		contest.put("registration_deadline", deadline);
 		int num_teams = prop_data.getInt("num_teams");
 		int players_per_team = prop_data.getInt("players_per_team");
 		int limit = num_teams * players_per_team;
-		//get 30 most expensive golfers
+		
 		Map<Integer, ArrayList<String>> players = new HashMap<>();
 		ResultSet top_players = null;
 		try {
@@ -809,12 +814,16 @@ public class GolfBot extends Utils {
 		return contest;
 	}
 	
-	
 
 	public void createGolfRosterContest( JSONObject contest, String when) throws JSONException, SQLException{
 		JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
 		if(prop_data.getString("when").equals(when)){
-			String title = this.getTourneyName() + " | " + contest.getString("title");
+			String title = "";
+			if(when.equals("tournament"))
+				title = this.getTourneyName() + " | Full Tournament | " + contest.getString("title");
+			else
+				title = this.getTourneyName() + " | Round " + when + " | " + contest.getString("title");
+		
 			contest.put("title", title);
 			contest.put("odds_source", "n/a");
 			contest.put("gameIDs", this.getTourneyID());
@@ -894,7 +903,11 @@ public class GolfBot extends Utils {
 						option_table.put(p);
 						index += 1;
 					}
-					String title = this.getTourneyName() + " | " + contest.getString("title");
+					String title = "";
+					if(when.equals("tournament"))
+						title = this.getTourneyName() + " | Full Tournament | " + contest.getString("title");
+					else
+						title = this.getTourneyName() + " | Round " + when + " | " + contest.getString("title");
 					contest.put("title", title);
 					contest.put("option_table", option_table);
 					break;
@@ -926,11 +939,15 @@ public class GolfBot extends Utils {
 						index += 1;
 					}
 					
-					title = this.getTourneyName() + " | " + contest.getString("title");
+					if(when.equals("tournament"))
+						title = this.getTourneyName() + " | Full Tournament | " + contest.getString("title");
+					else
+						title = this.getTourneyName() + " | Round " + when + " | " + contest.getString("title");
 					contest.put("title", title);
 					contest.put("option_table", option_table);
 					contest.put("progressive", "TOURNWINNERMON");
 					break;
+				
 					
 				case "MAKE_CUT":
 					ResultSet result_set = null;
@@ -938,11 +955,10 @@ public class GolfBot extends Utils {
 						get_players = sql_connection.prepareStatement("select name, team_abr, id from player where sport_type = ? and gameID = ? order by salary desc limit 5");
 						get_players.setString(1, this.sport);
 						get_players.setString(2, this.getTourneyID());
-						
 						result_set = get_players.executeQuery();		
 					}
 					catch(Exception e){
-						e.printStackTrace();
+						Server.exception(e);
 					}
 					while(result_set.next()){
 						JSONObject player = new JSONObject();
@@ -954,6 +970,7 @@ public class GolfBot extends Utils {
 						JSONObject output = new JSONObject("{\"status\":\"0\"}");
 						method.input = contest;
 						method.output = output;
+						method.internal_caller = true;
 						method.session = null;
 						method.sql_connection = sql_connection;
 						try{
@@ -962,18 +979,14 @@ public class GolfBot extends Utils {
 						}
 						catch(Exception e){
 							Server.exception(e);
-							log(e.toString());
-							log(e.getMessage());
-							log(e.getClass());
-							log(e.getCause());
-							log(e.getStackTrace().toString());
 						}	
 					}
 					break;
+				
 					
 				case "PLAYOFF":
 					
-					title = this.getTourneyName() + " | " + contest.getString("title");
+					title = this.getTourneyName() + " | Full Tournament | " + contest.getString("title");
 					contest.put("title", title);
 
 					option_table = new JSONArray(); 
@@ -987,6 +1000,7 @@ public class GolfBot extends Utils {
 					option_table.put(no);
 					contest.put("option_table", option_table);
 					break;
+				
 					
 				case "TEAM_SNAKE":
 					contest = this.createTeamsPariMutuel(contest, prop_data, this.getDeadline());
@@ -994,7 +1008,6 @@ public class GolfBot extends Utils {
 					
 				default:
 					return 0;
-
 			}
 			
 			if(!prop_data.getString("prop_type").equals("MAKE_CUT")){
@@ -1002,6 +1015,7 @@ public class GolfBot extends Utils {
 				JSONObject output = new JSONObject("{\"status\":\"0\"}");
 				method.input = contest;
 				method.output = output;
+				method.internal_caller = true;
 				method.session = null;
 				method.sql_connection = sql_connection;
 				try{
@@ -1010,10 +1024,6 @@ public class GolfBot extends Utils {
 				}
 				catch(Exception e){
 					Server.exception(e);
-					log(e.toString());
-					log(e.getMessage());
-					log(e.getClass());
-					log(e.getCause());
 				}	
 			}
 		}
@@ -1064,7 +1074,7 @@ public class GolfBot extends Utils {
 				index += 1;
 			}
 			
-			String title = this.getTourneyName() + " | " + contest.getString("title");
+			String title = this.getTourneyName() + " | Full Tournament | " + contest.getString("title");
 			contest.put("title", title);
 			contest.put("option_table", option_table);
 			contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
@@ -1075,6 +1085,7 @@ public class GolfBot extends Utils {
 			JSONObject output = new JSONObject("{\"status\":\"0\"}");
 			method.input = contest;
 			method.output = output;
+			method.internal_caller = true;
 			method.session = null;
 			method.sql_connection = sql_connection;
 			try{
@@ -1082,15 +1093,14 @@ public class GolfBot extends Utils {
 				c.newInstance(method);
 			}
 			catch(Exception e){
-				log(e.toString());
-				log(e.getMessage());
+				Server.exception(e);
 			}	
 		}
 		
 		// CREATE A PLAYOFF contest on THURS, FRI, SAT (all of them settle sunday)
 		else if(prop_data.getString("prop_type").equals("PLAYOFF") && !when.equals("1")){
 			
-			String title = this.getTourneyName() + " | " + contest.getString("title");
+			String title = this.getTourneyName() + " | Full Tournament | " + contest.getString("title");
 			contest.put("title", title);
 
 			JSONArray option_table = new JSONArray(); 
@@ -1111,6 +1121,7 @@ public class GolfBot extends Utils {
 			JSONObject output = new JSONObject("{\"status\":\"0\"}");
 			method.input = contest;
 			method.output = output;
+			method.internal_caller = true;
 			method.session = null;
 			method.sql_connection = sql_connection;
 			try{
@@ -1119,8 +1130,6 @@ public class GolfBot extends Utils {
 			}
 			catch(Exception e){
 				Server.exception(e);
-				log(e.toString());
-				log(e.getMessage());
 			}	
 		}
 		return 1;
@@ -1141,6 +1150,7 @@ public class GolfBot extends Utils {
 		switch(prop_data.getString("prop_type")){
 		
 			case "WINNER":
+				log("settling winner prop...");
 				String winner_id = leaderboard.getJSONObject("leaderboard").getJSONArray("players").getJSONObject(0).getString("player_id");
 				for(int i = 0; i < option_table.length(); i++){
 					try{
@@ -1158,6 +1168,7 @@ public class GolfBot extends Utils {
 				
 			
 			case "PLAYOFF":
+				log("settling will there be a playoff prop...");
 				int first = leaderboard.getJSONObject("leaderboard").getJSONArray("players").getJSONObject(0).getInt("total_strokes");
 				int second = leaderboard.getJSONObject("leaderboard").getJSONArray("players").getJSONObject(1).getInt("total_strokes");
 				if(first == second){
@@ -1201,7 +1212,6 @@ public class GolfBot extends Utils {
 				if(best_players.size() > 1){
 					//tie is correct answer;
 					winning_outcome = 2;
-					log("winning outcome = 2 because of tie");
 					return winning_outcome;
 				}
 				else{
@@ -1639,7 +1649,7 @@ public class GolfBot extends Utils {
 	
 	public JSONObject createMakeCutProp(JSONObject fields, JSONObject player) throws JSONException{
 		
-		String title = this.getTourneyName() + " | Will " + player.getString("name") + " Make the Cut?";
+		String title = this.getTourneyName() + " | Full Tournament | Will " + player.getString("name") + " Make the Cut?";
 		fields.put("title", title);
 		fields.put("description", "Place your bet on whether or not " + player.getString("name") + " will make the cut!");
 		

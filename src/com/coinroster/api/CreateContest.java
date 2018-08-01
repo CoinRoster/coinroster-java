@@ -26,7 +26,7 @@ public class CreateContest extends Utils
 		output = method.output;
 		
 		Session session = method.session;
-		boolean internal_caller = method.internall_caller;
+		boolean internal_caller = method.internal_caller;
 		
 		Connection sql_connection = method.sql_connection;
 

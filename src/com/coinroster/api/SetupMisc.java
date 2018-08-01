@@ -54,7 +54,7 @@ public class SetupMisc extends Utils{
 				prop_method.input = data;
 				prop_method.output = prop_output;
 				prop_method.session = method.session;
-				prop_method.internall_caller = true;
+				prop_method.internal_caller = true;
 				prop_method.sql_connection = sql_connection;
 				
 				try{
