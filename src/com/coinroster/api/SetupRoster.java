@@ -196,6 +196,8 @@ public class SetupRoster extends Utils{
 									break;
 							}
 							
+							title += " | " + data.getString("settlement_type");
+							
 							data.put("registration_deadline", deadline);
 							data.put("title", title);
 							option_table = db.getGolfRosterOptionTable(golf_bot.getTourneyID());

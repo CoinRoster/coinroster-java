@@ -556,7 +556,8 @@ public class ContestMethods extends Utils{
 			DB db_connection = new DB(sql_connection);
 			JSONObject roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
 			JSONObject pari_contests = db_connection.checkGolfPropInPlay("FANTASYSPORTS", "GOLFPROPS", "PARI-MUTUEL");
-
+			int hour = Calendar.getInstance().get(Calendar.HOUR);
+			
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				GolfBot golfBot = new GolfBot(sql_connection);
 				log("Golf tournament is in play and minute is multiple of 20");
@@ -568,7 +569,7 @@ public class ContestMethods extends Utils{
 				while(roster_contest_ids.hasNext()){
 					String c_id = (String) roster_contest_ids.next();
 					
-					if(today == 5)
+					if(today == 5 && hour < 9)
 						golfBot.checkForInactives(Integer.parseInt(c_id));
 					String when = roster_contests.getJSONObject(c_id).getString("when");
 					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
@@ -726,7 +727,6 @@ public class ContestMethods extends Utils{
 			}
 			else{
 				int today = getToday();
-				int hour = Calendar.getInstance().get(Calendar.HOUR);
 				if((today == 1 || today == 5 || today == 6 || today == 7) && ((hour % 3) == 0)){
 					GolfBot golfBot = new GolfBot(sql_connection);
 					log("No current CoinRoster contests but Golf tournament is in play and hour is multiple of 3");
@@ -806,7 +806,7 @@ public class ContestMethods extends Utils{
 			JSONArray roster_contests = db.getRosterTemplates("BASEBALL");
 			for(int index = 0; index < roster_contests.length(); index++){
 				JSONObject contest = roster_contests.getJSONObject(index);
-				String title = contest.getString("title")  + " | " + date.toString(); 
+				String title = date.toString() + " | " + contest.getString("title");
 				contest.put("title", title);
 				contest.put("odds_source", "n/a");
 				contest.put("gameIDs", gameID_array);
@@ -870,6 +870,8 @@ public class ContestMethods extends Utils{
 				BaseballBot baseball_bot = new BaseballBot(sql_connection);
 				log("Baseball games are in play and minute is multiple of 20");
 				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
+				baseball_bot.scrapeGameIDs();
+				
 				boolean games_ended;
 				games_ended = baseball_bot.scrape(gameIDs);
 				Iterator<?> roster_contest_ids = roster_contests.keys();

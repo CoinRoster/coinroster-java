@@ -148,7 +148,7 @@ public class GolfBot extends Utils {
 				//add player from player table to option table
 				if(!in_option_table){
 					log("could not find a match for " + existing_id);
-					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=? and gameID = ?");
+					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary, filter_on from player where sport_type = ? and id = ? and gameID = ?");
 					get_data.setString(1, this.sport);
 					get_data.setString(2, existing_id);
 					get_data.setString(3, this.getTourneyID());
@@ -157,6 +157,12 @@ public class GolfBot extends Utils {
 						String name = player_data.getString(1);
 						String country = player_data.getString(2);
 						double price = player_data.getDouble(3);
+						int status = player_data.getInt(4);
+						if(status != 4){
+							log(existing_id + " is inactive");
+							continue;
+						}
+							
 						JSONObject p = new JSONObject();
 						p.put("id", existing_id);
 						p.put("name", name + " " + country);
@@ -1085,7 +1091,7 @@ public class GolfBot extends Utils {
 				String name = players.getString(2);
 				String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
 				String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
-				p.put("name", nameNormalized + " " + players.getString(3));
+				p.put("description", nameNormalized + " " + players.getString(3));
 				option_table.put(p);
 				index += 1;
 			}

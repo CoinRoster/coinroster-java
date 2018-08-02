@@ -2,8 +2,10 @@ package com.coinroster.api;
 
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.json.JSONArray;
@@ -38,6 +40,10 @@ public class SetupPropBet extends Utils{
 //------------------------------------------------------------------------------------
 			try{
 				
+				BaseballBot baseball_bot = null;
+				BasketballBot basketball_bot = null;
+				GolfBot golf_bot = null;
+				
 				JSONObject data = input.getJSONObject("data");
 				
 				String category = "FANTASYSPORTS";
@@ -69,12 +75,10 @@ public class SetupPropBet extends Utils{
 				switch(sport){
 					
 					case "BASEBALL":
-						BaseballBot baseball_bot = new BaseballBot(sql_connection);
+						baseball_bot = new BaseballBot(sql_connection);
 						baseball_bot.scrapeGameIDs();
 						if(baseball_bot.getGameIDs() != null){
-							deadline = baseball_bot.getEarliestGame();
-							gameIDs = baseball_bot.getGameIDs().toString();
-							date_name_title = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate().toString();
+							date_name_title = Instant.ofEpochMilli(baseball_bot.getEarliestGame()).atZone(ZoneId.systemDefault()).toLocalDate().toString();
 							
 						}else{
 							output.put("error", "Baseball contests are not currently available");
@@ -83,7 +87,7 @@ public class SetupPropBet extends Utils{
 						break;
 					
 					case "GOLF":
-						GolfBot golf_bot = new GolfBot(sql_connection);
+						golf_bot = new GolfBot(sql_connection);
 						int today = ContestMethods.getToday();
 						golf_bot.scrapeTourneyID(today);
 						if(golf_bot.getTourneyID() != null){
@@ -132,12 +136,11 @@ public class SetupPropBet extends Utils{
 						break;
 						
 					case "BASKETBALL":
-						BasketballBot basketball_bot = new BasketballBot(sql_connection);
+						basketball_bot = new BasketballBot(sql_connection);
 						basketball_bot.scrapeGameIDs();
 						if(basketball_bot.getGameIDs() != null){
-							deadline = basketball_bot.getEarliestGame();
-							gameIDs = basketball_bot.getGameIDs().toString();
-							date_name_title = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate().toString();
+							//gameIDs = basketball_bot.getGameIDs().toString();
+							date_name_title = Instant.ofEpochMilli(basketball_bot.getEarliestGame()).atZone(ZoneId.systemDefault()).toLocalDate().toString();
 
 						}else{
 							output.put("error", "Basketball contests are not currently available");
@@ -158,6 +161,7 @@ public class SetupPropBet extends Utils{
 					case "MATCH_PLAY":
 						
 						contest_title = "Match Play";
+						ArrayList<String> games = new ArrayList<String>();
 						
 						JSONObject tie = new JSONObject();
 						tie.put("id", 1);
@@ -167,15 +171,26 @@ public class SetupPropBet extends Utils{
 						JSONArray players = prop_data.getJSONArray("players");
 						for(int i=0; i < players.length(); i++){
 							String player_id = players.getString(i);
-							String name = db.get_player_info(sport, player_id);
-							JSONObject p = new JSONObject();
-							p.put("description", name);
-							p.put("id", index);
-							p.put("player_id", player_id);
-							option_table.put(p);
-							index += 1;
+							ResultSet info = db.get_player_info(sport, player_id);
+							if(info.next()){
+								String name = info.getString(1) + " " + info.getString(2);
+								String gameID = info.getString(3);
+								if(!games.contains(gameID))
+									games.add(gameID);
+								JSONObject p = new JSONObject();
+								p.put("description", name);
+								p.put("id", index);
+								p.put("player_id", player_id);
+								option_table.put(p);
+								index += 1;
+							}
 						}
 						
+						if(sport.equals("BASEBALL"))
+							deadline = findEarliestGame(games, baseball_bot.getGames());
+						else if(sport.equals("BASKETBALL"))
+							//deadline = findEarliestGame(games, basketball_bot.getGames());
+							
 						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
 							desc += "Place your bets on which of the following golfers will finish the contest with the top score to par";
 						}
@@ -196,7 +211,14 @@ public class SetupPropBet extends Utils{
 						
 					case "OVER_UNDER":
 						
-						String name = db.get_player_info(sport, prop_data.getString("player_id"));
+						ResultSet info = db.get_player_info(sport, prop_data.getString("player_id"));
+						String name = "";
+						String game = "";
+						if(info.next()){
+							name = info.getString(1) + " " + info.getString(2);
+							game = info.getString(3);
+						}
+						
 						contest_title = name + " Over/Under";
 						String o_u = String.valueOf(prop_data.getDouble("over_under_value"));
 						
@@ -208,6 +230,19 @@ public class SetupPropBet extends Utils{
 						under.put("description", "Under " + o_u);
 						under.put("id", 2);
 						option_table.put(under);
+						
+						if(sport.equals("BASEBALL")){
+							for(int i = 0; i < baseball_bot.getGames().length(); i++){ 
+								if(baseball_bot.getGames().getJSONObject(i).getString("gameID").equals(game)){
+									deadline = baseball_bot.getGames().getJSONObject(i).getLong("date_milli");
+									break;
+								}
+							}
+						}
+						else if(sport.equals("BASKETBALL")){
+							
+						}
+							
 						
 						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
 							desc += "Place your bets on if " + name + " will finish the contest over or under " + o_u ;
@@ -228,7 +263,11 @@ public class SetupPropBet extends Utils{
 						
 					case "NUMBER_SHOTS":
 						
-						name = db.get_player_info(sport, prop_data.getString("player_id"));
+						info = db.get_player_info(sport, prop_data.getString("player_id"));
+						name = "";
+						if(info.next()){
+							name = info.getString(1) + " " + info.getString(2);
+						}
 						String when = prop_data.getString("when");
 						
 						// make option table
@@ -263,7 +302,10 @@ public class SetupPropBet extends Utils{
 						break;
 						
 					case "MAKE_CUT":
-						name = db.get_player_info(sport, prop_data.getString("player_id"));
+						info = db.get_player_info(sport, prop_data.getString("player_id"));
+						name = "";
+						if(info.next())
+							name = info.getString(1) + " " + info.getString(2);
 						
 						JSONObject yes = new JSONObject();
 						yes.put("description", "Yes");
@@ -358,6 +400,18 @@ public class SetupPropBet extends Utils{
 			}	
 		}
 		return desc;
+	}
+	
+	public Long findEarliestGame(ArrayList<String> games, JSONArray gameData) throws JSONException{
+		for(int i = 0; i < gameData.length(); i++){
+			log("checking for game: " + gameData.getJSONObject(i).getString("name"));
+			for(String game : games){
+				if(gameData.getJSONObject(i).getString("gameID").equals(game)){
+					return gameData.getJSONObject(i).getLong("date_milli");
+				}
+			}
+		}
+		return null;
 	}
 	
 }
