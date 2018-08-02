@@ -65,8 +65,9 @@ public class SetupMisc extends Utils{
 
 				}
 				catch(Exception e){
-					Server.exception(e);
 					output = prop_method.output;
+					log(output.toString());
+					Server.exception(e);
 				}
 				
 				

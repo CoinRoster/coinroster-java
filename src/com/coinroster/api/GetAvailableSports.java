@@ -44,7 +44,7 @@ public class GetAvailableSports extends Utils {
 				JSONArray games = baseball_bot.getGames();
 				for(int i = 0; i < games.length(); i++){
 					JSONObject game = games.getJSONObject(i);
-					if(hour >= 7 && game.getLong("date_milli") > (now + 3600000)){
+					if(hour >= 7 && game.getLong("date_milli") > (now + 5400000)){
 						games_to_offer.put(game);
 						baseball = true;
 						output.put("baseball_contest", "MLB | " + today_str);

@@ -50,7 +50,7 @@ public class GetPlayerList extends Utils{
 					JSONArray games = baseball_bot.getGames();
 					for(int i = 0; i < games.length(); i++){
 						JSONObject game = games.getJSONObject(i);
-						if(game.getLong("date_milli") > (now + 3600000))
+						if(game.getLong("date_milli") > (now + 5400000))
 							gameIDs.add(game.getString("gameID"));
 					}
 					break;
