@@ -113,7 +113,7 @@ public class GolfBot extends Utils {
 		}catch(Exception e){		
 			Server.exception(e);
 		}
-		
+				
 		boolean flag = false;
 		String url = "https://statdata.pgatour.com/r/" + this.getTourneyID() + "/field.json";
 		JSONObject field = JsonReader.readJsonFromUrl(url);
@@ -121,6 +121,7 @@ public class GolfBot extends Utils {
 			log("Unable to connect to pgatour API");
 			return false;
 		}
+		
 		JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
 		boolean player_table_updated = false;
 		
@@ -138,21 +139,23 @@ public class GolfBot extends Utils {
 						break;
 					}
 				}
+				
 				//add player from player table to option table
 				if(!in_option_table){
+					log("could not find a match for " + existing_id);
 					PreparedStatement get_data = sql_connection.prepareStatement("select name, team_abr, salary from player where sport_type=? and id=? and gameID = ?");
 					get_data.setString(1, this.sport);
 					get_data.setString(2, existing_id);
 					get_data.setString(3, this.getTourneyID());
 					ResultSet player_data = get_data.executeQuery();
-					while(player_data.next()){
+					if(player_data.next()){
 						String name = player_data.getString(1);
 						String country = player_data.getString(2);
 						double price = player_data.getDouble(3);
 						JSONObject p = new JSONObject();
 						p.put("id", existing_id);
 						p.put("name", name + " " + country);
-						p.put("count",0);
+						p.put("count", 0);
 						p.put("price", price);
 						option_table.put(p);
 						log("appending " + name + " to contest " + contest_id);
@@ -164,6 +167,7 @@ public class GolfBot extends Utils {
 				}
 			}
 			
+			// check for players new players in field
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
 				String id = player.getString("TournamentPlayerId");
@@ -222,6 +226,7 @@ public class GolfBot extends Utils {
 							add_player.setString(9, data.toString());
 							add_player.setInt(10, 4);
 							add_player.executeUpdate();
+							log("adding " + id + " to the player table");
 						}
 						catch(MySQLIntegrityConstraintViolationException e){
 							log("player with id " + id + " is already in the player table");
