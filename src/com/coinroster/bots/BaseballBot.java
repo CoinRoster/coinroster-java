@@ -1,5 +1,6 @@
 package com.coinroster.bots;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,8 +18,6 @@ import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
-
-import oracle.jrockit.jfr.settings.EventSetting;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -753,8 +752,26 @@ public class BaseballBot extends Utils {
 		
 		public int scrape_info() throws IOException, JSONException{
 			
-			Document page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-				      .referrer("http://www.google.com").timeout(10000).get();
+			Document page = null;
+			try{
+				page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID())
+						.userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+						.referrer("http://www.google.com").timeout(0).get();
+			}catch(SocketTimeoutException e){
+				log("socket timeout - will try again to connect...");
+				page = null;
+				while(page == null){
+					page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID())
+						.userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+						.referrer("http://www.google.com").timeout(0).get();
+					log(page.toString().getBytes());
+				}
+				
+			}
+			if(page == null){
+				return 0;
+			}
+			
 			Element bio = page.getElementsByClass("player-bio").first();
 			
 			// parse bio-bio div to get pos, weight, height, birthString
