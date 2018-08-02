@@ -191,8 +191,9 @@ public class SetupPropBet extends Utils{
 						
 						if(sport.equals("BASEBALL"))
 							deadline = findEarliestGame(games, baseball_bot.getGames());
-						else if(sport.equals("BASKETBALL"))
+						else if(sport.equals("BASKETBALL")){
 							//deadline = findEarliestGame(games, basketball_bot.getGames());
+						}
 							
 						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
 							desc += "Place your bets on which of the following golfers will finish the contest with the top score to par";
