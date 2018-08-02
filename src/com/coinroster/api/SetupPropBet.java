@@ -79,7 +79,6 @@ public class SetupPropBet extends Utils{
 						baseball_bot.scrapeGameIDs();
 						if(baseball_bot.getGameIDs() != null){
 							date_name_title = Instant.ofEpochMilli(baseball_bot.getEarliestGame()).atZone(ZoneId.systemDefault()).toLocalDate().toString();
-							
 						}else{
 							output.put("error", "Baseball contests are not currently available");
 							break method;
@@ -91,6 +90,8 @@ public class SetupPropBet extends Utils{
 						int today = ContestMethods.getToday();
 						golf_bot.scrapeTourneyID(today);
 						if(golf_bot.getTourneyID() != null){
+							
+							gameIDs  = golf_bot.getTourneyID();
 							
 							try{
 								 scoring_rules = data.getJSONObject("scoring_rules");
@@ -186,6 +187,8 @@ public class SetupPropBet extends Utils{
 							}
 						}
 						
+						gameIDs = games.toString();
+						
 						if(sport.equals("BASEBALL"))
 							deadline = findEarliestGame(games, baseball_bot.getGames());
 						else if(sport.equals("BASKETBALL"))
@@ -219,6 +222,8 @@ public class SetupPropBet extends Utils{
 							game = info.getString(3);
 						}
 						
+						
+						
 						contest_title = name + " Over/Under";
 						String o_u = String.valueOf(prop_data.getDouble("over_under_value"));
 						
@@ -238,6 +243,9 @@ public class SetupPropBet extends Utils{
 									break;
 								}
 							}
+							ArrayList<String> gameIds = new ArrayList<String>();
+							gameIds.add(game);
+							gameIDs = gameIds.toString();
 						}
 						else if(sport.equals("BASKETBALL")){
 							

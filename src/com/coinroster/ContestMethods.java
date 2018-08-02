@@ -869,11 +869,10 @@ public class ContestMethods extends Utils{
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				BaseballBot baseball_bot = new BaseballBot(sql_connection);
 				log("Baseball games are in play and minute is multiple of 20");
-				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
 				baseball_bot.scrapeGameIDs();
-				
 				boolean games_ended;
-				games_ended = baseball_bot.scrape(gameIDs);
+				games_ended = baseball_bot.scrape(baseball_bot.getGameIDs());
+				
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
 					
@@ -929,7 +928,7 @@ public class ContestMethods extends Utils{
 							c.newInstance(method);
 						}
 						catch(Exception e){
-							e.printStackTrace();
+							Server.exception(e);
 						}
 					}
 					
@@ -955,7 +954,7 @@ public class ContestMethods extends Utils{
 							c.newInstance(pari_method);
 						}
 						catch(Exception e){
-							e.printStackTrace();
+							Server.exception(e);
 						}		
 					}
 				}
