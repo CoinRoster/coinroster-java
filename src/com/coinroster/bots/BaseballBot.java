@@ -97,7 +97,6 @@ public class BaseballBot extends Utils {
 				JSONObject game_obj = new JSONObject();
 				game_obj.put("name", name);
 				game_obj.put("date_milli", game_milli);
-				game_obj.put("date_local", game_date.toString());
 				game_obj.put("gameID", gameID);		
 				games.put(game_obj);
 				
@@ -479,7 +478,7 @@ public class BaseballBot extends Utils {
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
-				save_player.setString(5, player.getTeam());
+				save_player.setString(4, player.getTeam());
 				save_player.setDouble(6, player.getSalary());
 				save_player.setString(7, empty_data_json.toString());
 				save_player.setDouble(8, player.getPoints());
@@ -779,6 +778,8 @@ public class BaseballBot extends Utils {
 			try{
 				String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
 				this.pos = pos;
+				String team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
+				this.team_abr = team;
 			}catch(NullPointerException e){
 				return 0;
 			}
