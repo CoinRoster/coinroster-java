@@ -81,8 +81,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 		
 		if((hour%6==0) && (minute==30)){
-			ContestMethods.updateGolfContestField();
+			ContestMethods.updateGolfContestField(hour);
 		}
+		
 		//update currencies hourly on live
 		if(Server.live_server && minute==2){
 			UpdateCurrencies();

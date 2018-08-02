@@ -400,10 +400,10 @@ public class ContestMethods extends Utils{
 	
 //------------------------------------------------------------------------------------
 
-	public static void updateGolfContestField() {
+	public static void updateGolfContestField(int hour) {
 		Connection sql_connection = null;
 		int today = getToday();
-		if(today == 2 || today == 3 || today == 4){
+		if(today == 2 || today == 3 || today == 4 || (today == 5 && hour < 7 )){
 			try {
 				sql_connection = Server.sql_connection();
 				GolfBot golfBot = new GolfBot(sql_connection);
@@ -729,8 +729,8 @@ public class ContestMethods extends Utils{
 				if((today == 1 || today == 5 || today == 6 || today == 7) && ((hour % 3) == 0)){
 					GolfBot golfBot = new GolfBot(sql_connection);
 					log("No current CoinRoster contests but Golf tournament is in play and hour is multiple of 3");
-					String gameID = golfBot.getLiveTourneyID();
-					golfBot.scrapeScores(gameID);
+					golfBot.scrapeTourneyID(today);
+					golfBot.scrapeScores(golfBot.getTourneyID());
 				}
 			}
 

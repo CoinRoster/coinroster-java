@@ -1340,6 +1340,7 @@ public class DB
 		try {
 			PreparedStatement get_players = sql_connection.prepareStatement("select id from player where sport_type = ? and gameID = ?");
 			get_players.setString(1, sport);
+			get_players.setString(2, gameID);
 			result_set = get_players.executeQuery();
 		}
 		catch(Exception e){
@@ -1436,7 +1437,7 @@ public class DB
 			}
 			stmt = stmt.substring(0, stmt.length() - 1);
 			stmt += ")";
-			
+						
 			PreparedStatement get_players = sql_connection.prepareStatement(stmt);
 			
 			get_players.setString(1, sport);

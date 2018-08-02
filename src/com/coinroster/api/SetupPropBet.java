@@ -122,7 +122,7 @@ public class SetupPropBet extends Utils{
 								}
 							}catch(JSONException e){
 								deadline = golf_bot.getDeadline();
-								date_name_title = " | " + golf_bot.getTourneyName();
+								date_name_title = golf_bot.getTourneyName() + " | ";
 							}
 							
 						}else{
