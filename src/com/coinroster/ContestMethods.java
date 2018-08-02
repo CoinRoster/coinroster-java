@@ -560,13 +560,14 @@ public class ContestMethods extends Utils{
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				GolfBot golfBot = new GolfBot(sql_connection);
 				log("Golf tournament is in play and minute is multiple of 20");
-				String gameID = golfBot.getLiveTourneyID();
-				JSONObject tournament_status = golfBot.scrapeScores(gameID);
+				int today = getToday();
+				golfBot.scrapeTourneyID(today);
+				JSONObject tournament_status = golfBot.scrapeScores(golfBot.getTourneyID());
 
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
 					String c_id = (String) roster_contest_ids.next();
-					int today = getToday();
+					
 					if(today == 5)
 						golfBot.checkForInactives(Integer.parseInt(c_id));
 					String when = roster_contests.getJSONObject(c_id).getString("when");

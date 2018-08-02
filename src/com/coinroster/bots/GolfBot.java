@@ -64,6 +64,11 @@ public class GolfBot extends Utils {
 	public long getDeadline(){
 		return startDate;
 	}
+	
+	public ArrayList<String> getGameIDs(){
+		return gameIDs;
+	}
+	
 	public String getLiveTourneyID() throws SQLException{
 		ResultSet result_set = null;
 		String id = null;
@@ -464,7 +469,8 @@ public class GolfBot extends Utils {
 		log("tournament status: " + tournament_statuses.toString());
 
 		JSONArray players = leaderboard.getJSONObject("leaderboard").getJSONArray("players");
-		ResultSet playerScores = db.getPlayerScores(this.sport, this.gameIDs);
+		log(this.getGameIDs().toString());
+		ResultSet playerScores = db.getPlayerScores(this.sport, this.getGameIDs());
 		while(playerScores.next()){
 			boolean in_leaderboard = false;
 			String id = playerScores.getString(1);
