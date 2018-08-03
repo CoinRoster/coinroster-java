@@ -1792,5 +1792,21 @@ public class DB
 		Utils.log("deleted " + sport + " players from player table - no longer necessary");
 	}
 	
+//------------------------------------------------------------------------------------
+
+	public JSONObject get_player_dashboard_data(String player_id, String sport) throws SQLException, JSONException{
+		JSONObject data = null;
+		ResultSet rs = null;
+		PreparedStatement get = sql_connection.prepareStatement("select bioJSON from player where id = ? and sport_type = ?");
+		get.setString(1, player_id);
+		get.setString(2, sport);
+		rs = get.executeQuery();
+		if(rs.next()){
+			data = new JSONObject(rs.getString(1));
+		}
+		return data;
+	}
+	
+	
 }
 
