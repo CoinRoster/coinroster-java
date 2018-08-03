@@ -882,7 +882,7 @@ public class ContestMethods extends Utils{
 					String scoring_rules_string = roster_contests.getString(c_id);
 					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
 					log("scoring rules: " + scoring_rules.toString());
-					JSONArray player_scores = baseball_bot.updateScores(scoring_rules);
+					JSONArray player_scores = baseball_bot.updateScores(scoring_rules, gameIDs);
 					JSONObject fields = new JSONObject();
 					fields.put("contest_id", Integer.parseInt(c_id));
 					fields.put("normalization_scheme", "INTEGER");
@@ -911,7 +911,7 @@ public class ContestMethods extends Utils{
 						String c_id = (String) roster_contest_ids.next();
 						String scoring_rules_string = roster_contests.getString(c_id);
 						JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-						JSONArray player_scores = baseball_bot.updateScores(scoring_rules);
+						JSONArray player_scores = baseball_bot.updateScores(scoring_rules, gameIDs);
 
 						JSONObject fields = new JSONObject();
 						fields.put("contest_id", Integer.parseInt(c_id));
