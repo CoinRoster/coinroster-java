@@ -870,9 +870,9 @@ public class ContestMethods extends Utils{
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				BaseballBot baseball_bot = new BaseballBot(sql_connection);
 				log("Baseball games are in play and minute is multiple of 20");
-				baseball_bot.scrapeGameIDs();
+				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
 				boolean games_ended;
-				games_ended = baseball_bot.scrape(baseball_bot.getGameIDs());
+				games_ended = baseball_bot.scrape(gameIDs);
 				
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){

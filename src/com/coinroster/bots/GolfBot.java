@@ -1839,7 +1839,7 @@ public class GolfBot extends Utils {
 			bio.put("birthString", birthString);
 			bio.put("country_abr", this.getCountry());
 			bio.put("height", height);
-			bio.put("Weight", weight);
+			bio.put("weight", weight);
 			bio.put("last_five_tournaments", last_five_tournaments);
 			bio.put("stats", stats);
 			bio.put("pga_id", this.getPGA_ID());
