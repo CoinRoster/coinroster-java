@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.json.JSONArray;
@@ -118,9 +119,25 @@ public class SetupRoster extends Utils{
 						BaseballBot baseball_bot = new BaseballBot(sql_connection);
 						baseball_bot.scrapeGameIDs();
 						if(baseball_bot.getGameIDs() != null){
-							options = db.getOptionTable(baseball_bot.sport, false, 0, baseball_bot.getGameIDs());
-							Long deadline = baseball_bot.getEarliestGame();
-							data.put("gameIDs", baseball_bot.getGameIDs().toString());
+							JSONArray total_games = baseball_bot.getGames();
+							ArrayList<String> games = new ArrayList<String>();
+							JSONArray games_json = data.getJSONArray("gameIDs");
+							boolean deadline_saved = false;
+							Long deadline = null;
+							for(int x = 0; x < total_games.length(); x++){
+								String game = total_games.getJSONObject(x).getString("gameID");
+								for(int i = 0; i < games_json.length(); i++){
+									String gameID = games_json.getString(i);
+									games.add(gameID);
+									if(game.equals(gameID) && !deadline_saved){
+										deadline = total_games.getJSONObject(x).getLong("date_milli");
+										deadline_saved = true;
+									}
+									
+								}
+							}
+							data.put("gameIDs", games.toString());
+							options = db.getOptionTable(baseball_bot.sport, false, 0, games);
 							data.put("registration_deadline", deadline);
 							
 							data.put("salary_cap", 2000);
