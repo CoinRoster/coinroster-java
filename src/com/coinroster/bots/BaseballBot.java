@@ -493,9 +493,9 @@ public class BaseballBot extends Utils {
 		}
 	}
 	
-	public JSONArray updateScores(JSONObject scoring_rules) throws SQLException, JSONException{
+	public JSONArray updateScores(JSONObject scoring_rules, ArrayList<String> gameIDs) throws SQLException, JSONException{
 		
-		ResultSet playerScores = db.getPlayerScores(this.sport, this.getGameIDs());
+		ResultSet playerScores = db.getPlayerScores(this.sport, gameIDs);
 		JSONArray player_map = new JSONArray();
 		while(playerScores.next()){
 			JSONObject player = new JSONObject();
