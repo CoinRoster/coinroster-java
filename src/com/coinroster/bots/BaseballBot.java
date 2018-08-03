@@ -38,11 +38,11 @@ public class BaseballBot extends Utils {
 	private long earliest_game;
 	public String sport = "BASEBALL";
 	private DB db;
-	private static Connection sql_connection = null;
+	private Connection sql_connection = null;
 	
 	// constructor
 	public BaseballBot(Connection sql_connection) throws IOException, JSONException{
-		BaseballBot.sql_connection = sql_connection;
+		this.sql_connection = sql_connection;
 		db = new DB(sql_connection);
 
 	}
@@ -441,8 +441,7 @@ public class BaseballBot extends Utils {
 			contest.put("option_table", teams);
 		}
 		catch(Exception e){
-			log(e.toString());
-			log(e.getMessage());
+			Server.exception(e);
 		}
 		
 		return contest;
@@ -451,6 +450,13 @@ public class BaseballBot extends Utils {
 	
 	public void savePlayers(){
 		try {
+			log("closed connection? " +sql_connection.isClosed());
+			
+			if(sql_connection.isClosed()){
+				sql_connection = Server.sql_connection();
+			}
+			log("valid?" + sql_connection.isValid(0));
+			
 			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
 			delete_old_rows.setString(1, this.sport);
 			delete_old_rows.executeUpdate();
@@ -477,7 +483,7 @@ public class BaseballBot extends Utils {
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
 				save_player.setString(4, player.getGameID());
-				save_player.setString(4, player.getTeam());
+				save_player.setString(5, player.getTeam());
 				save_player.setDouble(6, player.getSalary());
 				save_player.setString(7, empty_data_json.toString());
 				save_player.setDouble(8, player.getPoints());
@@ -538,6 +544,7 @@ public class BaseballBot extends Utils {
 				for(Element team : team_divs){
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
+					log(team_abr);
 					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/atBats").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 						      .referrer("http://www.google.com").timeout(6000).get();
 					Element stats_table = team_stats_page.select("table.tablehead").first();
@@ -863,6 +870,7 @@ public class BaseballBot extends Utils {
 				this.set_salary(price);
 				this.set_filter(at_bats);
 			}catch(Exception e){
+				log(this.getName() + " " + this.getESPN_ID());
 				Server.exception(e);
 				return 0;
 			}

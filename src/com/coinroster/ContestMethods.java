@@ -765,6 +765,7 @@ public class ContestMethods extends Utils{
 			String gameID_array = baseball_bot.scrapeGameIDs();
 			if(baseball_bot.getGameIDs() == null)
 				return;
+			log("setting up baseball contests...");
 			baseball_bot.setup();
 			baseball_bot.savePlayers();
 			
