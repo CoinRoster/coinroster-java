@@ -52,7 +52,7 @@ public class SetupPropBet extends Utils{
 				String sub_category = data.getString("sub_category");
 				String sport = sub_category.replace("PROPS", "");
 				boolean priv = data.getBoolean("private");
-				double cost_per_entry = 0.00001;
+				double cost_per_entry = 0.000001;
 				double rake = 5.0;
 				String progressive = "";
 				JSONObject scoring_rules, prop_data;
