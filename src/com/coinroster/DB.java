@@ -1807,6 +1807,19 @@ public class DB
 		return data;
 	}
 	
+//------------------------------------------------------------------------------------
+
+	public String get_landing_string() throws SQLException{
+		String rtn = "";
+		ResultSet rs = null;
+		PreparedStatement get_string = sql_connection.prepareStatement("select value from control where name = ?");
+		get_string.setString(1, "landing_page_html");
+		rs = get_string.executeQuery();
+		if(rs.next())
+			rtn = rs.getString(1);
+		return rtn;
+	}
+	
 	
 }
 
