@@ -164,7 +164,7 @@ public class BaseballBot extends Utils {
 		return contest;
 	}
 	
-	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules, JSONObject prop_data, JSONArray option_table) throws Exception{
+	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules, JSONObject prop_data, JSONArray option_table, ArrayList<String> gameIDs) throws Exception{
 		
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
@@ -179,7 +179,7 @@ public class BaseballBot extends Utils {
 				winning_outcome = 1;
 				ResultSet all_players = null;
 				try{
-					all_players = db.getPlayerScores(this.sport, this.getGameIDs());
+					all_players = db.getPlayerScores(this.sport, gameIDs);
 				}catch(Exception e){
 					log(e.toString());
 				}
@@ -246,7 +246,7 @@ public class BaseballBot extends Utils {
 					try{
 						String player_id = player.getString("player_id");
 					
-						JSONObject player_data = db.getPlayerScores(player_id, this.sport, this.getGameIDs());
+						JSONObject player_data = db.getPlayerScores(player_id, this.sport, gameIDs);
 						Double points = 0.0;
 						Iterator<?> keys = scoring_rules.keys();
 						while(keys.hasNext()){
@@ -297,7 +297,7 @@ public class BaseballBot extends Utils {
 			
 			case "OVER_UNDER":
 				String player_id = prop_data.getString("player_id");
-				JSONObject player_data = db.getPlayerScores(player_id, this.sport, this.getGameIDs());
+				JSONObject player_data = db.getPlayerScores(player_id, this.sport, gameIDs);
 				Double points = 0.0;
 				Iterator<?> keys = scoring_rules.keys();
 				while(keys.hasNext()){
@@ -324,11 +324,10 @@ public class BaseballBot extends Utils {
 						double team_score = 0.0;
 						JSONObject option = option_table.getJSONObject(i);
 						log("calculating scores from team with id = " + option.getInt("id"));
-						JSONArray players =  new JSONArray(option.getString("player_ids"));
+						JSONArray players =  option.getJSONArray("player_ids");
 						for(int q = 0; q < players.length(); q++){
 							String id = players.getString(q);
-							
-							JSONObject data = db.getPlayerScores(id, this.sport, this.getGameIDs());
+							JSONObject data = db.getPlayerScores(id, this.sport, gameIDs);
 							points = 0.0;
 							keys = scoring_rules.keys();
 							while(keys.hasNext()){
@@ -611,7 +610,7 @@ public class BaseballBot extends Utils {
 									}
 								
 									// look up player in HashMap with ESPN_ID, update his data in DB
-									db.editData(data.toString(), espn_ID, this.sport, this.getGameIDs());
+									db.editData(data.toString(), espn_ID, this.sport, gameIDs);
 								}			
 							}			
 						}

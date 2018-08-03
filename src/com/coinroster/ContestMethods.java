@@ -943,7 +943,7 @@ public class ContestMethods extends Utils{
 						JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
 						JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
 						
-						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
+						JSONObject pari_fields = baseball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table, gameIDs);
 						MethodInstance pari_method = new MethodInstance();
 						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 						pari_method.input = pari_fields;
