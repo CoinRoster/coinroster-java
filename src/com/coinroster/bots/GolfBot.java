@@ -279,6 +279,8 @@ public class GolfBot extends Utils {
 			c.add(Calendar.DATE, -1);
 		else if(today == 7)
 			c.add(Calendar.DATE, -2);
+		else if(today == 1)
+			c.add(Calendar.DATE, -3);
 		
 		String thursday = (String)(formattedDate.format(c.getTime()));
 		c.set(Calendar.HOUR_OF_DAY, 7);

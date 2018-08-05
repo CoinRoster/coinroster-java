@@ -798,6 +798,22 @@ public class BaseballBot extends Utils {
 			this.height = height;
 			this.weight = weight;
 			
+			if(this.height.isEmpty()  || this.weight.isEmpty()){
+				try{
+					player_metadata = bio.getElementsByClass("player-metadata").last().getElementsByTag("li");
+					for(Element li : player_metadata){
+						if(li.getElementsByTag("span").first().text().equals("Ht/Wt")){
+							String ht_wt = li.text().replace("Ht/Wt", "");
+							height = ht_wt.split(", ")[0].replace("-", "'") + "\"";
+							weight = ht_wt.split(", ")[1].replace(".", "");
+						}
+					}
+					this.height = height;
+					this.weight = weight;
+				}catch(Exception e){
+				}
+			}
+			
 			String[] stats = {"STAT_TYPE","GP","AB","R","H","2B","3B","HR","RBI","BB","K","SB","CS","AVG","OBP","SLG", "OPS"};
 			Elements tables = page.getElementsByClass("tablehead");
 			Element stats_table;
