@@ -1395,6 +1395,8 @@ public class GolfBot extends Utils {
 							continue;
 						}
 					}
+					log("top players: " + top_players.toString());
+
 					if(top_players.size() >= 2){
 						//tie is correct answer;
 						winning_outcome = 1;
@@ -1446,6 +1448,7 @@ public class GolfBot extends Utils {
 							continue;
 						}
 					}
+					log("top players: " + top_players.toString());
 					if(top_players.size() >= 2){
 						//tie is correct answer;
 						winning_outcome = 1;
@@ -1505,14 +1508,17 @@ public class GolfBot extends Utils {
 					}
 					// score to par over under
 					else{
+						// Over/under = -6 and player shoots -8: we call that UNDER
 						if(status == 4){
 							//player beat over/under value
 							if(overall_score < o_u){
-								winning_outcome = 1;
+								//under
+								winning_outcome = 2;
 								return winning_outcome;
 							}
 							// player did worse than over/under
 							else if(overall_score > o_u){
+								//over
 								winning_outcome = 1;
 								return winning_outcome;
 							}
