@@ -1330,6 +1330,7 @@ public class DB
 		while(result_set.next()){
 			gameIDs.add(result_set.getString(1));	
 		}
+		Utils.log(gameIDs.toString());
 		return gameIDs;
 	}
 	

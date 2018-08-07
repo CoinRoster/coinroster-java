@@ -128,7 +128,7 @@ public class SetupRoster extends Utils{
 								String game = total_games.getJSONObject(x).getString("gameID");
 								for(int i = 0; i < games_json.length(); i++){
 									String gameID = games_json.getString(i);
-									games.add(gameID);
+									if(!games.contains(gameID)) games.add(gameID);
 									if(game.equals(gameID) && !deadline_saved){
 										deadline = total_games.getJSONObject(x).getLong("date_milli");
 										deadline_saved = true;
