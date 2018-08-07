@@ -872,7 +872,6 @@ public class ContestMethods extends Utils{
 				BaseballBot baseball_bot = new BaseballBot(sql_connection);
 				log("Baseball games are in play and minute is multiple of 20");
 				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
-				log("games: " + gameIDs.toString());
 				boolean games_ended;
 				games_ended = baseball_bot.scrape(gameIDs);
 				
