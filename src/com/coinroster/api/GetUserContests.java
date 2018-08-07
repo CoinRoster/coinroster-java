@@ -33,7 +33,7 @@ public class GetUserContests extends Utils
 			
 //------------------------------------------------------------------------------------
 
-			PreparedStatement select_user_contest  = sql_connection.prepareStatement("select * from contest where created_by = ? and status = ?");
+			PreparedStatement select_user_contest  = sql_connection.prepareStatement("select * from contest where created_by = ? and status = ? and settlement_type = USER-SETTLED");
 			select_user_contest.setString(1, session.user_id());
 			select_user_contest.setInt(2, 2);
 
