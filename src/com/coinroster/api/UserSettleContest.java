@@ -2,25 +2,13 @@ package com.coinroster.api;
 
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
-import com.coinroster.internal.BackoutContest;
-import com.coinroster.internal.Backup;
-import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.NotifyAdmin;
-import com.coinroster.internal.UserMail;
 
 public class UserSettleContest extends Utils
 	{
