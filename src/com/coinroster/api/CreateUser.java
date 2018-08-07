@@ -101,6 +101,7 @@ public class CreateUser extends Utils
 					email_ver_flag = 1;
 					email_ver_key = null;
 					referrer = db.select_user("id", referrer_id);
+					log(referrer.toString());
 					}
 				}
 			
@@ -375,8 +376,14 @@ public class CreateUser extends Utils
 					String
 					
 					subject = "",
-					message_body = "",
-					income_message = "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake from this account once their playing requirement has been met.";
+					message_body = "";
+					
+					String income_message = "";
+					try{
+						income_message = "You will earn <b>" + (int) multiply(referrer.getDouble("referral_offer"), 100, 0) + "%</b> of the rake from this account once their playing requirement has been met.";
+					}catch(Exception e){
+						Server.exception(e);
+					}
 					
 					if (referral != null)
 						{
