@@ -376,6 +376,8 @@ public class CreateContest extends Utils
 				String gameIDs = null;
 				try{
 					gameIDs = input.getString("gameIDs");
+					log("gameIDs: " + gameIDs);
+					log("chars: " + gameIDs.length());
 				}
 				catch(Exception e){
 					gameIDs = null;

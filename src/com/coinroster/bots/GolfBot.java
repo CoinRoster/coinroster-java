@@ -43,10 +43,10 @@ public class GolfBot extends Utils {
 	private DB db;
 	public String sport = "GOLF";
 	public ArrayList<String> gameIDs = new ArrayList<String>();
-	private static Connection sql_connection = null;
+	private Connection sql_connection = null;
 	
 	public GolfBot(Connection sql_connection) throws IOException, JSONException{
-		GolfBot.sql_connection = sql_connection;
+		this.sql_connection = sql_connection;
 		db = new DB(sql_connection);
 	}
 	
@@ -385,7 +385,14 @@ public class GolfBot extends Utils {
 	
 	public void savePlayers(){
 		try {
-
+			
+			log("closed connection? " +sql_connection.isClosed());
+			
+			if(sql_connection.isClosed()){
+				sql_connection = Server.sql_connection();
+			}
+			log("valid?" + sql_connection.isValid(0));
+			
 			if(this.getPlayerHashMap() == null)
 				return;
 			
