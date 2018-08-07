@@ -101,6 +101,7 @@ public class CreateUser extends Utils
 					email_ver_flag = 1;
 					email_ver_key = null;
 					referrer = db.select_user("id", referrer_id);
+					log(referrer.toString());
 					}
 				}
 			
