@@ -577,7 +577,6 @@ public class BaseballBot extends Utils {
 		public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException{
 			
 			int games_ended = 0;
-			log("in scrape: " + gameIDs.toString());
 			for(int i=0; i < gameIDs.size(); i++){
 				Document page = Jsoup.connect("http://www.espn.com/mlb/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 					      .referrer("http://www.google.com").timeout(6000).get();
