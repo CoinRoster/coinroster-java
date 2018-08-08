@@ -561,7 +561,30 @@ public class CreateContest extends Utils
             
             if (is_private) {
             	output.put("code", participants.getString("code"));
-            	output.put("url", Server.host + "/contest.html?id=" + contest_id + "&code=" + participants.getString("code"));
+            	String private_url = Server.host + "/contest.html?id=" + contest_id + "&code=" + participants.getString("code");
+            	output.put("url", private_url);
+            	
+            	private_url += "&ref=" + session.username() + "&from=email";
+            	JSONObject user = db.select_user("id", session.user_id());
+            	
+            	// send email that can be forwarded
+            	String
+            	username = user.getString("username"),
+            	email_address = user.getString("email_address"),
+            	
+            	subject = "Private Contest: " + title,
+
+            	message_body = "Hello <b>" + username + "</b>!";
+            	message_body += "<br/>";
+            	message_body += "Thanks for creating a private contest titled <a href='" + private_url + "'>" + title + "</a><br><br>";
+            	message_body += "Forward this email to your friends so they can join your private contest with the above link!";
+            	message_body += "<br/>";
+            	message_body += "If for whatever reason that link doesn't work, copy and paste the following URL into your browser:<br/>";
+            	message_body += private_url;
+            	message_body += "<br><br>";
+            	message_body += "Best of luck, and thank you for playing CoinRoster!";
+
+            	Server.send_mail(email_address, username, subject, message_body);
             }
             else{
                 output.put("url", Server.host + "/contest.html?id=" + contest_id);
