@@ -158,7 +158,7 @@ public class BaseballBot extends Utils {
 			contest.put("option_table", option_table);
 		}
 		catch(Exception e){
-			e.printStackTrace();
+			Server.exception(e);
 		}
 		
 		return contest;

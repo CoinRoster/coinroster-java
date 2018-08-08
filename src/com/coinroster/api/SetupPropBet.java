@@ -140,9 +140,7 @@ public class SetupPropBet extends Utils{
 						basketball_bot = new BasketballBot(sql_connection);
 						basketball_bot.scrapeGameIDs();
 						if(basketball_bot.getGameIDs() != null){
-							//gameIDs = basketball_bot.getGameIDs().toString();
 							date_name_title = Instant.ofEpochMilli(basketball_bot.getEarliestGame()).atZone(ZoneId.systemDefault()).toLocalDate().toString();
-
 						}else{
 							output.put("error", "Basketball contests are not currently available");
 							break method;
@@ -192,7 +190,7 @@ public class SetupPropBet extends Utils{
 						if(sport.equals("BASEBALL"))
 							deadline = findEarliestGame(games, baseball_bot.getGames());
 						else if(sport.equals("BASKETBALL")){
-							//deadline = findEarliestGame(games, basketball_bot.getGames());
+							deadline = findEarliestGame(games, basketball_bot.getGames());
 						}
 							
 						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
@@ -223,8 +221,6 @@ public class SetupPropBet extends Utils{
 							game = info.getString(3);
 						}
 						
-						
-						
 						contest_title = name + " Over/Under";
 						String o_u = String.valueOf(prop_data.getDouble("over_under_value"));
 						
@@ -249,10 +245,18 @@ public class SetupPropBet extends Utils{
 							gameIDs = gameIds.toString();
 						}
 						else if(sport.equals("BASKETBALL")){
+							for(int i = 0; i < basketball_bot.getGames().length(); i++){ 
+								if(basketball_bot.getGames().getJSONObject(i).getString("gameID").equals(game)){
+									deadline = basketball_bot.getGames().getJSONObject(i).getLong("date_milli");
+									break;
+								}
+							}
+							ArrayList<String> gameIds = new ArrayList<String>();
+							gameIds.add(game);
+							gameIDs = gameIds.toString();
 							
 						}
 							
-						
 						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
 							desc += "Place your bets on if " + name + " will finish the contest over or under " + o_u ;
 						}
