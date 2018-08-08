@@ -1,13 +1,9 @@
 package com.coinroster;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.lang.reflect.Constructor;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -20,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
+import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.GolfBot;
 
 import com.coinroster.bots.CrowdSettleBot;
@@ -31,257 +28,224 @@ public class ContestMethods extends Utils{
 //------------------------------------------------------------------------------------
 
 	// create basketball contests reading from csv
-//	public static void createBasketballContests() {
-//		
-//		Connection sql_connection = null;
-//		
-//		try {
-//			sql_connection = Server.sql_connection();
-//			DB db = new DB(sql_connection);
-//			BasketballBot ball_bot = new BasketballBot(sql_connection);
-//			String gameID_array = ball_bot.scrapeGameIDs();
-//			if(ball_bot.getGameIDs() == null)
-//				return;
-//			ball_bot.setup();
-//			ball_bot.savePlayers();
-//			
-//			Long deadline = ball_bot.getEarliestGame();
-//            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
-//
-//            //create Pari-Mutuel contest for most points
-//            JSONObject pari_mutuel_data = ball_bot.createPariMutuel(deadline, date.toString());
-//            MethodInstance pari_method = new MethodInstance();
-//			JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//			pari_method.input = pari_mutuel_data;
-//			pari_method.output = pari_output;
-//			pari_method.session = null;
-//			pari_method.sql_connection = sql_connection;
-//			try{
-//				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//				c.newInstance(pari_method);
-//			}
-//			catch(Exception e){
-//				log(pari_method.output.toString());
-//				e.printStackTrace();
-//			}
-//			
-//			// read text file to create roster contests
-//			String fileName = Server.java_path + "BasketballContests.txt";
-//			String line = "";
-//			String sep = ";";
-//			
-//			try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-//				//skip the header
-//				br.readLine();
-//				while ((line = br.readLine()) != null) {
-//					JSONObject fields = new JSONObject();
-//					
-//					String[] contest = line.split(sep);
-//					
-//					// parameters for contest
-//					String category = "FANTASYSPORTS";		
-//					String contest_type = "ROSTER";
-//		            String settlement_type = contest[0];					
-//					String progressive_code = "";
-//					String title = contest[1] + " | " + date.toString(); 
-//					String desc = contest[2];
-//		            double rake = Double.parseDouble(contest[3]);
-//		            double cost_per_entry = Double.parseDouble(contest[4]);
-//		            int salary_cap = Integer.parseInt(contest[5]);
-//		            int min_users = Integer.parseInt(contest[6]);
-//		            int max_users = Integer.parseInt(contest[7]);
-//		            int entries_per_user = Integer.parseInt(contest[8]);
-//		            int roster_size = Integer.parseInt(contest[9]);
-//		            String score_header = contest[10];
-//		            String odds_source = "n/a";
-//		            if(!settlement_type.equals("JACKPOT")){
-//		            	JSONArray empty = new JSONArray();
-//		            	fields.put("pay_table", empty);
-//		            }
-//		            else{
-//			            String[] payouts_str = contest[11].split(",");
-//			            double[] payouts = new double[payouts_str.length];
-//			            for (int i = 0; i < payouts_str.length; i++) {
-//			                payouts[i] = Double.parseDouble(payouts_str[i]);
-//			            }
-//			            JSONArray pay_table = new JSONArray();
-//						for(int i=0; i < payouts.length; i++){
-//							JSONObject entry = new JSONObject();
-//							entry.put("payout", payouts[i]);
-//							entry.put("rank", i+1);
-//							pay_table.put(entry);
-//						}
-//						
-//						fields.put("pay_table", pay_table);
-//		            }
-//		       
-//		            fields.put("category", category);
-//					fields.put("sub_category", "BASKETBALL");
-//					fields.put("contest_type", contest_type);
-//					fields.put("progressive", progressive_code);
-//		            fields.put("settlement_type", settlement_type);
-//		            fields.put("title", title);
-//		            fields.put("description", desc);
-//		            fields.put("rake", rake);
-//		            fields.put("cost_per_entry", cost_per_entry);
-//		            fields.put("registration_deadline", deadline);
-//		            fields.put("odds_source", odds_source);
-//		            fields.put("gameIDs", gameID_array);
-//
-//		            ResultSet playerIDs = db.getAllPlayerIDs(ball_bot.sport);
-//		            JSONArray option_table = new JSONArray();
-//					while(playerIDs.next()){
-//						PreparedStatement get_player = sql_connection.prepareStatement("select name, team_abr, salary from player where id = ?");
-//						get_player.setInt(1, playerIDs.getInt(1));
-//						ResultSet player_data = get_player.executeQuery();
-//						if(player_data.next()){
-//							JSONObject player = new JSONObject();
-//							player.put("name", player_data.getString(1) + " " + player_data.getString(2));
-//							player.put("price", player_data.getDouble(3));
-//							player.put("count", 0);
-//							player.put("id", playerIDs.getInt(1));
-//							option_table.put(player);
-//						}
-//					}
-//					
-//					fields.put("option_table", option_table);
-//					fields.put("salary_cap", salary_cap);
-//					fields.put("min_users", min_users);		            
-//					fields.put("max_users", max_users);		            
-//					fields.put("entries_per_user", entries_per_user);
-//					fields.put("roster_size", roster_size);	
-//					fields.put("score_header", score_header);		            
-//					
-//					MethodInstance method = new MethodInstance();
-//					JSONObject output = new JSONObject("{\"status\":\"0\"}");
-//					method.input = fields;
-//					method.output = output;
-//					method.session = null;
-//					method.sql_connection = sql_connection;
-//					try{
-//						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-//						c.newInstance(method);
-//					}
-//					catch(Exception e){
-//						e.printStackTrace();
-//					}
-//				}
-//
-//	        } catch (Exception e) {
-//	            e.printStackTrace();
-//	        }
-//				
-//		} catch (Exception e) {
-//			Server.exception(e);
-//		} finally {
-//			if (sql_connection != null) {
-//				try {
-//					sql_connection.close();
-//					} 
-//				catch (SQLException ignore) {
-//					// ignore
-//				}
-//			}
-//		}
-//	}	
+		public static void createBasketballContests() {
+			
+			Connection sql_connection = null;
+			try {
+				sql_connection = Server.sql_connection();
+				DB db = new DB(sql_connection);
+				BasketballBot basketball_bot = new BasketballBot(sql_connection);
+				String gameID_array = basketball_bot.scrapeGameIDs();
+				if(basketball_bot.getGameIDs() == null)
+					return;
+				log("setting up basketball contests...");
+				basketball_bot.setup();
+				basketball_bot.savePlayers();
+				
+				Long deadline = basketball_bot.getEarliestGame();
+	            LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
 
-//------------------------------------------------------------------------------------
+	            JSONArray prop_contests = db.getRosterTemplates("BASKETBALLPROPS");
+	            for(int i = 0; i < prop_contests.length(); i++){
+					JSONObject contest = prop_contests.getJSONObject(i);
+					String title = date.toString() + " | " + contest.getString("title");
+					contest.put("title", title);
+					contest.put("odds_source", "n/a");
+					contest.put("gameIDs", gameID_array);
+					contest.put("registration_deadline", deadline);
+					
+					JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+					JSONObject pari_mutuel_data;
+					if(prop_data.getString("prop_type").equals("TEAM_SNAKE"))
+						pari_mutuel_data = basketball_bot.createTeamsPariMutuel(contest, prop_data);
+					else
+						pari_mutuel_data = basketball_bot.createPariMutuel(deadline, date.toString(), contest);
+					
+		            MethodInstance pari_method = new MethodInstance();
+					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+					pari_method.input = pari_mutuel_data;
+					pari_method.output = pari_output;
+					pari_method.session = null;
+					pari_method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+						c.newInstance(pari_method);
+					}
+					catch(Exception e){
+						log(pari_method.output.toString());
+						Server.exception(e);
+					}
+	            }
 
-	// check to see if contests are in play, settle if necessary
-//	public static void checkBasketballContests() {
-//		Connection sql_connection = null;
-//		try {
-//			sql_connection = Server.sql_connection();
-//			DB db_connection = new DB(sql_connection);
-//			ArrayList<Integer> roster_contest_ids = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
-//			ArrayList<Integer> pari_contest_ids = db_connection.get_pari_mutuel_id("BASKETBALL", "PARI-MUTUEL");
-//
-//			if(!roster_contest_ids.isEmpty() || !pari_contest_ids.isEmpty()){
-//				BasketballBot ball_bot = new BasketballBot(sql_connection);
-//				log("Basketball contest is in play and minute is multiple of 20");
-//				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(ball_bot.sport);
-//				boolean games_ended;
-//				games_ended = ball_bot.scrape(gameIDs);
-//				JSONArray player_scores = ball_bot.updateScores();
-//
-//				for(Integer contest_id : roster_contest_ids ){
-//					
-//					JSONObject fields = new JSONObject();
-//					fields.put("contest_id", contest_id);
-//					fields.put("normalization_scheme", "INTEGER");
-//					fields.put("player_scores", player_scores);
-//					
-//					MethodInstance method = new MethodInstance();
-//					JSONObject output = new JSONObject("{\"status\":\"0\"}");
-//					method.input = fields;
-//					method.output = output;
-//					method.session = null;
-//					method.sql_connection = sql_connection;
-//					try{
-//						Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
-//						c.newInstance(method);
-//					}
-//					catch(Exception e){
-//						e.printStackTrace();
-//					}
-//					
-//				}
-//				if(games_ended){
-//					log("Basketball games have ended");
-//					for(Integer contest_id : roster_contest_ids){
-//						
-//						JSONObject fields = new JSONObject();
-//						fields.put("contest_id", contest_id);
-//						fields.put("normalization_scheme", "INTEGER");
-//						fields.put("player_scores", player_scores);
-//						
-//						MethodInstance method = new MethodInstance();
-//						JSONObject output = new JSONObject("{\"status\":\"0\"}");
-//						method.input = fields;
-//						method.output = output;
-//						method.session = null;
-//						method.sql_connection = sql_connection;
-//						try{
-//							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-//							c.newInstance(method);
-//						}
-//						catch(Exception e){
-//							e.printStackTrace();
-//						}
-//					}
-//					
-//					//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
-//					for(Integer id : pari_contest_ids){
-//						JSONObject pari_fields = ball_bot.settlePariMutuel(id);
-//						MethodInstance pari_method = new MethodInstance();
-//						JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-//						pari_method.input = pari_fields;
-//						pari_method.output = pari_output;
-//						pari_method.session = null;
-//						pari_method.sql_connection = sql_connection;
-//						try{
-//							Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-//							c.newInstance(pari_method);
-//						}
-//						catch(Exception e){
-//							e.printStackTrace();
-//						}		
-//					}
-//				}
-//			}
-//		} catch (Exception e) {
-//			Server.exception(e);
-//		} finally {
-//			if (sql_connection != null) {
-//				try {
-//					sql_connection.close();
-//					} 
-//				catch (SQLException ignore) {
-//					// ignore
-//				}
-//			}
-//		}
-//	}	
+				//read templates from `CONTEST_TEMPLATES` table
+				JSONArray roster_contests = db.getRosterTemplates("BASKETBALL");
+				for(int index = 0; index < roster_contests.length(); index++){
+					JSONObject contest = roster_contests.getJSONObject(index);
+					String title = date.toString() + " | " + contest.getString("title");
+					contest.put("title", title);
+					contest.put("odds_source", "n/a");
+					contest.put("gameIDs", gameID_array);
+					contest.put("registration_deadline", deadline);
+					ResultSet options;
+					if(contest.getInt("filter") == 0){
+						options = db.getOptionTable(basketball_bot.sport, false, 0, basketball_bot.getGameIDs());
+					}
+					else{
+						options = db.getOptionTable(basketball_bot.sport, true, contest.getInt("filter"), basketball_bot.getGameIDs());
+					}
+						
+		            JSONArray option_table = new JSONArray();
+					while(options.next()){
+						JSONObject player = new JSONObject();
+						player.put("name", options.getString(2) + " " + options.getString(3));
+						player.put("price", options.getDouble(4));
+						player.put("count", 0);
+						player.put("id", options.getString(1));
+						option_table.put(player);
+					}
+					contest.put("option_table", option_table);
+					MethodInstance method = new MethodInstance();
+					JSONObject output = new JSONObject("{\"status\":\"0\"}");
+					method.input = contest;
+					method.output = output;
+					method.session = null;
+					method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+						c.newInstance(method);
+					}
+					catch(Exception e){
+						e.printStackTrace();
+					}	
+				}	
+			} catch (Exception e) {
+				Server.exception(e);
+			} finally {
+				if (sql_connection != null) {
+					try {
+						sql_connection.close();
+						} 
+					catch (SQLException ignore) {
+						// ignore
+					}
+				}
+			}
+		}	
+
+		// check to see if contests are in play, settle if necessary
+		public static void checkBasketballContests() {
+			Connection sql_connection = null;
+			try {
+				sql_connection = Server.sql_connection();
+				DB db_connection = new DB(sql_connection);
+				JSONObject roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
+				JSONObject pari_contests = db_connection.get_active_pari_mutuels("BASKETBALLPROPS", "PARI-MUTUEL");
+
+				if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
+					BasketballBot basketball_bot = new BasketballBot(sql_connection);
+					log("Basketball games are in play and minute is multiple of 20");
+					ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(basketball_bot.sport);
+					boolean games_ended;
+					games_ended = basketball_bot.scrape(gameIDs);
+					
+					Iterator<?> roster_contest_ids = roster_contests.keys();
+					while(roster_contest_ids.hasNext()){
+						
+						String c_id = (String) roster_contest_ids.next();
+						log("basketball contest: " + c_id);
+						String scoring_rules_string = roster_contests.getString(c_id);
+						JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+						JSONArray player_scores = basketball_bot.updateScores(scoring_rules, gameIDs);
+						JSONObject fields = new JSONObject();
+						fields.put("contest_id", Integer.parseInt(c_id));
+						fields.put("normalization_scheme", "INTEGER");
+						fields.put("player_scores", player_scores);
+						
+						MethodInstance method = new MethodInstance();
+						JSONObject output = new JSONObject("{\"status\":\"0\"}");
+						method.input = fields;
+						method.output = output;
+						method.session = null;
+						method.sql_connection = sql_connection;
+						try{
+							Constructor<?> c = Class.forName("com.coinroster.api." + "UpdateScores").getConstructor(MethodInstance.class);
+							c.newInstance(method);
+						}
+						catch(Exception e){
+							e.printStackTrace();
+						}
+						
+					}
+					if(games_ended){
+						log("basketball games have ended. Settling now...");
+						roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
+						roster_contest_ids = roster_contests.keys();
+						while(roster_contest_ids.hasNext()){
+							String c_id = (String) roster_contest_ids.next();
+							String scoring_rules_string = roster_contests.getString(c_id);
+							JSONObject scoring_rules = new JSONObject(scoring_rules_string);
+							JSONArray player_scores = basketball_bot.updateScores(scoring_rules, gameIDs);
+
+							JSONObject fields = new JSONObject();
+							fields.put("contest_id", Integer.parseInt(c_id));
+							fields.put("normalization_scheme", "INTEGER");
+							fields.put("player_scores", player_scores);
+							
+							MethodInstance method = new MethodInstance();
+							JSONObject output = new JSONObject("{\"status\":\"0\"}");
+							method.input = fields;
+							method.output = output;
+							method.session = null;
+							method.sql_connection = sql_connection;
+							try{
+								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+								c.newInstance(method);
+							}
+							catch(Exception e){
+								Server.exception(e);
+							}
+						}
+						
+						//SETTLE PARIMUTUELS FROM NIGHT'S GAMES
+						pari_contests = db_connection.get_active_pari_mutuels("BASKETBALLPROPS", "PARI-MUTUEL");
+						Iterator<?> pari_contest_ids = pari_contests.keys();	
+						while(pari_contest_ids.hasNext()){
+							String c_id = (String) pari_contest_ids.next();
+							
+							JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
+							JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
+							JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
+							
+							JSONObject pari_fields = basketball_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table, gameIDs);
+							MethodInstance pari_method = new MethodInstance();
+							JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+							pari_method.input = pari_fields;
+							pari_method.output = pari_output;
+							pari_method.session = null;
+							pari_method.sql_connection = sql_connection;
+							try{
+								Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+								c.newInstance(pari_method);
+							}
+							catch(Exception e){
+								Server.exception(e);
+							}		
+						}
+					}
+				}
+			} catch (Exception e) {
+				Server.exception(e);
+			} finally {
+				if (sql_connection != null) {
+					try {
+						sql_connection.close();
+						} 
+					catch (SQLException ignore) {
+						// ignore
+					}
+				}
+			}
+		}
 
 //------------------------------------------------------------------------------------
 
