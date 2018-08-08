@@ -575,10 +575,10 @@ public class CreateContest extends Utils
             	subject = "Private Contest: " + title,
 
             	message_body = "Hello <b>" + username + "</b>!";
-            	message_body += "<br/>";
-            	message_body += "Thanks for creating a private contest titled <a href='" + private_url + "'>" + title + "</a><br><br>";
+            	message_body += "<br><br>";
+            	message_body += "Thanks for creating a private contest: <a href='" + private_url + "'>" + title + "</a><br><br>";
             	message_body += "Forward this email to your friends so they can join your private contest with the above link!";
-            	message_body += "<br/>";
+            	message_body += "<br/><br/>";
             	message_body += "If for whatever reason that link doesn't work, copy and paste the following URL into your browser:<br/>";
             	message_body += private_url;
             	message_body += "<br><br>";
