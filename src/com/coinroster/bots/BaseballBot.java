@@ -68,7 +68,6 @@ public class BaseballBot extends Utils {
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
 		if(events.length() == 0){
-			log("No baseball games today");
 			this.game_IDs = null;
 			this.games = null;
 			return null;
@@ -158,7 +157,7 @@ public class BaseballBot extends Utils {
 			contest.put("option_table", option_table);
 		}
 		catch(Exception e){
-			e.printStackTrace();
+			Server.exception(e);
 		}
 		
 		return contest;
@@ -860,7 +859,7 @@ public class BaseballBot extends Utils {
 			JSONArray game_logs = new JSONArray();
 			for(Element row : rows){
 				if(row.className().contains("oddrow") || row.className().contains("evenrow")){
-					if(row.children().size() < 2){
+					if(row.children().size() < 3){
 						// skip the extra row in the game log - usually exists when player has been traded.
 						continue;
 					}
@@ -872,6 +871,7 @@ public class BaseballBot extends Utils {
 						index = index + 1;
 					}
 					game_logs.put(game);
+				
 				}	
 			}
 			this.game_log = game_logs;

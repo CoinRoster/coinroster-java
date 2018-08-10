@@ -94,17 +94,34 @@ public class SetupRoster extends Utils{
 						BasketballBot basketball_bot = new BasketballBot(sql_connection);
 						basketball_bot.scrapeGameIDs();
 						if(basketball_bot.getGameIDs() != null){
-							options = db.getOptionTable(basketball_bot.sport, false, 0, basketball_bot.getGameIDs());
-							Long deadline = basketball_bot.getEarliestGame();
-							data.put("gameIDs", basketball_bot.getGameIDs().toString());
+							JSONArray total_games = basketball_bot.getGames();
+							ArrayList<String> games = new ArrayList<String>();
+							JSONArray games_json = data.getJSONArray("gameIDs");
+							boolean deadline_saved = false;
+							Long deadline = null;
+							for(int x = 0; x < total_games.length(); x++){
+								String game = total_games.getJSONObject(x).getString("gameID");
+								for(int i = 0; i < games_json.length(); i++){
+									String gameID = games_json.getString(i);
+									if(!games.contains(gameID)) games.add(gameID);
+									if(game.equals(gameID) && !deadline_saved){
+										deadline = total_games.getJSONObject(x).getLong("date_milli");
+										deadline_saved = true;
+									}
+									
+								}
+							}
+							data.put("gameIDs", games.toString());
+							options = db.getOptionTable(basketball_bot.sport, false, 0, games);
 							data.put("registration_deadline", deadline);
 							
-							data.put("salary_cap", 1000);
+							data.put("salary_cap", 2000);
 							data.put("roster_size", 0);
 							
 							data.put("score_header", "Fantasy Points");
+							
 							title = today_str + " | " + data.getString("settlement_type");
-							data.put("title", title);
+							data.put("title", title);	
 							String desc_append = appendDescription(data.getJSONObject("scoring_rules"));
 							desc += desc_append;
 							

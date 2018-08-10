@@ -55,14 +55,19 @@ public class GetAvailableSports extends Utils {
 			
 			// BASKETBALL
 			boolean basketball = false;
+			games_to_offer = new JSONArray();
 			BasketballBot basketball_bot = new BasketballBot(sql_connection);
 			basketball_bot.scrapeGameIDs();
 			if(basketball_bot.getGameIDs() != null){
-				Long deadline = basketball_bot.getEarliestGame();
-				if(hour >= 7 && now < deadline){
-					basketball = true;
-					output.put("basketball_contest", "NBA | " + today_str);
-
+				JSONArray games = basketball_bot.getGames();
+				for(int i = 0; i < games.length(); i++){
+					JSONObject game = games.getJSONObject(i);
+					if(hour >= 7 && game.getLong("date_milli") > (now + 5400000)){
+						games_to_offer.put(game);
+						baseball = true;
+						output.put("basketball_contest", "NBA | " + today_str);
+						output.put("basketball_games", games_to_offer);
+					}
 				}
 			}
 			
