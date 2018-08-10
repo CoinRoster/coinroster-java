@@ -859,7 +859,7 @@ public class BaseballBot extends Utils {
 			JSONArray game_logs = new JSONArray();
 			for(Element row : rows){
 				if(row.className().contains("oddrow") || row.className().contains("evenrow")){
-					if(row.children().size() < 2){
+					if(row.children().size() < 3){
 						// skip the extra row in the game log - usually exists when player has been traded.
 						continue;
 					}
@@ -871,6 +871,7 @@ public class BaseballBot extends Utils {
 						index = index + 1;
 					}
 					game_logs.put(game);
+				
 				}	
 			}
 			this.game_log = game_logs;
