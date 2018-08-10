@@ -8,7 +8,7 @@ import com.coinroster.Server;
 
 public class ExpireSettlementWindow {
     
-	public ExpireSettlementWindow(Long settlement_deadline, int contest_id, JSONObject cash_register) throws Exception 
+	public ExpireSettlementWindow(Long settlement_deadline, int contest_id) throws Exception 
 		{
 		     
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -20,9 +20,6 @@ public class ExpireSettlementWindow {
 					Server.log("Settlement deadline for contest " + contest_id + " has elapsed, notifying admin");
 
 					String
-	
-					cash_register_email_address = cash_register.getString("email_address"),
-					cash_register_admin = "Cash Register Admin",
 					
 					subject_admin = "User generated Contest Expired!",
 					message_body_admin = "";
@@ -38,7 +35,7 @@ public class ExpireSettlementWindow {
 					message_body_admin += "Please settle the contest from the admin panel.";
 					message_body_admin += "<br/>";
 	
-					Server.send_mail(cash_register_email_address, cash_register_admin, subject_admin, message_body_admin);
+					new NotifyAdmin(Server.sql_connection(), subject_admin, message_body_admin);
 				} catch (Exception e) {
 					Server.log("Exception occured while notifying admin: " + e.toString());
 				}

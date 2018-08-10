@@ -13,6 +13,8 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BuildLobby;
+import com.coinroster.internal.NotifyAdmin;
+import com.coinroster.internal.UserMail;
 import com.mysql.jdbc.Statement;
 
 public class CreateContest extends Utils
@@ -138,6 +140,23 @@ public class CreateContest extends Utils
             		}
             	}
 
+            if (settlement_type.equals("USER-GENERATED") || settlement_type.equals("CROWD-SETTLED")) {
+				String
+				
+				subject_admin = "User Generated Contest Created!",
+				message_body_admin = "";
+				
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "A user generated contest has been created!";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+
+				new NotifyAdmin(Server.sql_connection(), subject_admin, message_body_admin);
+            }
             log("Contest parameters:");
             
             log("category: " + category);
@@ -560,13 +579,26 @@ public class CreateContest extends Utils
             if (is_private) {
             	output.put("code", participants.getString("code"));
             	output.put("url", Server.host + "/contest.html?id=" + contest_id + "&code=" + participants.getString("code"));
+            	
+				String
+				
+				subject = "Your private contest URL", 
+				message_body = "";
+				
+				message_body += "You created the private contest: <b>" + title + "</b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				message_body += "Here's the URL to share with your friends: <b><a href=\"" + Server.host + "/contest.html?id=" +
+						contest_id + "\">" + Server.host + "/contest.html?id=" + contest_id +"</a> BTC</b>";
+				message_body += "<br/>";
+				message_body += "<br/>";
+				new UserMail(db.select_user("id", session.user_id()), subject, message_body);
             }
             else{
                 output.put("url", Server.host + "/contest.html?id=" + contest_id);
             }
             
             output.put("status", "1");
-            
 		} 
 		
 	if(session != null && !internal_caller)

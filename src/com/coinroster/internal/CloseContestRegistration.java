@@ -55,28 +55,28 @@ public class CloseContestRegistration extends Utils
 						PreparedStatement select_entry = sql_connection.prepareStatement("select user_id from entry where contest_id = ?");
 						select_entry.setInt(1, contest_id);
 						ResultSet entry = select_entry.executeQuery();
-						
-						// lock contest table and get current max id
-						Statement lock_contest = sql_connection.createStatement();
-						lock_contest.execute("lock tables contest write");
-						
-						int max_id = 0;
-						try {
-							PreparedStatement select_max_contest = sql_connection.prepareStatement("select max(id) from contest");
-							ResultSet select_contest_result = select_max_contest.executeQuery();
-							if (select_contest_result.next()) max_id = select_contest_result.getInt(1);
-							else {
-								log("error with query: " + select_contest_result.toString());
-								break;
-							}
-						} catch (Exception e) {
-							log("Error getting max id from contest table: " + e.toString());
-						} finally {
-							lock_contest.execute("unlock tables");
-							if(max_id == 0) {
-								return;
-							}
-						}
+//						
+//						// lock contest table and get current max id
+//						Statement lock_contest = sql_connection.createStatement();
+//						lock_contest.execute("lock tables contest write");
+//						
+//						int max_id = 0;
+//						try {
+//							PreparedStatement select_max_contest = sql_connection.prepareStatement("select max(id) from contest");
+//							ResultSet select_contest_result = select_max_contest.executeQuery();
+//							if (select_contest_result.next()) max_id = select_contest_result.getInt(1);
+//							else {
+//								log("error with query: " + select_contest_result.toString());
+//								break;
+//							}
+//						} catch (Exception e) {
+//							log("Error getting max id from contest table: " + e.toString());
+//						} finally {
+//							lock_contest.execute("unlock tables");
+//							if(max_id == 0) {
+//								return;
+//							}
+//						}
 						
 						// count number of users
 						
@@ -166,7 +166,7 @@ public class CloseContestRegistration extends Utils
 							
 							// populate contest table
 							
-			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status, progressive) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status, progressive, min_users) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 							create_contest.setString(1, contest.getString("category"));
 							create_contest.setString(2, contest.getString("sub_category"));
 							create_contest.setLong(3, System.currentTimeMillis());
@@ -182,12 +182,20 @@ public class CloseContestRegistration extends Utils
 							create_contest.setInt(13, 0);
 							create_contest.setInt(14, 1);
 							create_contest.setString(15, code);
+							create_contest.setInt(16, 1);
 							create_contest.executeUpdate();
+							
+							ResultSet created_contest = create_contest.getGeneratedKeys();
+							int voting_id = (created_contest.next())? created_contest.getInt(1): 0;
+							
+							if(voting_id == 0) {
+								log("voting id not generated!");
+							}
 							
 							// populate voting table
 							
 							PreparedStatement voting_round = sql_connection.prepareStatement("insert into voting(id, original_contest_id, status) values(?, ?, ?)");
-							voting_round.setInt(1, max_id + 1);
+							voting_round.setInt(1, voting_id);
 							voting_round.setInt(2,  contest_id);
 							voting_round.setInt(3, 1);
 							voting_round.executeUpdate();
@@ -220,6 +228,10 @@ public class CloseContestRegistration extends Utils
 							message_body += "<b>" + contest_title + "</b> is now in play!";
 							message_body += "<br/>";
 							message_body += "<br/>";
+							
+							if (contest.getString("settlement-type").equals("USER-SETTLED")) {
+								
+							}
 							
 							if (contest_type.equals("ROSTER")) message_body += "<a href='" + Server.host + "/rosters.html?contest_id=" + contest_id + "'>Click here</a> to view the current Leaderboard";
 							else if (contest_type.equals("PARI-MUTUEL")) message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> to view your wagers.";
