@@ -2,8 +2,6 @@ package com.coinroster.internal;
 
 import java.util.concurrent.*;
 
-import org.json.JSONObject;
-
 import com.coinroster.Server;
 
 public class ExpireSettlementWindow {
