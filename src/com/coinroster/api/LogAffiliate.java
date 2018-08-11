@@ -17,6 +17,7 @@ public class LogAffiliate extends Utils
 		
 		input = method.input,
 		output = method.output;
+		
 		Session session = method.session;
 		Connection sql_connection = method.sql_connection;
 
@@ -31,19 +32,25 @@ public class LogAffiliate extends Utils
 				break method;
 			}
 			
-			// if session is active, log the session id
-			if(session != null && session.active()){
-				add_affiliate = sql_connection.prepareStatement("insert into affiliate (source, session_id) values(?, ?)");				
-			    add_affiliate.setString(1, affiliate);
-			    add_affiliate.setString(2, session.user_id());
+			try{
+				// if session is active, log the session id
+				if(session.active()){
+					add_affiliate = sql_connection.prepareStatement("insert into affiliate (source, session_id) values(?, ?)");				
+				    add_affiliate.setString(1, affiliate);
+				    add_affiliate.setString(2, session.user_id());
+				}
+				else{
+					add_affiliate = sql_connection.prepareStatement("insert into affiliate (source) values(?)");				
+				    add_affiliate.setString(1, affiliate);
+				}
+				
+				add_affiliate.execute();
+	            output.put("status", "1");
 			}
-			else{
-				add_affiliate = sql_connection.prepareStatement("insert into affiliate (source) values(?)");				
-			    add_affiliate.setString(1, affiliate);
+			catch(Exception e){
+				output.put("status", "0");
+				output.put("error", e.getMessage());
 			}
-			
-			add_affiliate.execute();
-            output.put("status", "1");
             
 		} 
 		method.response.send(output);
