@@ -140,23 +140,6 @@ public class CreateContest extends Utils
             		}
             	}
 
-            if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
-				String
-				
-				subject_admin = "User Generated Contest Created!",
-				message_body_admin = "";
-				
-				message_body_admin += "<br/>";
-				message_body_admin += "<br/>";
-				message_body_admin += "A user generated contest has been created!";
-				message_body_admin += "<br/>";
-				message_body_admin += "<br/>";
-				message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
-				message_body_admin += "<br/>";
-				message_body_admin += "<br/>";
-
-				new NotifyAdmin(Server.sql_connection(), subject_admin, message_body_admin);
-            }
             log("Contest parameters:");
             
             log("category: " + category);
@@ -570,6 +553,24 @@ public class CreateContest extends Utils
             	} else {
             		log("Generated keys query failed");
             	}
+            }
+            
+            if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
+				String
+				
+				subject_admin = "User Generated Contest Created!",
+				message_body_admin = "";
+				
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "A user generated contest has been created!";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+
+				new NotifyAdmin(Server.sql_connection(), subject_admin, message_body_admin);
             }
 
             new BuildLobby(sql_connection);

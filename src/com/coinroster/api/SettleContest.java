@@ -326,7 +326,7 @@ public class SettleContest extends Utils
 					contest_creator_commission = 0;
 					
 					JSONObject internal_asset = db.select_user("username", "internal_asset");
-					/*
+					
 					if(voting_contest && do_update) {
 						
 						// voting contest creator gets a 1% commission from the original contest's betting volume
@@ -360,7 +360,6 @@ public class SettleContest extends Utils
 						create_transaction.setString(4, from_account);
 						create_transaction.setString(5, to_account);
 						create_transaction.setDouble(6, contest_creator_commission);
-						// pls
 						create_transaction.setString(7, "RC");
 						create_transaction.setString(8, "RC");
 						create_transaction.setString(9, "Voting round creator commission");
@@ -376,7 +375,7 @@ public class SettleContest extends Utils
 						
 						db.update_rc_balance(from_account, internal_asset_rc_balance);
 						db.update_rc_balance(to_account, user_rc_balance);
-					}*/
+					}
 					
 					log("Pool: " + total_from_transactions);
 					log("Rake: " + rake);
@@ -514,7 +513,7 @@ public class SettleContest extends Utils
 						// compare final rc_liability_balance against opening balance to determine net swap
 						
 						log("Opening RC liability balance: " + opening_rc_liability_balance);
-						log("New RC liability balance: " + rc_liability_balance);
+						log("New RC liability balance: " + rc_liability_balance	);
 						
 						if (rc_liability_balance == opening_rc_liability_balance) log("No net swap");
 						else // net swap exists
@@ -726,6 +725,32 @@ public class SettleContest extends Utils
 									user_winnings_total = add(user_winnings_total, progressive_balance, 0);
 									actual_rake_amount = add(actual_rake_amount, progressive_balance, 0); // will get decremented back down
 									progressive_paid = progressive_balance;
+									
+									/*   if voting contest, payout will be carried out in RC   */
+									if (voting_contest) {
+										
+										PreparedStatement create_swap_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+										create_swap_transaction.setLong(1, System.currentTimeMillis());
+										create_swap_transaction.setString(2, contest_admin);
+										create_swap_transaction.setString(3, "RC_VOTING-PROGRESSIVE-SWAP");
+										create_swap_transaction.setString(4, contest_account_id);
+										create_swap_transaction.setString(5, contest_account_id);
+										create_swap_transaction.setDouble(6, progressive_balance);
+										create_swap_transaction.setString(7, "BTC");
+										create_swap_transaction.setString(8, "RC");
+										create_swap_transaction.setString(9, "Voting round RC swap");
+										create_swap_transaction.setInt(10, contest_id);
+										create_swap_transaction.executeUpdate();
+									
+										Double contest_btc = db.select_user("id", contest_account_id).getDouble("btc_balance");
+										Double contest_rc = db.select_user("id", contest_account_id).getDouble("rc_balance");
+										contest_btc = add(contest_btc, progressive_balance, 0);
+										contest_rc = subtract(contest_btc, progressive_balance, 0);
+
+										db.update_btc_balance(contest_account_id, contest_btc);
+										db.update_rc_balance(contest_account_id, contest_rc);
+									}
+									
 									progressive_balance = 0;
 									
 									db.update_btc_balance(internal_progressive_id, internal_progressive_balance);
