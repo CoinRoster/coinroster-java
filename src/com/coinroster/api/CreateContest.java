@@ -140,7 +140,7 @@ public class CreateContest extends Utils
             		}
             	}
 
-            if (settlement_type.equals("USER-GENERATED") || settlement_type.equals("CROWD-SETTLED")) {
+            if (settlement_type.equals("USER-SETTLED") || settlement_type.equals("CROWD-SETTLED")) {
 				String
 				
 				subject_admin = "User Generated Contest Created!",
@@ -366,8 +366,6 @@ public class CreateContest extends Utils
 	            log("entries_per_user: " + entries_per_user);
 	            log("roster_size: " + roster_size);
 	            log("salary_cap: " + salary_cap);
-	            //log("pay_table: " + pay_table);
-	            //log("option_table: " + option_table);
 	            
 	            create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, description, registration_deadline, "
 	            		+ "rake, cost_per_entry, settlement_type, min_users, max_users, entries_per_user, pay_table, salary_cap, option_table, created, created_by, roster_size, "
