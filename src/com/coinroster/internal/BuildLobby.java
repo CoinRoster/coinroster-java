@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import com.coinroster.ContestMethods;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 
@@ -134,7 +133,7 @@ public class BuildLobby extends Utils
 				
 				sitemap_builder.append(sitemap_url);
 				}
-		    ContestMethods.checkCrowdContests();
+
 		    new CloseContestRegistration();
 			String 
 			
