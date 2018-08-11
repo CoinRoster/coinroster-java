@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 
 import org.json.JSONObject;
 
+import com.coinroster.ContestMethods;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 
@@ -192,7 +193,7 @@ public class BuildLobby extends Utils
 				
 				sitemap_builder.append(sitemap_url);
 				}
-			
+			ContestMethods.checkCrowdContests();
 			String 
 			
 			lobby_html = sub_category_wrapper_template.replace("<!-- factory:sub_categories -->", uncategorized_lobby.toString()),
