@@ -745,7 +745,7 @@ public class SettleContest extends Utils
 										Double contest_btc = db.select_user("id", contest_account_id).getDouble("btc_balance");
 										Double contest_rc = db.select_user("id", contest_account_id).getDouble("rc_balance");
 										contest_btc = add(contest_btc, progressive_balance, 0);
-										contest_rc = subtract(contest_btc, progressive_balance, 0);
+										contest_rc = subtract(contest_rc, progressive_balance, 0);
 
 										db.update_btc_balance(contest_account_id, contest_btc);
 										db.update_rc_balance(contest_account_id, contest_rc);
