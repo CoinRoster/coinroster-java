@@ -360,7 +360,8 @@ public class SettleContest extends Utils
 						create_transaction.setString(4, from_account);
 						create_transaction.setString(5, to_account);
 						create_transaction.setDouble(6, contest_creator_commission);
-						create_transaction.setString(7, "BTC");
+						// pls
+						create_transaction.setString(7, "RC");
 						create_transaction.setString(8, "RC");
 						create_transaction.setString(9, "Voting round creator commission");
 						create_transaction.setInt(10, contest_id);
