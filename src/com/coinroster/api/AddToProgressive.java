@@ -36,7 +36,7 @@ public class AddToProgressive extends Utils
 			
 			String 
 
-			created_by = null, // session.user_id(),
+			created_by = null,
 			code = input.getString("code"),
 			internal_promotions_id = db.get_id_for_username("internal_promotions"),
 			internal_progressive_id = db.get_id_for_username("internal_progressive"),
@@ -52,7 +52,10 @@ public class AddToProgressive extends Utils
 			
 			Long transaction_timestamp = System.currentTimeMillis();
 			
-			int pending_flag = 0;
+			int 
+			
+			pending_flag = 0,
+			contest_id = input.getInt("contest_id");
 			
 			Double 
 			
@@ -72,7 +75,7 @@ public class AddToProgressive extends Utils
 				break method;
 				}
 			
-		    PreparedStatement internal_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+		    PreparedStatement internal_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, pending_flag, ext_address, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 			internal_transaction.setLong(1, transaction_timestamp);
 			internal_transaction.setString(2, created_by);
 			internal_transaction.setString(3, "BTC-WITHDRAWAL");
@@ -84,6 +87,7 @@ public class AddToProgressive extends Utils
 			internal_transaction.setString(9, "Progressive update");
 			internal_transaction.setInt(10, pending_flag);
 			internal_transaction.setString(11, ext_address);
+			internal_transaction.setInt(12, contest_id);
 			internal_transaction.execute();
 		
 			Double new_promo_balance = subtract(promo_btc_balance, amount_to_add, 0);	

@@ -130,40 +130,6 @@ public class CloseContestRegistration extends Utils
 								e.printStackTrace(System.out);
 							}
 							
-							PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
-							get_original_total.setInt(1, contest_id);
-							ResultSet betting_total_rs = get_original_total.executeQuery();
-							betting_total_rs.next();
-							
-							Double 
-							
-							total_from_original = betting_total_rs.getDouble(1),
-							voting_contest_commission = 0.01; //db.get_voting_contest_commission();
-							
-							log("commission: " + total_from_original);
-							log("control commission: " + voting_contest_commission);
-							
-							Double contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
-							log("Contest creator commission: " + contest_creator_commission);
-							
-							JSONObject fund_progressive_input = new JSONObject();
-							fund_progressive_input.put("code", code);
-							fund_progressive_input.put("amount_to_add", contest_creator_commission);
-							
-							MethodInstance fund_method = new MethodInstance();
-							fund_method.input = fund_progressive_input;
-							fund_method.output = output;
-							fund_method.session = null;
-							fund_method.sql_connection = sql_connection;
-							try{
-								log("Creating progressive for voting round");
-								Constructor<?> c = Class.forName("com.coinroster.api." + "AddToProgressive").getConstructor(MethodInstance.class);
-								c.newInstance(fund_method);
-							}
-							catch(Exception e){
-								e.printStackTrace(System.out);
-							}
-							
 							// populate contest table
 							
 			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status, progressive, min_users) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
@@ -190,6 +156,42 @@ public class CloseContestRegistration extends Utils
 							
 							if(voting_id == 0) {
 								log("voting id not generated!");
+							}
+							
+							// add 1% of betting volume to progressive created earlier
+							PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
+							get_original_total.setInt(1, contest_id);
+							ResultSet betting_total_rs = get_original_total.executeQuery();
+							betting_total_rs.next();
+							
+							Double 
+							
+							total_from_original = betting_total_rs.getDouble(1),
+							voting_contest_commission = 0.01; //db.get_voting_contest_commission();
+							
+							log("commission: " + total_from_original);
+							log("control commission: " + voting_contest_commission);
+							
+							Double contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
+							log("Contest creator commission: " + contest_creator_commission);
+							
+							JSONObject fund_progressive_input = new JSONObject();
+							fund_progressive_input.put("code", code);
+							fund_progressive_input.put("amount_to_add", contest_creator_commission);
+							fund_progressive_input.put("contest_id", voting_id);
+							
+							MethodInstance fund_method = new MethodInstance();
+							fund_method.input = fund_progressive_input;
+							fund_method.output = output;
+							fund_method.session = null;
+							fund_method.sql_connection = sql_connection;
+							try{
+								log("Creating progressive for voting round");
+								Constructor<?> c = Class.forName("com.coinroster.api." + "AddToProgressive").getConstructor(MethodInstance.class);
+								c.newInstance(fund_method);
+							}
+							catch(Exception e){
+								e.printStackTrace(System.out);
 							}
 							
 							// populate voting table
