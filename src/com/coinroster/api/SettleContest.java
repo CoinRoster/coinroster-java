@@ -326,7 +326,7 @@ public class SettleContest extends Utils
 					contest_creator_commission = 0;
 					
 					JSONObject internal_asset = db.select_user("username", "internal_asset");
-					
+					/*
 					if(voting_contest && do_update) {
 						
 						// voting contest creator gets a 1% commission from the original contest's betting volume
@@ -376,7 +376,7 @@ public class SettleContest extends Utils
 						
 						db.update_rc_balance(from_account, internal_asset_rc_balance);
 						db.update_rc_balance(to_account, user_rc_balance);
-					}
+					}*/
 					
 					log("Pool: " + total_from_transactions);
 					log("Rake: " + rake);
