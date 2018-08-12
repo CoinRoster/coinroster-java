@@ -134,7 +134,6 @@ public class BuildLobby extends Utils
 				sitemap_builder.append(sitemap_url);
 				}
 
-		    new CloseContestRegistration();
 			String 
 			
 			lobby_html = sub_category_wrapper_template.replace("<!-- factory:sub_categories -->", uncategorized_lobby.toString()),
