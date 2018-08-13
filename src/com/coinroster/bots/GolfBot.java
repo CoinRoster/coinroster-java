@@ -1348,17 +1348,21 @@ public class GolfBot extends Utils {
 						double team_score = 0.0;
 						JSONObject option = option_table.getJSONObject(i);
 						log("calculating scores from team with id = " + option.getInt("id"));
-						JSONArray golfers =  new JSONArray(option.getString("player_ids"));
+						JSONArray golfers =  option.getJSONArray("player_ids");
 						for(int q = 0; q < golfers.length(); q++){
 							String id = golfers.getString(q);
+							log("golfer: " + id);
 							ResultSet player_data = db.getPlayerScoresData(id, this.sport, this.getTourneyID());
 							int overall_score = 0;
 							JSONObject data = new JSONObject();
 							if(player_data.next()){
 								data = new JSONObject(player_data.getString(1));
+								log(data.toString());
 								overall_score = player_data.getInt(2);
+								log(overall_score);
 							}
 							double pts = this.calculateMultiStatPoints(prop_data.getString("when"), data, overall_score, scoring_rules);
+							log("golfer pts: " + pts);
 							team_score += pts;
 						}
 					

@@ -102,11 +102,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 		new ExpirePromos();
 //		new CheckPendingWithdrawals();
 	
-		if(hour==4){
+		if(hour==5){
 //			ContestMethods.createBasketballContests();
 			ContestMethods.createBaseballContests();
 		}
-		if(hour==6){
+		if(hour==7){
 			ContestMethods.createGolfContests();
 		}
 		

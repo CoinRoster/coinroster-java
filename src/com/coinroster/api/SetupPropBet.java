@@ -221,8 +221,8 @@ public class SetupPropBet extends Utils{
 							game = info.getString(3);
 						}
 						
-						contest_title = name + " Over/Under";
 						String o_u = String.valueOf(prop_data.getDouble("over_under_value"));
+						contest_title = name + " Over/Under " + o_u;
 						
 						JSONObject over = new JSONObject();
 						over.put("description", "Over " + o_u);
@@ -258,7 +258,9 @@ public class SetupPropBet extends Utils{
 						}
 							
 						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
-							desc += "Place your bets on if " + name + " will finish the contest over or under " + o_u ;
+							desc += "Place your bets on if " + name + " will finish the contest over or under " + o_u + ".<br>";
+							desc += "Note:<br>" + Math.floor(prop_data.getDouble("over_under_value")) + " is UNDER<br>";
+							desc += Math.ceil(prop_data.getDouble("over_under_value")) + " is OVER";
 						}
 						else{
 							//single stat
