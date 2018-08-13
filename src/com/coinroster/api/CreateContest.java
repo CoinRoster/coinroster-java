@@ -566,6 +566,11 @@ public class CreateContest extends Utils
 				message_body_admin += "<br/>";
 				message_body_admin += "<br/>";
 				message_body_admin += "Contest ID: <b>" + contest_id + "</b>";
+				message_body_admin += "Title: <b>" + title + "</b>";
+				message_body_admin += "Description: <b>" + description + "</b>";
+				message_body_admin += "<br/>";
+				message_body_admin += "<br/>";
+				message_body_admin += "Click <a href=\"" + Server.host + "/admin/contests.html#7\">here</a> to see pending contests.";
 				message_body_admin += "<br/>";
 				message_body_admin += "<br/>";
 
