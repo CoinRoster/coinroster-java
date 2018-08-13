@@ -467,7 +467,7 @@ public class ContestMethods extends Utils{
 							c.newInstance(method);
 						}
 						catch(Exception e){
-							e.printStackTrace();
+							Server.exception(e);
 						}
 						input.remove("contest_id");
 						

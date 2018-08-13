@@ -1278,21 +1278,23 @@ public class GolfBot extends Utils {
 				
 			
 			case "MOST":
-				
+				log(contest_id);
 				double max_points = -999.0;
 				ArrayList<String> top_players = new ArrayList<String>();
 				winning_outcome = 1;
 				ResultSet all_players = null;
+				log("gameID: " + this.getTourneyID());
 				try{
 					all_players = db.getPlayerScoresAndStatus(this.sport, this.getTourneyID());
 				}catch(Exception e){
-					log(e.toString());
+					Server.exception(e);
 				}
 				// loop through players and compile ArrayList<String> of player_ids with top score
 				while(all_players.next()){
 					player_id = all_players.getString(1);
 					JSONObject data = new JSONObject(all_players.getString(2));
 					int score = all_players.getInt(4);
+					log(player_id + ": " + data.toString());
 					double points = this.calculateMultiStatPoints(prop_data.getString("when"), data, score, scoring_rules);
 					if(points > max_points){
 						max_points = points;
@@ -1338,6 +1340,7 @@ public class GolfBot extends Utils {
 			
 			case "TEAM_SNAKE":
 				
+				log("snake draft " + contest_id);
 				double top_score_team = -999;
 				winning_outcome = 0;
 				for(int i = 0; i < option_table.length(); i++){
@@ -1376,6 +1379,7 @@ public class GolfBot extends Utils {
 			
 			
 			case "MATCH_PLAY":	
+				log("match play " + contest_id);
 				// Multi stat match play
 				if(prop_data.getString("multi_stp").equals("multi-stat")){
 					double most_pts = -100;
@@ -1485,6 +1489,7 @@ public class GolfBot extends Utils {
 
 			
 			case "OVER_UNDER":
+				log("over under " + contest_id);
 				double o_u = prop_data.getDouble("over_under_value");
 				player_id = prop_data.getString("player_id");
 				ResultSet rs = db.getPlayerScoresData(player_id, this.sport, this.getTourneyID());
