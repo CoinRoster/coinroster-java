@@ -554,7 +554,7 @@ public class BaseballBot extends Utils {
 							String name = cols.get(0).select("a").text();
 							try{
 								String ESPN_id = cols.get(0).select("a").attr("href").split("/")[7];
-								Player p = new Player(ESPN_id, name);
+								Player p = new Player(ESPN_id, name, team_abr.toUpperCase());
 								int return_value = p.scrape_info();
 								if(return_value == 1){
 									p.gameID = this.game_IDs.get(i);
@@ -656,9 +656,10 @@ public class BaseballBot extends Utils {
 		private int filter;
 		
 		// constructor
-		public Player(String id, String n){
+		public Player(String id, String n, String team_abr){
 			this.ESPN_ID = id;
 			this.name = n;
+			this.team_abr = team_abr;
 		}
 		
 		// methods
@@ -772,7 +773,11 @@ public class BaseballBot extends Utils {
 				String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
 				this.pos = pos;
 				String team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
-				this.team_abr = team;
+				if(!this.team_abr.equals(team)){
+					log("not saving " + this.getName() + " to DB - not correct team");
+					return 0;
+				}
+				
 			}catch(NullPointerException e){
 				return 0;
 			}

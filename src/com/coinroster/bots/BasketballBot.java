@@ -553,7 +553,7 @@ public class BasketballBot extends Utils {
 							String name = cols.get(0).select("a").text();
 							try{
 								String ESPN_id = cols.get(0).select("a").attr("href").split("/")[7];
-								Player p = new Player(ESPN_id, name);
+								Player p = new Player(ESPN_id, name, team_abr.toUpperCase());
 								int rtn = p.scrape_info();
 								if(rtn == 1){
 									p.setPPG();
@@ -687,9 +687,10 @@ public class BasketballBot extends Utils {
 		private String gameID;
 		
 		// constructor
-		public Player(String id, String n){
+		public Player(String id, String n, String team){
 			this.ESPN_ID = id;
 			this.name = n;
+			this.team_abr = team;
 		}
 		
 		// methods
@@ -797,7 +798,11 @@ public class BasketballBot extends Utils {
 			this.height = height;
 			this.weight = weight;
 			String team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
-			this.team_abr = team;
+			if(!this.team_abr.equals(team)){
+				log("not saving " + this.getName() + " to DB - not correct team");
+				return 0;
+			}
+			
 			Elements player_metadata = bio.getElementsByClass("player-metadata");
 			Element item = player_metadata.first();
 			Elements lis = item.children();
