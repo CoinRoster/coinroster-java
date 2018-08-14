@@ -87,7 +87,7 @@ public class SetupRoster extends Utils{
 				ResultSet options = null;
 				String title = "";
 				JSONArray option_table = null;
-				
+				double weight = 0;
 				switch(data.getString("sub_category")){
 					
 					case "BASKETBALL":
@@ -111,13 +111,13 @@ public class SetupRoster extends Utils{
 									
 								}
 							}
+							data.put("salary_cap", 2000);
+							// get weight for top player = 30% of salary cap
+							weight = basketball_bot.getNormalizationWeight(0.3, games, data.getInt("salary_cap"));
 							data.put("gameIDs", games.toString());
 							options = db.getOptionTable(basketball_bot.sport, false, 0, games);
 							data.put("registration_deadline", deadline);
-							
-							data.put("salary_cap", 2000);
 							data.put("roster_size", 0);
-							
 							data.put("score_header", "Fantasy Points");
 							
 							title = today_str + " | " + data.getString("settlement_type");
@@ -154,12 +154,11 @@ public class SetupRoster extends Utils{
 								}
 							}
 							data.put("gameIDs", games.toString());
+							data.put("salary_cap", 2000);
 							options = db.getOptionTable(baseball_bot.sport, false, 0, games);
 							data.put("registration_deadline", deadline);
-							
-							data.put("salary_cap", 2000);
 							data.put("roster_size", 0);
-							
+							weight = baseball_bot.getNormalizationWeight(0.3, games, data.getInt("salary_cap"));
 							data.put("score_header", "Fantasy Points");
 							
 							title = today_str + " | " + data.getString("settlement_type");
@@ -202,7 +201,7 @@ public class SetupRoster extends Utils{
 							data.put("score_header", score_header);
 							data.put("salary_cap", 10000);
 							data.put("roster_size", 6);
-							
+							weight = golf_bot.getNormalizationWeight(0.3, data.getInt("salary_cap"));
 							Long deadline = null;
 							
 							// figure out deadline
@@ -234,7 +233,7 @@ public class SetupRoster extends Utils{
 							
 							data.put("registration_deadline", deadline);
 							data.put("title", title);
-							option_table = db.getGolfRosterOptionTable(golf_bot.getTourneyID());
+							option_table = db.getGolfRosterOptionTable(golf_bot.getTourneyID(), weight);
 						}
 						else{
 							output.put("error", "Golf contests are not currently available");
@@ -248,7 +247,7 @@ public class SetupRoster extends Utils{
 					while(options.next()){
 						JSONObject player = new JSONObject();
 						player.put("name", options.getString(2) + " " + options.getString(3));
-						player.put("price", options.getDouble(4));
+						player.put("price", (int) Math.round(options.getDouble(4) * weight));
 						player.put("id", options.getString(1));
 						option_table.put(player);
 					}

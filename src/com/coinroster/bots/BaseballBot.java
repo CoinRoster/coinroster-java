@@ -526,6 +526,34 @@ public class BaseballBot extends Utils {
 		return player_map;
 	}
 	
+	public double getNormalizationWeight(double multiplier, ArrayList<String> gameIDs, int salary_cap) throws SQLException{
+		
+		double top_price = 0;
+		String stmt = "select salary from player where sport_type = ? and gameID in (";
+		
+		for(int i = 0; i < gameIDs.size(); i++){
+			stmt += "?,";
+		}
+		stmt = stmt.substring(0, stmt.length() - 1);
+		stmt += ") order by salary DESC limit 1";
+			
+		PreparedStatement top_player = sql_connection.prepareStatement(stmt);
+		top_player.setString(1, this.sport);
+		int index = 2;
+		for(String game : gameIDs){
+			top_player.setString(index++, game);
+		}
+		ResultSet top = top_player.executeQuery();
+		if(top.next()){
+			top_price = top.getDouble(1);
+			return ((double) salary_cap * multiplier) / top_price;
+		}
+		else{
+			log("error finding normalization weight");
+			return 0;
+		}
+	}
+	
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
 		public Map<String, Player> setup() throws IOException, JSONException, SQLException{
 			Map<String, Player> players = new HashMap<String,Player>();

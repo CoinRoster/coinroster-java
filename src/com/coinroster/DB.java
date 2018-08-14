@@ -1589,7 +1589,7 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	public JSONArray getGolfRosterOptionTable(String gameID) throws SQLException, JSONException{
+	public JSONArray getGolfRosterOptionTable(String gameID, double weight) throws SQLException, JSONException{
 		JSONArray option_table = new JSONArray();
 		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = ? and filter_on = ? and gameID = ?");
 		get_players.setString(1, "GOLF");
@@ -1603,7 +1603,7 @@ public class DB
 			String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
 			String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
 			p.put("name", nameNormalized + " " + players.getString(3));
-			p.put("price", players.getDouble(4));
+			p.put("price", (int) Math.round(players.getDouble(4) * weight));
 			option_table.put(p);
 		}
 		return option_table;
@@ -1758,7 +1758,7 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public void notify_user_roster_player_replacement(String username, String email_address, String replaced_player, String replacement_player, int roster_id, String contest_name, int contest_id) throws Exception
+	public void notify_user_roster_player_replacement(String username, String email_address, String replaced_player, String replacement_player, int roster_id, String contest_name, int contest_id, String type) throws Exception
 	{
 	String
 	subject = "Your roster has been adjusted!",
@@ -1766,7 +1766,7 @@ public class DB
 	message_body = "Hello <b>" + username + "</b>!";
 	message_body += "<br/>";
 	message_body += "We have made an <b>important change</b> to your roster (id: " + roster_id + ") in <a href='" + Server.host + "/contest.html?id=" + contest_id + "'>" + contest_name + "</a><br><br>";
-	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br><br>";
+	message_body += replaced_player + " is " + type.toLowerCase() + " so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br><br>";
 	message_body += "View your updated roster <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>here</a>";
 	message_body += "<br/>";
 	message_body += "Best of luck!";
