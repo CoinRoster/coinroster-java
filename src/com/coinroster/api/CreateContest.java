@@ -607,6 +607,7 @@ public class CreateContest extends Utils
             }
             
             output.put("status", "1");
+            output.put("contest_id", contest_id);
 		} 
 		
 	if(session != null && !internal_caller)
