@@ -49,9 +49,16 @@ public class CreateEntryRoster extends Utils
 			rc_transaction_amount = 0,
 			btc_transaction_amount = 0;
 			
-			String 
-
-			user_id = session.user_id(),
+			// if this API is called internally (autoplay), get the user_id from the input not the session
+			String user_id = null;
+			if(session != null){
+				user_id = session.user_id();
+			}
+			else{
+				user_id = input.getString("user_id");
+			}
+			
+			String
 			created_by = user_id,
 			contest_account_id = null,
 			contest_title = null;
@@ -425,6 +432,8 @@ public class CreateEntryRoster extends Utils
 			
 //------------------------------------------------------------------------------------
 
-			} method.response.send(output);
+			} 
+		if(session != null)
+			method.response.send(output);
 		}
 	}

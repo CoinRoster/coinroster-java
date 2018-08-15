@@ -1668,6 +1668,7 @@ public class DB
 		while (result_set.next()){
 			JSONObject entry = new JSONObject();
 			try{
+				entry.put("contest_template_id", result_set.getInt(1));
 				entry.put("category", result_set.getString(2));
 				entry.put("sub_category", result_set.getString(3));
 				entry.put("contest_type", result_set.getString(4));
@@ -1818,6 +1819,14 @@ public class DB
 		if(rs.next())
 			rtn = rs.getString(1);
 		return rtn;
+	}
+	
+	public ResultSet get_data_for_autoplay(int contest_id) throws SQLException{
+		ResultSet rs = null;
+		PreparedStatement get = sql_connection.prepareStatement("select option_table, salary_cap, roster_size from contest where id = ?");
+		get.setInt(1, contest_id);
+		rs = get.executeQuery();
+		return rs;
 	}
 	
 	

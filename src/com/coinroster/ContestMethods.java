@@ -21,6 +21,7 @@ import com.coinroster.bots.GolfBot;
 
 import com.coinroster.bots.CrowdSettleBot;
 import com.coinroster.internal.BackoutContest;
+import com.coinroster.internal.EnterAutoplayRosters;
 import com.coinroster.internal.UpdateContestStatus;
 
 public class ContestMethods extends Utils{
@@ -825,10 +826,14 @@ public class ContestMethods extends Utils{
 				try{
 					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 					c.newInstance(method);
+					int contest_id = method.output.getInt("contest_id");
+					new EnterAutoplayRosters(sql_connection, contest.getInt("contest_template_id"), contest_id);
 				}
 				catch(Exception e){
-					e.printStackTrace();
+					Server.exception(e);
 				}	
+				
+				
 			}	
 		} catch (Exception e) {
 			Server.exception(e);
