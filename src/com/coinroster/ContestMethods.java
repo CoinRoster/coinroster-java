@@ -785,6 +785,9 @@ public class ContestMethods extends Utils{
 				contest.put("gameIDs", gameID_array);
 				contest.put("registration_deadline", deadline);
 				ResultSet options;
+				double weight = 0;
+				JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
+				
 				if(contest.getInt("filter") == 0){
 					options = db.getOptionTable(baseball_bot.sport, false, 0, baseball_bot.getGameIDs());
 				}
@@ -792,9 +795,17 @@ public class ContestMethods extends Utils{
 					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"), baseball_bot.getGameIDs());
 				}
 				
-				JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
-				double weight = baseball_bot.getNormalizationWeight(prop_data.getDouble("top_player_salary"), baseball_bot.getGameIDs(), contest.getInt("salary_cap"));
-					
+				// get most expensive player in option table
+				double top_price = 0;
+				while(options.next()){
+					if(options.getDouble(4) > top_price)
+						top_price = options.getDouble(4);
+				}
+				
+				weight = ((double) contest.getInt("salary_cap") * prop_data.getDouble("top_player_salary")) / top_price;	
+				// set the options RS back to the first row
+				options.first();
+				
 	            JSONArray option_table = new JSONArray();
 				while(options.next()){
 					JSONObject player = new JSONObject();
@@ -856,7 +867,6 @@ public class ContestMethods extends Utils{
 					log("baseball contest: " + c_id);
 					String scoring_rules_string = roster_contests.getString(c_id);
 					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-					log("scoring rules: " + scoring_rules.toString());
 					JSONArray player_scores = baseball_bot.updateScores(scoring_rules, gameIDs);
 					JSONObject fields = new JSONObject();
 					fields.put("contest_id", Integer.parseInt(c_id));
