@@ -31,6 +31,8 @@ public class EnterAutoplay extends Utils {
 			SimpleDateFormat input_pattern =  new SimpleDateFormat("MM/dd/yyyy");
 			SimpleDateFormat output_pattern = new SimpleDateFormat("yyyy-MM-dd");
 			
+			input = input.getJSONObject("data");
+			
 			switch(input.getString("process")){
 				
 				case "REMOVE":
