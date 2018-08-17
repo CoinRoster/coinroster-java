@@ -81,6 +81,7 @@ public class CreateContest extends Utils
 				prop_data = input.getString("prop_data").toString();
 				log("prop data: " + prop_data);
 			}catch(Exception e){
+				e.printStackTrace(System.out);
 				prop_data = "";
 			}
             
