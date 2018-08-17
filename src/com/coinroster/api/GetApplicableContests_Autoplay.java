@@ -57,10 +57,7 @@ public class GetApplicableContests_Autoplay extends Utils {
 					entry.put("contest_title", title);
 					entry.put("contest_desc", description);
 					entry.put("settlement_type", settlement_type);
-					
-					if(pay_table != null) entry.put("pay_table", new JSONArray(pay_table));
-					else entry.put("pay_table", pay_table);
-					
+					entry.put("pay_table", pay_table);
 					entry.put("cost_per_entry", cost_per_entry);
 	
 					autoplays.put(entry);

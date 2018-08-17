@@ -38,14 +38,8 @@ public class EnterAutoplay extends Utils {
 				case "REMOVE":
 					PreparedStatement delete_autoplay = sql_connection.prepareStatement("delete from autoplay where id = ?");
 					delete_autoplay.setInt(1, input.getInt("autoplay_id"));
+					delete_autoplay.executeUpdate();
 					msg = "Your autoplay entry has been deleted.";
-					break;
-				
-					
-				case "DEACTIVATE":
-					PreparedStatement deactivate = sql_connection.prepareStatement("update autoplay set active = 0 where id = ?");
-					deactivate.setInt(1, input.getInt("autoplay_id"));
-					msg = "Your autoplay entry has been deactivated.";
 					break;
 				
 					
@@ -60,13 +54,18 @@ public class EnterAutoplay extends Utils {
 					String mysql_end = output_pattern.format(end);
 					String algorithm = input.getString("algorithm");
 					int num_rosters = input.getInt("num_rosters");
+					int active = 0;
+					if(input.getBoolean("active"))
+						active = 1;
 					
-					PreparedStatement modify = sql_connection.prepareStatement("update autoplay set start_date = ?, end_date = ?, algorithm = ?, num_rosters = ? where id = ?");
+					PreparedStatement modify = sql_connection.prepareStatement("update autoplay set start_date = ?, end_date = ?, algorithm = ?, num_rosters = ?, active = ? where id = ?");
 					modify.setString(1, mysql_start);
 					modify.setString(2, mysql_end);
 					modify.setString(3, algorithm);
 					modify.setInt(4, num_rosters);
-					modify.setInt(5, input.getInt("autoplay_id"));
+					modify.setInt(5, active);
+					modify.setInt(6, input.getInt("autoplay_id"));
+					
 					modify.executeUpdate();
 					
 					msg = "Your autoplay entry has been modified.";
