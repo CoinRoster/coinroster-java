@@ -59,7 +59,7 @@ public class SetupMisc extends Utils{
 					JSONObject prop_data = new JSONObject();
 					prop_data.put("risk", data.getDouble("risk"));
 					data.remove("risk");
-					data.put("prop_data", prop_data);
+					data.put("prop_data", prop_data.toString());
 					log(data.toString());
 				}
 				
