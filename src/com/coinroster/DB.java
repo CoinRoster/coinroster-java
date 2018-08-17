@@ -874,6 +874,15 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	// CHECK IF CONTEST IS PRIVATE
+	
+	public boolean is_fixed_odds_contest(int contest_id) throws Exception {
+		if(this.select_contest(contest_id).getJSONObject("prop_data").has("risk")) return true;
+		return false;
+	}
+
+//------------------------------------------------------------------------------------
+
 	// UPDATE PRIVATE CONTEST PARTICIPANTS
 	
 	public void update_private_contest_users(int contest_id, JSONObject participants) throws Exception {
