@@ -59,7 +59,7 @@ public class SetupMisc extends Utils{
 					JSONObject prop_data = new JSONObject();
 					prop_data.put("risk", data.getDouble("risk"));
 					data.put("prop_data", prop_data);
-					log(prop_data.toString());
+					log(data.toString());
 				}
 				
 				MethodInstance prop_method = new MethodInstance();
