@@ -21,6 +21,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.BackoutContest;
+import com.coinroster.internal.EnterAutoplayRosters;
 import com.coinroster.internal.JsonReader;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
@@ -873,6 +874,8 @@ public class GolfBot extends Utils {
 			try{
 				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 				c.newInstance(method);
+				int contest_id = method.output.getInt("contest_id");
+				new EnterAutoplayRosters(sql_connection, contest.getInt("contest_template_id"), contest_id);
 			}
 			catch(Exception e){
 				log(e.toString());
@@ -1195,7 +1198,7 @@ public class GolfBot extends Utils {
 						continue;
 					}
 				}
-				return 1; // must be "Any Other Golfer (1)
+				return 1; // must be Any Other Golfer (1)
 				
 			
 			case "PLAYOFF":
