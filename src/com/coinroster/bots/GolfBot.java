@@ -1671,9 +1671,8 @@ public class GolfBot extends Utils {
 			else if(status_type == 3)
 				type = "CUT";
 			
-			
-			log("entry existing players: " + existing_players.toString());
 			for(int q = 0; q < entry_data.length(); q++){
+				log("entry existing players: " + existing_players.toString());
 				JSONObject player = entry_data.getJSONObject(q);
 				int status = db.getGolferStatus(player.getString("id"), this.sport, this.getTourneyID());
 				
@@ -1683,8 +1682,11 @@ public class GolfBot extends Utils {
 					JSONObject new_player = replaceInactivePlayer(player.getString("id"), player.getDouble("price"), existing_players);
 					// remove inactive player from roster
 					entry_data.remove(q);
+					existing_players.remove(player.getString("id"));
 					// put in new one
 					entry_data.put(new_player);
+					existing_players.add(new_player.getString("id"));
+					
 					log("replacing " + type + " rostered golfer " + player.getString("id") + " with " + new_player.toString());
 					
 					db.updateEntryWithActivePlayer(entry.getInt("entry_id"), entry_data.toString());
@@ -1718,7 +1720,7 @@ public class GolfBot extends Utils {
 		int index = 3;
 		Iterator<?> players = existing_players.iterator();
 		while(players.hasNext()){
-		   get_player.setString(index++, (String) players.next()); // or whatever it applies 
+		   get_player.setString(index++, (String) players.next());
 		}
 		get_player.setString(index++, this.sport);
 		get_player.setDouble(index++, salary);
