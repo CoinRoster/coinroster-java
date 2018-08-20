@@ -117,6 +117,8 @@ public class ContestMethods extends Utils{
 					try{
 						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 						c.newInstance(method);
+						int contest_id = method.output.getInt("contest_id");
+						new EnterAutoplayRosters(sql_connection, contest.getInt("contest_template_id"), contest_id);
 					}
 					catch(Exception e){
 						e.printStackTrace();
