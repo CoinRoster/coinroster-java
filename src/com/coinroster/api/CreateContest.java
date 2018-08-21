@@ -50,6 +50,8 @@ public class CreateContest extends Utils
             JSONArray option_table = input.getJSONArray("option_table");
             
             boolean is_private = false;
+            boolean is_fixed_odds = false;
+            
             try{
             	is_private = input.getBoolean("private");
             }catch(Exception e){
@@ -61,6 +63,7 @@ public class CreateContest extends Utils
 			}
 
 			int contest_id = 0;
+			double risk = 0;
             String settlement_type = input.getString("settlement_type");
             PreparedStatement create_contest = null;
             Long settlement_deadline = null;
@@ -84,6 +87,8 @@ public class CreateContest extends Utils
 				e.printStackTrace(System.out);
 				prop_data = "";
 			}
+			
+			if (prop_data.contains("risk")) is_fixed_odds = true;
             
 			
             // validate common fields
@@ -435,6 +440,19 @@ public class CreateContest extends Utils
 	        }
             else if (contest_type.equals("PARI-MUTUEL"))
             	{
+            	
+            	// check if user has enough to cover risk if fixed odds
+            	
+            	if(is_fixed_odds) {
+            		JSONObject prop_data_json = new JSONObject(prop_data); 
+            		risk = prop_data_json.getDouble("risk");
+            		// fixed odds are not auto-generated so this won't break
+            		if (risk > db.select_user("id", session.user_id()).getDouble("btc_balance")) {
+            			output.put("error", "Risk exceeds total balance");
+            			break method;
+            		}
+            	}
+            	
             	// validate option table:
             	
             	int number_of_options = option_table.length();
@@ -458,6 +476,15 @@ public class CreateContest extends Utils
 						log(output.get("error"));
 	            		break method;
 						}
+					
+					if(is_fixed_odds) {
+						// check if the odds for a single option is greater than total risk
+						if (line.getDouble("odds") > risk) {
+							output.put("error", "Odds for option: <b>" + line.getString("description") + "</b> are greater than total risk");
+							break method;
+						}
+					}
+					
 					last_id = id;
 					
 					String option_description = line.getString("description");
