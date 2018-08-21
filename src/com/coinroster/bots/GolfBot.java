@@ -309,7 +309,7 @@ public class GolfBot extends Utils {
 	
 	public String getCountry(String id) throws JSONException, IOException, InterruptedException{
 		Document page = Jsoup.connect("https://www.pgatour.com/players/player." + id + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-			      .referrer("http://www.google.com").timeout(6000).get();
+			      .referrer("http://www.google.com").timeout(0).get();
 		Element country_img = page.getElementsByClass("country").first().getElementsByTag("span")
 				.first().getElementsByTag("img").first();
 		String country_code = country_img.attr("src").split("/")[7].replace(".png", "");
@@ -1816,7 +1816,7 @@ public class GolfBot extends Utils {
 			
 			String weight = "", height = "", birthday = "", age = "", birthPlace = "", birthString = "", cut_percentage = "";
 			Document page = Jsoup.connect("https://www.pgatour.com/players/player." + this.pga_id + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-				      .referrer("http://www.google.com").timeout(12000).get();
+				      .referrer("http://www.google.com").timeout(0).get();
 			
 			try{
 				Element outer_div = page.getElementsByClass("s-col-left").first();
@@ -1854,7 +1854,7 @@ public class GolfBot extends Utils {
 			try{
 				String data_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "stat.json";
 				page = Jsoup.connect(data_url).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						.ignoreContentType(true).referrer("http://www.google.com").timeout(6000).get(); 
+						.ignoreContentType(true).referrer("http://www.google.com").timeout(0).get(); 
 				JSONObject data = new JSONObject(page.text().replace(" \"\" : \"\",", ""));
 				JSONArray json_stats = data.getJSONArray("plrs").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("statCats").getJSONObject(0).getJSONArray("stats");
 				List<String> options = Arrays.asList("101", "102", "103", "105", "155", "156", "120", "186");
@@ -1872,7 +1872,7 @@ public class GolfBot extends Utils {
 			try{
 				String results_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "results.json";
 				page = Jsoup.connect(results_url).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						.ignoreContentType(true).referrer("http://www.google.com").timeout(6000).get(); 
+						.ignoreContentType(true).referrer("http://www.google.com").timeout(0).get(); 
 				JSONObject results = new JSONObject(page.text().replace(" \"\" : \"\",", ""));
 				JSONArray tourneys = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trnDetails");
 				int num_tourneys = tourneys.length();
