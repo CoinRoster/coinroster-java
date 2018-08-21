@@ -22,6 +22,7 @@ import com.coinroster.internal.JsonReader;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -788,6 +789,9 @@ public class BaseballBot extends Utils {
 					log(page.toString().getBytes());
 				}
 				
+			}catch(HttpStatusException e){
+				Server.exception(e);
+				return 0;
 			}
 			if(page == null){
 				return 0;
