@@ -536,7 +536,7 @@ public class BasketballBot extends Utils {
 			for(int i=0; i < this.game_IDs.size(); i++){
 				// for each gameID, get the two teams playing
 				Document page = Jsoup.connect("http://www.espn.com/nba/game?gameId="+this.game_IDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-					      .referrer("http://www.google.com").timeout(6000).get();
+					      .referrer("http://www.google.com").timeout(0).get();
 				Elements team_divs = page.getElementsByClass("team-info-wrapper");
 				// for each team, go to their stats page and scrape ppg
 				for(Element team : team_divs){
@@ -544,7 +544,7 @@ public class BasketballBot extends Utils {
 					String team_abr = team_link.split("/")[5];
 					log(team_abr);
 					Document team_stats_page = Jsoup.connect("http://www.espn.com/nba/team/roster/_/name/" + team_abr).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						      .referrer("http://www.google.com").timeout(6000).get();
+						      .referrer("http://www.google.com").timeout(0).get();
 					Element stats_table = team_stats_page.getElementsByClass("mod-table").first().getElementsByClass("mod-content").first();
 					Elements rows = stats_table.getElementsByTag("tr");
 					for (Element row : rows){
@@ -579,7 +579,7 @@ public class BasketballBot extends Utils {
 			int games_ended = 0;
 			for(int i=0; i < gameIDs.size(); i++){
 				Document page = Jsoup.connect("http://www.espn.com/nba/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-					      .referrer("http://www.google.com").timeout(6000).get();
+					      .referrer("http://www.google.com").timeout(0).get();
 				Element outer_div = page.getElementById("gamepackage-boxscore-module");
 				Elements tables = outer_div.getElementsByTag("table");
 				for (Element table : tables){
@@ -785,7 +785,7 @@ public class BasketballBot extends Utils {
 		public int scrape_info() throws IOException, JSONException{
 			
 			Document page = Jsoup.connect("http://www.espn.com/nba/player/_/id/"+ this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-				      .referrer("http://www.google.com").timeout(6000).get();
+				      .referrer("http://www.google.com").timeout(0).get();
 			
 			Element bio = page.getElementsByClass("player-bio").first();
 			// parse bio-bio div to get pos, weight, height, birthString
