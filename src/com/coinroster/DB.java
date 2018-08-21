@@ -517,6 +517,11 @@ public class DB
 			String progressive = result_set.getString(28);
 			double progressive_paid = result_set.getDouble(29);
 			Long settlement_deadline = result_set.getLong(32);
+			String prop_data = result_set.getString(33);
+			
+			if (result_set.wasNull()) {
+				prop_data = "";
+			}
 			
 			String participants = result_set.getString(34);
 			
@@ -555,6 +560,7 @@ public class DB
 			contest.put("progressive_paid", progressive_paid);
 			contest.put("settlement_deadline", settlement_deadline);
 			contest.put("participants", participants);
+			contest.put("prop_data", prop_data);
 			}
 
 		return contest;
@@ -874,10 +880,10 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// CHECK IF CONTEST IS PRIVATE
-	
+	// CHECK IF CONTEST IS FIXED-ODDS
 	public boolean is_fixed_odds_contest(int contest_id) throws Exception {
-		if(this.select_contest(contest_id).getJSONObject("prop_data").has("risk")) return true;
+		JSONObject prop_data = new JSONObject(this.select_contest(contest_id).getString("prop_data"));
+		if(prop_data.has("risk")) return true;
 		return false;
 	}
 
