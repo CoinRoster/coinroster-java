@@ -786,11 +786,16 @@ public class BaseballBot extends Utils {
 					page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID())
 						.userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 						.referrer("http://www.google.com").timeout(0).get();
-					log(page.toString().getBytes());
 				}
 				
 			}catch(HttpStatusException e){
 				Server.exception(e);
+				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
+				return 0;
+			}
+			catch(IOException e){
+				Server.exception(e);
+				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
 				return 0;
 			}
 			if(page == null){
