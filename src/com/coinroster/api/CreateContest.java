@@ -478,14 +478,14 @@ public class CreateContest extends Utils
 	            		break method;
 						}
 					
-					if(is_fixed_odds) {
-						// check if the odds for a single option is greater than total risk
-						if (line.getDouble("odds") > risk) {
-							output.put("error", "Odds for option: <b>" + line.getString("description") + "</b> are greater than total risk");
-							break method;
-						}
-					}
-					
+//					if(is_fixed_odds) {
+//						// check if the odds for a single option is greater than total risk
+//						if (line.getDouble("odds") > risk) {
+//							output.put("error", "Odds for option: <b>" + line.getString("description") + "</b> are greater than total risk");
+//							break method;
+//						}
+//					}
+//					
 					last_id = id;
 					
 					String option_description = line.getString("description");
