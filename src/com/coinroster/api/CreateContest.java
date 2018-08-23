@@ -497,7 +497,7 @@ public class CreateContest extends Utils
             		
             		JSONObject contest_account = db.select_user("username", "internal_contest_asset");
 
-            		db.update_btc_balance(contest_account.getString("id"), add(contest_account.getDouble("btc_balance"), risk, 0));
+            		db.update_btc_balance(contest_account.getString("user_id"), add(contest_account.getDouble("btc_balance"), risk, 0));
             		db.update_btc_balance(session.user_id(), subtract(db.select_user("id", session.user_id()).getDouble("btc_balance"), risk, 0));
             		
 					String 
