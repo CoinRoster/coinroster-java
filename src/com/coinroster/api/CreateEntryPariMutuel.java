@@ -45,7 +45,8 @@ public class CreateEntryPariMutuel extends Utils
 			double
 			
 			rc_transaction_amount = 0,
-			btc_transaction_amount = 0;
+			btc_transaction_amount = 0,
+			amount_left = 0;
 			
 			String 
 
@@ -54,7 +55,10 @@ public class CreateEntryPariMutuel extends Utils
 			contest_account_id = null,
 			contest_title = null;
 			
-			boolean voting_contest = db.is_voting_contest(contest_id);
+			boolean 
+			
+			voting_contest = db.is_voting_contest(contest_id),
+			fixed_odds = db.is_fixed_odds_contest(contest_id);
 			
 			// lock it all
 			
@@ -118,6 +122,8 @@ public class CreateEntryPariMutuel extends Utils
 					cost_per_entry = contest.getDouble("cost_per_entry"),
 					total_entry_fees = 0;
 					
+					if (fixed_odds) amount_left = contest.getJSONObject("prop_data").getDouble("amount_left");
+					
 					for (int i=0; i<number_of_user_wagers; i++)
 						{
 						JSONObject wager_item = wagers.getJSONObject(i);
@@ -135,6 +141,28 @@ public class CreateEntryPariMutuel extends Utils
 							output.put("error", "Wager on outcome " + option_id + " is less than the min wager");
 							break lock;
 							}
+						
+						/*  FIXED-ODDS STUFF  */
+						
+						// check if entry is greater than risk if fixed-odds
+						if (fixed_odds) {
+							Double odds_for_option = option_table.getJSONObject(i).getDouble("odds");
+//							Double rake_amount = multiply(wager, contest.getDouble("rake"), 0);
+//							Double actual_odds = subtract(odds_for_option, rake_amount, 0);
+							Double actual_wager = multiply(wager, amount_left, 0);
+							
+							if (actual_wager > amount_left) {
+								log("wager exceeds risk");
+								output.put("error", "Your wager exceeds the contest's max risk!");
+								break lock;
+							} else {
+								log("reducing risk after wager");
+								amount_left = subtract(amount_left, actual_wager, 0);
+								
+								//TO-DO: Figure out what to do with updated risk (update risk or `amount_left`?)
+							}
+						}
+						/********************************************************/
 						
 						total_entry_fees = add(total_entry_fees, wager, 0);
 						}
