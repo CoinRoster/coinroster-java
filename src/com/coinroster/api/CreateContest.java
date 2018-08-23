@@ -452,6 +452,8 @@ public class CreateContest extends Utils
             			output.put("error", "Risk exceeds total balance");
             			break method;
             		}
+            		prop_data_json.put("amount_left", risk);
+            		prop_data = prop_data_json.toString();
             	}
             	
             	// validate option table:
@@ -478,14 +480,6 @@ public class CreateContest extends Utils
 	            		break method;
 						}
 					
-//					if(is_fixed_odds) {
-//						// check if the odds for a single option is greater than total risk
-//						if (line.getDouble("odds") > risk) {
-//							output.put("error", "Odds for option: <b>" + line.getString("description") + "</b> are greater than total risk");
-//							break method;
-//						}
-//					}
-//					
 					last_id = id;
 					
 					String option_description = line.getString("description");
@@ -497,6 +491,37 @@ public class CreateContest extends Utils
 	            		break method;
 						}
 					}
+            	
+            	// take away risk amount as escrow
+            	if (is_fixed_odds) {
+            		
+            		JSONObject contest_account = db.select_user("username", "internal_contest_asset");
+
+            		db.update_btc_balance(contest_account.getString("id"), add(contest_account.getDouble("btc_balance"), risk, 0));
+            		db.update_btc_balance(session.user_id(), subtract(db.select_user("id", session.user_id()).getDouble("btc_balance"), risk, 0));
+            		
+					String 
+					
+					transaction_type = "FIXED-ODDS-RISK-ESCROW",
+					from_account = session.user_id(),
+					to_account = contest_account.getString("id"),
+					from_currency = "BTC",
+					to_currency = "BTC",
+					memo = "Risk amount escrow for fixed odds contest";
+					
+					PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+					create_transaction.setLong(1, System.currentTimeMillis());
+					create_transaction.setString(2, session.user_id());
+					create_transaction.setString(3, transaction_type);
+					create_transaction.setString(4, from_account);
+					create_transaction.setString(5, to_account);
+					create_transaction.setDouble(6, risk);
+					create_transaction.setString(7, from_currency);
+					create_transaction.setString(8, to_currency);
+					create_transaction.setString(9, memo);
+					create_transaction.setInt(10, contest_id);
+					create_transaction.executeUpdate();
+            	}
             	
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "

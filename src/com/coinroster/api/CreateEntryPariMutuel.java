@@ -46,7 +46,7 @@ public class CreateEntryPariMutuel extends Utils
 			
 			rc_transaction_amount = 0,
 			btc_transaction_amount = 0,
-			risk =0;
+			amount_left = 0;
 			
 			String 
 
@@ -122,7 +122,7 @@ public class CreateEntryPariMutuel extends Utils
 					cost_per_entry = contest.getDouble("cost_per_entry"),
 					total_entry_fees = 0;
 					
-					if (fixed_odds) risk = contest.getJSONObject("prop_data").getDouble("risk");
+					if (fixed_odds) amount_left = contest.getJSONObject("prop_data").getDouble("amount_left");
 					
 					for (int i=0; i<number_of_user_wagers; i++)
 						{
@@ -147,17 +147,17 @@ public class CreateEntryPariMutuel extends Utils
 						// check if entry is greater than risk if fixed-odds
 						if (fixed_odds) {
 							Double odds_for_option = option_table.getJSONObject(i).getDouble("odds");
-							Double rake_amount = multiply(wager, contest.getDouble("rake"), 0);
-							Double actual_odds = subtract(odds_for_option, rake_amount, 0);
-							Double actual_wager = multiply(actual_odds, risk, 0);
+//							Double rake_amount = multiply(wager, contest.getDouble("rake"), 0);
+//							Double actual_odds = subtract(odds_for_option, rake_amount, 0);
+							Double actual_wager = multiply(wager, amount_left, 0);
 							
-							if (multiply(odds_for_option, actual_wager, 0) > risk) {
+							if (actual_wager > amount_left) {
 								log("wager exceeds risk");
 								output.put("error", "Your wager exceeds the contest's max risk!");
 								break lock;
 							} else {
 								log("reducing risk after wager");
-								risk = subtract(risk, actual_wager, 0);
+								amount_left = subtract(amount_left, actual_wager, 0);
 								
 								//TO-DO: Figure out what to do with updated risk (update risk or `amount_left`?)
 							}
