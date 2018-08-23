@@ -122,7 +122,10 @@ public class CreateEntryPariMutuel extends Utils
 					cost_per_entry = contest.getDouble("cost_per_entry"),
 					total_entry_fees = 0;
 					
-					if (fixed_odds) amount_left = contest.getJSONObject("prop_data").getDouble("amount_left");
+					if (fixed_odds) {
+						JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+						amount_left = prop_data.getDouble("amount_left");
+					}
 					
 					for (int i=0; i<number_of_user_wagers; i++)
 						{
