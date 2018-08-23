@@ -162,7 +162,7 @@ public class CreateEntryPariMutuel extends Utils
 							} else {
 								log("reducing risk after wager");
 								amount_left = subtract(amount_left, actual_wager, 0);
-								
+								log("amount left: " + amount_left);
 								JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
 								prop_data.remove("amount_left");
 								prop_data.put("amount_left", amount_left);
