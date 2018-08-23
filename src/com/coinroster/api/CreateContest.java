@@ -504,7 +504,7 @@ public class CreateContest extends Utils
 					
 					transaction_type = "FIXED-ODDS-RISK-ESCROW",
 					from_account = session.user_id(),
-					to_account = contest_account.getString("id"),
+					to_account = contest_account.getString("user_id"),
 					from_currency = "BTC",
 					to_currency = "BTC",
 					memo = "Risk amount escrow for fixed odds contest";
