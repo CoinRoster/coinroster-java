@@ -155,6 +155,7 @@ public class EnterAutoplayRosters extends Utils {
 			method.input = input;
 			method.output = output;
 			method.session = null;
+			method.internal_caller = true;
 			method.sql_connection = sql_connection;
 			try{
 				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateEntryRoster").getConstructor(MethodInstance.class);

@@ -144,6 +144,16 @@ public class CreateEntryRoster extends Utils
 					if (total_entry_fees > available_balance)
 						{
 						output.put("error", "Insufficient funds");
+						
+						// send email if autoplay entries are rejected for insufficient funds
+						if(method.internal_caller){
+							String message_body = "";
+							message_body += "Due to insufficient funds in your account, we were unable to generate your auto-play rosters in <a href='" + Server.host + "/contest.html?id=" + contest_id + "'>" + contest_title + "</a><br><br>";
+							message_body += "Please click <a href='" + Server.host + "/account/deposit.html'>here</a> to make a deposit.";
+							message_body += "<br/>";
+							message_body += "Thanks!";
+							Server.send_mail(user.getString("email_address"), user.getString("username"), "Auto-Play Rejected: Insufficient Funds", message_body);
+						}
 						break lock;
 						}
 					
