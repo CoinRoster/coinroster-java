@@ -1835,6 +1835,15 @@ public class DB
 			rtn = rs.getString(1);
 		return rtn;
 	}
+
+//------------------------------------------------------------------------------------
+
+	public void update_prop_data(int contest_id, JSONObject prop_data) throws SQLException {
+		PreparedStatement update_amount_left = sql_connection.prepareStatement("update contest set prop_data = ? where contest_id = ?");
+		update_amount_left.setString(1, prop_data.toString());
+		update_amount_left.setInt(1, contest_id);
+		
+	}
 	
 	public ResultSet get_data_for_autoplay(int contest_id) throws SQLException{
 		ResultSet rs = null;
