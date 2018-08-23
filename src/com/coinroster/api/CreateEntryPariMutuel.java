@@ -149,6 +149,7 @@ public class CreateEntryPariMutuel extends Utils
 						
 						// check if entry is greater than risk if fixed-odds
 						if (fixed_odds) {
+							log("is this thing on? " + fixed_odds);
 							Double odds_for_option = option_table.getJSONObject(i).getDouble("odds");
 //							Double rake_amount = multiply(wager, contest.getDouble("rake"), 0);
 //							Double actual_odds = subtract(odds_for_option, rake_amount, 0);
