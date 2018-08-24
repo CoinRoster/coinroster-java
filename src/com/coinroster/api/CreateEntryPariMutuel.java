@@ -152,7 +152,7 @@ public class CreateEntryPariMutuel extends Utils
 							Double odds_for_option = option_table.getJSONObject(i).getDouble("odds");
 							Double actual_wager = multiply(wager, odds_for_option, 0);
 							
-							log("actual wager: " + actual_wager);
+							log("actual wager: " + format_btc(actual_wager));
 							if (actual_wager > amount_left) {
 								log("wager exceeds risk");
 								output.put("error", "Your wager exceeds the contest's max risk!");
@@ -163,7 +163,7 @@ public class CreateEntryPariMutuel extends Utils
 								log("amount left: " + amount_left);
 								JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
 								prop_data.remove("amount_left");
-								prop_data.put("amount_left", amount_left);
+								prop_data.put("amount_left", format_btc(amount_left));
 								db.update_prop_data(contest_id, prop_data);
 							}
 						}

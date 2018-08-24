@@ -231,10 +231,6 @@ public class CloseContestRegistration extends Utils
 							message_body += "<br/>";
 							message_body += "<br/>";
 							
-							if (contest.getString("settlement-type").equals("USER-SETTLED")) {
-								
-							}
-							
 							if (contest_type.equals("ROSTER")) message_body += "<a href='" + Server.host + "/rosters.html?contest_id=" + contest_id + "'>Click here</a> to view the current Leaderboard";
 							else if (contest_type.equals("PARI-MUTUEL")) message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> to view your wagers.";
 							}
