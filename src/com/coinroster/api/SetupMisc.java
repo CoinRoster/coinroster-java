@@ -58,7 +58,8 @@ public class SetupMisc extends Utils{
 				data.remove("pari_mutuel_options");
 				if(data.has("risk")) {
 					JSONObject prop_data = new JSONObject();
-					prop_data.put("risk", data.getDouble("risk"));
+					log("formatted: " + format_btc(data.getDouble("risk")));
+					prop_data.put("risk", format_btc(data.getDouble("risk")));
 					data.remove("risk");
 					data.put("prop_data", prop_data.toString());
 					log(data.toString());
