@@ -446,6 +446,7 @@ public class CreateContest extends Utils
             	if(is_fixed_odds) {
             		JSONObject prop_data_json = new JSONObject(prop_data); 
             		risk = prop_data_json.getDouble("risk");
+            		log("risk: " + risk);
             		// fixed odds are not auto-generated so this won't break
             		if (risk > db.select_user("id", session.user_id()).getDouble("btc_balance")) {
             			log("Risk exceeds user funds");

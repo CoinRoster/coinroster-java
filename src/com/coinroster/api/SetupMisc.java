@@ -42,6 +42,7 @@ public class SetupMisc extends Utils{
 				for(int i = 0; i < data.getJSONArray("pari_mutuel_options").length(); i++){
 					JSONObject option = new JSONObject();
 					if(data.has("risk")) {
+						log("fixed-odds" + data.toString());
 						option.put("id", index);
 						option.put("description", data.getJSONArray("pari_mutuel_options").getJSONObject(i).getString("description"));
 						option.put("odds", data.getJSONArray("pari_mutuel_options").getJSONObject(i).getDouble("odds"));
