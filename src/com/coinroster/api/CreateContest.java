@@ -453,7 +453,7 @@ public class CreateContest extends Utils
             			output.put("error", "Risk exceeds total balance");
             			break method;
             		}
-            		prop_data_json.put("amount_left", risk);
+            		prop_data_json.put("amount_left", format_btc(risk));
             		prop_data = prop_data_json.toString();
             	}
             	
