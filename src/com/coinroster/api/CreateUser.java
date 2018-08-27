@@ -57,6 +57,8 @@ public class CreateUser extends Utils
 			new_user_referrer_key = db.get_new_referrer_key(), // user's referrer key (their affiliate link)
 			email_address = null;
 			
+			log("referring_user_refferer_key: " + referring_user_referrer_key);
+			
 			int 
 			
 			user_level = 3,
@@ -69,7 +71,10 @@ public class CreateUser extends Utils
 			String 
 			
 			referral_key = no_whitespace(input.getString("referral_key")),
+			referrer_username = no_whitespace(input.getString("referrer_username")),
 			promo_code = no_whitespace(input.getString("promo_code"));
+			
+			log("referral_key: " + referral_key);
 			
 			if (promo_code.length() > 100)
 				{
@@ -89,6 +94,7 @@ public class CreateUser extends Utils
 				if (referral == null)
 					{
 					output.put("error", "Invalid referrer key");
+					log("invalid referrer key");
 					break method;
 					}
 				else
@@ -104,6 +110,10 @@ public class CreateUser extends Utils
 					log(referrer.toString());
 					}
 				}
+			
+			else if(referrer_username != null){
+				referrer = db.select_user("username", referrer_username);
+			}
 			
 			else
 				{

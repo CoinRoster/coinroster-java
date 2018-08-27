@@ -265,8 +265,8 @@ public class GolfBot extends Utils {
 	}
 	
 	public void scrapeTourneyID(int today) throws IOException, JSONException, InterruptedException{
+		
 		// get the Thursday date in yyyy-MM-dd format
-		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
 		Calendar c = Calendar.getInstance();
 		
@@ -302,9 +302,12 @@ public class GolfBot extends Utils {
 				this.tourneyID = tournament.getString("permNum");
 				this.gameIDs.add(this.tourneyID);
 				this.startDate = milli;
+				log("setting up for tournament: " + this.getTourneyName());
 				break;
 			}
 		}
+		log("couldn't find a tournament this week that fits criteria.");
+
 	}
 	
 	public String getCountry(String id) throws JSONException, IOException, InterruptedException{
@@ -322,6 +325,7 @@ public class GolfBot extends Utils {
 			String url = "https://statdata.pgatour.com/r/" + tourneyID + "/field.json";
 			JSONObject field = JsonReader.readJsonFromUrl(url);
 			JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
+			log("getting the field...");
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
 				String id = player.getString("TournamentPlayerId");

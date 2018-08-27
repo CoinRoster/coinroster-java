@@ -266,14 +266,16 @@ public class ContestMethods extends Utils{
 			JSONArray roster_contests = db.getRosterTemplates("GOLF");
 			JSONArray prop_contests = db.getRosterTemplates("GOLFPROPS");
 			int today = getToday();
+			
+			golfBot.scrapeTourneyID(today);
+			if(golfBot.getTourneyID() == null)
+				return;
+			
 			switch(today){
 			
 				// MONDAY
 				case 2: 
 					// initialize and scrape
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					golfBot.setup();
 					golfBot.savePlayers();
 					
@@ -295,9 +297,6 @@ public class ContestMethods extends Utils{
 				
 				// THURSDAY
 				case 5:
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					
 					//generate tournament ROSTER contests
 					for(int index = 0; index < roster_contests.length(); index++){
@@ -314,9 +313,6 @@ public class ContestMethods extends Utils{
 					
 				// FRIDAY
 				case 6:
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					
 					//generate tournament ROSTER contests
 					for(int index = 0; index < roster_contests.length(); index++){
@@ -333,9 +329,6 @@ public class ContestMethods extends Utils{
 					
 				// SATURDAY
 				case 7:
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					
 					//generate tournament ROSTER contests
 					for(int index = 0; index < roster_contests.length(); index++){
