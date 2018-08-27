@@ -159,8 +159,9 @@ public class CreateEntryPariMutuel extends Utils
 								break lock;
 							} else {
 								log("reducing risk after wager");
+								log("amount left before: " + amount_left);
 								amount_left = subtract(amount_left, actual_wager, 0);
-								log("amount left: " + amount_left);
+								log("amount left after: " + amount_left);
 								JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
 								prop_data.remove("amount_left");
 								prop_data.put("amount_left", format_btc(amount_left));

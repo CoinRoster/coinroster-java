@@ -1842,7 +1842,7 @@ public class DB
 		PreparedStatement update_amount_left = sql_connection.prepareStatement("update contest set prop_data = ? where contest_id = ?");
 		update_amount_left.setString(1, prop_data.toString());
 		update_amount_left.setInt(1, contest_id);
-		
+		update_amount_left.execute();
 	}
 	
 	public ResultSet get_data_for_autoplay(int contest_id) throws SQLException{
