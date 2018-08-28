@@ -72,11 +72,17 @@ public class SettleContest extends Utils
 					contest_title = contest.getString("title"),
 					contest_type = contest.getString("contest_type");
 					
-					boolean voting_contest = db.is_voting_contest(contest_id);
+					boolean 
+					
+					voting_contest = db.is_voting_contest(contest_id),
+					fixed_odds = db.is_fixed_odds_contest(contest_id);
+					
+					double odds_for_winning_option = 0;
 
 					log("Validating contest #" + contest_id);
 					log("Type: " + contest_type);
 					log("Voting contest: " + voting_contest);
+					log("Fixed-odds contest: " + fixed_odds);
 					
 					if (contest == null)
 						{
@@ -131,7 +137,7 @@ public class SettleContest extends Utils
 
 							winning_outcome = input.getInt("winning_outcome");
 							
-							for (int i=0; i<option_table.length(); i++)
+							for (int i = 0; i < option_table.length(); i++)
 								{
 								JSONObject option = option_table.getJSONObject(i);
 								
@@ -141,6 +147,7 @@ public class SettleContest extends Utils
 									{
 									option.put("outcome", 1);
 									valid_option = true;
+									if (fixed_odds) odds_for_winning_option = option.getDouble("odds");
 									}
 								else option.put("outcome", 0);
 								
@@ -386,10 +393,7 @@ public class SettleContest extends Utils
 					//--------------------------------------------------------------------------------------------------------------
 
 					JSONArray entries = db.select_contest_entries(contest_id);
-					
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-					
+				
 					// calculate referral rewards / process rake credits 
 					
 					/* IF NOT VOTING */
@@ -624,8 +628,6 @@ public class SettleContest extends Utils
 	
 						log("");
 						}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 					
 					//--------------------------------------------------------------------------------------------------------------
 					
@@ -808,7 +810,14 @@ public class SettleContest extends Utils
 										double 
 										
 										user_btc_balance = user.getDouble("btc_balance"),
-										user_winnings = multiply(user_wager, payout_ratio, 0);
+										user_winnings;
+
+										// payout with fixed-odds instead of pro rata
+										if (!fixed_odds) {
+											user_winnings = multiply(user_wager, payout_ratio, 0);
+										} else {
+											user_winnings = multiply(user_wager, odds_for_winning_option, 0);
+										}
 										
 										log("");
 										log("User: " + user_id);
@@ -1468,7 +1477,9 @@ public class SettleContest extends Utils
 					
 					// any funds that have not been paid out as winnings or referral revenue are credited to internal_asset
 
-					log("Crediting asset account: " + actual_rake_amount);
+					//EXCEPT 
+					if(fixed_odds)log("Crediting asset account: " + rake_amount);
+					else log("Crediting asset account: " + actual_rake_amount);
 					
 					String internal_asset_id = internal_asset.getString("user_id");
 					
@@ -1486,7 +1497,7 @@ public class SettleContest extends Utils
 					to_currency = "BTC",
 					memo = "Rake (BTC) from contest #" + contest_id;
 					
-					// voting contests should theoretically not have any rake amount but in case it does, implicitly
+					// voting contests should not have any rake amount but in case it does, implicitly
 					// convert rc to btc within contest account and credit asset account accordingly
 					if (voting_contest) {
 						
@@ -1514,13 +1525,37 @@ public class SettleContest extends Utils
 						create_transaction.setString(3, transaction_type);
 						create_transaction.setString(4, from_account);
 						create_transaction.setString(5, to_account);
-						create_transaction.setDouble(6, actual_rake_amount);
+						create_transaction.setDouble(6, (fixed_odds)? rake_amount: actual_rake_amount);
 						create_transaction.setString(7, from_currency);
 						create_transaction.setString(8, to_currency);
-						create_transaction.setString(9, memo);
+						create_transaction.setString(9, "Fixed-odds contest creator payout for contest #" + contest_id);
 						create_transaction.setInt(10, contest_id);
 						create_transaction.executeUpdate();
 						}
+					
+					// finally, if fixed-odds the creator should receive anything left after raking
+					if (fixed_odds) {
+						// this should not be possible as fixed-odds assume only winners of bets get paid
+						// there should be an excess amount left over for all losers who wagered
+						// If there aren't any losers, this amount cannot be lesser than 0
+						if (actual_rake_amount < rake_amount) log("amount after rake is less than rake!!");
+						actual_rake_amount = subtract(actual_rake_amount, rake_amount, 0);
+						
+						if (actual_rake_amount > 0) {
+							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+							create_transaction.setLong(1, System.currentTimeMillis());
+							create_transaction.setString(2, contest_admin);
+							create_transaction.setString(3, "BTC-FIXED-ODDS-CREATOR-WINNINGS");
+							create_transaction.setString(4, from_account);
+							create_transaction.setString(5, contest.getString("created_by"));
+							create_transaction.setDouble(6, actual_rake_amount);
+							create_transaction.setString(7, from_currency);
+							create_transaction.setString(8, to_currency);
+							create_transaction.setString(9, memo);
+							create_transaction.setInt(10, contest_id);
+							create_transaction.executeUpdate();
+						}
+					}
 
 					log("");
 					

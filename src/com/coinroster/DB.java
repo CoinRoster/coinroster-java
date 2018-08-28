@@ -1843,6 +1843,20 @@ public class DB
 		update_amount_left.setInt(2, contest_id);
 		update_amount_left.execute();
 	}
+
+//------------------------------------------------------------------------------------
+
+	public JSONObject get_prop_data(int contest_id) throws SQLException, JSONException {
+		JSONObject prop_data = null;
+		ResultSet rs = null;
+		PreparedStatement get = sql_connection.prepareStatement("select prop_data from contest where id = ?");
+		get.setInt(1, contest_id);
+		rs = get.executeQuery();
+		if(rs.next()){
+			prop_data = new JSONObject(rs.getString(1));
+		}
+		return prop_data;
+	}
 	
 	
 }
