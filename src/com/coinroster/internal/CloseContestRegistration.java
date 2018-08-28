@@ -1,6 +1,7 @@
 package com.coinroster.internal;
 
 import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -38,6 +39,8 @@ public class CloseContestRegistration extends Utils
 					
 					JSONObject contest = db.select_contest(contest_id);
 					
+					boolean fixed_odds = db.is_fixed_odds_contest(contest_id);
+					
 					Long registration_deadline = contest.getLong("registration_deadline");
 					
 					// process any contests where registration should be closed
@@ -55,28 +58,6 @@ public class CloseContestRegistration extends Utils
 						PreparedStatement select_entry = sql_connection.prepareStatement("select user_id from entry where contest_id = ?");
 						select_entry.setInt(1, contest_id);
 						ResultSet entry = select_entry.executeQuery();
-//						
-//						// lock contest table and get current max id
-//						Statement lock_contest = sql_connection.createStatement();
-//						lock_contest.execute("lock tables contest write");
-//						
-//						int max_id = 0;
-//						try {
-//							PreparedStatement select_max_contest = sql_connection.prepareStatement("select max(id) from contest");
-//							ResultSet select_contest_result = select_max_contest.executeQuery();
-//							if (select_contest_result.next()) max_id = select_contest_result.getInt(1);
-//							else {
-//								log("error with query: " + select_contest_result.toString());
-//								break;
-//							}
-//						} catch (Exception e) {
-//							log("Error getting max id from contest table: " + e.toString());
-//						} finally {
-//							lock_contest.execute("unlock tables");
-//							if(max_id == 0) {
-//								return;
-//							}
-//						}
 						
 						// count number of users
 						
@@ -129,6 +110,16 @@ public class CloseContestRegistration extends Utils
 							catch(Exception e){
 								e.printStackTrace(System.out);
 							}
+
+							// prob don't need this as fixed-odds is only checked by prop_data attribute
+							/*JSONArray option_table = new JSONArray(contest.getString("option_table"));
+							if(fixed_odds) {
+								for (int i = 0; i < option_table.length(); i++) {
+									JSONObject option = option_table.getJSONObject(i);
+									option.remove("odds");
+									option_table.put(option);
+								}
+							}*/
 							
 							// populate contest table
 							
@@ -136,7 +127,7 @@ public class CloseContestRegistration extends Utils
 							create_contest.setString(1, contest.getString("category"));
 							create_contest.setString(2, contest.getString("sub_category"));
 							create_contest.setLong(3, System.currentTimeMillis());
-							create_contest.setString(4, contest.getString("contest_type"));
+							create_contest.setString(4, "PARI-MUTUEL");
 							create_contest.setString(5, "VOTING ROUND: " + contest.getString("title"));
 							create_contest.setString(6, contest.getString("description"));
 							create_contest.setLong(7, contest.getLong("settlement_deadline"));
@@ -154,25 +145,29 @@ public class CloseContestRegistration extends Utils
 							ResultSet created_contest = create_contest.getGeneratedKeys();
 							int voting_id = (created_contest.next())? created_contest.getInt(1): 0;
 							
-							if(voting_id == 0) {
-								log("voting id not generated!");
-							}
+							// redundancy
+							if(voting_id == 0) log("voting id not generated!");
+
+							Double contest_creator_commission = 0.0;
 							
-							// add 1% of betting volume to progressive created earlier
-							PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
-							get_original_total.setInt(1, contest_id);
-							ResultSet betting_total_rs = get_original_total.executeQuery();
-							betting_total_rs.next();
-							
-							Double 
-							
-							total_from_original = betting_total_rs.getDouble(1),
-							voting_contest_commission = 0.01; //db.get_voting_contest_commission();
-							
-							log("commission: " + total_from_original);
-							log("control commission: " + voting_contest_commission);
-							
-							Double contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
+							if (!fixed_odds) {
+								// add 1% of betting volume to progressive created earlier
+								PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
+								get_original_total.setInt(1, contest_id);
+								ResultSet betting_total_rs = get_original_total.executeQuery();
+								betting_total_rs.next();
+								
+								Double 
+								
+								total_from_original = betting_total_rs.getDouble(1),
+								voting_contest_commission = 0.01; //db.get_voting_contest_commission();
+								
+								log("commission: " + total_from_original);
+								log("control commission: " + voting_contest_commission);
+								
+								contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
+							} else contest_creator_commission = new BigDecimal(0.0000001).doubleValue();
+
 							log("Contest creator commission: " + contest_creator_commission);
 							
 							JSONObject fund_progressive_input = new JSONObject();
