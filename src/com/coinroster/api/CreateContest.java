@@ -81,7 +81,7 @@ public class CreateContest extends Utils
 				scoring_rules = "";
 			}
 			try{
-				prop_data = input.getString("prop_data").toString();
+				prop_data = input.getString("prop_data");
 				log("prop data: " + prop_data);
 			}catch(Exception e){
 				e.printStackTrace(System.out);
