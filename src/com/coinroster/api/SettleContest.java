@@ -827,9 +827,9 @@ public class SettleContest extends Utils
 										// payout with fixed-odds instead of pro rata
 										if (!fixed_odds) {
 											user_winnings = multiply(user_wager, payout_ratio, 0);
-											winning_wager_total = add(winning_wager_total, user_winnings, 0);
 										} else {
 											user_winnings = multiply(user_wager, odds_for_winning_option, 0);
+											winning_wager_total = add(winning_wager_total, user_winnings, 0);
 										}
 										
 										log("");
@@ -900,6 +900,7 @@ public class SettleContest extends Utils
 										user_rc_balance = add(user_rc_balance, user_winnings, 0);
 										
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
+										log("actual_rake_amount 2: " + actual_rake_amount);
 										
 										if (do_update)
 											{
@@ -1102,6 +1103,7 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0); 
+										log("actual_rake_amount 3: " + actual_rake_amount);
 										
 										log("");
 										log("User: " + user_id);
@@ -1260,6 +1262,7 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0); 
+										log("actual_rake_amount 4:" + actual_rake_amount);
 										
 										log("");
 										log("User: " + user_id);
@@ -1429,6 +1432,7 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0); 
+										log("actual_rake_amount 5: " + actual_rake_amount);
 										
 										log("");
 										log("User: " + user_id);
@@ -1559,11 +1563,11 @@ public class SettleContest extends Utils
 						contest_account = db.select_user("id", contest_account_id);
 						double btc_contest = contest_account.getDouble("btc_balance");
 						btc_contest = subtract(btc_contest, creator_winnings, 0);
-//						db.update_rc_balance(contest_account_id, btc_contest);
+						db.update_rc_balance(contest_account_id, btc_contest);
 						
 						double creator_balance = db.select_user("id", contest.getString("created_by")).getDouble("btc_balance");
 						creator_balance = add(creator_balance, actual_rake_amount, 0);
-//						db.update_btc_balance(contest.getString("created_by"), creator_balance);
+						db.update_btc_balance(contest.getString("created_by"), creator_balance);
 
 						log(String.format("btc_contest: %f; creator_balance: %f", btc_contest, creator_balance));
 						
