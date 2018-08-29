@@ -101,8 +101,10 @@ public class GetContestDetails extends Utils
 						}
 					}
 				}
-
 				
+				double amount_left = -1;
+
+				if (db.is_fixed_odds_contest(contest_id)) amount_left = db.get_prop_data(contest_id).getDouble("amount_left");
 				if (!contest.isNull("progressive"))
 					{
 					String progressive_code = contest.getString("progressive");
@@ -127,6 +129,7 @@ public class GetContestDetails extends Utils
 				output.put("contest_status", contest.get("status"));
 				output.put("registration_deadline", contest.get("registration_deadline"));
 				output.put("settled", contest.get("settled"));
+				output.put("amount_left", amount_left);
 
 				double 
 				
