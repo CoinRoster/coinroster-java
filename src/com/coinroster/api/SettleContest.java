@@ -839,9 +839,11 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 
-										log("actual_rake_amount before payout: " + format_btc(actual_rake_amount));
+										log(String.format("user_winnings: %f; actual_rake_amount: %f", user_winnings, actual_rake_amount));
 										
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
+										
+										log("actual_rake_amount after payout: " + format_btc(actual_rake_amount));
 										
 										if (do_update)
 											{
