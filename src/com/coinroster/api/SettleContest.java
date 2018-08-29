@@ -80,7 +80,15 @@ public class SettleContest extends Utils
 					double 
 					
 					odds_for_winning_option = 0,
-					amount_left = 0;
+					amount_left = 0,
+					risk = 0;
+					
+					if(fixed_odds) {
+						JSONObject prop_data = db.get_prop_data(contest_id);
+						amount_left = prop_data.getDouble("amount_left");
+						risk = prop_data.getDouble("risk");
+					}
+					
 
 					log("Validating contest #" + contest_id);
 					log("Type: " + contest_type);
@@ -329,7 +337,7 @@ public class SettleContest extends Utils
 					double
 					
 					rake = contest.getDouble("rake"), // e.g. 0.01 if rake is 1%
-					rake_amount = multiply(rake, total_from_transactions, 0),
+					rake_amount = (!fixed_odds)? multiply(rake, total_from_transactions, 0): multiply(rake, risk, 0),
 					actual_rake_amount = total_from_transactions, // gets decremented every time something is paid out; remainder -> internal_asset
 					progressive_paid = 0,							
 					user_winnings_total = subtract(total_from_transactions, rake_amount, 0),
@@ -1481,7 +1489,7 @@ public class SettleContest extends Utils
 					// any funds that have not been paid out as winnings or referral revenue are credited to internal_asset
 
 					//EXCEPT 
-					if(fixed_odds)log("Crediting asset account: " + rake_amount);
+					if (fixed_odds) log("Crediting asset account: " + rake_amount);
 					else log("Crediting asset account: " + actual_rake_amount);
 					
 					String internal_asset_id = internal_asset.getString("user_id");
@@ -1536,32 +1544,24 @@ public class SettleContest extends Utils
 						create_transaction.executeUpdate();
 						}
 					
-					// finally, if fixed-odds the creator should receive anything left after raking
+					// finally, if fixed-odds the creator should receive any leftover winnings
+					// along with their risk that has not been raked/lost
 					if (fixed_odds) {
-						// this should not be possible as fixed-odds assume only winners of bets get paid
-						// there should be an excess amount left over for all losers who wagered
-						// If there aren't any losers, this amount cannot be lesser than 0
-						if (actual_rake_amount < rake_amount) log("amount after rake is less than rake!!");
-						actual_rake_amount = subtract(actual_rake_amount, rake_amount, 0);
+						log(String.format("amount_left: %f; actual_rake_amount: %f", amount_left, actual_rake_amount));
+						double creator_winnings = add(amount_left, actual_rake_amount, 0);
 						
-						JSONObject prop_data = db.get_prop_data(contest_id);
-						
-						double creator_winnings = add(prop_data.getDouble("amount_left"), actual_rake_amount, 0);
-						
-						if (actual_rake_amount > 0) {
-							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-							create_transaction.setLong(1, System.currentTimeMillis());
-							create_transaction.setString(2, contest_admin);
-							create_transaction.setString(3, "BTC-FIXED-ODDS-CREATOR-WINNINGS");
-							create_transaction.setString(4, from_account);
-							create_transaction.setString(5, contest.getString("created_by"));
-							create_transaction.setDouble(6, creator_winnings);
-							create_transaction.setString(7, from_currency);
-							create_transaction.setString(8, to_currency);
-							create_transaction.setString(9, memo);
-							create_transaction.setInt(10, contest_id);
-							create_transaction.executeUpdate();
-						}
+						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+						create_transaction.setLong(1, System.currentTimeMillis());
+						create_transaction.setString(2, contest_admin);
+						create_transaction.setString(3, "BTC-FIXED-ODDS-CREATOR-WINNINGS");
+						create_transaction.setString(4, from_account);
+						create_transaction.setString(5, contest.getString("created_by"));
+						create_transaction.setDouble(6, creator_winnings);
+						create_transaction.setString(7, from_currency);
+						create_transaction.setString(8, to_currency);
+						create_transaction.setString(9, memo);
+						create_transaction.setInt(10, contest_id);
+						create_transaction.executeUpdate();
 					}
 
 					log("");

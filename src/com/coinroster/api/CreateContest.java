@@ -453,7 +453,9 @@ public class CreateContest extends Utils
             			output.put("error", "Risk exceeds total balance");
             			break method;
             		}
-            		prop_data_json.put("amount_left", format_btc(risk));
+            		
+            		// adjust amount_left by rake
+            		prop_data_json.put("amount_left", format_btc(subtract(risk, multiply(risk, rake, 0), 0)));
             		prop_data = prop_data_json.toString();
             	}
             	
@@ -490,7 +492,7 @@ public class CreateContest extends Utils
 						odds = multiply(odds, subtract(1, rake, 0), 0);
 						line.remove("odds");
 						line.put("odds", odds);
-						log(String.format("odds for option %f : %f", line.getInt("id"), odds));
+						log(String.format("odds for option %d : %f", line.getInt("id"), odds));
 					}
 					
 					last_id = id;
@@ -607,7 +609,7 @@ public class CreateContest extends Utils
 				if (is_private) create_contest.setString(19, participants.toString());
 				else create_contest.setNull(19, java.sql.Types.VARCHAR);
 				
-				if (is_fixed_odds) create_contest.setInt(20, 2);
+				if (is_fixed_odds) create_contest.setInt(20, 1);
 				else create_contest.setNull(20, java.sql.Types.INTEGER);
 				
             	create_contest.executeUpdate();
