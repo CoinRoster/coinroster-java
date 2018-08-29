@@ -109,6 +109,11 @@ public class CreateEntryPariMutuel extends Utils
 							}
 						}
 					
+					if (session.user_id().equals(contest.getString("created_by"))) {
+						output.put("error", "Contest creator can't bet on fixed odds contests!");
+						break lock;
+					}
+					
 					contest_title = contest.getString("title");
 					
 					// validate wagers
