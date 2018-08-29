@@ -488,11 +488,11 @@ public class CreateContest extends Utils
 							output.put("error", "Odds must be greater than 1");
 							break method;
 						}
-						double odds = line.getDouble("odds");
-						odds = multiply(odds, subtract(1, rake, 0), 0);
-						line.remove("odds");
-						line.put("odds", odds);
-						log(String.format("odds for option %d : %f", line.getInt("id"), odds));
+//						double odds = line.getDouble("odds");
+//						odds = multiply(odds, subtract(1, rake, 0), 0);
+//						line.remove("odds");
+//						line.put("odds", odds);
+//						log(String.format("odds for option %d : %f", line.getInt("id"), odds));
 					}
 					
 					last_id = id;

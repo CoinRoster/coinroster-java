@@ -81,7 +81,8 @@ public class SettleContest extends Utils
 					
 					odds_for_winning_option = 0,
 					amount_left = 0,
-					risk = 0;
+					risk = 0,
+					winning_wager_total = 0;
 					
 					if(fixed_odds) {
 						JSONObject prop_data = db.get_prop_data(contest_id);
@@ -337,7 +338,7 @@ public class SettleContest extends Utils
 					double
 					
 					rake = contest.getDouble("rake"), // e.g. 0.01 if rake is 1%
-					rake_amount = (!fixed_odds)? multiply(rake, total_from_transactions, 0): multiply(rake, risk, 0),
+					rake_amount = multiply(rake, total_from_transactions, 0),
 					actual_rake_amount = total_from_transactions, // gets decremented every time something is paid out; remainder -> internal_asset
 					progressive_paid = 0,							
 					user_winnings_total = subtract(total_from_transactions, rake_amount, 0),
@@ -826,6 +827,7 @@ public class SettleContest extends Utils
 										// payout with fixed-odds instead of pro rata
 										if (!fixed_odds) {
 											user_winnings = multiply(user_wager, payout_ratio, 0);
+											winning_wager_total = add(winning_wager_total, user_winnings, 0);
 										} else {
 											user_winnings = multiply(user_wager, odds_for_winning_option, 0);
 										}
@@ -836,6 +838,8 @@ public class SettleContest extends Utils
 										log("Winnings: " + user_winnings);
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
+
+										log("actual_rake_amount before payout: " + actual_rake_amount);
 										
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
 										
@@ -1489,7 +1493,7 @@ public class SettleContest extends Utils
 					// any funds that have not been paid out as winnings or referral revenue are credited to internal_asset
 
 					//EXCEPT 
-					if (fixed_odds) log("Crediting asset account: " + rake_amount);
+					if (fixed_odds) log("Crediting asset account: " + multiply(winning_wager_total, rake, 0));
 					else log("Crediting asset account: " + actual_rake_amount);
 					
 					String internal_asset_id = internal_asset.getString("user_id");
@@ -1536,7 +1540,8 @@ public class SettleContest extends Utils
 						create_transaction.setString(3, transaction_type);
 						create_transaction.setString(4, from_account);
 						create_transaction.setString(5, to_account);
-						create_transaction.setDouble(6, (!fixed_odds)? actual_rake_amount: rake_amount);
+						// rake is a function of winning wager
+						create_transaction.setDouble(6, (!fixed_odds)? actual_rake_amount: multiply(winning_wager_total, rake, 0));
 						create_transaction.setString(7, from_currency);
 						create_transaction.setString(8, to_currency);
 						create_transaction.setString(9, memo);
@@ -1562,6 +1567,16 @@ public class SettleContest extends Utils
 						create_transaction.setString(9, memo);
 						create_transaction.setInt(10, contest_id);
 						create_transaction.executeUpdate();
+						
+						//refresh data
+						contest_account = db.select_user("id", contest_account_id);
+						double btc_contest = contest_account.getDouble("btc_balance");
+						btc_contest = subtract(btc_contest, creator_winnings, 0);
+						db.update_rc_balance(contest_account_id, btc_contest);
+						
+						double creator_balance = db.select_user("id", contest.getString("created_by")).getDouble("btc_balance");
+						creator_balance = add(creator_balance, actual_rake_amount, 0);
+						db.update_btc_balance(contest.getString("created_by"), creator_balance);
 					}
 
 					log("");
