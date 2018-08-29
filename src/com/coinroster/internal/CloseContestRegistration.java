@@ -58,7 +58,7 @@ public class CloseContestRegistration extends Utils
 						PreparedStatement select_entry = sql_connection.prepareStatement("select user_id from entry where contest_id = ?");
 						select_entry.setInt(1, contest_id);
 						ResultSet entry = select_entry.executeQuery();
-
+						
 						// count number of users
 						
 						HashSet<String> users = new HashSet<String>();
