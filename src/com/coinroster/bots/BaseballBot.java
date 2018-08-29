@@ -74,8 +74,18 @@ public class BaseballBot extends Utils {
 			return null;
 		}
 		else{
-			String earliest_date = events.getJSONObject(0).getString("date");
-	        
+			boolean ready = false;
+			int index = 0;
+			String earliest_date = null;
+			while(!ready){
+				
+				earliest_date = events.getJSONObject(index).getString("date");
+				// check if suspended
+				if(events.getJSONObject(index).getJSONObject("status").getJSONObject("type").getString("name").equals("STATUS_SUSPENDED"))
+					index++;
+				else
+					ready = true;
+	        }
 	        try {
 	            Date date = formatter1.parse(earliest_date.replaceAll("Z$", "+0000"));
 	            long milli = date.getTime();
@@ -85,7 +95,7 @@ public class BaseballBot extends Utils {
 	            e.printStackTrace();
 	        }
 
-			for(int i=0; i < events.length(); i++){
+			for(int i=index; i < events.length(); i++){
 				JSONObject game = events.getJSONObject(i);
 				String name = game.getString("shortName");
 				Date game_date = formatter1.parse(game.getString("date").replaceAll("Z$", "+0000"));
