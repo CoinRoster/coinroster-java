@@ -839,11 +839,7 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 
-										log(String.format("user_winnings: %f; actual_rake_amount: %f", user_winnings, actual_rake_amount));
-										
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
-										
-										log("actual_rake_amount after payout: " + format_btc(actual_rake_amount));
 										
 										if (do_update)
 											{
@@ -902,7 +898,6 @@ public class SettleContest extends Utils
 										user_rc_balance = add(user_rc_balance, user_winnings, 0);
 										
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
-										log("actual_rake_amount 2: " + actual_rake_amount);
 										
 										if (do_update)
 											{
@@ -1105,7 +1100,6 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0); 
-										log("actual_rake_amount 3: " + actual_rake_amount);
 										
 										log("");
 										log("User: " + user_id);
@@ -1264,7 +1258,6 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0); 
-										log("actual_rake_amount 4:" + actual_rake_amount);
 										
 										log("");
 										log("User: " + user_id);
@@ -1434,7 +1427,6 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0); 
-										log("actual_rake_amount 5: " + actual_rake_amount);
 										
 										log("");
 										log("User: " + user_id);
@@ -1558,8 +1550,8 @@ public class SettleContest extends Utils
 					// finally, if fixed-odds the creator should receive any leftover winnings
 					// along with their risk that has not been raked/lost
 					if (fixed_odds) {
-						log(String.format("amount_left: %f; actual_rake_amount: %f", amount_left, actual_rake_amount));
-						double creator_winnings = add(amount_left, actual_rake_amount, 0);
+						log(String.format("amount_left: %f; leftover: %f", amount_left, subtract(total_from_transactions, winning_wager_total, 0)));
+						double creator_winnings = add(amount_left, subtract(total_from_transactions, winning_wager_total, 0), 0);
 						
 						//refresh data
 						contest_account = db.select_user("id", contest_account_id);
@@ -1568,7 +1560,7 @@ public class SettleContest extends Utils
 						db.update_btc_balance(contest_account_id, btc_contest);
 						
 						double creator_balance = db.select_user("id", contest.getString("created_by")).getDouble("btc_balance");
-						creator_balance = add(creator_balance, actual_rake_amount, 0);
+						creator_balance = add(creator_balance, creator_winnings, 0);
 						db.update_btc_balance(contest.getString("created_by"), creator_balance);
 
 						log(String.format("btc_contest: %f; creator_balance: %f", btc_contest, creator_balance));
