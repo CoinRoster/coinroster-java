@@ -490,7 +490,7 @@ public class CreateContest extends Utils
 						odds = multiply(odds, subtract(1, rake, 0), 0);
 						line.remove("odds");
 						line.put("odds", odds);
-						log(String.format("odds for option %f : %f", line.getInt("id"), odds));
+						log(String.format("odds for option %d : %f", line.getInt("id"), odds));
 					}
 					
 					last_id = id;
