@@ -839,7 +839,7 @@ public class SettleContest extends Utils
 										
 										user_btc_balance = add(user_btc_balance, user_winnings, 0);
 
-										log("actual_rake_amount before payout: " + actual_rake_amount);
+										log("actual_rake_amount before payout: " + format_btc(actual_rake_amount));
 										
 										actual_rake_amount = subtract(actual_rake_amount, user_winnings, 0);
 										
@@ -1563,7 +1563,7 @@ public class SettleContest extends Utils
 						contest_account = db.select_user("id", contest_account_id);
 						double btc_contest = contest_account.getDouble("btc_balance");
 						btc_contest = subtract(btc_contest, creator_winnings, 0);
-						db.update_rc_balance(contest_account_id, btc_contest);
+						db.update_btc_balance(contest_account_id, btc_contest);
 						
 						double creator_balance = db.select_user("id", contest.getString("created_by")).getDouble("btc_balance");
 						creator_balance = add(creator_balance, actual_rake_amount, 0);
