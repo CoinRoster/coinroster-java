@@ -1547,7 +1547,7 @@ public class SettleContest extends Utils
 					// finally, if fixed-odds the creator should receive any leftover winnings
 					// along with their risk that has not been raked/lost
 					if (fixed_odds) {
-						
+						log(String.format("amount_left: %f; actual_rake_amount: %f", amount_left, actual_rake_amount));
 						double creator_winnings = add(amount_left, actual_rake_amount, 0);
 						
 						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
