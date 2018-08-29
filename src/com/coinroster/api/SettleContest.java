@@ -77,7 +77,10 @@ public class SettleContest extends Utils
 					voting_contest = db.is_voting_contest(contest_id),
 					fixed_odds = db.is_fixed_odds_contest(contest_id);
 					
-					double odds_for_winning_option = 0;
+					double 
+					
+					odds_for_winning_option = 0,
+					amount_left = 0;
 
 					log("Validating contest #" + contest_id);
 					log("Type: " + contest_type);
@@ -1525,10 +1528,10 @@ public class SettleContest extends Utils
 						create_transaction.setString(3, transaction_type);
 						create_transaction.setString(4, from_account);
 						create_transaction.setString(5, to_account);
-						create_transaction.setDouble(6, (fixed_odds)? rake_amount: actual_rake_amount);
+						create_transaction.setDouble(6, (!fixed_odds)? actual_rake_amount: rake_amount);
 						create_transaction.setString(7, from_currency);
 						create_transaction.setString(8, to_currency);
-						create_transaction.setString(9, "Fixed-odds contest creator payout for contest #" + contest_id);
+						create_transaction.setString(9, memo);
 						create_transaction.setInt(10, contest_id);
 						create_transaction.executeUpdate();
 						}
@@ -1541,6 +1544,10 @@ public class SettleContest extends Utils
 						if (actual_rake_amount < rake_amount) log("amount after rake is less than rake!!");
 						actual_rake_amount = subtract(actual_rake_amount, rake_amount, 0);
 						
+						JSONObject prop_data = db.get_prop_data(contest_id);
+						
+						double creator_winnings = add(prop_data.getDouble("amount_left"), actual_rake_amount, 0);
+						
 						if (actual_rake_amount > 0) {
 							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 							create_transaction.setLong(1, System.currentTimeMillis());
@@ -1548,7 +1555,7 @@ public class SettleContest extends Utils
 							create_transaction.setString(3, "BTC-FIXED-ODDS-CREATOR-WINNINGS");
 							create_transaction.setString(4, from_account);
 							create_transaction.setString(5, contest.getString("created_by"));
-							create_transaction.setDouble(6, actual_rake_amount);
+							create_transaction.setDouble(6, creator_winnings);
 							create_transaction.setString(7, from_currency);
 							create_transaction.setString(8, to_currency);
 							create_transaction.setString(9, memo);

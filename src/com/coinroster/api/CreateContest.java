@@ -480,6 +480,18 @@ public class CreateContest extends Utils
 						log(output.get("error"));
 	            		break method;
 						}
+
+					if (is_fixed_odds) {
+						if (line.getDouble("odds") <= 1) {
+							output.put("error", "Odds must be greater than 1");
+							break method;
+						}
+						double odds = line.getDouble("odds");
+						odds = multiply(odds, subtract(1, rake, 0), 0);
+						line.remove("odds");
+						line.put("odds", odds);
+						log(String.format("odds for option %d : %d", line.getInt("id"), odds));
+					}
 					
 					last_id = id;
 					
@@ -527,8 +539,9 @@ public class CreateContest extends Utils
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
             																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
-            																		+ "scoring_rules, prop_data, participants) "
-            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+            																		+ "scoring_rules, prop_data, participants, min_users) "
+            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -591,13 +604,12 @@ public class CreateContest extends Utils
 				create_contest.setString(17, scoring_rules);
 				create_contest.setString(18, prop_data);
 				
-
-				if (is_private) {
-					create_contest.setString(19, participants.toString());
-				} else {
-					create_contest.setNull(19, java.sql.Types.VARCHAR);
-				}
-
+				if (is_private) create_contest.setString(19, participants.toString());
+				else create_contest.setNull(19, java.sql.Types.VARCHAR);
+				
+				if (is_fixed_odds) create_contest.setInt(20, 2);
+				else create_contest.setNull(20, java.sql.Types.INTEGER);
+				
             	create_contest.executeUpdate();
             	
             	ResultSet rs = create_contest.getGeneratedKeys();
