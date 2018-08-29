@@ -1555,28 +1555,30 @@ public class SettleContest extends Utils
 						log(String.format("amount_left: %f; actual_rake_amount: %f", amount_left, actual_rake_amount));
 						double creator_winnings = add(amount_left, actual_rake_amount, 0);
 						
-						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-						create_transaction.setLong(1, System.currentTimeMillis());
-						create_transaction.setString(2, contest_admin);
-						create_transaction.setString(3, "BTC-FIXED-ODDS-CREATOR-WINNINGS");
-						create_transaction.setString(4, from_account);
-						create_transaction.setString(5, contest.getString("created_by"));
-						create_transaction.setDouble(6, creator_winnings);
-						create_transaction.setString(7, from_currency);
-						create_transaction.setString(8, to_currency);
-						create_transaction.setString(9, memo);
-						create_transaction.setInt(10, contest_id);
-						create_transaction.executeUpdate();
-						
 						//refresh data
 						contest_account = db.select_user("id", contest_account_id);
 						double btc_contest = contest_account.getDouble("btc_balance");
 						btc_contest = subtract(btc_contest, creator_winnings, 0);
-						db.update_rc_balance(contest_account_id, btc_contest);
+//						db.update_rc_balance(contest_account_id, btc_contest);
 						
 						double creator_balance = db.select_user("id", contest.getString("created_by")).getDouble("btc_balance");
 						creator_balance = add(creator_balance, actual_rake_amount, 0);
-						db.update_btc_balance(contest.getString("created_by"), creator_balance);
+//						db.update_btc_balance(contest.getString("created_by"), creator_balance);
+
+						log(String.format("btc_contest: %f; creator_balance: %f", btc_contest, creator_balance));
+						
+						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+						create_transaction.setLong(1, System.currentTimeMillis());
+						create_transaction.setString(2, contest_admin);
+						create_transaction.setString(3, "BTC-FIXED-ODDS-CREATOR-WINNINGS");
+						create_transaction.setString(4, contest_account_id);
+						create_transaction.setString(5, contest.getString("created_by"));
+						create_transaction.setDouble(6, creator_winnings);
+						create_transaction.setString(7, "BTC");
+						create_transaction.setString(8, "BTC");
+						create_transaction.setString(9, "Contest creator returned amount");
+						create_transaction.setInt(10, contest_id);
+						create_transaction.executeUpdate();
 					}
 
 					log("");

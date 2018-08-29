@@ -882,7 +882,7 @@ public class DB
 
 	// CHECK IF CONTEST IS FIXED-ODDS
 	public boolean is_fixed_odds_contest(int contest_id) throws Exception {
-		JSONObject prop_data = new JSONObject(this.select_contest(contest_id).getString("prop_data"));
+		JSONObject prop_data = this.get_prop_data(contest_id);
 		if(prop_data.has("risk")) return true;
 		return false;
 	}
