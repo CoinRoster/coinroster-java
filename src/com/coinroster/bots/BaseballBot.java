@@ -467,10 +467,10 @@ public class BaseballBot extends Utils {
 			}
 			log("valid?" + sql_connection.isValid(0));
 			
-			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
-			delete_old_rows.setString(1, this.sport);
-			delete_old_rows.executeUpdate();
-			log("deleted " + this.sport + " players from old contests");
+//			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
+//			delete_old_rows.setString(1, this.sport);
+//			delete_old_rows.executeUpdate();
+//			log("deleted " + this.sport + " players from old contests");
 			
 			JSONObject empty_data_json = new JSONObject();
 			try {
