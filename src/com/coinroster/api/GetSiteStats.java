@@ -96,7 +96,7 @@ public class GetSiteStats extends Utils
 			rs = ps.executeQuery();
 			if(rs.next()){
 				rc_won = rs.getDouble(1);
-				stat.put("name", "Amound of RC Won");
+				stat.put("name", "Amount of RC Won");
 				stat.put("value", rc_won);
 				all_stats.put(stat);
 			}
