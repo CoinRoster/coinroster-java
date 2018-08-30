@@ -610,7 +610,7 @@ public class CreateContest extends Utils
 				else create_contest.setNull(19, java.sql.Types.VARCHAR);
 				
 				if (is_fixed_odds) create_contest.setInt(20, 1);
-				else create_contest.setNull(20, java.sql.Types.INTEGER);
+				else create_contest.setInt(20,2);
 				
             	create_contest.executeUpdate();
             	
