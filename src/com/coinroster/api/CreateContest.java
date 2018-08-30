@@ -484,8 +484,8 @@ public class CreateContest extends Utils
 						}
 
 					if (is_fixed_odds) {
-						if (line.getDouble("odds") <= 1) {
-							output.put("error", "Odds must be greater than 1");
+						if (line.getDouble("odds") < 1) {
+							output.put("error", "Odds must be 1 or greater");
 							break method;
 						}
 						
