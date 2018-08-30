@@ -73,8 +73,8 @@ public class SetupPropBet extends Utils{
 					prop_data = new JSONObject();
 				}
 				
-				// add all the checks for odds go here
-				if (prop_data.has("over_odds")) {
+				// checks for fixed-odds
+				if (prop_data.has("risk")) {
 					is_fixed_odds = true;
 				}
 				
@@ -176,8 +176,8 @@ public class SetupPropBet extends Utils{
 						int index = 2;
 						JSONArray players = prop_data.getJSONArray("players");
 						for(int i=0; i < players.length(); i++){
-							String player_id = players.getString(i);
-							ResultSet info = db.get_player_info(sport, player_id);
+							JSONObject player = players.getJSONObject(i);
+							ResultSet info = db.get_player_info(sport, player.getString("id"));
 							if(info.next()){
 								String name = info.getString(1) + " " + info.getString(2);
 								String gameID = info.getString(3);
@@ -186,9 +186,11 @@ public class SetupPropBet extends Utils{
 								JSONObject p = new JSONObject();
 								p.put("description", name);
 								p.put("id", index);
-								p.put("player_id", player_id);
+								p.put("player_id", player.getString("id"));
 								option_table.put(p);
 								index += 1;
+								
+								if (is_fixed_odds) p.put("odds", player.getDouble("odds"));
 							}
 						}
 						
@@ -352,10 +354,13 @@ public class SetupPropBet extends Utils{
 						JSONObject yes = new JSONObject();
 						yes.put("description", "Yes");
 						yes.put("id", 1);
+						if(is_fixed_odds) yes.put("odds", prop_data.getDouble("yes_odds"));
 						option_table.put(yes);
+						
 						JSONObject no = new JSONObject();
 						no.put("description", "No");
 						no.put("id", 2);
+						if(is_fixed_odds) yes.put("odds", prop_data.getDouble("no_odds"));
 						option_table.put(no);
 						
 						sport_title = "";
