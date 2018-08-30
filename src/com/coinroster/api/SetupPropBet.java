@@ -73,9 +73,13 @@ public class SetupPropBet extends Utils{
 					prop_data = new JSONObject();
 				}
 				
-				// checks for fixed-odds
+				
+				// checks for fixed-odds and if so convert risk to String
 				if (prop_data.has("risk")) {
 					is_fixed_odds = true;
+					String risk = Utils.format_btc(prop_data.getDouble("risk"));
+					prop_data.remove("risk");
+					prop_data.put("risk", risk);
 				}
 				
 				Long deadline = null;
