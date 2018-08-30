@@ -206,7 +206,7 @@ public class CloseContestRegistration extends Utils
 							message_body  = "Hi <b><!--USERNAME--></b>";
 							message_body += "<br/>";
 							message_body += "<br/>";
-							message_body += "<b>" + contest_title + "</b> is now being Crowd settled! <a href='" + Server.host + "/login.html>Log in now</a> and cast your bet on what you think is the correct outcome.";
+							message_body += "<b>" + contest_title + "</b> is now being Crowd settled! <a href='" + Server.host + "/login.html'>Log in now</a> and cast your bet on what you think is the correct outcome.";
 							message_body += "<br/>";
 							message_body += "<br/>";
 							message_body += "<a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>Click here</a> to view your wagers.";
