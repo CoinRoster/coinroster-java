@@ -114,7 +114,6 @@ public class BaseballBot extends Utils {
 			}
 			this.game_IDs = gameIDs;
 			this.games = games;
-			log(games.toString());
 			return gameIDs.toString();
 		}
 	}
