@@ -229,7 +229,6 @@ public class SetupPropBet extends Utils{
 						String game = "";
 						
 						double 
-						
 						over_odds = 0,
 						under_odds = 0;
 						
@@ -237,7 +236,7 @@ public class SetupPropBet extends Utils{
 							name = info.getString(1) + " " + info.getString(2);
 							game = info.getString(3);
 						}
-						
+												
 						String o_u = String.valueOf(prop_data.getDouble("over_under_value"));
 						contest_title = name + " Over/Under " + o_u;
 						
@@ -381,7 +380,6 @@ public class SetupPropBet extends Utils{
 				}
 				
 				String title = date_name_title + " | " + contest_title + sport_title;
-				
 				JSONObject prop = new JSONObject();
 				prop.put("category", category);
 				prop.put("sub_category", sub_category);
@@ -452,7 +450,6 @@ public class SetupPropBet extends Utils{
 	
 	public Long findEarliestGame(ArrayList<String> games, JSONArray gameData) throws JSONException{
 		for(int i = 0; i < gameData.length(); i++){
-			log("checking for game: " + gameData.getJSONObject(i).getString("name"));
 			for(String game : games){
 				if(gameData.getJSONObject(i).getString("gameID").equals(game)){
 					return gameData.getJSONObject(i).getLong("date_milli");

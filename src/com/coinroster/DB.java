@@ -1764,7 +1764,7 @@ public class DB
 	public ResultSet get_player_info(String sport, String player_id) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr, gameID from player where id = ? and sport_type = ? ");
+			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr, max(gameID) from player where id = ? and sport_type = ? ");
 			get_players.setString(1, player_id);
 			get_players.setString(2, sport);
 			result_set = get_players.executeQuery();		
