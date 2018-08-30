@@ -40,6 +40,8 @@ public class SetupPropBet extends Utils{
 //------------------------------------------------------------------------------------
 			try{
 				
+				boolean is_fixed_odds = false;
+				
 				BaseballBot baseball_bot = null;
 				BasketballBot basketball_bot = null;
 				GolfBot golf_bot = null;
@@ -69,6 +71,11 @@ public class SetupPropBet extends Utils{
 					prop_data = data.getJSONObject("prop_data");
 				}catch(JSONException e){
 					prop_data = new JSONObject();
+				}
+				
+				// add all the checks for odds go here
+				if (prop_data.has("over_odds")) {
+					is_fixed_odds = true;
 				}
 				
 				Long deadline = null;
@@ -216,6 +223,12 @@ public class SetupPropBet extends Utils{
 						ResultSet info = db.get_player_info(sport, prop_data.getString("player_id"));
 						String name = "";
 						String game = "";
+						
+						double 
+						
+						over_odds = 0,
+						under_odds = 0;
+						
 						if(info.next()){
 							name = info.getString(1) + " " + info.getString(2);
 							game = info.getString(3);
@@ -227,10 +240,24 @@ public class SetupPropBet extends Utils{
 						JSONObject over = new JSONObject();
 						over.put("description", "Over " + o_u);
 						over.put("id", 1);
+						
+						if(is_fixed_odds) {
+							over_odds = prop_data.getDouble("over_odds");
+							over.put("odds", over_odds);
+						}
+						
 						option_table.put(over);
+						
 						JSONObject under = new JSONObject();
 						under.put("description", "Under " + o_u);
 						under.put("id", 2);
+						
+						
+						if(is_fixed_odds) {
+							under_odds = prop_data.getDouble("under_odds");
+							over.put("odds", under_odds);
+						}
+						
 						option_table.put(under);
 						
 						if(sport.equals("BASEBALL")){
