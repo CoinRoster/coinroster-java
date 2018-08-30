@@ -172,7 +172,9 @@ public class SetupPropBet extends Utils{
 						JSONObject tie = new JSONObject();
 						tie.put("id", 1);
 						tie.put("description", "Tie");
+						if(is_fixed_odds) tie.put("odds", prop_data.getDouble("tie_odds"));
 						option_table.put(tie);
+						
 						int index = 2;
 						JSONArray players = prop_data.getJSONArray("players");
 						for(int i=0; i < players.length(); i++){
@@ -187,10 +189,10 @@ public class SetupPropBet extends Utils{
 								p.put("description", name);
 								p.put("id", index);
 								p.put("player_id", player.getString("id"));
+								if (is_fixed_odds) 
+									p.put("odds", player.getDouble("odds"));
 								option_table.put(p);
 								index += 1;
-								
-								if (is_fixed_odds) p.put("odds", player.getDouble("odds"));
 							}
 						}
 						
@@ -253,11 +255,10 @@ public class SetupPropBet extends Utils{
 						JSONObject under = new JSONObject();
 						under.put("description", "Under " + o_u);
 						under.put("id", 2);
-						
-						
+										
 						if(is_fixed_odds) {
 							under_odds = prop_data.getDouble("under_odds");
-							over.put("odds", under_odds);
+							under.put("odds", under_odds);
 						}
 						
 						option_table.put(under);
