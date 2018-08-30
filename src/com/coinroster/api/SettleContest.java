@@ -80,13 +80,11 @@ public class SettleContest extends Utils
 					double 
 					
 					odds_for_winning_option = 0,
-					amount_left = 0,
 					risk = 0,
 					winning_wager_total = 0;
 					
 					if(fixed_odds) {
 						JSONObject prop_data = db.get_prop_data(contest_id);
-						amount_left = prop_data.getDouble("amount_left");
 						risk = prop_data.getDouble("risk");
 					}
 					
@@ -1550,8 +1548,11 @@ public class SettleContest extends Utils
 					// finally, if fixed-odds the creator should receive any leftover winnings
 					// along with their risk that has not been raked/lost
 					if (fixed_odds) {
-						log(String.format("amount_left: %f; leftover: %f", amount_left, subtract(total_from_transactions, winning_wager_total, 0)));
-						double creator_winnings = add(amount_left, subtract(total_from_transactions, winning_wager_total, 0), 0);
+						double actual_amount_left = risk - total_from_transactions;
+						log(String.format("amount_left: %f; leftover: %f", actual_amount_left, subtract(total_from_transactions, winning_wager_total, 0)));
+						
+						// creator_winnings = amount_left + (total_from_transactions - winning_wager_total) - rake
+						double creator_winnings = subtract(add(actual_amount_left, subtract(total_from_transactions, winning_wager_total, 0), 0), multiply(winning_wager_total, rake, 0), 0);
 						
 						//refresh data
 						contest_account = db.select_user("id", contest_account_id);
