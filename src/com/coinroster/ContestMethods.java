@@ -150,7 +150,8 @@ public class ContestMethods extends Utils{
 				if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 					BasketballBot basketball_bot = new BasketballBot(sql_connection);
 					log("Basketball games are in play and minute is multiple of 20");
-					ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(basketball_bot.sport);
+					basketball_bot.scrapeGameIDs();
+					ArrayList<String> gameIDs = basketball_bot.getGameIDs();
 					boolean games_ended;
 					games_ended = basketball_bot.scrape(gameIDs);
 					
@@ -519,7 +520,7 @@ public class ContestMethods extends Utils{
 			DB db_connection = new DB(sql_connection);
 			JSONObject roster_contests = db_connection.checkGolfRosterInPlay("FANTASYSPORTS", "GOLF", "ROSTER");
 			JSONObject pari_contests = db_connection.checkGolfPropInPlay("FANTASYSPORTS", "GOLFPROPS", "PARI-MUTUEL");
-			int hour = Calendar.getInstance().get(Calendar.HOUR);
+			int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 			
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				GolfBot golfBot = new GolfBot(sql_connection);
@@ -857,7 +858,8 @@ public class ContestMethods extends Utils{
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				BaseballBot baseball_bot = new BaseballBot(sql_connection);
 				log("Baseball games are in play and minute is multiple of 20");
-				ArrayList<String> gameIDs = db_connection.getAllGameIDsDB(baseball_bot.sport);
+				baseball_bot.scrapeGameIDs();
+				ArrayList<String> gameIDs = baseball_bot.getGameIDs();
 				boolean games_ended;
 				games_ended = baseball_bot.scrape(gameIDs);
 				
