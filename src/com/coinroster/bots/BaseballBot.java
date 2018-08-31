@@ -808,16 +808,6 @@ public class BaseballBot extends Utils {
 				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
 				return 0;
 			}
-			catch(HttpStatusException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
-			catch(IOException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
 			if(page == null){
 				return 0;
 			}
@@ -825,7 +815,7 @@ public class BaseballBot extends Utils {
 			Element bio = page.getElementsByClass("player-bio").first();
 			
 			// parse bio-bio div to get pos, weight, height, birthString
-			Element general_info = bio.getElementsByClass("general-info").first();
+			Element general_info = bio.getElementsByClass("xgeneral-info").first();
 			try{
 				String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
 				this.pos = pos;
