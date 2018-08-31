@@ -517,6 +517,11 @@ public class DB
 			String progressive = result_set.getString(28);
 			double progressive_paid = result_set.getDouble(29);
 			Long settlement_deadline = result_set.getLong(32);
+			String prop_data = result_set.getString(33);
+			
+			if (result_set.wasNull()) {
+				prop_data = "";
+			}
 			
 			String participants = result_set.getString(34);
 			
@@ -555,6 +560,7 @@ public class DB
 			contest.put("progressive_paid", progressive_paid);
 			contest.put("settlement_deadline", settlement_deadline);
 			contest.put("participants", participants);
+			contest.put("prop_data", prop_data);
 			}
 
 		return contest;
@@ -868,6 +874,18 @@ public class DB
 		ResultSet private_rs = check_private.executeQuery();
 		if(private_rs.next()) {
 			if(!private_rs.getString(1).equals("")) return true;
+		}
+		return false;
+	}
+
+//------------------------------------------------------------------------------------
+
+	// CHECK IF CONTEST IS FIXED-ODDS
+	public boolean is_fixed_odds_contest(int contest_id) throws Exception {
+		String prop_str= this.select_contest(contest_id).getString("prop_data");
+		if(!prop_str.isEmpty()){
+			JSONObject prop_data = new JSONObject(prop_str);
+			if(prop_data.has("risk")) return true;
 		}
 		return false;
 	}
@@ -1589,7 +1607,7 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	public JSONArray getGolfRosterOptionTable(String gameID) throws SQLException, JSONException{
+	public JSONArray getGolfRosterOptionTable(String gameID, double weight) throws SQLException, JSONException{
 		JSONArray option_table = new JSONArray();
 		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = ? and filter_on = ? and gameID = ?");
 		get_players.setString(1, "GOLF");
@@ -1603,7 +1621,7 @@ public class DB
 			String name2 = Normalizer.normalize(name, Normalizer.Form.NFD);
 			String nameNormalized = name2.replaceAll("[^\\p{ASCII}]", "");
 			p.put("name", nameNormalized + " " + players.getString(3));
-			p.put("price", players.getDouble(4));
+			p.put("price", (int) Math.round(players.getDouble(4) * weight));
 			option_table.put(p);
 		}
 		return option_table;
@@ -1668,6 +1686,7 @@ public class DB
 		while (result_set.next()){
 			JSONObject entry = new JSONObject();
 			try{
+				entry.put("contest_template_id", result_set.getInt(1));
 				entry.put("category", result_set.getString(2));
 				entry.put("sub_category", result_set.getString(3));
 				entry.put("contest_type", result_set.getString(4));
@@ -1745,7 +1764,7 @@ public class DB
 	public ResultSet get_player_info(String sport, String player_id) throws SQLException{
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr, gameID from player where id = ? and sport_type = ? ");
+			PreparedStatement get_players = sql_connection.prepareStatement("select name, team_abr, max(gameID) from player where id = ? and sport_type = ? ");
 			get_players.setString(1, player_id);
 			get_players.setString(2, sport);
 			result_set = get_players.executeQuery();		
@@ -1758,7 +1777,7 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	public void notify_user_roster_player_replacement(String username, String email_address, String replaced_player, String replacement_player, int roster_id, String contest_name, int contest_id) throws Exception
+	public void notify_user_roster_player_replacement(String username, String email_address, String replaced_player, String replacement_player, int roster_id, String contest_name, int contest_id, String type) throws Exception
 	{
 	String
 	subject = "Your roster has been adjusted!",
@@ -1766,7 +1785,7 @@ public class DB
 	message_body = "Hello <b>" + username + "</b>!";
 	message_body += "<br/>";
 	message_body += "We have made an <b>important change</b> to your roster (id: " + roster_id + ") in <a href='" + Server.host + "/contest.html?id=" + contest_id + "'>" + contest_name + "</a><br><br>";
-	message_body += replaced_player + " is inactive so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br><br>";
+	message_body += replaced_player + " is " + type.toLowerCase() + " so we have gone ahead and replaced him with the next most expensive active player: " + replacement_player + "<br><br>";
 	message_body += "View your updated roster <a href='" + Server.host + "/contests/entries.html?contest_id=" + contest_id + "'>here</a>";
 	message_body += "<br/>";
 	message_body += "Best of luck!";
@@ -1818,6 +1837,37 @@ public class DB
 		if(rs.next())
 			rtn = rs.getString(1);
 		return rtn;
+	}
+
+//------------------------------------------------------------------------------------
+
+	public void update_prop_data(int contest_id, JSONObject prop_data) throws SQLException {
+		PreparedStatement update_amount_left = sql_connection.prepareStatement("update contest set prop_data = ? where id = ?");
+		update_amount_left.setString(1, prop_data.toString());
+		update_amount_left.setInt(2, contest_id);
+		update_amount_left.execute();
+	}
+
+//------------------------------------------------------------------------------------
+
+	public JSONObject get_prop_data(int contest_id) throws SQLException, JSONException {
+		JSONObject prop_data = null;
+		ResultSet rs = null;
+		PreparedStatement get = sql_connection.prepareStatement("select prop_data from contest where id = ?");
+		get.setInt(1, contest_id);
+		rs = get.executeQuery();
+		if(rs.next()){
+			prop_data = new JSONObject(rs.getString(1));
+		}
+		return prop_data;
+	}
+	
+	public ResultSet get_data_for_autoplay(int contest_id) throws SQLException{
+		ResultSet rs = null;
+		PreparedStatement get = sql_connection.prepareStatement("select option_table, salary_cap, roster_size from contest where id = ?");
+		get.setInt(1, contest_id);
+		rs = get.executeQuery();
+		return rs;
 	}
 	
 	

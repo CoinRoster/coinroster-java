@@ -21,6 +21,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.BackoutContest;
+import com.coinroster.internal.EnterAutoplayRosters;
 import com.coinroster.internal.JsonReader;
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
@@ -264,8 +265,8 @@ public class GolfBot extends Utils {
 	}
 	
 	public void scrapeTourneyID(int today) throws IOException, JSONException, InterruptedException{
+		
 		// get the Thursday date in yyyy-MM-dd format
-		// THIS ASSUMES ITS BEING RUN ON A MONDAY
 		SimpleDateFormat formattedDate = new SimpleDateFormat("yyyy-MM-dd");            
 		Calendar c = Calendar.getInstance();
 		
@@ -301,14 +302,17 @@ public class GolfBot extends Utils {
 				this.tourneyID = tournament.getString("permNum");
 				this.gameIDs.add(this.tourneyID);
 				this.startDate = milli;
+				log("setting up for tournament: " + this.getTourneyName());
 				break;
 			}
 		}
+		log("couldn't find a tournament this week that fits criteria.");
+
 	}
 	
 	public String getCountry(String id) throws JSONException, IOException, InterruptedException{
 		Document page = Jsoup.connect("https://www.pgatour.com/players/player." + id + ".html").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-			      .referrer("http://www.google.com").timeout(6000).get();
+			      .referrer("http://www.google.com").timeout(0).get();
 		Element country_img = page.getElementsByClass("country").first().getElementsByTag("span")
 				.first().getElementsByTag("img").first();
 		String country_code = country_img.attr("src").split("/")[7].replace(".png", "");
@@ -321,6 +325,7 @@ public class GolfBot extends Utils {
 			String url = "https://statdata.pgatour.com/r/" + tourneyID + "/field.json";
 			JSONObject field = JsonReader.readJsonFromUrl(url);
 			JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
+			log("getting the field...");
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
 				String id = player.getString("TournamentPlayerId");
@@ -862,7 +867,10 @@ public class GolfBot extends Utils {
 				contest.put("registration_deadline", this.getDeadline());
 			else
 				contest.put("registration_deadline", (this.getDeadline() + ((Integer.parseInt(when) - 1) * 86400000)));
-            JSONArray option_table = db.getGolfRosterOptionTable(this.getTourneyID());
+			
+			double weight = this.getNormalizationWeight(prop_data.getDouble("top_player_salary"), contest.getInt("salary_cap"));
+			
+			JSONArray option_table = db.getGolfRosterOptionTable(this.getTourneyID(), weight);
 			contest.put("option_table", option_table);
 			MethodInstance method = new MethodInstance();
 			JSONObject output = new JSONObject("{\"status\":\"0\"}");
@@ -873,6 +881,8 @@ public class GolfBot extends Utils {
 			try{
 				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 				c.newInstance(method);
+				int contest_id = method.output.getInt("contest_id");
+				new EnterAutoplayRosters(sql_connection, contest.getInt("contest_template_id"), contest_id);
 			}
 			catch(Exception e){
 				log(e.toString());
@@ -1195,7 +1205,7 @@ public class GolfBot extends Utils {
 						continue;
 					}
 				}
-				return 1; // must be "Any Other Golfer (1)
+				return 1; // must be Any Other Golfer (1)
 				
 			
 			case "PLAYOFF":
@@ -1585,6 +1595,28 @@ public class GolfBot extends Utils {
 		return 0;
 	}
 	
+	
+	public double getNormalizationWeight(double multiplier, int salary_cap) throws SQLException{
+		
+		double top_price = 0;
+		String stmt = "select salary from player where sport_type = ? and gameID = ? and filter_on = ? order by salary DESC limit 1";
+	
+		PreparedStatement top_player = sql_connection.prepareStatement(stmt);
+		top_player.setString(1, this.sport);
+		top_player.setString(2, this.getTourneyID());
+		top_player.setInt(3, 4);
+		
+		ResultSet top = top_player.executeQuery();
+		if(top.next()){
+			top_price = top.getDouble(1);
+			return ((double) salary_cap * multiplier) / top_price;
+		}
+		else{
+			log("error finding normalization weight");
+			return 0;
+		}
+	}
+	
 	public double calculateMultiStatPoints(String when, JSONObject data, int overall_score, JSONObject scoring_rules) throws JSONException, SQLException{
 		double points = 0.0;
 		int top_score;
@@ -1626,7 +1658,7 @@ public class GolfBot extends Utils {
 		return points;
 	}
 	
-	public void checkForInactives(int contest_id) throws Exception{
+	public void checkForInactives(int contest_id, int status_type) throws Exception{
 		JSONArray entries = db.select_contest_entries(contest_id);
 		for(int i = 0; i < entries.length(); i++){
 			JSONObject entry = entries.getJSONObject(i);
@@ -1636,27 +1668,39 @@ public class GolfBot extends Utils {
 				String p_id = entry_data.getJSONObject(ex_p).getString("id");
 				existing_players.add(p_id);
 			}
-			log("entry existing players: " + existing_players.toString());
+			
+			String type = null;
+			if(status_type == 0)
+				type = "INACTIVE";
+			else if(status_type == 3)
+				type = "CUT";
+			
 			for(int q = 0; q < entry_data.length(); q++){
+				log("entry existing players: " + existing_players.toString());
 				JSONObject player = entry_data.getJSONObject(q);
 				int status = db.getGolferStatus(player.getString("id"), this.sport, this.getTourneyID());
-				// Roster contains INACTIVE player
-				if(status == 0){
+				
+				// Roster contains INACTIVE or CUT player
+				if(status == status_type){
 					// get next available player (one player cheaper)
 					JSONObject new_player = replaceInactivePlayer(player.getString("id"), player.getDouble("price"), existing_players);
 					// remove inactive player from roster
 					entry_data.remove(q);
+					existing_players.remove(player.getString("id"));
 					// put in new one
 					entry_data.put(new_player);
-					log("replacing INACTIVE rostered golfer " + player.getString("id") + " with " + new_player.toString());
+					existing_players.add(new_player.getString("id"));
+					
+					log("replacing " + type + " rostered golfer " + player.getString("id") + " with " + new_player.toString());
 					
 					db.updateEntryWithActivePlayer(entry.getInt("entry_id"), entry_data.toString());
 					String title = db.get_contest_title(contest_id);
 					JSONObject user = db.select_user("id", entry.getString("user_id"));
+					
 					// email user to notify
 					db.notify_user_roster_player_replacement(user.getString("username"), user.getString("email_address"), 
 							db.getPlayerName(player.getString("id"), this.sport, this.getTourneyID()), db.getPlayerName(new_player.getString("id"), this.sport, this.getTourneyID()), 
-							entry.getInt("entry_id"), title, contest_id);
+							entry.getInt("entry_id"), title, contest_id, type);
 					
 				}
 			}
@@ -1680,7 +1724,7 @@ public class GolfBot extends Utils {
 		int index = 3;
 		Iterator<?> players = existing_players.iterator();
 		while(players.hasNext()){
-		   get_player.setString(index++, (String) players.next()); // or whatever it applies 
+		   get_player.setString(index++, (String) players.next());
 		}
 		get_player.setString(index++, this.sport);
 		get_player.setDouble(index++, salary);
@@ -1832,7 +1876,7 @@ public class GolfBot extends Utils {
 			try{
 				String results_url = "https://statdata.pgatour.com/players/" + this.pga_id + "/" + year + "results.json";
 				page = Jsoup.connect(results_url).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						.ignoreContentType(true).referrer("http://www.google.com").timeout(6000).get(); 
+						.ignoreContentType(true).referrer("http://www.google.com").timeout(0).get(); 
 				JSONObject results = new JSONObject(page.text().replace(" \"\" : \"\",", ""));
 				JSONArray tourneys = results.getJSONArray("plrs").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trnDetails");
 				int num_tourneys = tourneys.length();

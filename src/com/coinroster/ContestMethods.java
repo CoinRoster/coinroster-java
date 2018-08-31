@@ -21,6 +21,7 @@ import com.coinroster.bots.GolfBot;
 
 import com.coinroster.bots.CrowdSettleBot;
 import com.coinroster.internal.BackoutContest;
+import com.coinroster.internal.EnterAutoplayRosters;
 import com.coinroster.internal.UpdateContestStatus;
 
 public class ContestMethods extends Utils{
@@ -93,12 +94,15 @@ public class ContestMethods extends Utils{
 					else{
 						options = db.getOptionTable(basketball_bot.sport, true, contest.getInt("filter"), basketball_bot.getGameIDs());
 					}
-						
+					
+					JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+					double weight = basketball_bot.getNormalizationWeight(prop_data.getDouble("top_player_salary"), basketball_bot.getGameIDs(), contest.getInt("salary_cap"));
+											
 		            JSONArray option_table = new JSONArray();
 					while(options.next()){
 						JSONObject player = new JSONObject();
 						player.put("name", options.getString(2) + " " + options.getString(3));
-						player.put("price", options.getDouble(4));
+						player.put("price", (int) Math.round(options.getDouble(4) * weight));
 						player.put("count", 0);
 						player.put("id", options.getString(1));
 						option_table.put(player);
@@ -113,6 +117,8 @@ public class ContestMethods extends Utils{
 					try{
 						Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 						c.newInstance(method);
+						int contest_id = method.output.getInt("contest_id");
+						new EnterAutoplayRosters(sql_connection, contest.getInt("contest_template_id"), contest_id);
 					}
 					catch(Exception e){
 						e.printStackTrace();
@@ -260,14 +266,16 @@ public class ContestMethods extends Utils{
 			JSONArray roster_contests = db.getRosterTemplates("GOLF");
 			JSONArray prop_contests = db.getRosterTemplates("GOLFPROPS");
 			int today = getToday();
+			
+			golfBot.scrapeTourneyID(today);
+			if(golfBot.getTourneyID() == null)
+				return;
+			
 			switch(today){
 			
 				// MONDAY
 				case 2: 
 					// initialize and scrape
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					golfBot.setup();
 					golfBot.savePlayers();
 					
@@ -289,9 +297,6 @@ public class ContestMethods extends Utils{
 				
 				// THURSDAY
 				case 5:
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					
 					//generate tournament ROSTER contests
 					for(int index = 0; index < roster_contests.length(); index++){
@@ -308,9 +313,6 @@ public class ContestMethods extends Utils{
 					
 				// FRIDAY
 				case 6:
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					
 					//generate tournament ROSTER contests
 					for(int index = 0; index < roster_contests.length(); index++){
@@ -327,9 +329,6 @@ public class ContestMethods extends Utils{
 					
 				// SATURDAY
 				case 7:
-					golfBot.scrapeTourneyID(today);
-					if(golfBot.getTourneyID() == null)
-						return;
 					
 					//generate tournament ROSTER contests
 					for(int index = 0; index < roster_contests.length(); index++){
@@ -532,9 +531,14 @@ public class ContestMethods extends Utils{
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
 					String c_id = (String) roster_contest_ids.next();
-					log(hour);
+					
+					// if its Thurs morning, replace INACTIVE players
 					if(today == 5 && hour < 9)
-						golfBot.checkForInactives(Integer.parseInt(c_id));
+						golfBot.checkForInactives(Integer.parseInt(c_id), 0);
+					
+					// if its Sat or Sun morning, replace CUT players
+					else if((today == 7 && hour <= 8 && hour >= 7) || (today == 1 && hour <= 8 && hour >= 7))
+						golfBot.checkForInactives(Integer.parseInt(c_id), 3);
 					
 					String when = roster_contests.getJSONObject(c_id).getString("when");
 					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
@@ -696,7 +700,8 @@ public class ContestMethods extends Utils{
 					GolfBot golfBot = new GolfBot(sql_connection);
 					log("No current CoinRoster contests but Golf tournament is in play and hour is multiple of 3");
 					golfBot.scrapeTourneyID(today);
-					golfBot.scrapeScores(golfBot.getTourneyID());
+					if(golfBot.getTourneyID() != null)
+						golfBot.scrapeScores(golfBot.getTourneyID());
 				}
 			}
 
@@ -717,7 +722,6 @@ public class ContestMethods extends Utils{
 //------------------------------------------------------------------------------------
 
 	
-	// create basketball contests reading from csv
 	public static void createBaseballContests() {
 		
 		Connection sql_connection = null;
@@ -778,18 +782,32 @@ public class ContestMethods extends Utils{
 				contest.put("gameIDs", gameID_array);
 				contest.put("registration_deadline", deadline);
 				ResultSet options;
+				double weight = 0;
+				JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
+				
 				if(contest.getInt("filter") == 0){
 					options = db.getOptionTable(baseball_bot.sport, false, 0, baseball_bot.getGameIDs());
 				}
 				else{
 					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"), baseball_bot.getGameIDs());
 				}
-					
+				
+				// get most expensive player in option table
+				double top_price = 0;
+				while(options.next()){
+					if(options.getDouble(4) > top_price)
+						top_price = options.getDouble(4);
+				}
+				
+				weight = ((double) contest.getInt("salary_cap") * prop_data.getDouble("top_player_salary")) / top_price;	
+				// set the options RS back to the first row
+				options.first();
+				
 	            JSONArray option_table = new JSONArray();
 				while(options.next()){
 					JSONObject player = new JSONObject();
 					player.put("name", options.getString(2) + " " + options.getString(3));
-					player.put("price", options.getDouble(4));
+					player.put("price", (int) Math.round(options.getDouble(4) * weight));
 					player.put("count", 0);
 					player.put("id", options.getString(1));
 					option_table.put(player);
@@ -804,10 +822,14 @@ public class ContestMethods extends Utils{
 				try{
 					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 					c.newInstance(method);
+					int contest_id = method.output.getInt("contest_id");
+					new EnterAutoplayRosters(sql_connection, contest.getInt("contest_template_id"), contest_id);
 				}
 				catch(Exception e){
-					e.printStackTrace();
+					Server.exception(e);
 				}	
+				
+				
 			}	
 		} catch (Exception e) {
 			Server.exception(e);
@@ -846,7 +868,6 @@ public class ContestMethods extends Utils{
 					log("baseball contest: " + c_id);
 					String scoring_rules_string = roster_contests.getString(c_id);
 					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
-					log("scoring rules: " + scoring_rules.toString());
 					JSONArray player_scores = baseball_bot.updateScores(scoring_rules, gameIDs);
 					JSONObject fields = new JSONObject();
 					fields.put("contest_id", Integer.parseInt(c_id));

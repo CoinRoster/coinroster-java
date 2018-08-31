@@ -35,6 +35,7 @@ public class CreateUser extends Utils
 //------------------------------------------------------------------------------------
 
 			// first, a quick length check of username and password
+			log(input.toString());
 			
 			String
 			
@@ -54,8 +55,12 @@ public class CreateUser extends Utils
 			email_ver_key = Server.generate_key(username),
 			referrer_id = null, // id of referrer (if applicable)
 			referring_user_referrer_key = method.request.cookie("referrer_key"),
+			referrer_username = method.request.cookie("referrer_username"),
 			new_user_referrer_key = db.get_new_referrer_key(), // user's referrer key (their affiliate link)
 			email_address = null;
+			
+			log("referring_user_refferer_key: " + referring_user_referrer_key);
+			log("referrer username: " + referrer_username);
 			
 			int 
 			
@@ -70,6 +75,8 @@ public class CreateUser extends Utils
 			
 			referral_key = no_whitespace(input.getString("referral_key")),
 			promo_code = no_whitespace(input.getString("promo_code"));
+			
+			log("referral_key: " + referral_key);
 			
 			if (promo_code.length() > 100)
 				{
@@ -89,6 +96,7 @@ public class CreateUser extends Utils
 				if (referral == null)
 					{
 					output.put("error", "Invalid referrer key");
+					log("invalid referrer key");
 					break method;
 					}
 				else
@@ -101,12 +109,12 @@ public class CreateUser extends Utils
 					email_ver_flag = 1;
 					email_ver_key = null;
 					referrer = db.select_user("id", referrer_id);
-					log(referrer.toString());
 					}
 				}
 			
+			
 			else
-				{
+			{
 				email_address = to_valid_email(input.getString("email_address"));
 				
 				if (email_address == null)
@@ -122,18 +130,24 @@ public class CreateUser extends Utils
 					}
 				
 				if (referring_user_referrer_key != null)
-					{
+				{
 					referrer_id = db.get_referrer_id_for_key(referring_user_referrer_key);
 					referrer = db.select_user("id", referrer_id);
 					if (referrer == null) referrer_id = null;
 					else referral_program = referrer.getDouble("referral_offer");
+				}
+				else if(referrer_username != null)
+				{
+					referrer = db.select_user("username", referrer_username);
+					if (referrer == null) referrer_id = null;
+					else {
+						referral_program = referrer.getDouble("referral_offer");
+						referrer_id = referrer.getString("user_id");
 					}
 				}
-			
-			// check if the new user clicked a link with a referral
-			if (input.has("referrer")) {
-				referrer_id = db.get_id_for_username(input.getString("referrer"));
 			}
+			
+			
 			
 			// at this point we should have our referrer_id, referral_program, and promo object where applicable
 			
@@ -385,6 +399,7 @@ public class CreateUser extends Utils
 						Server.exception(e);
 					}
 					
+				
 					if (referral != null)
 						{
 						// delete all referral records associated with the referred email address:
@@ -401,6 +416,19 @@ public class CreateUser extends Utils
 						message_body += "<br/>";
 						message_body += income_message;
 						}
+					
+					else if (referrer != null)
+						{
+						
+						//db.store_verified_email(new_user_id, email_address);
+						
+						subject = "Successful referral!";
+						message_body  = "<b>" + email_address + "</b> has signed up to CoinRoster!";
+						message_body += "<br/>";
+						message_body += "<br/>";
+						message_body += income_message;
+						}
+					
 					else if (promo != null)
 						{
 						subject = "Someone used your promo code!";

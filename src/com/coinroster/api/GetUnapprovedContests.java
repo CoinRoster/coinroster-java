@@ -62,6 +62,11 @@ public class GetUnapprovedContests extends Utils
 				option_table = result_set.getString(11),
 				rake = result_set.getString(13),
 				cost_per_entry = result_set.getString(15);
+				
+				Long 
+				
+				registration_deadline = result_set.getLong(19),
+				settlement_deadline = result_set.getLong(32);
 		
 				JSONObject transaction = new JSONObject();
 
@@ -75,6 +80,8 @@ public class GetUnapprovedContests extends Utils
 				transaction.put("option_table", option_table);
 				transaction.put("rake", rake);
 				transaction.put("cost_per_entry", cost_per_entry);
+				transaction.put("registration_deadline", registration_deadline);
+				transaction.put("settlement_deadline", settlement_deadline);
 				
 				pending_contests.put(transaction);
 				}
