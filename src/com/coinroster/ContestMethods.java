@@ -700,7 +700,8 @@ public class ContestMethods extends Utils{
 					GolfBot golfBot = new GolfBot(sql_connection);
 					log("No current CoinRoster contests but Golf tournament is in play and hour is multiple of 3");
 					golfBot.scrapeTourneyID(today);
-					golfBot.scrapeScores(golfBot.getTourneyID());
+					if(golfBot.getTourneyID() != null)
+						golfBot.scrapeScores(golfBot.getTourneyID());
 				}
 			}
 
