@@ -10,10 +10,12 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
 import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
@@ -63,8 +65,17 @@ public class BaseballBot extends Utils {
 	public String scrapeGameIDs() throws IOException, JSONException, InterruptedException, ParseException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		JSONArray games = new JSONArray();
+		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
+		
+		int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+		// get previous days' gamesIDs because its past midnight
+		if(hour >= 0 && hour <= 4){
+			today = LocalDate.now().minusDays(1).format(formatter);
+			log("subtracting one day because its past 12am --> date grabbing: " + today);
+		}
+		
 		SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
@@ -92,7 +103,7 @@ public class BaseballBot extends Utils {
 	            this.earliest_game = milli;
 	        } 
 	        catch (ParseException e) {
-	            e.printStackTrace();
+	            Server.exception(e);
 	        }
 
 			for(int i=index; i < events.length(); i++){
