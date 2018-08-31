@@ -41,13 +41,29 @@ public class SetupMisc extends Utils{
 				int index = 1;
 				for(int i = 0; i < data.getJSONArray("pari_mutuel_options").length(); i++){
 					JSONObject option = new JSONObject();
-					option.put("id", index);
-					option.put("description", data.getJSONArray("pari_mutuel_options").getString(i));
-					option_table.put(option);
+					if(data.has("risk")) {
+						log("fixed-odds" + data.toString());
+						option.put("id", index);
+						option.put("description", data.getJSONArray("pari_mutuel_options").getJSONObject(i).getString("description"));
+						option.put("odds", data.getJSONArray("pari_mutuel_options").getJSONObject(i).getDouble("odds"));
+						option_table.put(option);
+					} else {
+						option.put("id", index);
+						option.put("description", data.getJSONArray("pari_mutuel_options").getString(i));
+						option_table.put(option);
+					}
 					index++;
 				}
 				data.put("option_table", option_table);
 				data.remove("pari_mutuel_options");
+				if(data.has("risk")) {
+					JSONObject prop_data = new JSONObject();
+					log("formatted: " + format_btc(data.getDouble("risk")));
+					prop_data.put("risk", format_btc(data.getDouble("risk")));
+					data.remove("risk");
+					data.put("prop_data", prop_data.toString());
+					log(data.toString());
+				}
 				
 				MethodInstance prop_method = new MethodInstance();
 				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");
@@ -61,7 +77,7 @@ public class SetupMisc extends Utils{
 					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
 					c.newInstance(prop_method);
 					output = prop_method.output;
-					output.put("status", "1");
+//					output.put("status", "1");
 
 				}
 				catch(Exception e){

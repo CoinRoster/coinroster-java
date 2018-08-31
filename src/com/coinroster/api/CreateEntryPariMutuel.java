@@ -45,7 +45,8 @@ public class CreateEntryPariMutuel extends Utils
 			double
 			
 			rc_transaction_amount = 0,
-			btc_transaction_amount = 0;
+			btc_transaction_amount = 0,
+			amount_left = 0;
 			
 			String 
 
@@ -54,7 +55,10 @@ public class CreateEntryPariMutuel extends Utils
 			contest_account_id = null,
 			contest_title = null;
 			
-			boolean voting_contest = db.is_voting_contest(contest_id);
+			boolean 
+			
+			voting_contest = db.is_voting_contest(contest_id),
+			fixed_odds = db.is_fixed_odds_contest(contest_id);
 			
 			// lock it all
 			
@@ -105,6 +109,11 @@ public class CreateEntryPariMutuel extends Utils
 							}
 						}
 					
+					if (session.user_id().equals(contest.getString("created_by"))) {
+						output.put("error", "Contest creator can't bet on fixed odds contests!");
+						break lock;
+					}
+					
 					contest_title = contest.getString("title");
 					
 					// validate wagers
@@ -117,6 +126,11 @@ public class CreateEntryPariMutuel extends Utils
 					
 					cost_per_entry = contest.getDouble("cost_per_entry"),
 					total_entry_fees = 0;
+					
+					if (fixed_odds) {
+						JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+						amount_left = prop_data.getDouble("amount_left");
+					}
 					
 					for (int i=0; i<number_of_user_wagers; i++)
 						{
@@ -135,6 +149,31 @@ public class CreateEntryPariMutuel extends Utils
 							output.put("error", "Wager on outcome " + option_id + " is less than the min wager");
 							break lock;
 							}
+						
+						/*  FIXED-ODDS STUFF  */
+						
+						// check if entry is greater than risk if fixed-odds
+						if (fixed_odds) {
+							Double odds_for_option = option_table.getJSONObject(i).getDouble("odds");
+							Double actual_wager = multiply(wager, odds_for_option, 0);
+							
+							log("actual wager: " + format_btc(actual_wager));
+							if (actual_wager > amount_left) {
+								log("wager exceeds risk");
+								output.put("error", "Your wager exceeds the contest's max risk!");
+								break lock;
+							} else {
+								log("reducing risk after wager");
+								log("amount left before: " + amount_left);
+								amount_left = subtract(amount_left, actual_wager, 0);
+								log("amount left after: " + amount_left);
+								JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+								prop_data.remove("amount_left");
+								prop_data.put("amount_left", format_btc(amount_left));
+								db.update_prop_data(contest_id, prop_data);
+							}
+						}
+						/********************************************************/
 						
 						total_entry_fees = add(total_entry_fees, wager, 0);
 						}

@@ -50,6 +50,8 @@ public class CreateContest extends Utils
             JSONArray option_table = input.getJSONArray("option_table");
             
             boolean is_private = false;
+            boolean is_fixed_odds = false;
+            
             try{
             	is_private = input.getBoolean("private");
             }catch(Exception e){
@@ -61,6 +63,7 @@ public class CreateContest extends Utils
 			}
 
 			int contest_id = 0;
+			double risk = 0;
             String settlement_type = input.getString("settlement_type");
             PreparedStatement create_contest = null;
             Long settlement_deadline = null;
@@ -78,11 +81,14 @@ public class CreateContest extends Utils
 				scoring_rules = "";
 			}
 			try{
-				prop_data = input.getString("prop_data").toString();
+				prop_data = input.getString("prop_data");
 				log("prop data: " + prop_data);
 			}catch(Exception e){
+				e.printStackTrace(System.out);
 				prop_data = "";
 			}
+			
+			if (prop_data.contains("risk")) is_fixed_odds = true;
             
 			
             // validate common fields
@@ -434,6 +440,25 @@ public class CreateContest extends Utils
 	        }
             else if (contest_type.equals("PARI-MUTUEL"))
             	{
+            	
+            	// check if user has enough to cover risk if fixed odds
+            	
+            	if(is_fixed_odds) {
+            		JSONObject prop_data_json = new JSONObject(prop_data); 
+            		risk = prop_data_json.getDouble("risk");
+            		log("risk: " + risk);
+            		// fixed odds are not auto-generated so this won't break
+            		if (risk > db.select_user("id", session.user_id()).getDouble("btc_balance")) {
+            			log("Risk exceeds user funds");
+            			output.put("error", "Risk exceeds total balance");
+            			break method;
+            		}
+            		
+            		// adjust amount_left by rake
+            		prop_data_json.put("amount_left", format_btc(subtract(risk, multiply(risk, rake, 0), 0)));
+            		prop_data = prop_data_json.toString();
+            	}
+            	
             	// validate option table:
             	
             	int number_of_options = option_table.length();
@@ -457,6 +482,23 @@ public class CreateContest extends Utils
 						log(output.get("error"));
 	            		break method;
 						}
+
+					if (is_fixed_odds) {
+						if (line.getDouble("odds") < 1) {
+							output.put("error", "Odds must be 1 or greater");
+							break method;
+						}
+						
+						/*
+						// Odds adjusted for risk
+						double odds = line.getDouble("odds");
+						odds = multiply(odds, subtract(1, rake, 0), 0);
+						line.remove("odds");
+						line.put("odds", odds);
+						log(String.format("odds for option %d : %f", line.getInt("id"), odds));
+						*/
+					}
+					
 					last_id = id;
 					
 					String option_description = line.getString("description");
@@ -472,8 +514,9 @@ public class CreateContest extends Utils
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
             																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
-            																		+ "scoring_rules, prop_data, participants) "
-            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+            																		+ "scoring_rules, prop_data, participants, min_users) "
+            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
 				create_contest.setString(3, progressive_code);
@@ -536,13 +579,12 @@ public class CreateContest extends Utils
 				create_contest.setString(17, scoring_rules);
 				create_contest.setString(18, prop_data);
 				
-
-				if (is_private) {
-					create_contest.setString(19, participants.toString());
-				} else {
-					create_contest.setNull(19, java.sql.Types.VARCHAR);
-				}
-
+				if (is_private) create_contest.setString(19, participants.toString());
+				else create_contest.setNull(19, java.sql.Types.VARCHAR);
+				
+				if (is_fixed_odds) create_contest.setInt(20, 1);
+				else create_contest.setInt(20,2);
+				
             	create_contest.executeUpdate();
             	
             	ResultSet rs = create_contest.getGeneratedKeys();
@@ -551,6 +593,37 @@ public class CreateContest extends Utils
             		contest_id = rs.getInt(1);
             	} else {
             		log("Generated keys query failed");
+            	}
+            	
+            	// take away risk amount as escrow
+            	if (is_fixed_odds) {
+            		
+            		JSONObject contest_account = db.select_user("username", "internal_contest_asset");
+
+            		db.update_btc_balance(contest_account.getString("user_id"), add(contest_account.getDouble("btc_balance"), risk, 0));
+            		db.update_btc_balance(session.user_id(), subtract(db.select_user("id", session.user_id()).getDouble("btc_balance"), risk, 0));
+            		
+					String 
+					
+					transaction_type = "FIXED-ODDS-RISK-ESCROW",
+					from_account = session.user_id(),
+					to_account = contest_account.getString("user_id"),
+					from_currency = "BTC",
+					to_currency = "BTC",
+					memo = "Risk amount escrow for fixed odds contest";
+					
+					PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+					create_transaction.setLong(1, System.currentTimeMillis());
+					create_transaction.setString(2, session.user_id());
+					create_transaction.setString(3, transaction_type);
+					create_transaction.setString(4, from_account);
+					create_transaction.setString(5, to_account);
+					create_transaction.setDouble(6, risk);
+					create_transaction.setString(7, from_currency);
+					create_transaction.setString(8, to_currency);
+					create_transaction.setString(9, memo);
+					create_transaction.setInt(10, contest_id);
+					create_transaction.executeUpdate();
             	}
             }
             
@@ -612,6 +685,7 @@ public class CreateContest extends Utils
             }
             
             output.put("status", "1");
+            output.put("contest_id", contest_id);
 		} 
 		
 	if(session != null && !internal_caller)

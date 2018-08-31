@@ -71,8 +71,18 @@ public class BasketballBot extends Utils {
 			return null;
 		}
 		else{
-			String earliest_date = events.getJSONObject(0).getString("date");
-	        
+			boolean ready = false;
+			int index = 0;
+			String earliest_date = null;
+			while(!ready){
+				
+				earliest_date = events.getJSONObject(index).getString("date");
+				// check if suspended
+				if(events.getJSONObject(index).getJSONObject("status").getJSONObject("type").getString("name").equals("STATUS_SUSPENDED"))
+					index++;
+				else
+					ready = true;
+	        }
 	        try {
 	            Date date = formatter1.parse(earliest_date.replaceAll("Z$", "+0000"));
 	            long milli = date.getTime();
@@ -82,7 +92,7 @@ public class BasketballBot extends Utils {
 	            e.printStackTrace();
 	        }
 
-			for(int i=0; i < events.length(); i++){
+			for(int i=index; i < events.length(); i++){
 				JSONObject game = events.getJSONObject(i);
 				String name = game.getString("shortName");
 				Date game_date = formatter1.parse(game.getString("date").replaceAll("Z$", "+0000"));
@@ -454,10 +464,10 @@ public class BasketballBot extends Utils {
 			}
 			log("valid?" + sql_connection.isValid(0));
 			
-			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
-			delete_old_rows.setString(1, this.sport);
-			delete_old_rows.executeUpdate();
-			log("deleted " + this.sport + " players from old contests");
+//			PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type=?");
+//			delete_old_rows.setString(1, this.sport);
+//			delete_old_rows.executeUpdate();
+//			log("deleted " + this.sport + " players from old contests");
 			
 			JSONObject empty_data_json = new JSONObject();
 			empty_data_json.put("fgm", 0);
@@ -572,6 +582,35 @@ public class BasketballBot extends Utils {
 			}
 			this.players_list = players;
 			return players;
+		}
+		
+		
+		public double getNormalizationWeight(double multiplier, ArrayList<String> gameIDs, int salary_cap) throws SQLException{
+			
+			double top_price = 0;
+			String stmt = "select salary from player where sport_type = ? and gameID in (";
+			
+			for(int i = 0; i < gameIDs.size(); i++){
+				stmt += "?,";
+			}
+			stmt = stmt.substring(0, stmt.length() - 1);
+			stmt += ") order by salary DESC limit 1";
+		
+			PreparedStatement top_player = sql_connection.prepareStatement(stmt);
+			top_player.setString(1, this.sport);
+			int index = 2;
+			for(String game : gameIDs){
+				top_player.setString(index++, game); // or whatever it applies 
+			}
+			ResultSet top = top_player.executeQuery();
+			if(top.next()){
+				top_price = top.getDouble(1);
+				return ((double) salary_cap * multiplier) / top_price;
+			}
+			else{
+				log("error finding normalization weight");
+				return 0;
+			}
 		}
 		
 		public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException{

@@ -40,6 +40,8 @@ public class SetupPropBet extends Utils{
 //------------------------------------------------------------------------------------
 			try{
 				
+				boolean is_fixed_odds = false;
+				
 				BaseballBot baseball_bot = null;
 				BasketballBot basketball_bot = null;
 				GolfBot golf_bot = null;
@@ -69,6 +71,15 @@ public class SetupPropBet extends Utils{
 					prop_data = data.getJSONObject("prop_data");
 				}catch(JSONException e){
 					prop_data = new JSONObject();
+				}
+				
+				
+				// checks for fixed-odds and if so convert risk to String
+				if (prop_data.has("risk")) {
+					is_fixed_odds = true;
+					String risk = Utils.format_btc(prop_data.getDouble("risk"));
+					prop_data.remove("risk");
+					prop_data.put("risk", risk);
 				}
 				
 				Long deadline = null;
@@ -165,12 +176,14 @@ public class SetupPropBet extends Utils{
 						JSONObject tie = new JSONObject();
 						tie.put("id", 1);
 						tie.put("description", "Tie");
+						if(is_fixed_odds) tie.put("odds", prop_data.getDouble("tie_odds"));
 						option_table.put(tie);
+						
 						int index = 2;
 						JSONArray players = prop_data.getJSONArray("players");
 						for(int i=0; i < players.length(); i++){
-							String player_id = players.getString(i);
-							ResultSet info = db.get_player_info(sport, player_id);
+							JSONObject player = players.getJSONObject(i);
+							ResultSet info = db.get_player_info(sport, player.getString("id"));
 							if(info.next()){
 								String name = info.getString(1) + " " + info.getString(2);
 								String gameID = info.getString(3);
@@ -179,7 +192,9 @@ public class SetupPropBet extends Utils{
 								JSONObject p = new JSONObject();
 								p.put("description", name);
 								p.put("id", index);
-								p.put("player_id", player_id);
+								p.put("player_id", player.getString("id"));
+								if (is_fixed_odds) 
+									p.put("odds", player.getDouble("odds"));
 								option_table.put(p);
 								index += 1;
 							}
@@ -216,21 +231,39 @@ public class SetupPropBet extends Utils{
 						ResultSet info = db.get_player_info(sport, prop_data.getString("player_id"));
 						String name = "";
 						String game = "";
+						
+						double 
+						over_odds = 0,
+						under_odds = 0;
+						
 						if(info.next()){
 							name = info.getString(1) + " " + info.getString(2);
 							game = info.getString(3);
 						}
-						
+												
 						String o_u = String.valueOf(prop_data.getDouble("over_under_value"));
 						contest_title = name + " Over/Under " + o_u;
 						
 						JSONObject over = new JSONObject();
 						over.put("description", "Over " + o_u);
 						over.put("id", 1);
+						
+						if(is_fixed_odds) {
+							over_odds = prop_data.getDouble("over_odds");
+							over.put("odds", over_odds);
+						}
+						
 						option_table.put(over);
+						
 						JSONObject under = new JSONObject();
 						under.put("description", "Under " + o_u);
 						under.put("id", 2);
+										
+						if(is_fixed_odds) {
+							under_odds = prop_data.getDouble("under_odds");
+							under.put("odds", under_odds);
+						}
+						
 						option_table.put(under);
 						
 						if(sport.equals("BASEBALL")){
@@ -325,10 +358,13 @@ public class SetupPropBet extends Utils{
 						JSONObject yes = new JSONObject();
 						yes.put("description", "Yes");
 						yes.put("id", 1);
+						if(is_fixed_odds) yes.put("odds", prop_data.getDouble("yes_odds"));
 						option_table.put(yes);
+						
 						JSONObject no = new JSONObject();
 						no.put("description", "No");
 						no.put("id", 2);
+						if(is_fixed_odds) yes.put("odds", prop_data.getDouble("no_odds"));
 						option_table.put(no);
 						
 						sport_title = "";
@@ -348,7 +384,6 @@ public class SetupPropBet extends Utils{
 				}
 				
 				String title = date_name_title + " | " + contest_title + sport_title;
-				
 				JSONObject prop = new JSONObject();
 				prop.put("category", category);
 				prop.put("sub_category", sub_category);
@@ -419,7 +454,6 @@ public class SetupPropBet extends Utils{
 	
 	public Long findEarliestGame(ArrayList<String> games, JSONArray gameData) throws JSONException{
 		for(int i = 0; i < gameData.length(); i++){
-			log("checking for game: " + gameData.getJSONObject(i).getString("name"));
 			for(String game : games){
 				if(gameData.getJSONObject(i).getString("gameID").equals(game)){
 					return gameData.getJSONObject(i).getLong("date_milli");
