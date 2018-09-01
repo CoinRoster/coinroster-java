@@ -819,16 +819,6 @@ public class BaseballBot extends Utils {
 				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
 				return 0;
 			}
-			catch(HttpStatusException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
-			catch(IOException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
 			if(page == null){
 				return 0;
 			}
