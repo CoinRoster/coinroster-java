@@ -364,8 +364,10 @@ public class SetupPropBet extends Utils{
 						JSONObject no = new JSONObject();
 						no.put("description", "No");
 						no.put("id", 2);
-						if(is_fixed_odds) yes.put("odds", prop_data.getDouble("no_odds"));
+						if(is_fixed_odds) no.put("odds", prop_data.getDouble("no_odds"));
 						option_table.put(no);
+						
+						log(option_table.toString());
 						
 						sport_title = "";
 						contest_title = "Will " + name + " Make the Cut?";
