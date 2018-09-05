@@ -306,8 +306,6 @@ public class GolfBot extends Utils {
 				break;
 			}
 		}
-		log("couldn't find a tournament this week that fits criteria.");
-
 	}
 	
 	public String getCountry(String id) throws JSONException, IOException, InterruptedException{
