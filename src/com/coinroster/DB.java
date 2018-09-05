@@ -1404,17 +1404,46 @@ public class DB
 		
 		if(filtered){
 			try{
-				PreparedStatement get_players = sql_connection.prepareStatement("SELECT a.id, a.name, a.team_abr, a.salary, a.filter_on FROM player AS a "
-						+ "WHERE (SELECT COUNT(*) FROM player AS b "
-						+ "WHERE b.team_abr = a.team_abr AND b.filter_on >= a.filter_on) <= ? "
-						+ "AND a.sport_type = ?"
-						+ "ORDER BY a.team_abr ASC, a.filter_on DESC");
-				get_players.setInt(1, filter);
-				get_players.setString(2, sport);
+				String stmt = "SELECT a.id, a.name, a.team_abr, a.salary, a.filter_on FROM player AS a "
+							+ "WHERE (SELECT COUNT(*) FROM player AS b "
+							+ "WHERE a.gameID = b.gameID AND b.team_abr = a.team_abr AND b.filter_on >= a.filter_on AND b.gameID in (";
+				
+				for(int i = 0; i < gameIDs.size(); i++){
+					stmt += "?,";
+				}
+				stmt = stmt.substring(0, stmt.length() - 1);
+				stmt += ")";
+				
+				stmt +=  " ) <= ? AND a.sport_type = ? AND a.gameID in (";
+				
+				for(int i = 0; i < gameIDs.size(); i++){
+					stmt += "?,";
+				}
+				stmt = stmt.substring(0, stmt.length() - 1);
+				stmt += ")";
+				
+				stmt += " ORDER BY a.team_abr ASC, a.filter_on DESC";
+						
+				PreparedStatement get_players = sql_connection.prepareStatement(stmt);
+				
+				int index = 1;
+				// first batch of gameIDs
+				for(String game : gameIDs){
+					get_players.setString(index++, game); 
+				}
+				
+				get_players.setInt(index++, filter);
+				get_players.setString(index++, sport);
+				
+				// second batch of gameIDs
+				for(String game : gameIDs){
+					get_players.setString(index++, game); 
+				}
+				
 				result_set = get_players.executeQuery();
 			}
 			catch(Exception e){
-				Utils.log(e.toString());
+				Server.exception(e);
 			}
 		}
 		else{
