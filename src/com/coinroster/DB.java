@@ -1422,7 +1422,7 @@ public class DB
 				stmt = stmt.substring(0, stmt.length() - 1);
 				stmt += ")";
 				
-				stmt += " ORDER BY a.team_abr ASC, a.filter_on DESC";
+				stmt += " ORDER BY a.salary DESC";
 						
 				PreparedStatement get_players = sql_connection.prepareStatement(stmt);
 				
@@ -1454,7 +1454,7 @@ public class DB
 					stmt += "?,";
 				}
 				stmt = stmt.substring(0, stmt.length() - 1);
-				stmt += ")";
+				stmt += ") ORDER BY salary DESC";
 				
 				PreparedStatement get_players = sql_connection.prepareStatement(stmt);
 				

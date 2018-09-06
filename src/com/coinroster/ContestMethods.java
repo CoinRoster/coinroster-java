@@ -735,43 +735,43 @@ public class ContestMethods extends Utils{
 			if(baseball_bot.getGameIDs() == null)
 				return;
 			log("setting up baseball contests...");
-			baseball_bot.setup();
-			baseball_bot.savePlayers();
+			//baseball_bot.setup();
+			//baseball_bot.savePlayers();
 			
 			Long deadline = baseball_bot.getEarliestGame();
             LocalDate date = Instant.ofEpochMilli(deadline).atZone(ZoneId.systemDefault()).toLocalDate();
 
-            JSONArray prop_contests = db.getRosterTemplates("BASEBALLPROPS");
-            for(int i = 0; i < prop_contests.length(); i++){
-				JSONObject contest = prop_contests.getJSONObject(i);
-				String title = date.toString() + " | " + contest.getString("title");
-				contest.put("title", title);
-				contest.put("odds_source", "n/a");
-				contest.put("gameIDs", gameID_array);
-				contest.put("registration_deadline", deadline);
-				
-				JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
-				JSONObject pari_mutuel_data;
-				if(prop_data.getString("prop_type").equals("TEAM_SNAKE"))
-					pari_mutuel_data = baseball_bot.createTeamsPariMutuel(contest, prop_data);
-				else
-					pari_mutuel_data = baseball_bot.createPariMutuel(deadline, date.toString(), contest);
-				
-	            MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-				pari_method.input = pari_mutuel_data;
-				pari_method.output = pari_output;
-				pari_method.session = null;
-				pari_method.sql_connection = sql_connection;
-				try{
-					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-					c.newInstance(pari_method);
-				}
-				catch(Exception e){
-					log(pari_method.output.toString());
-					Server.exception(e);
-				}
-            }
+//            JSONArray prop_contests = db.getRosterTemplates("BASEBALLPROPS");
+//            for(int i = 0; i < prop_contests.length(); i++){
+//				JSONObject contest = prop_contests.getJSONObject(i);
+//				String title = date.toString() + " | " + contest.getString("title");
+//				contest.put("title", title);
+//				contest.put("odds_source", "n/a");
+//				contest.put("gameIDs", gameID_array);
+//				contest.put("registration_deadline", deadline);
+//				
+//				JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+//				JSONObject pari_mutuel_data;
+//				if(prop_data.getString("prop_type").equals("TEAM_SNAKE"))
+//					pari_mutuel_data = baseball_bot.createTeamsPariMutuel(contest, prop_data);
+//				else
+//					pari_mutuel_data = baseball_bot.createPariMutuel(deadline, date.toString(), contest);
+//				
+//	            MethodInstance pari_method = new MethodInstance();
+//				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+//				pari_method.input = pari_mutuel_data;
+//				pari_method.output = pari_output;
+//				pari_method.session = null;
+//				pari_method.sql_connection = sql_connection;
+//				try{
+//					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+//					c.newInstance(pari_method);
+//				}
+//				catch(Exception e){
+//					log(pari_method.output.toString());
+//					Server.exception(e);
+//				}
+//            }
 
 			//read templates from `CONTEST_TEMPLATES` table
 			JSONArray roster_contests = db.getRosterTemplates("BASEBALL");
@@ -783,7 +783,6 @@ public class ContestMethods extends Utils{
 				contest.put("gameIDs", gameID_array);
 				contest.put("registration_deadline", deadline);
 				ResultSet options;
-				double weight = 0;
 				JSONObject prop_data = new JSONObject(contest.get("prop_data").toString());
 				
 				if(contest.getInt("filter") == 0){
@@ -793,26 +792,32 @@ public class ContestMethods extends Utils{
 					options = db.getOptionTable(baseball_bot.sport, true, contest.getInt("filter"), baseball_bot.getGameIDs());
 				}
 				
-				// get most expensive player in option table
-				double top_price = 0;
-				while(options.next()){
-					if(options.getDouble(4) > top_price)
-						top_price = options.getDouble(4);
-				}
+				double original_max = 0, original_min = 0;
+				if(options.first())
+					original_max = options.getDouble(4);
+				if(options.last())
+					original_min = options.getDouble(4);
 				
-				weight = ((double) contest.getInt("salary_cap") * prop_data.getDouble("top_player_salary")) / top_price;	
-				// set the options RS back to the first row
+				double range = original_max - original_min;
+				
+				double new_max = (double) contest.getInt("salary_cap") * prop_data.getDouble("top_player_salary");
+				
+				// this new_min can eventually be a DB value
+				double new_min = (double) contest.getInt("salary_cap") * 0.125;
+				double new_range = new_max - new_min;
+			
 				options.first();
 				
-	            JSONArray option_table = new JSONArray();
+				JSONArray option_table = new JSONArray();
 				while(options.next()){
 					JSONObject player = new JSONObject();
 					player.put("name", options.getString(2) + " " + options.getString(3));
-					player.put("price", (int) Math.round(options.getDouble(4) * weight));
+					player.put("price", (int) Math.round((((options.getDouble(4) - original_min) / range) * new_range) + new_min));
 					player.put("count", 0);
 					player.put("id", options.getString(1));
 					option_table.put(player);
 				}
+				
 				contest.put("option_table", option_table);
 				MethodInstance method = new MethodInstance();
 				JSONObject output = new JSONObject("{\"status\":\"0\"}");
