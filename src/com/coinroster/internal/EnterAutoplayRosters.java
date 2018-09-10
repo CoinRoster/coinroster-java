@@ -125,10 +125,7 @@ public class EnterAutoplayRosters extends Utils {
 							if(option_table.getJSONObject(i).getDouble("price") <= amount_per_player && !player_ids.contains(option_table.getJSONObject(i).getString("id")))
 								subset.put(option_table.getJSONObject(i));
 						}
-						log(subset.toString());
-						log("subset length = " + subset.length());
 						int random_number = new Random().nextInt(subset.length());
-						log("random num: " + random_number);
 						JSONObject player_to_add = subset.getJSONObject(random_number);
 						String player_id = player_to_add.getString("id");
 						double price = player_to_add.getDouble("price");
