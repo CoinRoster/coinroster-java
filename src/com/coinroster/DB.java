@@ -379,7 +379,7 @@ public class DB
 	{
 
 		JSONObject contests = new JSONObject();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table from contest where category = ? "
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table, gameIDs from contest where category = ? "
 				+ "and sub_category = ? and contest_type = ? and status=2 and auto_settle = 1");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
@@ -407,6 +407,7 @@ public class DB
 				data.put("scoring_rules", scoring_rules_json);
 				data.put("prop_data", prop_data_json);
 				data.put("option_table", new JSONArray(result_set.getString(4)));
+				data.put("gameID", result_set.getString(5));
 				contests.put(String.valueOf(result_set.getInt(1)), data);
 				
 			}catch(Exception e){

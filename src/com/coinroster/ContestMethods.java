@@ -524,7 +524,12 @@ public class ContestMethods extends Utils{
 			
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				log("Golf tournament is in play and minute is multiple of 20");
-				String tourney_id = roster_contests.getJSONObject((String) roster_contests.keys().next()).getString("gameID");
+				String tourney_id = null;
+				if(roster_contests.length() != 0)
+					tourney_id = roster_contests.getJSONObject((String) roster_contests.keys().next()).getString("gameID");
+				else if(pari_contests.length() != 0)
+					tourney_id = pari_contests.getJSONObject((String) pari_contests.keys().next()).getString("gameID");
+				
 				GolfBot golfBot = new GolfBot(sql_connection, tourney_id);
 				
 				int today = getToday();
