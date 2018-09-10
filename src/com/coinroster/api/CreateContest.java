@@ -90,6 +90,9 @@ public class CreateContest extends Utils
 			
 			if (prop_data.contains("risk")) is_fixed_odds = true;
             
+			String gameIDs = null;
+			if(input.has("gameIDs"))
+				gameIDs = input.getString("gameIDs");
 			
             // validate common fields
             
@@ -378,13 +381,6 @@ public class CreateContest extends Utils
 				create_contest.setDouble(15, salary_cap);
 				create_contest.setString(16, option_table.toString());
 				create_contest.setLong(17, System.currentTimeMillis());
-				String gameIDs = null;
-				try{
-					gameIDs = input.getString("gameIDs");
-				}
-				catch(Exception e){
-					gameIDs = null;
-				}
 				
 				if(session == null){
 					madeBy = "ContestBot";
@@ -408,8 +404,6 @@ public class CreateContest extends Utils
 						create_contest.setNull(24, java.sql.Types.BIGINT);
 					}					
 				}
-				
-				
 				
 				create_contest.setString(18, madeBy);
 				create_contest.setInt(19, roster_size);
@@ -514,8 +508,8 @@ public class CreateContest extends Utils
             	create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, progressive, contest_type, title, "
             																		+ "description, registration_deadline, rake, cost_per_entry, settlement_type, "
             																		+ "option_table, created, created_by, auto_settle, status, settlement_deadline, "
-            																		+ "scoring_rules, prop_data, participants, min_users) "
-            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+            																		+ "scoring_rules, prop_data, participants, min_users, gameIDs) "
+            																		+ "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 
 				create_contest.setString(1, category);
 				create_contest.setString(2, sub_category);
@@ -584,6 +578,8 @@ public class CreateContest extends Utils
 				
 				if (is_fixed_odds) create_contest.setInt(20, 1);
 				else create_contest.setInt(20,2);
+				
+				create_contest.setString(21, gameIDs);
 				
             	create_contest.executeUpdate();
             	

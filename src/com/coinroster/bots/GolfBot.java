@@ -51,6 +51,16 @@ public class GolfBot extends Utils {
 		db = new DB(sql_connection);
 	}
 	
+	public GolfBot(Connection sql_connection, String tourney_id) throws IOException, JSONException{
+		this.sql_connection = sql_connection;
+		db = new DB(sql_connection);
+		this.tourneyID = tourney_id;
+		ArrayList<String> gameIDs = new ArrayList<String>();
+		gameIDs.add(tourney_id);
+		this.gameIDs = gameIDs;
+	}
+	
+	
 	public Map<String, Player> getPlayerHashMap(){
 		return players_list;
 	}
@@ -1181,7 +1191,7 @@ public class GolfBot extends Utils {
 		JSONObject prop_data = contest.getJSONObject("prop_data");
 		JSONArray option_table = contest.getJSONArray("option_table");
 		
-		String url = "https://statdata.pgatour.com/r/" + this.getLiveTourneyID() + "/2018/leaderboard-v2.json";
+		String url = "https://statdata.pgatour.com/r/" + this.getTourneyID() + "/2018/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		
 		int winning_outcome = 0;
