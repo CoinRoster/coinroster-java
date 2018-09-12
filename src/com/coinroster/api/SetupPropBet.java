@@ -21,6 +21,7 @@ import com.coinroster.Utils;
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.GolfBot;
+import com.coinroster.bots.HockeyBot;
 
 public class SetupPropBet extends Utils{
 	public static String method_level = "standard";
@@ -45,6 +46,7 @@ public class SetupPropBet extends Utils{
 				BaseballBot baseball_bot = null;
 				BasketballBot basketball_bot = null;
 				GolfBot golf_bot = null;
+				HockeyBot hockey_bot = null;
 				
 				JSONObject data = input.getJSONObject("data");
 				
@@ -60,7 +62,7 @@ public class SetupPropBet extends Utils{
 				JSONObject scoring_rules, prop_data;
 				String gameIDs = "";
 				String sport_title = "", contest_title = "", date_name_title = "";
-				String desc = "Be careful not to include injured or inactive players<br>";
+				String desc = "";
 				try{
 					scoring_rules = data.getJSONObject("scoring_rules");
 				}catch(JSONException e){
@@ -158,6 +160,17 @@ public class SetupPropBet extends Utils{
 						}
 						break;
 						
+					case "HOCKEY":
+						hockey_bot = new HockeyBot(sql_connection);
+						hockey_bot.scrapeGameIDs();
+						if(hockey_bot.getGameIDs() != null){
+							date_name_title = Instant.ofEpochMilli(hockey_bot.getEarliestGame()).atZone(ZoneId.systemDefault()).toLocalDate().toString();
+						}else{
+							output.put("error", "Hockey contests are not currently available");
+							break method;
+						}
+						break;
+						
 					default:
 						break;
 				}
@@ -202,10 +215,14 @@ public class SetupPropBet extends Utils{
 						
 						gameIDs = games.toString();
 						
-						if(sport.equals("BASEBALL"))
+						if(sport.equals("BASEBALL")){
 							deadline = findEarliestGame(games, baseball_bot.getGames());
+						}
 						else if(sport.equals("BASKETBALL")){
 							deadline = findEarliestGame(games, basketball_bot.getGames());
+						}
+						else if(sport.equals("HOCKEY")){
+							deadline = findEarliestGame(games, hockey_bot.getGames());
 						}
 							
 						if(sport.equals("GOLF") && prop_data.getString("multi_stp").equals("score_to_par")){
@@ -281,6 +298,18 @@ public class SetupPropBet extends Utils{
 							for(int i = 0; i < basketball_bot.getGames().length(); i++){ 
 								if(basketball_bot.getGames().getJSONObject(i).getString("gameID").equals(game)){
 									deadline = basketball_bot.getGames().getJSONObject(i).getLong("date_milli");
+									break;
+								}
+							}
+							ArrayList<String> gameIds = new ArrayList<String>();
+							gameIds.add(game);
+							gameIDs = gameIds.toString();
+							
+						}
+						else if(sport.equals("HOCKEY")){
+							for(int i = 0; i < hockey_bot.getGames().length(); i++){ 
+								if(hockey_bot.getGames().getJSONObject(i).getString("gameID").equals(game)){
+									deadline = hockey_bot.getGames().getJSONObject(i).getLong("date_milli");
 									break;
 								}
 							}

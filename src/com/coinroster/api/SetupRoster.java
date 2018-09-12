@@ -21,6 +21,7 @@ import com.coinroster.Utils;
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.GolfBot;
+import com.coinroster.bots.HockeyBot;
 
 public class SetupRoster extends Utils{
 	public static String method_level = "standard";
@@ -127,6 +128,47 @@ public class SetupRoster extends Utils{
 							
 						}else{
 							output.put("error", "Basketball contests are not currently available");
+							break method;
+						}
+						break;
+						
+					case "HOCKEY":
+						HockeyBot hockey_bot = new HockeyBot(sql_connection);
+						hockey_bot.scrapeGameIDs();
+						if(hockey_bot.getGameIDs() != null){
+							JSONArray total_games = hockey_bot.getGames();
+							ArrayList<String> games = new ArrayList<String>();
+							JSONArray games_json = data.getJSONArray("gameIDs");
+							boolean deadline_saved = false;
+							Long deadline = null;
+							for(int x = 0; x < total_games.length(); x++){
+								String game = total_games.getJSONObject(x).getString("gameID");
+								for(int i = 0; i < games_json.length(); i++){
+									String gameID = games_json.getString(i);
+									if(!games.contains(gameID)) games.add(gameID);
+									if(game.equals(gameID) && !deadline_saved){
+										deadline = total_games.getJSONObject(x).getLong("date_milli");
+										deadline_saved = true;
+									}
+									
+								}
+							}
+							data.put("salary_cap", 2000);
+							// get weight for top player = 30% of salary cap
+							weight = hockey_bot.getNormalizationWeight(0.3, games, data.getInt("salary_cap"));
+							data.put("gameIDs", games.toString());
+							options = db.getOptionTable(hockey_bot.sport, false, 0, games);
+							data.put("registration_deadline", deadline);
+							data.put("roster_size", 0);
+							data.put("score_header", "Fantasy Points");
+							
+							title = today_str + " | " + data.getString("settlement_type");
+							data.put("title", title);	
+							String desc_append = appendDescription(data.getJSONObject("scoring_rules"));
+							desc += desc_append;
+							
+						}else{
+							output.put("error", "Hockey contests are not currently available");
 							break method;
 						}
 						break;
