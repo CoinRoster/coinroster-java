@@ -207,8 +207,8 @@ public class HockeyBot extends Utils {
 					Iterator<?> keys = scoring_rules.keys();
 					while(keys.hasNext()){
 						String key = (String) keys.next();
-						int multiplier = scoring_rules.getInt(key);
-						points += ((double) (data.getInt(key) * multiplier));
+						double multiplier = scoring_rules.getDouble(key);
+						points += (double) data.getInt(key) * multiplier; 
 					}
 					if(points > max_points){
 						max_points = points;
@@ -267,8 +267,8 @@ public class HockeyBot extends Utils {
 						Iterator<?> keys = scoring_rules.keys();
 						while(keys.hasNext()){
 							String key = (String) keys.next();
-							int multiplier = scoring_rules.getInt(key);
-							points += ((double) (player_data.getInt(key) * multiplier));
+							double multiplier = scoring_rules.getDouble(key);
+							points += (double) player_data.getInt(key) * multiplier;
 						}
 						log(player_id + ": " + points);
 						if(points > max_points){
@@ -318,8 +318,8 @@ public class HockeyBot extends Utils {
 				Iterator<?> keys = scoring_rules.keys();
 				while(keys.hasNext()){
 					String key = (String) keys.next();
-					int multiplier = scoring_rules.getInt(key);
-					points += ((double) (player_data.getInt(key) * multiplier));
+					double multiplier = scoring_rules.getDouble(key);
+					points += (double) player_data.getInt(key) * multiplier;
 				}
 				double o_u = prop_data.getDouble("over_under_value");
 				//over = 1, under = 2
@@ -348,8 +348,8 @@ public class HockeyBot extends Utils {
 							keys = scoring_rules.keys();
 							while(keys.hasNext()){
 								String key = (String) keys.next();
-								int multiplier = scoring_rules.getInt(key);
-								points += ((double) (data.getInt(key) * multiplier));
+								double multiplier = scoring_rules.getDouble(key);
+								points += (double) data.getInt(key) * multiplier;
 							}
 							team_score += points;
 						}
@@ -522,10 +522,10 @@ public class HockeyBot extends Utils {
 			Iterator<?> keys = scoring_rules.keys();
 			while(keys.hasNext()){
 				String key = (String) keys.next();
-				int multiplier = scoring_rules.getInt(key);
+				double multiplier = scoring_rules.getDouble(key);
 				if(data.getInt(key) != 0)
 					data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getInt(key)) + ", ";
-				points += ((double) (data.getInt(key) * multiplier));			
+				points += (double) data.getInt(key) * multiplier;			
 			}
 			// chop off ", " from end of string
 			if(data_to_display.contains(", "))
