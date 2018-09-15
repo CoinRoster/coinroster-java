@@ -13,6 +13,7 @@ import com.coinroster.Utils;
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.GolfBot;
+import com.coinroster.bots.HockeyBot;
 
 public class GetAvailableSports extends Utils {
 	
@@ -71,6 +72,24 @@ public class GetAvailableSports extends Utils {
 				}
 			}
 			
+			// HOCKEY
+			boolean hockey = false;
+			games_to_offer = new JSONArray();
+			HockeyBot hockey_bot = new HockeyBot(sql_connection);
+			hockey_bot.scrapeGameIDs();
+			if(hockey_bot.getGameIDs() != null){
+				JSONArray games = hockey_bot.getGames();
+				for(int i = 0; i < games.length(); i++){
+					JSONObject game = games.getJSONObject(i);
+					if(hour >= 7 && game.getLong("date_milli") > (now + 5400000)){
+						games_to_offer.put(game);
+						hockey = true;
+						output.put("hockey_contest", "NHL | " + today_str);
+						output.put("hockey_games", games_to_offer);
+					}
+				}
+			}
+		
 			// GOLF
 			boolean golf_tournament = false;
 			boolean r1 = false;
@@ -129,6 +148,7 @@ public class GetAvailableSports extends Utils {
 			}
 			output.put("BASEBALL", baseball);
 			output.put("BASKETBALL", basketball);
+			output.put("HOCKEY", hockey);
 			output.put("GOLF_TOURNAMENT", golf_tournament);
 			output.put("GOLF_1", r1);
 			output.put("GOLF_2", r2);
