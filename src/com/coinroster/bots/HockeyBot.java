@@ -479,8 +479,8 @@ public class HockeyBot extends Utils {
 //			log("deleted " + this.sport + " players from old contests");
 			
 			JSONObject empty_data_json = new JSONObject();
-			empty_data_json.put("goal", 0);
-			empty_data_json.put("ast", 0);
+			empty_data_json.put("goals", 0);
+			empty_data_json.put("assists", 0);
 			empty_data_json.put("plus-minus", 0);
 			empty_data_json.put("sog", 0);			
 			empty_data_json.put("bs", 0);
@@ -490,7 +490,7 @@ public class HockeyBot extends Utils {
 			
 			for(Player player : this.getPlayerHashMap().values()){
 				
-				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setString(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
@@ -648,11 +648,11 @@ public class HockeyBot extends Utils {
 							
 							if(goal_string.equals("--"))
 								goal_string = "0";
-							data.put("goal", Integer.parseInt(goal_string));
+							data.put("goals", Integer.parseInt(goal_string));
 							
 							if(ast_string.equals("--"))
 								ast_string = "0";
-							data.put("ast", Integer.parseInt(ast_string));
+							data.put("assists", Integer.parseInt(ast_string));
 							
 							if(plus_minus_string.equals("--"))
 								plus_minus_string = "0";
@@ -863,7 +863,13 @@ public class HockeyBot extends Utils {
 			
 			Element bio = page.getElementsByClass("player-bio").first();
 			// parse bio-bio div to get pos, weight, height, birthString
-			Element general_info = bio.getElementsByClass("general-info").first();
+			Element general_info;
+			try{
+				general_info = bio.getElementsByClass("general-info").first();
+			}catch(Exception e){
+				log(this.getESPN_ID() + " - " + this.getName());
+				return 0;
+			}
 			String[] info = general_info.text().split(" ");
 			String pos = info[1];
 			this.pos = pos;
@@ -871,7 +877,13 @@ public class HockeyBot extends Utils {
 			String weight = info[4] + " " + info[5];
 			this.height = height;
 			this.weight = weight;
-			String team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
+			String team = null;
+			try{
+				team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
+			}catch(NullPointerException e){
+				log("not saving " + this.getName() + " to DB - no team");
+				return 0;
+			}
 			if(!this.team_abr.equals(team)){
 				log("not saving " + this.getName() + " to DB - not correct team");
 				return 0;
