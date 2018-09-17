@@ -470,7 +470,7 @@ public class SetupPropBet extends Utils{
 			String key = (String) keys.next();
 			try {
 				String value_str = "";
-				int value = scoring_rules.getInt(key);
+				Double value = scoring_rules.getDouble(key);
 				if(value < 0)
 					value_str = String.valueOf(value);
 				else
