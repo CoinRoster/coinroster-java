@@ -624,7 +624,7 @@ public class HockeyBot extends Utils {
 			for(int i=0; i < gameIDs.size(); i++){
 				Document page = Jsoup.connect("http://www.espn.com/nhl/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 					      .referrer("http://www.google.com").timeout(0).get();
-				Element outer_div = page.getElementById("Boxscore__ResponsiveWrapper");
+				Element outer_div = page.getElementsByClass("Boxscore__ResponsiveWrapper").first();
 				Elements tables = outer_div.getElementsByClass("v-top");
 				
 				//away team 
@@ -696,11 +696,11 @@ public class HockeyBot extends Utils {
 							
 							if(goal_string.equals("--"))
 								goal_string = "0";
-							data.put("goal", Integer.parseInt(goal_string));
+							data.put("goals", Integer.parseInt(goal_string));
 							
 							if(ast_string.equals("--"))
 								ast_string = "0";
-							data.put("ast", Integer.parseInt(ast_string));
+							data.put("assists", Integer.parseInt(ast_string));
 							
 							if(plus_minus_string.equals("--"))
 								plus_minus_string = "0";
