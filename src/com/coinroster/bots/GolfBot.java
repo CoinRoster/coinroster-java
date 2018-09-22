@@ -11,10 +11,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
@@ -195,54 +197,21 @@ public class GolfBot extends Utils {
 				String id = player.getString("TournamentPlayerId");
 				
 				if(!existing_ids.contains(id)){
-					flag = true;
-					String name = player.getString("PlayerName");
-					String names[] = name.split(", ");
-					String name_fl, country = "";
-					try{
-						name_fl = names[1] + " " + names[0];
-					}
-					catch(Exception e){
-						name_fl = names[0];
-					}
-					String rank_url = "https://statdata.pgatour.com/r/stats/2018/186.json";
-					JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
-					JSONArray ranked_players = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
-					boolean checked = false;
 					
-					double salary = 0;
-					for(int q=0; q < ranked_players.length(); q++){
-						JSONObject r_player = ranked_players.getJSONObject(q);
-						if(id.equals(r_player.getString("plrNum"))){
-							String points = r_player.getJSONObject("statValues").getString("statValue2");
-							country = r_player.getJSONObject("statValues").getString("statValue5");
-							if(country.isEmpty())
-								country = getCountry(id);
-							salary = Math.round(Double.parseDouble(points) * 10);
-							if(salary < 80.0)
-								salary = 80.0;
-							checked = true;
-							break;
-						}
-					}
-					if(!checked){
-						salary = 80.0;
-					}
-			
+					PricingStat pricing = this.getPricingData();
+					Player new_player = this.initializePlayer(player, pricing);
 					if(!player_table_updated){
-						Player p = new Player(id, name_fl, this.getTourneyID());
-						p.setCountry(country);
-						JSONObject data = p.getDashboardData(this.year);
+						JSONObject data = new_player.getDashboardData(this.year);
 						// add player to player table
 						try{
 							PreparedStatement add_player = sql_connection.prepareStatement("INSERT INTO player (id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )");
 						
 							add_player.setString(1, id);
-							add_player.setString(2, name_fl);
+							add_player.setString(2, new_player.getName());
 							add_player.setString(3, this.sport);
 							add_player.setString(4, this.getTourneyID());
-							add_player.setString(5, country);
-							add_player.setDouble(6, salary);
+							add_player.setString(5, new_player.getCountry());
+							add_player.setDouble(6, new_player.getSalary());
 							add_player.setString(7, initializeGolferScores().toString());
 							add_player.setDouble(8, 0.0);
 							add_player.setString(9, data.toString());
@@ -257,11 +226,11 @@ public class GolfBot extends Utils {
 					
 					//create JSONObject to add to option table
 					JSONObject p = new JSONObject();
-					p.put("price", salary);
+					p.put("price", new_player.getSalary());
 					p.put("count", 0);
-					p.put("name", name_fl + " " + country);
+					p.put("name", new_player.getName() + " " + new_player.getCountry());
 					p.put("id", id);
-					log("appending " + name_fl + " to contest " + contest_id );
+					log("appending " + new_player.getName() + " to contest " + contest_id );
 					option_table.put(p);	
 				}
 			}
@@ -327,53 +296,118 @@ public class GolfBot extends Utils {
 		return country_code;
 	}
 	
+	
+	public PricingStat getPricingData() throws IOException, JSONException{
+		
+		//OWGR stats - preference 1
+		String rank_url = "https://statdata.pgatour.com/r/stats/" + this.year + "/186.json";
+		JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
+		boolean owgr = false;
+		JSONArray players_list = new JSONArray();
+		Map<String, Double> player_prices = new HashMap<String, Double>();
+		
+		try{
+			players_list = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
+			if(players_list.length() > 1)
+				owgr = true;
+		}catch(Exception e){
+			owgr = false;
+		}
+		if(!owgr){
+			//scoring average stats - preference 2
+			log("OWGR seems to be unavailable so we are grabbing scoring average stats");
+			String avg_url = "https://statdata.pgatour.com/r/stats/" + this.year + "/120.json";
+			JSONObject avg_json = JsonReader.readJsonFromUrl(avg_url);
+			players_list = avg_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
+			Double[] normal_dist = new Double[players_list.length()];
+			for(int index = 0; index < players_list.length(); index++){
+				Random r = new Random();
+				Double sample = r.nextGaussian() * 75 + 200;
+				normal_dist[index] = sample;
+			}
+			
+			// sort the array
+			Arrays.sort(normal_dist, Collections.reverseOrder());
+
+			for(int i = 0; i < players_list.length(); i++){
+				String player_id = players_list.getJSONObject(i).getString("plrNum");
+				player_prices.put(player_id, normal_dist[i]);
+			}
+		}
+		PricingStat pricing = new PricingStat(owgr, players_list);
+		if(!owgr) pricing.setPriceMap(player_prices);
+		
+		return pricing;
+	}
+	
+	public Player initializePlayer(JSONObject player, PricingStat pricing) throws JSONException, IOException, InterruptedException{
+		
+		boolean checked = false;
+		String country = "";
+		double salary = 0;
+		String id = player.getString("TournamentPlayerId");
+		String name = player.getString("PlayerName");
+		String names[] = name.split(", ");
+		String name_fl;
+		try{
+			name_fl = names[1] + " " + names[0];
+		}
+		catch(Exception e){
+			name_fl = names[0];
+		}
+		
+		for(int q = 0; q < pricing.getPlayerPricingArray().length(); q++){
+			JSONObject r_player = pricing.getPlayerPricingArray().getJSONObject(q);
+			if(id.equals(r_player.getString("plrNum"))){
+				String points = null;
+				// owgr stat 
+				if(pricing.isOWGR()){
+					points = r_player.getJSONObject("statValues").getString("statValue2");
+					country = r_player.getJSONObject("statValues").getString("statValue5");
+					salary = Math.round(Double.parseDouble(points) * 10);
+				}	
+				// get normalized price from normal distribution
+				else{
+					salary = pricing.getPriceMap().get(id);
+				}
+				
+				if(country.isEmpty())
+					country = getCountry(id);
+				
+				if(salary < 80.0)
+					salary = 80.0;
+				checked = true;
+				break;
+			}
+		}
+		if(!checked){
+			salary = 80.0;
+		}
+		
+		Player p = new Player(id, name_fl, this.tourneyID);
+		p.set_ppg_salary(salary);
+		p.setCountry(country);
+		return p;
+	}
+	
 	public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException {
+		
 		Map<String, Player> players = new HashMap<String, Player>();
+		
 		if(this.tourneyID != null){
+			// tourney field
 			String url = "https://statdata.pgatour.com/r/" + tourneyID + "/field.json";
 			JSONObject field = JsonReader.readJsonFromUrl(url);
 			JSONArray players_json = field.getJSONObject("Tournament").getJSONArray("Players");
 			log("getting the field...");
+			
+			// get pricing
+			PricingStat pricing = this.getPricingData();
+			
 			for(int i = 0; i < players_json.length(); i++){
 				JSONObject player = players_json.getJSONObject(i);
-				String id = player.getString("TournamentPlayerId");
-				String name = player.getString("PlayerName");
-				String names[] = name.split(", ");
-				String name_fl;
-				try{
-					name_fl = names[1] + " " + names[0];
-				}
-				catch(Exception e){
-					name_fl = names[0];
-				}
-				String rank_url = "https://statdata.pgatour.com/r/stats/2018/186.json";
-				JSONObject world_rankings_json = JsonReader.readJsonFromUrl(rank_url);
-				JSONArray ranked_players = world_rankings_json.getJSONArray("tours").getJSONObject(0).getJSONArray("years").getJSONObject(0).getJSONArray("stats").getJSONObject(0).getJSONArray("details");
-				boolean checked = false;
-				String country = "";
-				double salary = 0;
-				for(int q=0; q < ranked_players.length(); q++){
-					JSONObject r_player = ranked_players.getJSONObject(q);
-					if(id.equals(r_player.getString("plrNum"))){
-						String points = r_player.getJSONObject("statValues").getString("statValue2");
-						country = r_player.getJSONObject("statValues").getString("statValue5");
-						if(country.isEmpty())
-							country = getCountry(id);
-						salary = Math.round(Double.parseDouble(points) * 10);
-						if(salary < 80.0)
-							salary = 80.0;
-						checked = true;
-						break;
-					}
-				}
-				if(!checked){
-					salary = 80.0;
-				}
-				
-				Player p = new Player(id, name_fl, tourneyID);
-				p.set_ppg_salary(salary);
-				p.setCountry(country);
-				players.put(id, p);
+				Player p = this.initializePlayer(player, pricing);
+				players.put(p.getPGA_ID(), p);
 			}
 		}
 		this.players_list = players;
@@ -399,12 +433,9 @@ public class GolfBot extends Utils {
 	public void savePlayers(){
 		try {
 			
-			log("closed connection? " +sql_connection.isClosed());
-			
 			if(sql_connection.isClosed()){
 				sql_connection = Server.sql_connection();
 			}
-			log("valid?" + sql_connection.isValid(0));
 			
 			if(this.getPlayerHashMap() == null)
 				return;
@@ -472,7 +503,7 @@ public class GolfBot extends Utils {
 		tournament_statuses.put("4", false);
 		tournament_statuses.put("tournament", false);
 		
-		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/2018/leaderboard-v2.json";
+		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/" + this.year + "/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		if(leaderboard == null){
 			log("couldn't connect to pgatour API");
@@ -1191,7 +1222,7 @@ public class GolfBot extends Utils {
 		JSONObject prop_data = contest.getJSONObject("prop_data");
 		JSONArray option_table = contest.getJSONArray("option_table");
 		
-		String url = "https://statdata.pgatour.com/r/" + this.getTourneyID() + "/2018/leaderboard-v2.json";
+		String url = "https://statdata.pgatour.com/r/" + this.getTourneyID() + "/" + this.year + "/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		
 		int winning_outcome = 0;
@@ -1768,6 +1799,31 @@ public class GolfBot extends Utils {
 		
 		return fields;
 		
+	}
+	
+	class PricingStat{
+		public String method_level = "admin";
+		private boolean owgr;
+		private JSONArray player_pricing;
+		private Map<String, Double> player_prices;
+		
+		// constructor
+		public PricingStat(boolean owgr, JSONArray player_pricing){
+			this.owgr = owgr;
+			this.player_pricing = player_pricing;
+		}
+		public void setPriceMap(Map<String, Double> player_prices){
+			this.player_prices = player_prices;
+		}
+		public boolean isOWGR(){
+			return this.owgr;
+		}
+		public JSONArray getPlayerPricingArray(){
+			return player_pricing;
+		}
+		public Map<String, Double> getPriceMap(){
+			return player_prices;
+		}
 	}
 	
 	class Player {

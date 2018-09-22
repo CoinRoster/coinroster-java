@@ -527,8 +527,7 @@ public class BasketballBot extends Utils {
 			while(keys.hasNext()){
 				String key = (String) keys.next();
 				int multiplier = scoring_rules.getInt(key);
-				if(data.getInt(key) > 0)
-					data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getInt(key)) + ", ";
+				data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getInt(key)) + ", ";
 				points += ((double) (data.getInt(key) * multiplier));			
 			}
 			// chop off ", " from end of string

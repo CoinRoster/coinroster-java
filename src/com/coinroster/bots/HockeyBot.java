@@ -523,8 +523,7 @@ public class HockeyBot extends Utils {
 			while(keys.hasNext()){
 				String key = (String) keys.next();
 				double multiplier = scoring_rules.getDouble(key);
-				if(data.getInt(key) != 0)
-					data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getInt(key)) + ", ";
+				data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getInt(key)) + ", ";
 				points += (double) data.getInt(key) * multiplier;			
 			}
 			// chop off ", " from end of string
@@ -540,7 +539,7 @@ public class HockeyBot extends Utils {
 		return player_map;
 	}
 	
-	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
+		// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
 		public Map<String, Player> setup() throws IOException, JSONException, SQLException{
 			Map<String, Player> players = new HashMap<String,Player>();
 			if(this.game_IDs == null){
@@ -624,8 +623,14 @@ public class HockeyBot extends Utils {
 			for(int i=0; i < gameIDs.size(); i++){
 				Document page = Jsoup.connect("http://www.espn.com/nhl/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 					      .referrer("http://www.google.com").timeout(0).get();
-				Element outer_div = page.getElementsByClass("Boxscore__ResponsiveWrapper").first();
-				Elements tables = outer_div.getElementsByClass("v-top");
+				Element outer_div;
+				Elements tables;
+				try{
+					outer_div = page.getElementsByClass("Boxscore__ResponsiveWrapper").first();
+					tables = outer_div.getElementsByClass("v-top");
+				}catch(NullPointerException e){
+					continue;
+				}
 				
 				//away team 
 				Elements away_player_names_rows = tables.get(0).getElementsByAttribute("data-idx");
@@ -893,7 +898,7 @@ public class HockeyBot extends Utils {
 			Element item = player_metadata.first();
 			Elements lis = item.children();
 			String born_string = lis.first().text().replace("Born", "");
-			String age = lis.get(1).text().replace("Age", "(Age: ");
+			String age = lis.get(1).text().replace("Age", " (Age: ");
 			born_string += age + ")";
 			this.birthString = born_string;
 			
