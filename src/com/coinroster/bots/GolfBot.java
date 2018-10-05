@@ -291,7 +291,7 @@ public class GolfBot extends Utils {
 		// parse schedule json to get tournaments
 		String url = "https://statdata.pgatour.com/r/current/schedule-v2.json";
 		JSONObject schedule = JsonReader.readJsonFromUrl(url);
-		JSONArray tournaments = schedule.getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trns");
+		JSONArray tournaments = schedule.getJSONArray("years").getJSONObject(1).getJSONArray("tours").getJSONObject(0).getJSONArray("trns");
 
 		for(int index=0; index < tournaments.length(); index++){
 			JSONObject tournament = tournaments.getJSONObject(index);
