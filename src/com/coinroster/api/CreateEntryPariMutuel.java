@@ -135,7 +135,7 @@ public class CreateEntryPariMutuel extends Utils
 					for (int i=0; i<number_of_user_wagers; i++)
 						{
 						JSONObject wager_item = wagers.getJSONObject(i);
-						
+						log("Wager: " + wager_item.toString());
 						int option_id = wager_item.getInt("id");
 						double wager = wager_item.getDouble("wager");
 						
@@ -150,14 +150,14 @@ public class CreateEntryPariMutuel extends Utils
 							break lock;
 							}
 						
-						/*  FIXED-ODDS STUFF  */
-						
 						// check if entry is greater than risk if fixed-odds
 						if (fixed_odds) {
-							Double odds_for_option = option_table.getJSONObject(i).getDouble("odds");
+							log("option_table object: " + option_table.getJSONObject(option_id - 1));
+							Double odds_for_option = option_table.getJSONObject(option_id - 1).getDouble("odds");
 							Double actual_wager = multiply(wager, odds_for_option, 0);
-							
+
 							log("actual wager: " + format_btc(actual_wager));
+							
 							if (actual_wager > amount_left) {
 								log("wager exceeds risk");
 								output.put("error", "Your wager exceeds the contest's max risk!");

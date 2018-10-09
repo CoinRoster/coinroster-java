@@ -448,8 +448,10 @@ public class CreateContest extends Utils
             			break method;
             		}
             		
-            		// adjust amount_left by rake
-            		prop_data_json.put("amount_left", format_btc(subtract(risk, multiply(risk, rake, 0), 0)));
+            		/*// adjust amount_left by rake
+            		prop_data_json.put("amount_left", format_btc(subtract(risk, multiply(risk, rake, 0), 0)));*/
+            		
+            		prop_data_json.put("amount_left", risk);
             		prop_data = prop_data_json.toString();
             	}
             	
