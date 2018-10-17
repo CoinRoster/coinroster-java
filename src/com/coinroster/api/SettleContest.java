@@ -287,10 +287,11 @@ public class SettleContest extends Utils
 					btc_contest_balance = contest_account.getDouble("btc_balance"),
 					rc_contest_balance = contest_account.getDouble("rc_balance");
 					
+					// fixed-odds settles entirely differently
 					if(!fixed_odds) {
 						btc_contest_balance = subtract(btc_contest_balance, btc_wagers_total, 0);
+						rc_contest_balance = subtract(rc_contest_balance, rc_wagers_total, 0);
 					}
-					rc_contest_balance = subtract(rc_contest_balance, rc_wagers_total, 0);
 					
 					if (do_update)
 						{
@@ -1589,23 +1590,23 @@ public class SettleContest extends Utils
 						create_transaction.setInt(10, contest_id);
 						create_transaction.executeUpdate();
 						
-						if (rc_wagers_total > 0) {
-							double contest_account_rc = contest_account.getDouble("rc_balance");
-							db.update_rc_balance(contest_account_id, add(contest_account_rc, rc_wagers_total, 0));		
-							
-							PreparedStatement swap_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-							swap_transaction.setLong(1, System.currentTimeMillis());
-							swap_transaction.setString(2, contest_admin);
-							swap_transaction.setString(3, "BTC-FIXED-ODDS-CONTEST-SWAP");
-							swap_transaction.setString(4, contest_account_id);
-							swap_transaction.setString(5, contest_account_id);
-							swap_transaction.setDouble(6, rc_wagers_total);
-							swap_transaction.setString(7, "BTC");
-							swap_transaction.setString(8, "RC");
-							swap_transaction.setString(9, "Contest account swap");
-							swap_transaction.setInt(10, contest_id);
-							swap_transaction.executeUpdate();
-						}
+//						if (rc_wagers_total > 0) {
+//							double contest_account_rc = contest_account.getDouble("rc_balance");
+//							db.update_rc_balance(contest_account_id, add(contest_account_rc, rc_wagers_total, 0));		
+//							
+//							PreparedStatement swap_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+//							swap_transaction.setLong(1, System.currentTimeMillis());
+//							swap_transaction.setString(2, contest_admin);
+//							swap_transaction.setString(3, "BTC-FIXED-ODDS-CONTEST-SWAP");
+//							swap_transaction.setString(4, contest_account_id);
+//							swap_transaction.setString(5, contest_account_id);
+//							swap_transaction.setDouble(6, rc_wagers_total);
+//							swap_transaction.setString(7, "BTC");
+//							swap_transaction.setString(8, "RC");
+//							swap_transaction.setString(9, "Contest account swap");
+//							swap_transaction.setInt(10, contest_id);
+//							swap_transaction.executeUpdate();
+//						}
 					}
 
 					log("");
