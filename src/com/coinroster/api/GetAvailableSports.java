@@ -71,7 +71,7 @@ public class GetAvailableSports extends Utils {
 					}
 				}
 			}
-			
+/*			
 			// HOCKEY
 			boolean hockey = false;
 			games_to_offer = new JSONArray();
@@ -88,7 +88,7 @@ public class GetAvailableSports extends Utils {
 						output.put("hockey_games", games_to_offer);
 					}
 				}
-			}
+			}*/
 		
 			// GOLF
 			boolean golf_tournament = false;
@@ -148,7 +148,7 @@ public class GetAvailableSports extends Utils {
 			}
 			output.put("BASEBALL", baseball);
 			output.put("BASKETBALL", basketball);
-			output.put("HOCKEY", hockey);
+//			output.put("HOCKEY", hockey);
 			output.put("GOLF_TOURNAMENT", golf_tournament);
 			output.put("GOLF_1", r1);
 			output.put("GOLF_2", r2);
