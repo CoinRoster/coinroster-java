@@ -843,9 +843,10 @@ public class SettleContest extends Utils
 										if (do_update)
 											{
 											if (fixed_odds) {
-												double contest_account_balance = db.select_user("id", contest_account_id).getDouble("btc_balance");
-												log("balance before: " + contest_account_balance + " , after: " +  subtract(contest_account_balance, user_winnings, 0));
-												db.update_btc_balance(contest_account_id, subtract(contest_account_balance, user_winnings, 0));
+												// double contest_account_balance = db.select_user("id", contest_account_id).getDouble("btc_balance");
+												log("balance before: " + btc_contest_balance + " , after: " +  subtract(btc_contest_balance, user_winnings, 0));
+												btc_contest_balance = subtract(btc_contest_balance, user_winnings, 0);
+												db.update_btc_balance(contest_account_id, btc_contest_balance);
 											}
 											db.update_btc_balance(user_id, user_btc_balance);
 						
@@ -1564,17 +1565,14 @@ public class SettleContest extends Utils
 						// additionally, a rake could potentially be directly subtracted from this amount
 						double creator_winnings = add(subtract(risk, winning_wager_total, 0), total_from_transactions, 0);
 						
-						//refresh data (??)
-//						contest_account = db.select_user("id", contest_account_id);
-						double btc_contest = contest_account.getDouble("btc_balance");
-						btc_contest = subtract(btc_contest, creator_winnings, 0);
-						db.update_btc_balance(contest_account_id, btc_contest);
+						btc_contest_balance = subtract(btc_contest_balance, creator_winnings, 0);
+						db.update_btc_balance(contest_account_id, btc_contest_balance);
 						
 						double creator_balance = db.select_user("id", contest.getString("created_by")).getDouble("btc_balance");
 						creator_balance = add(creator_balance, creator_winnings, 0);
 						db.update_btc_balance(contest.getString("created_by"), creator_balance);
 
-						log(String.format("btc_contest: %f; creator_balance: %f", btc_contest, creator_balance));
+						log(String.format("btc_contest after credit: %f; creator_balance: %f", btc_contest_balance, creator_balance));
 						
 						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 						create_transaction.setLong(1, System.currentTimeMillis());
