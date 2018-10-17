@@ -842,12 +842,12 @@ public class SettleContest extends Utils
 										
 										if (do_update)
 											{
-											if (fixed_odds) {
-												// double contest_account_balance = db.select_user("id", contest_account_id).getDouble("btc_balance");
-												log("balance before: " + btc_contest_balance + " , after: " +  subtract(btc_contest_balance, user_winnings, 0));
-												btc_contest_balance = subtract(btc_contest_balance, user_winnings, 0);
-												db.update_btc_balance(contest_account_id, btc_contest_balance);
-											}
+//											if (fixed_odds) {
+//												// double contest_account_balance = db.select_user("id", contest_account_id).getDouble("btc_balance");
+//												log("balance before: " + btc_contest_balance + " , after: " +  subtract(btc_contest_balance, user_winnings, 0));
+//												btc_contest_balance = subtract(btc_contest_balance, user_winnings, 0);
+//												db.update_btc_balance(contest_account_id, btc_contest_balance);
+//											}
 											db.update_btc_balance(user_id, user_btc_balance);
 						
 											String 
