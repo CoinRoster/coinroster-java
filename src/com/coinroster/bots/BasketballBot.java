@@ -494,7 +494,7 @@ public class BasketballBot extends Utils {
 			
 			for(Player player : this.getPlayerHashMap().values()){
 				
-				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setString(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
@@ -563,14 +563,14 @@ public class BasketballBot extends Utils {
 					log(team_abr);
 					Document team_stats_page = Jsoup.connect("http://www.espn.com/nba/team/roster/_/name/" + team_abr).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 						      .referrer("http://www.google.com").timeout(0).get();
-					Element stats_table = team_stats_page.getElementsByClass("mod-table").first().getElementsByClass("mod-content").first();
+					Element stats_table = team_stats_page.getElementsByClass("Table2__tbody").first();
 					Elements rows = stats_table.getElementsByTag("tr");
 					for (Element row : rows){
-						if(row.className().contains("oddrow") || row.className().contains("evenrow")){
+						if(row.className().contains("Table2__tr")){
 							Elements cols = row.getElementsByTag("td");
-							String name = cols.get(0).select("a").text();
+							String name = cols.get(1).select("a").text();
 							try{
-								String ESPN_id = cols.get(0).select("a").attr("href").split("/")[7];
+								String ESPN_id = cols.get(1).select("a").attr("href").split("/")[7];
 								Player p = new Player(ESPN_id, name, team_abr.toUpperCase());
 								int rtn = p.scrape_info();
 								if(rtn == 1){
