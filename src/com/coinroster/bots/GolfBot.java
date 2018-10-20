@@ -36,7 +36,7 @@ import org.json.JSONArray;
 public class GolfBot extends Utils {
 
 	public static String method_level = "admin";
-	public String year = "2018";
+	public String year = "2019";
 	protected Map<String, Player> players_list;
 	private String tourneyID;
 	private String tourneyName;
