@@ -907,7 +907,7 @@ public class HockeyBot extends Utils {
 			Elements tables = page.getElementsByClass("tablehead");
 			Element stats_table;
 			try{
-				stats_table = tables.get(0);
+				stats_table = tables.get(1);
 			}
 			catch (Exception e){
 				log("No available data for " + this.getName() + " - " + this.getESPN_ID() + " so he will not be available in contests");
@@ -940,11 +940,11 @@ public class HockeyBot extends Utils {
 			String[] game_log_stats = {"DATE","OPP","SCORE", "G", "A", "PTS", "+/-", "PIM",	"SOG",	"Shooting %", "PPG", "PPA",	"SHG", "SHA", "GWG", "TOI/G", "PROD"};
 			Element game_log_table;
 			try{
-				game_log_table = tables.get(1);
+				game_log_table = tables.get(2);
 			}
 			catch(java.lang.IndexOutOfBoundsException e){
 				//player does not have a year and career stats table, so his game logs is second table on page, not third
-				game_log_table = tables.get(0);
+				game_log_table = tables.get(1);
 			}
 			Elements rows = game_log_table.getElementsByTag("tr");
 			JSONArray game_logs = new JSONArray();
