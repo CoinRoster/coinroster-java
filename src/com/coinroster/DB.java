@@ -1847,7 +1847,7 @@ public class DB
 	public JSONObject get_player_dashboard_data(String player_id, String sport) throws SQLException, JSONException{
 		JSONObject data = null;
 		ResultSet rs = null;
-		PreparedStatement get = sql_connection.prepareStatement("select bioJSON from player where id = ? and sport_type = ?");
+		PreparedStatement get = sql_connection.prepareStatement("select bioJSON from player where id = ? and sport_type = ? order by last_updated desc limit 1");
 		get.setString(1, player_id);
 		get.setString(2, sport);
 		rs = get.executeQuery();
