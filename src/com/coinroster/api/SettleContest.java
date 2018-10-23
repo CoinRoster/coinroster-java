@@ -348,9 +348,10 @@ public class SettleContest extends Utils
 					
 					JSONObject internal_asset = db.select_user("username", "internal_asset");
 					
-					if(voting_contest && do_update) {
+					// voting contest creator gets a 1% commission from the original contest's betting volume
+					// does not apply to fixed-odds contests
+					if(voting_contest && do_update && !fixed_odds) {
 						
-						// voting contest creator gets a 1% commission from the original contest's betting volume
 						
 						Integer original_contest = db.get_original_contest(contest_id);
 						
