@@ -18,6 +18,8 @@ import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
+import com.coinroster.internal.scrapeHTML;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -541,7 +543,7 @@ public class HockeyBot extends Utils {
 	}
 	
 		// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
-		public Map<String, Player> setup() throws IOException, JSONException, SQLException{
+		public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException{
 			Map<String, Player> players = new HashMap<String,Player>();
 			if(this.game_IDs == null){
 				log("No games scheduled");
@@ -558,8 +560,12 @@ public class HockeyBot extends Utils {
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
 					log(team_abr);
-					Document team_stats_page = Jsoup.connect("http://www.espn.com/nhl/team/stats/_/name/" + team_abr).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						      .referrer("http://www.google.com").timeout(0).get();
+					String url  = "http://www.espn.com/nhl/team/stats/_/name/" + team_abr;
+					Document team_stats_page = scrapeHTML.connect(url);
+					if(team_stats_page == null){
+						log("problem connecting to " + url);
+						continue;
+					}
 					Element stats_table = team_stats_page.getElementsByClass("mod-table").first().getElementsByClass("mod-content").first();
 					Elements rows = stats_table.getElementsByTag("tr");
 					for (Element row : rows){
@@ -862,10 +868,13 @@ public class HockeyBot extends Utils {
 			return this.bio;
 		}
 		
-		public int scrape_info() throws IOException, JSONException{
+		public int scrape_info() throws IOException, JSONException, InterruptedException{
 			
-			Document page = Jsoup.connect("http://www.espn.com/nhl/player/_/id/"+ this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-				      .referrer("http://www.google.com").timeout(0).get();
+			String url = "http://www.espn.com/nhl/player/_/id/"+ this.getESPN_ID();
+			Document page = scrapeHTML.connect(url);
+			if(page == null){
+				return 0;
+			}
 			
 			Element bio = page.getElementsByClass("player-bio").first();
 			// parse bio-bio div to get pos, weight, height, birthString
