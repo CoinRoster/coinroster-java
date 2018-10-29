@@ -768,8 +768,6 @@ public class SettleContest extends Utils
 										db.update_rc_balance(contest_account_id, contest_rc);
 									}
 									
-									progressive_balance = 0;
-									
 									db.update_btc_balance(internal_progressive_id, internal_progressive_balance);
 									
 									String 
@@ -787,7 +785,7 @@ public class SettleContest extends Utils
 									create_transaction.setString(3, transaction_type);
 									create_transaction.setString(4, from_account);
 									create_transaction.setString(5, to_account);
-									create_transaction.setDouble(6, user_winnings_total);
+									create_transaction.setDouble(6, (fixed_odds)? progressive_balance: user_winnings_total);
 									create_transaction.setString(7, from_currency);
 									create_transaction.setString(8, to_currency);
 									create_transaction.setString(9, memo);
