@@ -123,7 +123,7 @@ public class CloseContestRegistration extends Utils
 							
 							// populate contest table
 							
-			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status, progressive, min_users) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
+			            	PreparedStatement create_contest = sql_connection.prepareStatement("insert into contest(category, sub_category, created, contest_type, title, description, registration_deadline, rake, cost_per_entry, settlement_type, option_table, created_by, auto_settle, status, progressive, min_users, prop_data) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);				
 							create_contest.setString(1, contest.getString("category"));
 							create_contest.setString(2, contest.getString("sub_category"));
 							create_contest.setLong(3, System.currentTimeMillis());
@@ -140,6 +140,11 @@ public class CloseContestRegistration extends Utils
 							create_contest.setInt(14, 1);
 							create_contest.setString(15, code);
 							create_contest.setInt(16, 1);
+							if(fixed_odds) {
+								create_contest.setString(17,  contest.getString("prop_data"));
+							} else {
+								create_contest.setNull(17, java.sql.Types.VARCHAR);
+							}
 							create_contest.executeUpdate();
 							
 							ResultSet created_contest = create_contest.getGeneratedKeys();
@@ -166,7 +171,10 @@ public class CloseContestRegistration extends Utils
 								log("control commission: " + voting_contest_commission);
 								
 								contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
-							} else contest_creator_commission = new BigDecimal(0.0000001).doubleValue();
+							} 
+							// fixed-odds has a hardcoded commission amount for now
+							// TODO: move this amount to a `control` table variable
+							else contest_creator_commission = new BigDecimal(0.0000001).doubleValue();
 
 							log("Contest creator commission: " + contest_creator_commission);
 							
