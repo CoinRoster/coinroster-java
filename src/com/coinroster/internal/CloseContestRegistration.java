@@ -40,6 +40,7 @@ public class CloseContestRegistration extends Utils
 					JSONObject contest = db.select_contest(contest_id);
 					
 					boolean fixed_odds = db.is_fixed_odds_contest(contest_id);
+					boolean voting = db.is_voting_contest(contest_id);
 					
 					Long registration_deadline = contest.getLong("registration_deadline");
 					
@@ -79,7 +80,8 @@ public class CloseContestRegistration extends Utils
 
 						int min_users = contest.getInt("min_users");
 										
-						if (users.size() >= min_users && contest.getString("settlement_type").equals("CROWD-SETTLED")) // contest is adequately subscribed
+						// contest is adequately subscribed and isn't a voting round
+						if (users.size() >= min_users && contest.getString("settlement_type").equals("CROWD-SETTLED") && !voting)
 							{
 							Server.log("Contest #" + contest_id + " is being crowd-settled");
 							
