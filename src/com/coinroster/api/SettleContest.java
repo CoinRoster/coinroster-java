@@ -749,7 +749,7 @@ public class SettleContest extends Utils
 										PreparedStatement create_swap_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 										create_swap_transaction.setLong(1, System.currentTimeMillis());
 										create_swap_transaction.setString(2, contest_admin);
-										create_swap_transaction.setString(3, "RC_VOTING-PROGRESSIVE-SWAP");
+										create_swap_transaction.setString(3, "RC-VOTING-PROGRESSIVE-SWAP");
 										create_swap_transaction.setString(4, contest_account_id);
 										create_swap_transaction.setString(5, contest_account_id);
 										create_swap_transaction.setDouble(6, progressive_balance);
