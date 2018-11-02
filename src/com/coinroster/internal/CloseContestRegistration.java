@@ -170,7 +170,7 @@ public class CloseContestRegistration extends Utils
 								voting_contest_commission = 0.01; //db.get_voting_contest_commission();
 								
 								log("commission: " + total_from_original);
-								log("control commission: " + voting_contest_commission);
+								log("Total from original: " + total_from_original);
 								
 								contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
 							} 
