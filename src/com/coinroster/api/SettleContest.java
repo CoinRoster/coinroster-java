@@ -352,7 +352,6 @@ public class SettleContest extends Utils
 					// does not apply to fixed-odds contests
 					if(voting_contest && do_update && !fixed_odds) {
 						
-						
 						Integer original_contest = db.get_original_contest(contest_id);
 						
 						PreparedStatement get_original_total = sql_connection.prepareStatement("select sum(amount) from entry where contest_id = ?");
@@ -785,7 +784,7 @@ public class SettleContest extends Utils
 									create_transaction.setString(3, transaction_type);
 									create_transaction.setString(4, from_account);
 									create_transaction.setString(5, to_account);
-									create_transaction.setDouble(6, (fixed_odds)? progressive_balance: user_winnings_total);
+									create_transaction.setDouble(6, (fixed_odds || voting_contest)? progressive_balance: user_winnings_total);
 									create_transaction.setString(7, from_currency);
 									create_transaction.setString(8, to_currency);
 									create_transaction.setString(9, memo);
