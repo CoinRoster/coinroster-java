@@ -725,6 +725,7 @@ public class ContestMethods extends Utils{
 				}
 			}
 		}catch (Exception e) {
+			log("wtf");
 			Server.exception(e);
 		} 
 		finally {
