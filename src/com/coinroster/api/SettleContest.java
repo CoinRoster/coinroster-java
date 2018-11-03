@@ -350,7 +350,7 @@ public class SettleContest extends Utils
 					
 					// voting contest creator gets a 1% commission from the original contest's betting volume
 					// does not apply to fixed-odds contests
-					if(voting_contest && do_update && !fixed_odds) {
+					if(voting_contest && do_update && !db.is_fixed_odds_contest(db.get_original_contest(contest_id))) {
 						
 						Integer original_contest = db.get_original_contest(contest_id);
 						
