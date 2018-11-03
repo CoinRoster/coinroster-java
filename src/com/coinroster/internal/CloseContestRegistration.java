@@ -145,7 +145,7 @@ public class CloseContestRegistration extends Utils
 							if(fixed_odds) {
 								create_contest.setString(17,  contest.getString("prop_data"));
 							} else {
-								create_contest.setNull(17, java.sql.Types.VARCHAR);
+								create_contest.setString(17, "");
 							}
 							create_contest.executeUpdate();
 							
