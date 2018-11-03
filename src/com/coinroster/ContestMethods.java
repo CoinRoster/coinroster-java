@@ -640,6 +640,7 @@ public class ContestMethods extends Utils{
 				for(Integer contest_id : voting_contest_ids){
 	
 					JSONObject contest = db.select_contest(contest_id);
+					log(contest.toString());
 					if(new Date().getTime() > contest.getLong("registration_deadline")) {
 	
 						// Settle Voting Round
