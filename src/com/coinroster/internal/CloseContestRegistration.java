@@ -145,7 +145,7 @@ public class CloseContestRegistration extends Utils
 							if(fixed_odds) {
 								create_contest.setString(17,  contest.getString("prop_data"));
 							} else {
-								create_contest.setNull(17, java.sql.Types.VARCHAR);
+								create_contest.setString(17, "");
 							}
 							create_contest.executeUpdate();
 							
@@ -170,7 +170,7 @@ public class CloseContestRegistration extends Utils
 								voting_contest_commission = 0.01; //db.get_voting_contest_commission();
 								
 								log("commission: " + total_from_original);
-								log("control commission: " + voting_contest_commission);
+								log("Total from original: " + total_from_original);
 								
 								contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
 							} 
