@@ -37,22 +37,33 @@ public class UserSettleContest extends Utils
 			winning_outcome = input.getInt("winning_outcome");
 
 			String message_body;
-			
-//			// check valid winning outcome
-//			if(input.getInt("winning_outcome") < 1) {
-//				new BackoutContest(sql_connection, contest_id);
-//				break method;
-//			}			
 
-			MethodInstance settle_method = new MethodInstance();
-			settle_method.input = input;
-			settle_method.output = output;
-			settle_method.session = null;
-			settle_method.sql_connection = sql_connection;
+//			MethodInstance settle_method = new MethodInstance();
+//			settle_method.input = input;
+//			settle_method.output = output;
+//			settle_method.session = null;
+//			settle_method.sql_connection = sql_connection;
+			
 			try{
 				log("Settling voting round");
 				Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
 				c.newInstance(method);
+				
+				if(db.is_voting_contest(contest_id)) {
+					JSONObject betting_input = new JSONObject();
+					betting_input.put("winning_outcome", winning_outcome);
+					betting_input.put("contest_id", db.get_original_contest(contest_id));
+					
+					MethodInstance betting_method = new MethodInstance();
+					betting_method.input = betting_input;
+					betting_method.output = output;
+					betting_method.session = null;
+					betting_method.sql_connection = sql_connection;
+					
+					log("Settling betting round round");
+					Constructor<?> b = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+					c.newInstance(betting_method);
+				}
 			}
 			catch(Exception e){
 				e.printStackTrace(System.out);
