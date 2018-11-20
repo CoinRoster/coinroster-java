@@ -446,7 +446,8 @@ public class SettleContest extends Utils
 							log("Amount: " + entry_amount);
 							log("Raked amount: " + user_raked_amount);
 							
-							if (free_play == 1)
+							// fixed odds does not take a rake so this messes the balance
+							if (free_play == 1 && !fixed_odds)
 								{
 								log("Free play credit: " + user_raked_amount);
 								
