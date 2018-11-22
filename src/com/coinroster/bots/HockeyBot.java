@@ -39,11 +39,11 @@ public class HockeyBot extends Utils {
 	private long earliest_game;
 	public String sport = "HOCKEY";
 	private DB db;
-	private Connection sql_connection = null;
+	private static Connection sql_connection = null;
 	
 	// constructor
 	public HockeyBot(Connection sql_connection) throws IOException, JSONException{
-		this.sql_connection = sql_connection;
+		HockeyBot.sql_connection = sql_connection;
 		this.db = new DB(sql_connection);
 
 	}

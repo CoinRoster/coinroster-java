@@ -2,6 +2,7 @@ package com.coinroster;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.concurrent.Callable;
 
 public class ServerWorker extends Utils implements Callable<Integer> 
@@ -36,7 +37,12 @@ public class ServerWorker extends Utils implements Callable<Integer>
 						}
 					case "ssi":
 						{
-						new SSI(request, response);
+						try{	
+							new SSI(request, response);
+						}catch(SQLException e){
+							log("SQLException");
+							log("request:" + request.full_url());
+						}
 						break;
 						}
 					case "referral":

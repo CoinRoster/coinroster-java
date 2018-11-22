@@ -46,15 +46,15 @@ public class GolfBot extends Utils {
 	private DB db;
 	public String sport = "GOLF";
 	public ArrayList<String> gameIDs = new ArrayList<String>();
-	private Connection sql_connection = null;
+	private static Connection sql_connection = null;
 	
 	public GolfBot(Connection sql_connection) throws IOException, JSONException{
-		this.sql_connection = sql_connection;
+		GolfBot.sql_connection = sql_connection;
 		db = new DB(sql_connection);
 	}
 	
 	public GolfBot(Connection sql_connection, String tourney_id) throws IOException, JSONException{
-		this.sql_connection = sql_connection;
+		GolfBot.sql_connection = sql_connection;
 		db = new DB(sql_connection);
 		this.tourneyID = tourney_id;
 		ArrayList<String> gameIDs = new ArrayList<String>();

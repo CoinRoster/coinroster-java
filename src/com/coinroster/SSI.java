@@ -13,8 +13,13 @@ public class SSI extends Utils
 		{
 		Connection sql_connection = null;
 		try {
-			sql_connection = Server.sql_connection();
-			
+			try{
+				sql_connection = Server.sql_connection();
+			}catch(SQLException e){
+				log("SQL exception");
+				log(request.full_url());
+				log(request.cookie("session_token"));
+			}
 			DB db = new DB(sql_connection);
 			
 			String 

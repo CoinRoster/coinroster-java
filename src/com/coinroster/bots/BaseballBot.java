@@ -39,11 +39,11 @@ public class BaseballBot extends Utils {
 	private long earliest_game;
 	public String sport = "BASEBALL";
 	private DB db;
-	private Connection sql_connection = null;
+	private static Connection sql_connection = null;
 	
 	// constructor
 	public BaseballBot(Connection sql_connection) throws IOException, JSONException{
-		this.sql_connection = sql_connection;
+		BaseballBot.sql_connection = sql_connection;
 		db = new DB(sql_connection);
 
 	}
