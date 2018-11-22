@@ -309,20 +309,30 @@ public class DB
 
 	
 	// CHECK IF CONTESTS ARE IN PLAY
-	public JSONObject check_if_in_play(String category, String sub_category, String contest_type) throws Exception
+	public JSONArray check_if_in_play(String category, String sub_category, String contest_type) throws Exception
 	{
 
-		JSONObject contests = new JSONObject();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules from contest where category = ? and sub_category = ? and contest_type = ? and status = 2");
+		JSONArray contests = new JSONArray();
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, gameIDs from contest where category = ? and sub_category = ? and contest_type = ? and status = 2");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
 		get_live_contests.setString(3, contest_type);
 	
 		ResultSet result_set = get_live_contests.executeQuery();
 		
-		while (result_set.next())
-			contests.put(String.valueOf(result_set.getInt(1)), result_set.getString(2));
-
+		while (result_set.next()){
+			JSONObject contest = new JSONObject();
+			contest.put("id", String.valueOf(result_set.getInt(1)));
+			contest.put("scoring_rules", result_set.getString(2));
+			JSONArray game_ids_db = new JSONArray(result_set.getString(3));
+			ArrayList<String> gameIDs = new ArrayList<String>();
+			for(int i = 0; i<game_ids_db.length(); i++){
+				gameIDs.add(game_ids_db.getString(i));
+			}
+			Utils.log(gameIDs.toString());
+			contest.put("gameIDs", gameIDs);
+			contests.put(contest);
+		}
 		return contests;
 	}
 	
@@ -439,7 +449,7 @@ public class DB
 	public JSONObject get_active_pari_mutuels(String sub_category, String contest_type) throws Exception
 	{
 		JSONObject contests = new JSONObject();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table, gameIDs from contest where sub_category = ? and contest_type = ? and auto_settle=1 and status=2");
 		get_live_contests.setString(1, sub_category);
 		get_live_contests.setString(2, contest_type);
 	
@@ -450,7 +460,15 @@ public class DB
 			contest_data.put("scoring_rules", result_set.getString(2));
 			contest_data.put("prop_data", result_set.getString(3));
 			contest_data.put("option_table", result_set.getString(4));
+			JSONArray game_ids_db = new JSONArray(result_set.getString(3));
+			ArrayList<String> gameIDs = new ArrayList<String>();
+			for(int i = 0; i<game_ids_db.length(); i++){
+				gameIDs.add(game_ids_db.getString(i));
+			}
+			Utils.log(gameIDs.toString());
+			contest_data.put("gameIDs", gameIDs);
 			contests.put(String.valueOf(result_set.getInt(1)), contest_data);
+
 		}
 		return contests;
 	}

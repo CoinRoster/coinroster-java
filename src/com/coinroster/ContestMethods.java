@@ -144,23 +144,29 @@ public class ContestMethods extends Utils{
 		try {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
-			JSONObject roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
+			JSONArray roster_contests = db_connection.check_if_in_play("FANTASYSPORTS", "BASKETBALL", "ROSTER");
 			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BASKETBALLPROPS", "PARI-MUTUEL");
 	
 			if(!(roster_contests.length() == 0) || !(pari_contests.length() == 0)){
 				BasketballBot basketball_bot = new BasketballBot(sql_connection);
 				log("Basketball games are in play and minute is multiple of 20");
-				basketball_bot.scrapeGameIDs();
-				ArrayList<String> gameIDs = basketball_bot.getGameIDs();
-				boolean games_ended;
-				games_ended = basketball_bot.scrape(gameIDs);
+				
+				ArrayList<String> gameIDs = new ArrayList<String>();
+				if(!(roster_contests.length() == 0)){
+					gameIDs = (ArrayList<String>) roster_contests.getJSONObject(0).get("gameIDs");
+				}else{
+					String pari_id = (String) pari_contests.keys().next();
+					gameIDs = (ArrayList<String>) pari_contests.getJSONObject(pari_id).get("gameIDs");
+				}
+				
+				//basketball_bot.scrapeGameIDs();
+				boolean games_ended = basketball_bot.scrape(gameIDs);
 	
-				Iterator<?> roster_contest_ids = roster_contests.keys();
-				while(roster_contest_ids.hasNext()){
+				for(int i = 0; i < roster_contests.length(); i++){
 	
-					String c_id = (String) roster_contest_ids.next();
+					String c_id = roster_contests.getJSONObject(i).getString("id");
 					log("basketball contest: " + c_id);
-					String scoring_rules_string = roster_contests.getString(c_id);
+					String scoring_rules_string = roster_contests.getJSONObject(i).getString("scoring_rules");
 					JSONObject scoring_rules = new JSONObject(scoring_rules_string);
 					JSONArray player_scores = basketball_bot.updateScores(scoring_rules, gameIDs);
 					JSONObject fields = new JSONObject();
