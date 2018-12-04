@@ -66,13 +66,13 @@ public class BitcoinBot {
 		JSONObject json;
 		
 		json = new JSONObject(jsonString);
-		String brr = String.valueOf(json.getJSONObject("referenceRate").getLong("value"));
+		String brr = String.valueOf(json.getJSONObject("referenceRate").getDouble("value"));
 		this.referenceRate = parseRate(brr);
 		
 		String brrDate = json.getJSONObject("referenceRate").getString("date");
 		this.referenceRateDate = parseDate(brrDate);
 		
-		String rti = String.valueOf(json.getJSONObject("realTimeIndex").getLong("value"));
+		String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
 		this.realtimeIndex  = parseRate(rti);
 		
 		String rtiDate = json.getJSONObject("realTimeIndex").getString("date");
