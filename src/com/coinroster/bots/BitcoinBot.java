@@ -66,7 +66,7 @@ public class BitcoinBot {
 		JSONObject json;
 		
 		json = new JSONObject(jsonString);
-		String brr = String.valueOf(json.getJSONObject("referenceRate").getDouble("value"));
+		String brr = String.valueOf(json.getJSONObject("referenceRate").getString("value"));
 		this.referenceRate = parseRate(brr);
 		
 		String brrDate = json.getJSONObject("referenceRate").getString("date");
