@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import com.coinroster.ContestMethods;
+import com.coinroster.bots.BitcoinBot; //Importing this until I make contest methods for it.
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
 import com.coinroster.internal.CloseContestRegistration;
@@ -78,7 +79,8 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
-			ContestMethods.checkHockeyContests();	
+			ContestMethods.checkHockeyContests();
+			UpdateBRR();
 		}
 		
 		if((hour%6==0) && (minute==30)){
@@ -394,7 +396,39 @@ public class CronWorker extends Utils implements Callable<Integer>
 		    }
 		});
 	}	
+
+//------------------------------------------------------------------------------------
+
+	// update BRR price
 	
+	private void UpdateBRR()
+		{
+		Server.async_updater.execute(new Runnable() 
+			{
+		    public void run() 
+		    	{
+		    	Connection sql_connection = null;
+				try {
+					sql_connection = Server.sql_connection();
+					BitcoinBot bb = new BitcoinBot(sql_connection);
+					bb.scrape();
+					bb.updateDB();
+					}
+				catch (Exception e) 
+					{
+					Server.exception(e);
+					} 
+				finally
+					{
+				if (sql_connection != null)
+					{
+					try {sql_connection.close();} 
+					catch (SQLException ignore) {}
+					}
+				}
+	    	}
+		});
+	}		
 //------------------------------------------------------------------------------------
 
 	// purge any password reset keys that have not been used
