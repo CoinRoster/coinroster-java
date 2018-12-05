@@ -274,7 +274,7 @@ public class CloseContestRegistration extends Utils
 									String created_by = contest_account_id;
 									String memo = "Not enough users entered: " + contest_title;
 									
-									if (trans_type.endsWith("CONTEST-ENTRY"))
+									if (trans_type.endsWith("CONTEST-ENTRY") || trans_type.endsWith("ESCROW"))
 										{
 										// build up unique list of users for communications
 										
