@@ -14,6 +14,7 @@ import com.coinroster.Utils;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.GolfBot;
+import com.coinroster.bots.HockeyBot;
 
 public class GetPlayerList extends Utils{
 	public static String method_level = "standard";
@@ -38,6 +39,17 @@ public class GetPlayerList extends Utils{
 				BasketballBot basketball_bot = new BasketballBot(sql_connection);
 				basketball_bot.scrapeGameIDs();
 				JSONArray games = basketball_bot.getGames();
+				for(int i = 0; i < games.length(); i++){
+					JSONObject game = games.getJSONObject(i);
+					if(game.getLong("date_milli") > (now + 5400000))
+						gameIDs.add(game.getString("gameID"));
+				}
+				break;
+				
+			case "HOCKEY":
+				HockeyBot hockey_bot = new HockeyBot(sql_connection);
+				hockey_bot.scrapeGameIDs();
+				games = hockey_bot.getGames();
 				for(int i = 0; i < games.length(); i++){
 					JSONObject game = games.getJSONObject(i);
 					if(game.getLong("date_milli") > (now + 5400000))

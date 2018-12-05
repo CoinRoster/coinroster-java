@@ -1,6 +1,5 @@
 package com.coinroster.bots;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,22 +14,21 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
 import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
+import com.coinroster.internal.scrapeHTML;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
-import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class BaseballBot extends Utils {
+public class HockeyBot extends Utils {
 	
 	public static String method_level = "admin";
 
@@ -39,14 +37,14 @@ public class BaseballBot extends Utils {
 	protected JSONArray games;
 	private Map<String, Player> players_list;
 	private long earliest_game;
-	public String sport = "BASEBALL";
+	public String sport = "HOCKEY";
 	private DB db;
-	private Connection sql_connection = null;
+	private static Connection sql_connection = null;
 	
 	// constructor
-	public BaseballBot(Connection sql_connection) throws IOException, JSONException{
-		this.sql_connection = sql_connection;
-		db = new DB(sql_connection);
+	public HockeyBot(Connection sql_connection) throws IOException, JSONException{
+		HockeyBot.sql_connection = sql_connection;
+		this.db = new DB(sql_connection);
 
 	}
 	// methods
@@ -65,7 +63,6 @@ public class BaseballBot extends Utils {
 	public String scrapeGameIDs() throws IOException, JSONException, InterruptedException, ParseException{
 		ArrayList<String> gameIDs = new ArrayList<String>();
 		JSONArray games = new JSONArray();
-		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYYMMdd");
 		String today = LocalDate.now().format(formatter);
 		
@@ -77,7 +74,7 @@ public class BaseballBot extends Utils {
 		}
 		
 		SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
-		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
+		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
 		if(events.length() == 0){
 			this.game_IDs = null;
@@ -112,7 +109,8 @@ public class BaseballBot extends Utils {
 				Date game_date = formatter1.parse(game.getString("date").replaceAll("Z$", "+0000"));
 				Long game_milli = game_date.getTime();
 				JSONArray links = game.getJSONArray("links");
-				String href = links.getJSONObject(0).getString("href");
+				// get the fourth link (boxscore link)
+				String href = links.getJSONObject(3).getString("href");
 				String gameID = href.split("=")[1].replace("&sourceLang", "");
 				
 				JSONObject game_obj = new JSONObject();
@@ -212,8 +210,8 @@ public class BaseballBot extends Utils {
 					Iterator<?> keys = scoring_rules.keys();
 					while(keys.hasNext()){
 						String key = (String) keys.next();
-						int multiplier = scoring_rules.getInt(key);
-						points += ((double) (data.getInt(key) * multiplier));
+						double multiplier = scoring_rules.getDouble(key);
+						points += (double) data.getInt(key) * multiplier; 
 					}
 					if(points > max_points){
 						max_points = points;
@@ -272,8 +270,8 @@ public class BaseballBot extends Utils {
 						Iterator<?> keys = scoring_rules.keys();
 						while(keys.hasNext()){
 							String key = (String) keys.next();
-							int multiplier = scoring_rules.getInt(key);
-							points += ((double) (player_data.getInt(key) * multiplier));
+							double multiplier = scoring_rules.getDouble(key);
+							points += (double) player_data.getInt(key) * multiplier;
 						}
 						log(player_id + ": " + points);
 						if(points > max_points){
@@ -323,8 +321,8 @@ public class BaseballBot extends Utils {
 				Iterator<?> keys = scoring_rules.keys();
 				while(keys.hasNext()){
 					String key = (String) keys.next();
-					int multiplier = scoring_rules.getInt(key);
-					points += ((double) (player_data.getInt(key) * multiplier));
+					double multiplier = scoring_rules.getDouble(key);
+					points += (double) player_data.getInt(key) * multiplier;
 				}
 				double o_u = prop_data.getDouble("over_under_value");
 				//over = 1, under = 2
@@ -353,8 +351,8 @@ public class BaseballBot extends Utils {
 							keys = scoring_rules.keys();
 							while(keys.hasNext()){
 								String key = (String) keys.next();
-								int multiplier = scoring_rules.getInt(key);
-								points += ((double) (data.getInt(key) * multiplier));
+								double multiplier = scoring_rules.getDouble(key);
+								points += (double) data.getInt(key) * multiplier;
 							}
 							team_score += points;
 						}
@@ -484,22 +482,18 @@ public class BaseballBot extends Utils {
 //			log("deleted " + this.sport + " players from old contests");
 			
 			JSONObject empty_data_json = new JSONObject();
-			try {
-				empty_data_json.put("hits", 0);
-				empty_data_json.put("runs", 0);
-				empty_data_json.put("rbis", 0);
-				empty_data_json.put("walks", 0);
-				empty_data_json.put("strikeouts", 0);
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
+			empty_data_json.put("goals", 0);
+			empty_data_json.put("assists", 0);
+			empty_data_json.put("plus-minus", 0);
+			empty_data_json.put("sog", 0);			
+			empty_data_json.put("bs", 0);
+			
 			if(this.getPlayerHashMap() == null)
 				return;
 			
 			for(Player player : this.getPlayerHashMap().values()){
 				
-				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON, filter_on) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+				PreparedStatement save_player = sql_connection.prepareStatement("insert into player(id, name, sport_type, gameID, team_abr, salary, data, points, bioJSON) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				save_player.setString(1, player.getESPN_ID());
 				save_player.setString(2, player.getName());
 				save_player.setString(3, this.sport);
@@ -509,7 +503,6 @@ public class BaseballBot extends Utils {
 				save_player.setString(7, empty_data_json.toString());
 				save_player.setDouble(8, player.getPoints());
 				save_player.setString(9, player.getBio().toString());
-				save_player.setInt(10, player.get_filter());
 				save_player.executeUpdate();	
 			}
 			log("added " + this.sport + " players to DB");
@@ -532,12 +525,13 @@ public class BaseballBot extends Utils {
 			Iterator<?> keys = scoring_rules.keys();
 			while(keys.hasNext()){
 				String key = (String) keys.next();
-				int multiplier = scoring_rules.getInt(key);
-				data_to_display += key.toUpperCase() + ": " + String.valueOf(data.get(key)) + ", ";
-				points += ((double) (data.getInt(key) * multiplier));			
+				double multiplier = scoring_rules.getDouble(key);
+				data_to_display += key.toUpperCase() + ": " + String.valueOf(data.getInt(key)) + ", ";
+				points += (double) data.getInt(key) * multiplier;			
 			}
 			// chop off ", " from end of string
-			data_to_display = data_to_display.substring(0, data_to_display.length() - 2);
+			if(data_to_display.contains(", "))
+				data_to_display = data_to_display.substring(0, data_to_display.length() - 2);
 			
 			player.put("score_raw", data_to_display);
 			player.put("score_normalized", points);
@@ -548,36 +542,8 @@ public class BaseballBot extends Utils {
 		return player_map;
 	}
 	
-	public double getNormalizationWeight(double multiplier, ArrayList<String> gameIDs, int salary_cap) throws SQLException{
-		
-		double top_price = 0;
-		String stmt = "select salary from player where sport_type = ? and gameID in (";
-		
-		for(int i = 0; i < gameIDs.size(); i++){
-			stmt += "?,";
-		}
-		stmt = stmt.substring(0, stmt.length() - 1);
-		stmt += ") order by salary DESC limit 1";
-			
-		PreparedStatement top_player = sql_connection.prepareStatement(stmt);
-		top_player.setString(1, this.sport);
-		int index = 2;
-		for(String game : gameIDs){
-			top_player.setString(index++, game);
-		}
-		ResultSet top = top_player.executeQuery();
-		if(top.next()){
-			top_price = top.getDouble(1);
-			return ((double) salary_cap * multiplier) / top_price;
-		}
-		else{
-			log("error finding normalization weight");
-			return 0;
-		}
-	}
-	
-	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
-		public Map<String, Player> setup() throws IOException, JSONException, SQLException{
+		// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
+		public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException{
 			Map<String, Player> players = new HashMap<String,Player>();
 			if(this.game_IDs == null){
 				log("No games scheduled");
@@ -586,17 +552,21 @@ public class BaseballBot extends Utils {
 			}
 			for(int i=0; i < this.game_IDs.size(); i++){
 				// for each gameID, get the two teams playing
-				Document page = Jsoup.connect("http://www.espn.com/mlb/game?gameId="+this.game_IDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+				Document page = Jsoup.connect("http://www.espn.com/nhl/game?gameId="+this.game_IDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 					      .referrer("http://www.google.com").timeout(0).get();
-				Elements team_divs = page.getElementsByClass("team-info-wrapper");
+				Elements team_divs = page.getElementsByClass("Gamestrip__Truncate");
 				// for each team, go to their stats page and scrape ppg
 				for(Element team : team_divs){
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
 					log(team_abr);
-					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/atBats").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						      .referrer("http://www.google.com").timeout(0).get();
-					Element stats_table = team_stats_page.select("table.tablehead").first();
+					String url  = "http://www.espn.com/nhl/team/stats/_/name/" + team_abr;
+					Document team_stats_page = scrapeHTML.connect(url);
+					if(team_stats_page == null){
+						log("problem connecting to " + url);
+						continue;
+					}
+					Element stats_table = team_stats_page.getElementsByClass("mod-table").first().getElementsByClass("mod-content").first();
 					Elements rows = stats_table.getElementsByTag("tr");
 					for (Element row : rows){
 						if(row.className().contains("oddrow") || row.className().contains("evenrow")){
@@ -605,9 +575,11 @@ public class BaseballBot extends Utils {
 							try{
 								String ESPN_id = cols.get(0).select("a").attr("href").split("/")[7];
 								Player p = new Player(ESPN_id, name, team_abr.toUpperCase());
-								int return_value = p.scrape_info();
-								if(return_value == 1){
+								int rtn = p.scrape_info();
+								if(rtn == 1){
+									p.setPPG();
 									p.gameID = this.game_IDs.get(i);
+									p.set_ppg_salary(p.getPPG());
 									p.createBio();		
 									players.put(ESPN_id, p);
 								}
@@ -623,58 +595,148 @@ public class BaseballBot extends Utils {
 			return players;
 		}
 		
+		
+		public double getNormalizationWeight(double multiplier, ArrayList<String> gameIDs, int salary_cap) throws SQLException{
+			
+			double top_price = 0;
+			String stmt = "select salary from player where sport_type = ? and gameID in (";
+			
+			for(int i = 0; i < gameIDs.size(); i++){
+				stmt += "?,";
+			}
+			stmt = stmt.substring(0, stmt.length() - 1);
+			stmt += ") order by salary DESC limit 1";
+		
+			PreparedStatement top_player = sql_connection.prepareStatement(stmt);
+			top_player.setString(1, this.sport);
+			int index = 2;
+			for(String game : gameIDs){
+				top_player.setString(index++, game); // or whatever it applies 
+			}
+			ResultSet top = top_player.executeQuery();
+			if(top.next()){
+				top_price = top.getDouble(1);
+				return ((double) salary_cap * multiplier) / top_price;
+			}
+			else{
+				log("error finding normalization weight");
+				return 0;
+			}
+		}
+		
 		public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException{
 			
 			int games_ended = 0;
 			for(int i=0; i < gameIDs.size(); i++){
-				Document page = Jsoup.connect("http://www.espn.com/mlb/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+				Document page = Jsoup.connect("http://www.espn.com/nhl/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
 					      .referrer("http://www.google.com").timeout(0).get();
-				Elements tables = page.getElementsByAttributeValue("data-type", "batting");
-				for (Element table : tables){
-					if(!table.hasClass("stats-wrap--pre")){
-						Elements rows = table.getElementsByTag("tr");
-						try{
-							for (Element row : rows){
-								String espn_ID_url = row.getElementsByClass("name").select("a").attr("href");
-								if(!espn_ID_url.isEmpty()){
-									String espn_ID = espn_ID_url.split("/")[7];		
-									String hits_string = row.getElementsByClass("batting-stats-h").text();
-									String runs_string = row.getElementsByClass("batting-stats-r").text();
-									String rbi_string = row.getElementsByClass("batting-stats-rbi").text();
-									String bb_string = row.getElementsByClass("batting-stats-bb").text();
-									String k_string = row.getElementsByClass("batting-stats-k").text();
-									JSONObject data = new JSONObject();
-									try {
-										if(hits_string.equals("--"))
-											hits_string = "0";
-										data.put("hits", Integer.parseInt(hits_string));
-										if(runs_string.equals("--"))
-											runs_string = "0";
-										data.put("runs", Integer.parseInt(runs_string));
-										if(rbi_string.equals("--"))
-											rbi_string = "0";
-										data.put("rbis", Integer.parseInt(rbi_string));
-										if(bb_string.equals("--"))
-											bb_string = "0";
-										data.put("walks", Integer.parseInt(bb_string));
-										if(k_string.equals("--"))
-											k_string = "0";
-										data.put("strikeouts", Integer.parseInt(k_string));
-									} catch (JSONException e) {
-										e.printStackTrace();
-									}
-								
-									// look up player in HashMap with ESPN_ID, update his data in DB
-									db.editData(data.toString(), espn_ID, this.sport, gameIDs);
-								}			
-							}			
+				Element outer_div;
+				Elements tables;
+				try{
+					outer_div = page.getElementsByClass("Boxscore__ResponsiveWrapper").first();
+					tables = outer_div.getElementsByClass("v-top");
+				}catch(NullPointerException e){
+					continue;
+				}
+				
+				//away team 
+				Elements away_player_names_rows = tables.get(0).getElementsByAttribute("data-idx");
+				Elements away_player_stats_rows = tables.get(1).getElementsByAttribute("data-idx");
+		
+				int total_rows = away_player_names_rows.size();
+				for(int row = 1; row < total_rows; row++ ){
+					String espn_ID_url = away_player_names_rows.get(row).select("a").attr("href");
+					if(!espn_ID_url.isEmpty()){
+						String espn_ID = espn_ID_url.split("/")[7];	
+						Elements stats = away_player_stats_rows.get(row).getElementsByTag("td");
+						String goal_string = stats.get(0).text();
+						String ast_string = stats.get(1).text();
+						String plus_minus_string = stats.get(2).text();
+						String sog_string = stats.get(3).text();
+						String bs_string = stats.get(5).text();
+						
+						JSONObject data = new JSONObject();
+						try {
+							
+							if(goal_string.equals("--"))
+								goal_string = "0";
+							data.put("goals", Integer.parseInt(goal_string));
+							
+							if(ast_string.equals("--"))
+								ast_string = "0";
+							data.put("assists", Integer.parseInt(ast_string));
+							
+							if(plus_minus_string.equals("--"))
+								plus_minus_string = "0";
+							data.put("plus-minus", Integer.parseInt(plus_minus_string));
+							
+							if(sog_string.equals("--"))
+								sog_string= "0";
+							data.put("sog", Integer.parseInt(sog_string));
+							
+							if(bs_string.equals("--"))
+								bs_string= "0";
+							data.put("bs", Integer.parseInt(bs_string));
+							
+						}catch (JSONException e) {
+							Server.exception(e);
 						}
-						catch (NullPointerException nullPointer){		
-						}	
+					
+						// look up player in HashMap with ESPN_ID, update his data in DB
+						db.editData(data.toString(), espn_ID, this.sport, gameIDs);	
 					}
 				}
+				
+				//home team 
+				Elements home_player_names_rows = tables.get(4).getElementsByAttribute("data-idx");
+				Elements home_player_stats_rows = tables.get(5).getElementsByAttribute("data-idx");
+				
+				total_rows = home_player_names_rows.size();
+				for(int row = 1; row < total_rows; row++ ){
+					String espn_ID_url = home_player_names_rows.get(row).select("a").attr("href");
+					if(!espn_ID_url.isEmpty()){
+						String espn_ID = espn_ID_url.split("/")[7];	
+						Elements stats = home_player_stats_rows.get(row).getElementsByTag("td");
+						String goal_string = stats.get(0).text();
+						String ast_string = stats.get(1).text();
+						String plus_minus_string = stats.get(2).text();
+						String sog_string = stats.get(3).text();
+						String bs_string = stats.get(5).text();
+						
+						JSONObject data = new JSONObject();
+						try {
+							
+							if(goal_string.equals("--"))
+								goal_string = "0";
+							data.put("goals", Integer.parseInt(goal_string));
+							
+							if(ast_string.equals("--"))
+								ast_string = "0";
+							data.put("assists", Integer.parseInt(ast_string));
+							
+							if(plus_minus_string.equals("--"))
+								plus_minus_string = "0";
+							data.put("plus-minus", Integer.parseInt(plus_minus_string));
+							
+							if(sog_string.equals("--"))
+								sog_string= "0";
+							data.put("sog", Integer.parseInt(sog_string));
+							
+							if(bs_string.equals("--"))
+								bs_string= "0";
+							data.put("bs", Integer.parseInt(bs_string));
+							
+						}catch (JSONException e) {
+							Server.exception(e);
+						}
+					
+						// look up player in HashMap with ESPN_ID, update his data in DB
+						db.editData(data.toString(), espn_ID, this.sport, gameIDs);	
+					}
+				}
+				
 	            //check to see if contest is finished - if all games are deemed final
-				String time_left = page.getElementsByClass("status-detail").first().text();
+				String time_left = page.getElementsByClass("Gamestrip__Time").first().text();
 				if(time_left.contains("Final") || time_left.contains("Postponed")){
 					games_ended += 1;
 				}
@@ -685,8 +747,8 @@ public class BaseballBot extends Utils {
 			return false;
 		}
 
-	class Player {
 
+	class Player {
 		public String method_level = "admin";
 		private String name;
 		private String team_abr;
@@ -698,21 +760,21 @@ public class BaseballBot extends Utils {
 		private String height;
 		private String weight;
 		private String pos;
-		private JSONArray game_log;
+		private JSONArray last_five_games;
 		private JSONObject career_stats;
 		private JSONObject year_stats;
 		private JSONObject bio;
 		private String gameID;
-		private int filter;
 		
 		// constructor
-		public Player(String id, String n, String team_abr){
+		public Player(String id, String n, String team){
 			this.ESPN_ID = id;
 			this.name = n;
-			this.team_abr = team_abr;
+			this.team_abr = team;
 		}
 		
 		// methods
+	
 		public double getPoints(){
 			return fantasy_points;
 		}
@@ -722,8 +784,23 @@ public class BaseballBot extends Utils {
 		public String getGameID(){
 			return gameID;
 		}
-		public void setPPG(double hits){
-			this.ppg = hits;
+		public void setPPG() throws JSONException{
+			try{
+				String pts = this.getYearStats().getString("PTS");
+				String gp = this.getYearStats().getString("GP");
+				double ppg = 0.0;
+				ppg = Double.parseDouble(pts) / Double.parseDouble(gp);
+				this.ppg = ppg;
+			}
+			catch(java.lang.NullPointerException e){
+				this.ppg = 0.0;
+			}
+			catch(JSONException e){
+				this.ppg = 0.0;
+			}
+			catch(Exception e){
+				this.ppg = 0.0;
+			}
 		}
 		public double getSalary(){
 			return salary;
@@ -738,7 +815,7 @@ public class BaseballBot extends Utils {
 			return team_abr;
 		}
 		public JSONArray getGameLogs(){
-			return game_log;
+			return last_five_games;
 		}
 		public JSONObject getCareerStats(){
 			if(career_stats == null){
@@ -764,27 +841,25 @@ public class BaseballBot extends Utils {
 		public String getWeight(){
 			return weight;
 		}
-		public void set_salary(double sal){
-			this.salary = sal;
+		public void set_ppg_salary(double pts){
+			if(pts < 0.2){
+				this.salary = 50.0;
+			}
+			else{
+				this.salary = Math.round(pts * 500.0);
+			}
 		}
-		public void set_filter(int at_bats){
-			this.filter = at_bats;
-		}
-		public int get_filter(){
-			return filter;
-		}
-		
 		public void createBio() throws JSONException{
 			JSONObject bio = new JSONObject();
+			bio.put("id", this.getESPN_ID());
+			bio.put("name", this.getName());
 			bio.put("birthString", this.getBirthString());
 			bio.put("height", this.getHeight());
 			bio.put("weight", this.getWeight());
 			bio.put("pos", this.getPosition());
-			bio.put("last_ten_games", this.getGameLogs());
+			bio.put("last_five_games", this.getGameLogs());
 			bio.put("career_stats", this.getCareerStats());
 			bio.put("year_stats", this.getYearStats());
-			bio.put("name", this.name);
-			bio.put("id", this.getESPN_ID());
 			bio.put("team_abr", this.getTeam());
 
 			this.bio = bio;		
@@ -793,89 +868,51 @@ public class BaseballBot extends Utils {
 			return this.bio;
 		}
 		
-		public int scrape_info() throws IOException, JSONException{
+		public int scrape_info() throws IOException, JSONException, InterruptedException{
 			
-			Document page = null;
-			try{
-				page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID())
-						.userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						.referrer("http://www.google.com").timeout(0).get();
-			}catch(SocketTimeoutException e){
-				log("socket timeout - will try again to connect...");
-				page = null;
-				while(page == null){
-					page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID())
-						.userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						.referrer("http://www.google.com").timeout(0).get();
-				}
-				
-			}catch(HttpStatusException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
-			catch(IOException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
+			String url = "http://www.espn.com/nhl/player/_/id/"+ this.getESPN_ID();
+			Document page = scrapeHTML.connect(url);
 			if(page == null){
 				return 0;
 			}
 			
 			Element bio = page.getElementsByClass("player-bio").first();
-			
 			// parse bio-bio div to get pos, weight, height, birthString
-			Element general_info = bio.getElementsByClass("general-info").first();
+			Element general_info;
 			try{
-				String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
-				this.pos = pos;
-				String team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
-				if(!this.team_abr.equals(team)){
-					log("not saving " + this.getName() + " to DB - not correct team");
-					return 0;
-				}
-				
+				general_info = bio.getElementsByClass("general-info").first();
+			}catch(Exception e){
+				log(this.getESPN_ID() + " - " + this.getName());
+				return 0;
+			}
+			String[] info = general_info.text().split(" ");
+			String pos = info[1];
+			this.pos = pos;
+			String height = info[2] + " " + info[3].replace(",", "");
+			String weight = info[4] + " " + info[5];
+			this.height = height;
+			this.weight = weight;
+			String team = null;
+			try{
+				team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
 			}catch(NullPointerException e){
+				log("not saving " + this.getName() + " to DB - no team");
+				return 0;
+			}
+			if(!this.team_abr.equals(team)){
+				log("not saving " + this.getName() + " to DB - not correct team");
 				return 0;
 			}
 			
-			String birthDate = "", birthPlace = "", height = "", weight = "";
-			Elements player_metadata = bio.getElementsByClass("player-metadata").first().getElementsByTag("li");
-			for(Element li : player_metadata){
-				if(li.getElementsByTag("span").first().text().equals("Birth Date")){
-					birthDate = li.text().replace("Birth Date", "");
-				}
-				else if(li.getElementsByTag("span").first().text().equals("Birthplace")){
-					birthPlace = li.text().replace("Birthplace", "");
-				}
-				else if(li.getElementsByTag("span").first().text().equals("Ht/Wt")){
-					String ht_wt = li.text().replace("Ht/Wt", "");
-					height = ht_wt.split(", ")[0].replace("-", "'") + "\"";
-					weight = ht_wt.split(", ")[1].replace(".", "");
-				}
-			}
-			this.birthString = birthDate.split("\\(")[0] + "in " + birthPlace + " (" + birthDate.split("\\(")[1];
-			this.height = height;
-			this.weight = weight;
+			Elements player_metadata = bio.getElementsByClass("player-metadata");
+			Element item = player_metadata.first();
+			Elements lis = item.children();
+			String born_string = lis.first().text().replace("Born", "");
+			String age = lis.get(1).text().replace("Age", " (Age: ");
+			born_string += age + ")";
+			this.birthString = born_string;
 			
-			if(this.height.isEmpty()  || this.weight.isEmpty()){
-				try{
-					player_metadata = bio.getElementsByClass("player-metadata").last().getElementsByTag("li");
-					for(Element li : player_metadata){
-						if(li.getElementsByTag("span").first().text().equals("Ht/Wt")){
-							String ht_wt = li.text().replace("Ht/Wt", "");
-							height = ht_wt.split(", ")[0].replace("-", "'") + "\"";
-							weight = ht_wt.split(", ")[1].replace(".", "");
-						}
-					}
-					this.height = height;
-					this.weight = weight;
-				}catch(Exception e){
-				}
-			}
-			
-			String[] stats = {"STAT_TYPE","GP","AB","R","H","2B","3B","HR","RBI","BB","K","SB","CS","AVG","OBP","SLG", "OPS"};
+			String[] stats = {"STAT_TYPE", "GP", "G", "A", "PTS", "+/-", "PIM",	"SOG",	"Shooting %", "PPG", "PPA",	"SHG", "SHA", "GWG", "TOI/G", "PROD"};
 			Elements tables = page.getElementsByClass("tablehead");
 			Element stats_table;
 			try{
@@ -888,7 +925,7 @@ public class BaseballBot extends Utils {
 			Elements stats_rows = stats_table.getElementsByTag("tr");
 			try{
 				for(Element row : stats_rows){
-					if((row.className().contains("oddrow") || row.className().contains("evenrow")) && !row.getElementsByTag("td").first().text().equals("Projected")){
+					if(row.className().contains("oddrow") || row.className().contains("evenrow")){
 						JSONObject stat = new JSONObject();
 						Elements cols = row.getElementsByTag("td");
 						int index = 0;
@@ -900,7 +937,7 @@ public class BaseballBot extends Utils {
 						if(stat.get("STAT_TYPE").equals("Career")){
 							this.career_stats = stat;
 						}
-						else{
+						else if(stat.get("STAT_TYPE").toString().contains("Regular")){
 							this.year_stats = stat;
 						}
 					}
@@ -909,7 +946,7 @@ public class BaseballBot extends Utils {
 			catch (java.lang.ArrayIndexOutOfBoundsException e){
 			}
 		
-			String[] game_log_stats = {"DATE","OPP","SCORE","AB","R","H","2B","3B","HR","RBI","BB","K","SB","AVG"};
+			String[] game_log_stats = {"DATE","OPP","SCORE", "G", "A", "PTS", "+/-", "PIM",	"SOG",	"Shooting %", "PPG", "PPA",	"SHG", "SHA", "GWG", "TOI/G", "PROD"};
 			Element game_log_table;
 			try{
 				game_log_table = tables.get(2);
@@ -922,7 +959,7 @@ public class BaseballBot extends Utils {
 			JSONArray game_logs = new JSONArray();
 			for(Element row : rows){
 				if(row.className().contains("oddrow") || row.className().contains("evenrow")){
-					if(row.children().size() < 3){
+					if(row.children().size() < 2){
 						// skip the extra row in the game log - usually exists when player has been traded.
 						continue;
 					}
@@ -934,26 +971,11 @@ public class BaseballBot extends Utils {
 						index = index + 1;
 					}
 					game_logs.put(game);
-				
 				}	
 			}
-			this.game_log = game_logs;
-			
-			try{
-				Double avg = Double.parseDouble(this.year_stats.getString("AVG"));
-				int at_bats = Integer.parseInt(this.year_stats.getString("AB"));
-				double price = (avg * 1000);
-				if(price < 80 || at_bats < 15)
-					price = 80;
-				this.set_salary(price);
-				this.set_filter(at_bats);
-			}catch(Exception e){
-				log(this.getName() + " " + this.getESPN_ID());
-				Server.exception(e);
-				return 0;
-			}
-
+			this.last_five_games = game_logs;
 			return 1;
 		}
-	}	
+	}
+	
 }

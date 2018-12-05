@@ -26,7 +26,6 @@ public class CronThread extends Thread
 			Callable<Integer> worker = new CronWorker(freq, cal);
 			
 			task = new FutureTask<Integer>(worker);
-			
 		    Server.cron_pool.execute(task);
 		    
 		    task.get(timeout, TimeUnit.SECONDS);
@@ -34,9 +33,9 @@ public class CronThread extends Thread
 		catch (TimeoutException e) // only fires if CronWorker hasn't yet returned
 			{
 			Utils.log("------------------------TASK TIMEOUT-------------------------");
+			Utils.log("cron TASK to string: " + task.toString());
 			task.cancel(true); // interrupt CronWorker task
 			Server.exception(e);
-			
 			}
 		catch (Exception e) 
 			{

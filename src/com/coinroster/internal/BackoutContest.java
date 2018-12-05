@@ -64,7 +64,8 @@ public class BackoutContest extends Utils {
 					String created_by = contest_account_id;
 					String memo = "Not enough users entered: " + contest.getString("title");
 					
-					if (trans_type.endsWith("CONTEST-ENTRY"))
+					// User transactions: entries and fixed-odds escrow
+					if (trans_type.endsWith("CONTEST-ENTRY") || trans_type.equals("FIXED-ODDS-RISK-ESCROW"))
 						{
 						// build up unique list of users for communications
 						
@@ -136,6 +137,9 @@ public class BackoutContest extends Utils {
 			message_body += "The contest has been cancelled and your entry fees have been credited back to your account.";
 			
 			for (String user_id : users) new UserMail(db.select_user("id", user_id), subject, message_body);
+			
+			// finally, if it's a voting contest, backout the betting round
+			if(db.is_voting_contest(contest_id)) new BackoutContest(sql_connection, db.get_original_contest(contest_id));
 			
 		} catch (Exception e) {
 			e.printStackTrace(System.out);

@@ -332,7 +332,7 @@ public class DB
 	{
 
 		JSONObject contests = new JSONObject();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, gameIDs from contest where category = ? and sub_category = ? and contest_type = ? and status=2");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
 		get_live_contests.setString(3, contest_type);
@@ -362,6 +362,7 @@ public class DB
 				}
 				
 				data.put("scoring_rules", scoring_rules_json);
+				data.put("gameID", result_set.getString(4));
 				contests.put(String.valueOf(result_set.getInt(1)), data);
 				
 			}catch(Exception e){
@@ -378,7 +379,7 @@ public class DB
 	{
 
 		JSONObject contests = new JSONObject();
-		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table from contest where category = ? "
+		PreparedStatement get_live_contests = sql_connection.prepareStatement("select id, scoring_rules, prop_data, option_table, gameIDs from contest where category = ? "
 				+ "and sub_category = ? and contest_type = ? and status=2 and auto_settle = 1");
 		get_live_contests.setString(1, category);
 		get_live_contests.setString(2, sub_category);
@@ -406,6 +407,7 @@ public class DB
 				data.put("scoring_rules", scoring_rules_json);
 				data.put("prop_data", prop_data_json);
 				data.put("option_table", new JSONArray(result_set.getString(4)));
+				data.put("gameID", result_set.getString(5));
 				contests.put(String.valueOf(result_set.getInt(1)), data);
 				
 			}catch(Exception e){
@@ -1404,17 +1406,46 @@ public class DB
 		
 		if(filtered){
 			try{
-				PreparedStatement get_players = sql_connection.prepareStatement("SELECT a.id, a.name, a.team_abr, a.salary, a.filter_on FROM player AS a "
-						+ "WHERE (SELECT COUNT(*) FROM player AS b "
-						+ "WHERE b.team_abr = a.team_abr AND b.filter_on >= a.filter_on) <= ? "
-						+ "AND a.sport_type = ?"
-						+ "ORDER BY a.team_abr ASC, a.filter_on DESC");
-				get_players.setInt(1, filter);
-				get_players.setString(2, sport);
+				String stmt = "SELECT a.id, a.name, a.team_abr, a.salary, a.filter_on FROM player AS a "
+							+ "WHERE (SELECT COUNT(*) FROM player AS b "
+							+ "WHERE a.gameID = b.gameID AND b.team_abr = a.team_abr AND b.filter_on >= a.filter_on AND b.gameID in (";
+				
+				for(int i = 0; i < gameIDs.size(); i++){
+					stmt += "?,";
+				}
+				stmt = stmt.substring(0, stmt.length() - 1);
+				stmt += ")";
+				
+				stmt +=  " ) <= ? AND a.sport_type = ? AND a.gameID in (";
+				
+				for(int i = 0; i < gameIDs.size(); i++){
+					stmt += "?,";
+				}
+				stmt = stmt.substring(0, stmt.length() - 1);
+				stmt += ")";
+				
+				stmt += " ORDER BY a.salary DESC";
+						
+				PreparedStatement get_players = sql_connection.prepareStatement(stmt);
+				
+				int index = 1;
+				// first batch of gameIDs
+				for(String game : gameIDs){
+					get_players.setString(index++, game); 
+				}
+				
+				get_players.setInt(index++, filter);
+				get_players.setString(index++, sport);
+				
+				// second batch of gameIDs
+				for(String game : gameIDs){
+					get_players.setString(index++, game); 
+				}
+				
 				result_set = get_players.executeQuery();
 			}
 			catch(Exception e){
-				Utils.log(e.toString());
+				Server.exception(e);
 			}
 		}
 		else{
@@ -1425,7 +1456,7 @@ public class DB
 					stmt += "?,";
 				}
 				stmt = stmt.substring(0, stmt.length() - 1);
-				stmt += ")";
+				stmt += ") ORDER BY salary DESC";
 				
 				PreparedStatement get_players = sql_connection.prepareStatement(stmt);
 				
@@ -1816,7 +1847,7 @@ public class DB
 	public JSONObject get_player_dashboard_data(String player_id, String sport) throws SQLException, JSONException{
 		JSONObject data = null;
 		ResultSet rs = null;
-		PreparedStatement get = sql_connection.prepareStatement("select bioJSON from player where id = ? and sport_type = ?");
+		PreparedStatement get = sql_connection.prepareStatement("select bioJSON from player where id = ? and sport_type = ? order by last_updated desc limit 1");
 		get.setString(1, player_id);
 		get.setString(2, sport);
 		rs = get.executeQuery();

@@ -27,6 +27,7 @@ import com.coinroster.internal.UserMail;
 public class SettleContest extends Utils
 	{
 	public static String method_level = "score_bot";
+	
 	@SuppressWarnings("unused")
 	public SettleContest(MethodInstance method) throws Exception 
 		{
@@ -286,8 +287,11 @@ public class SettleContest extends Utils
 					btc_contest_balance = contest_account.getDouble("btc_balance"),
 					rc_contest_balance = contest_account.getDouble("rc_balance");
 					
-					btc_contest_balance = subtract(btc_contest_balance, btc_wagers_total, 0);
-					rc_contest_balance = subtract(rc_contest_balance, rc_wagers_total, 0);
+					// fixed-odds settles entirely differently
+					if(!fixed_odds) {
+						btc_contest_balance = subtract(btc_contest_balance, btc_wagers_total, 0);
+						rc_contest_balance = subtract(rc_contest_balance, rc_wagers_total, 0);
+					}
 					
 					if (do_update)
 						{
@@ -344,9 +348,9 @@ public class SettleContest extends Utils
 					
 					JSONObject internal_asset = db.select_user("username", "internal_asset");
 					
-					if(voting_contest && do_update) {
-						
-						// voting contest creator gets a 1% commission from the original contest's betting volume
+					// voting contest creator gets a 1% commission from the original contest's betting volume
+					// does not apply to fixed-odds contests
+					if(voting_contest && do_update && !db.is_fixed_odds_contest(db.get_original_contest(contest_id))) {
 						
 						Integer original_contest = db.get_original_contest(contest_id);
 						
@@ -442,7 +446,8 @@ public class SettleContest extends Utils
 							log("Amount: " + entry_amount);
 							log("Raked amount: " + user_raked_amount);
 							
-							if (free_play == 1)
+							// fixed odds does not take a rake so this messes the balance
+							if (free_play == 1 && !fixed_odds)
 								{
 								log("Free play credit: " + user_raked_amount);
 								
@@ -518,7 +523,7 @@ public class SettleContest extends Utils
 						
 						// at this point, we write out the updated liability balances
 						
-						if (do_update)
+						if (do_update && !fixed_odds)
 							{
 							db.update_btc_balance(liability_account_id, btc_liability_balance);
 							db.update_rc_balance(liability_account_id, rc_liability_balance);
@@ -560,7 +565,7 @@ public class SettleContest extends Utils
 							
 							log("Swap: " + swap_trans_type);
 							
-							if (do_update)
+							if (do_update & !fixed_odds)
 								{			
 								PreparedStatement swap = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 								swap.setLong(1, System.currentTimeMillis());
@@ -596,7 +601,7 @@ public class SettleContest extends Utils
 							
 							user_rc_balance = add(user_rc_balance, referrer_payout, 0);
 			
-							if (do_update)
+							if (do_update && !fixed_odds)
 								{
 								db.update_rc_balance(user_id, user_rc_balance);
 			
@@ -744,7 +749,7 @@ public class SettleContest extends Utils
 										PreparedStatement create_swap_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 										create_swap_transaction.setLong(1, System.currentTimeMillis());
 										create_swap_transaction.setString(2, contest_admin);
-										create_swap_transaction.setString(3, "RC_VOTING-PROGRESSIVE-SWAP");
+										create_swap_transaction.setString(3, "RC-VOTING-PROGRESSIVE-SWAP");
 										create_swap_transaction.setString(4, contest_account_id);
 										create_swap_transaction.setString(5, contest_account_id);
 										create_swap_transaction.setDouble(6, progressive_balance);
@@ -763,8 +768,6 @@ public class SettleContest extends Utils
 										db.update_rc_balance(contest_account_id, contest_rc);
 									}
 									
-									progressive_balance = 0;
-									
 									db.update_btc_balance(internal_progressive_id, internal_progressive_balance);
 									
 									String 
@@ -782,7 +785,7 @@ public class SettleContest extends Utils
 									create_transaction.setString(3, transaction_type);
 									create_transaction.setString(4, from_account);
 									create_transaction.setString(5, to_account);
-									create_transaction.setDouble(6, user_winnings_total);
+									create_transaction.setDouble(6, (fixed_odds || voting_contest)? progressive_balance: user_winnings_total);
 									create_transaction.setString(7, from_currency);
 									create_transaction.setString(8, to_currency);
 									create_transaction.setString(9, memo);
@@ -841,6 +844,12 @@ public class SettleContest extends Utils
 										
 										if (do_update)
 											{
+											if (fixed_odds) {
+												// double contest_account_balance = db.select_user("id", contest_account_id).getDouble("btc_balance");
+												log("balance before: " + btc_contest_balance + " , after: " +  subtract(btc_contest_balance, user_winnings, 0));
+												btc_contest_balance = subtract(btc_contest_balance, user_winnings, 0);
+												db.update_btc_balance(contest_account_id, btc_contest_balance);
+											}
 											db.update_btc_balance(user_id, user_btc_balance);
 						
 											String 
@@ -1488,62 +1497,64 @@ public class SettleContest extends Utils
 					
 					// any funds that have not been paid out as winnings or referral revenue are credited to internal_asset
 
-					//EXCEPT 
-					if (fixed_odds) log("Crediting asset account: " + multiply(winning_wager_total, rake, 0));
-					else log("Crediting asset account: " + actual_rake_amount);
-					
-					String internal_asset_id = internal_asset.getString("user_id");
-					
-					double internal_asset_btc_balance = internal_asset.getDouble("btc_balance");
-					internal_asset_btc_balance = add(internal_asset_btc_balance, actual_rake_amount, 0);
-					
-					if (do_update) db.update_btc_balance(internal_asset_id, internal_asset_btc_balance);
-					
-					String 
-					
-					transaction_type = "BTC-RAKE",
-					from_account = contest_account_id,
-					to_account = internal_asset_id,
-					from_currency = "BTC",
-					to_currency = "BTC",
-					memo = "Rake (BTC) from contest #" + contest_id;
-					
-					// voting contests should not have any rake amount but in case it does, implicitly
-					// convert rc to btc within contest account and credit asset account accordingly
-					if (voting_contest) {
+					// except in the case of fixed-odds
+					if (!fixed_odds) {
+
+						log("Crediting asset account: " + actual_rake_amount);
 						
-						/* destroy rc amount from internal_contest */
+						String internal_asset_id = internal_asset.getString("user_id");
 						
-						//refresh data
-						contest_account = db.select_user("id", contest_account_id);
-						double rc_contest = contest_account.getDouble("rc_balance");
-						rc_contest = add(rc_contest, actual_rake_amount, 0);
-						db.update_rc_balance(contest_account_id, rc_contest);
+						double internal_asset_btc_balance = internal_asset.getDouble("btc_balance");
+						internal_asset_btc_balance = add(internal_asset_btc_balance, actual_rake_amount, 0);
 						
-						from_currency = "RC";
+						if (do_update) db.update_btc_balance(internal_asset_id, internal_asset_btc_balance);
 						
-						/* create btc for same amount in internal_contest */
-						double btc_contest = contest_account.getDouble("btc_balance");
-						btc_contest = subtract(btc_contest, actual_rake_amount, 0);
-						db.update_btc_balance(contest_account_id, btc_contest);
-					}
-					
-					if (do_update)
-						{
-						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
-						create_transaction.setLong(1, System.currentTimeMillis());
-						create_transaction.setString(2, contest_admin);
-						create_transaction.setString(3, transaction_type);
-						create_transaction.setString(4, from_account);
-						create_transaction.setString(5, to_account);
-						// rake is a function of winning wager
-						create_transaction.setDouble(6, (!fixed_odds)? actual_rake_amount: multiply(winning_wager_total, rake, 0));
-						create_transaction.setString(7, from_currency);
-						create_transaction.setString(8, to_currency);
-						create_transaction.setString(9, memo);
-						create_transaction.setInt(10, contest_id);
-						create_transaction.executeUpdate();
+						String 
+						
+						transaction_type = "BTC-RAKE",
+						from_account = contest_account_id,
+						to_account = internal_asset_id,
+						from_currency = "BTC",
+						to_currency = "BTC",
+						memo = "Rake (BTC) from contest #" + contest_id;
+						
+						// voting contests should not have any rake amount but in case it does, implicitly
+						// convert rc to btc within contest account and credit asset account accordingly
+						if (voting_contest) {
+							
+							/* destroy rc amount from internal_contest */
+							
+							//refresh data
+							contest_account = db.select_user("id", contest_account_id);
+							double rc_contest = contest_account.getDouble("rc_balance");
+							rc_contest = add(rc_contest, actual_rake_amount, 0);
+							db.update_rc_balance(contest_account_id, rc_contest);
+							
+							from_currency = "RC";
+							
+							/* create btc for same amount in internal_contest */
+							double btc_contest = contest_account.getDouble("btc_balance");
+							btc_contest = subtract(btc_contest, actual_rake_amount, 0);
+							db.update_btc_balance(contest_account_id, btc_contest);
 						}
+						
+						if (do_update)
+							{
+							PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+							create_transaction.setLong(1, System.currentTimeMillis());
+							create_transaction.setString(2, contest_admin);
+							create_transaction.setString(3, transaction_type);
+							create_transaction.setString(4, from_account);
+							create_transaction.setString(5, to_account);
+							// rake is a function of winning wager
+							create_transaction.setDouble(6, (!fixed_odds)? actual_rake_amount: multiply(winning_wager_total, rake, 0));
+							create_transaction.setString(7, from_currency);
+							create_transaction.setString(8, to_currency);
+							create_transaction.setString(9, memo);
+							create_transaction.setInt(10, contest_id);
+							create_transaction.executeUpdate();
+							}
+					}
 					
 					// finally, if fixed-odds the creator should receive any leftover winnings
 					// along with their risk that has not been raked/lost
@@ -1551,20 +1562,19 @@ public class SettleContest extends Utils
 						double actual_amount_left = risk - total_from_transactions;
 						log(String.format("amount_left: %f; leftover: %f", actual_amount_left, subtract(total_from_transactions, winning_wager_total, 0)));
 						
-						// creator_winnings = amount_left + (total_from_transactions - winning_wager_total) - rake
-						double creator_winnings = subtract(add(actual_amount_left, subtract(total_from_transactions, winning_wager_total, 0), 0), multiply(winning_wager_total, rake, 0), 0);
+						// creator_winnings = risk - user_winnings + total_from_txs, where user_winnings = winning_entries * odds_for_winning_option
+						// risk > user_winnings is guaranteed 
+						// additionally, a rake could potentially be directly subtracted from this amount
+						double creator_winnings = add(subtract(risk, winning_wager_total, 0), total_from_transactions, 0);
 						
-						//refresh data
-						contest_account = db.select_user("id", contest_account_id);
-						double btc_contest = contest_account.getDouble("btc_balance");
-						btc_contest = subtract(btc_contest, creator_winnings, 0);
-						db.update_btc_balance(contest_account_id, btc_contest);
+						btc_contest_balance = subtract(btc_contest_balance, creator_winnings, 0);
+						db.update_btc_balance(contest_account_id, btc_contest_balance);
 						
 						double creator_balance = db.select_user("id", contest.getString("created_by")).getDouble("btc_balance");
 						creator_balance = add(creator_balance, creator_winnings, 0);
 						db.update_btc_balance(contest.getString("created_by"), creator_balance);
 
-						log(String.format("btc_contest: %f; creator_balance: %f", btc_contest, creator_balance));
+						log(String.format("btc_contest after credit: %f; creator_balance: %f", btc_contest_balance, creator_balance));
 						
 						PreparedStatement create_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 						create_transaction.setLong(1, System.currentTimeMillis());
@@ -1578,6 +1588,24 @@ public class SettleContest extends Utils
 						create_transaction.setString(9, "Contest creator returned amount");
 						create_transaction.setInt(10, contest_id);
 						create_transaction.executeUpdate();
+						
+//						if (rc_wagers_total > 0) {
+//							double contest_account_rc = contest_account.getDouble("rc_balance");
+//							db.update_rc_balance(contest_account_id, add(contest_account_rc, rc_wagers_total, 0));		
+//							
+//							PreparedStatement swap_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo, contest_id) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");				
+//							swap_transaction.setLong(1, System.currentTimeMillis());
+//							swap_transaction.setString(2, contest_admin);
+//							swap_transaction.setString(3, "BTC-FIXED-ODDS-CONTEST-SWAP");
+//							swap_transaction.setString(4, contest_account_id);
+//							swap_transaction.setString(5, contest_account_id);
+//							swap_transaction.setDouble(6, rc_wagers_total);
+//							swap_transaction.setString(7, "BTC");
+//							swap_transaction.setString(8, "RC");
+//							swap_transaction.setString(9, "Contest account swap");
+//							swap_transaction.setInt(10, contest_id);
+//							swap_transaction.executeUpdate();
+//						}
 					}
 
 					log("");

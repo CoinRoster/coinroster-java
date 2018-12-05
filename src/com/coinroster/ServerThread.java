@@ -30,11 +30,12 @@ public class ServerThread extends Thread
 		catch (TimeoutException e) // only fires if ServerWorker hasn't yet returned
 			{
 			task.cancel(true); // interrupt ServerWorker task
+			Utils.log("server TASK to string: " + task.toString());
 			Utils.log("--------------------TASK TIMEOUT--------------------------");
 			Server.exception(e);
 			}
 		catch (Exception e) 
-			{
+			{    
 			Server.exception(e);
 			}
     	}

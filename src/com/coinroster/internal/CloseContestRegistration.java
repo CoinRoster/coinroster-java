@@ -40,6 +40,7 @@ public class CloseContestRegistration extends Utils
 					JSONObject contest = db.select_contest(contest_id);
 					
 					boolean fixed_odds = db.is_fixed_odds_contest(contest_id);
+					boolean voting = db.is_voting_contest(contest_id);
 					
 					Long registration_deadline = contest.getLong("registration_deadline");
 					
@@ -79,7 +80,8 @@ public class CloseContestRegistration extends Utils
 
 						int min_users = contest.getInt("min_users");
 										
-						if (users.size() >= min_users && contest.getString("settlement_type").equals("CROWD-SETTLED")) // contest is adequately subscribed
+						// contest is adequately subscribed and isn't a voting round
+						if (users.size() >= min_users && contest.getString("settlement_type").equals("CROWD-SETTLED") && !voting)
 							{
 							Server.log("Contest #" + contest_id + " is being crowd-settled");
 							
@@ -163,10 +165,13 @@ public class CloseContestRegistration extends Utils
 								voting_contest_commission = 0.01; //db.get_voting_contest_commission();
 								
 								log("commission: " + total_from_original);
-								log("control commission: " + voting_contest_commission);
+								log("Total from original: " + total_from_original);
 								
 								contest_creator_commission = multiply(voting_contest_commission, total_from_original, 0);
-							} else contest_creator_commission = new BigDecimal(0.0000001).doubleValue();
+							} 
+							// fixed-odds has a hardcoded commission amount for now
+							// TODO: move this amount to a `control` table variable
+							else contest_creator_commission = new BigDecimal(0.0000001).doubleValue();
 
 							log("Contest creator commission: " + contest_creator_commission);
 							
@@ -269,7 +274,7 @@ public class CloseContestRegistration extends Utils
 									String created_by = contest_account_id;
 									String memo = "Not enough users entered: " + contest_title;
 									
-									if (trans_type.endsWith("CONTEST-ENTRY"))
+									if (trans_type.endsWith("CONTEST-ENTRY") || trans_type.endsWith("ESCROW"))
 										{
 										// build up unique list of users for communications
 										
