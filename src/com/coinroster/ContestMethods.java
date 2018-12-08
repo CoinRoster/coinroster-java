@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
+import com.coinroster.bots.BitcoinBot;
 import com.coinroster.bots.GolfBot;
 import com.coinroster.bots.HockeyBot;
 import com.coinroster.bots.CrowdSettleBot;
@@ -27,7 +28,63 @@ import com.coinroster.internal.UpdateContestStatus;
 public class ContestMethods extends Utils{
 
 	//------------------------------------------------------------------------------------
+	public static void createBitcoinContests() {
+		
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
+			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
+			bit_bot.scrape();
 	
+			Date rtiDate = bit_bot.getRealtimeIndexDate(); //time of price index.
+			
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(rtiDate);
+			cal.add(Calendar.HOUR_OF_DAY, 1);
+			Date date = cal.getTime();
+			Long deadline = date.getTime(); //deadline = 1 hour from now.
+	
+			JSONArray prop_contests = db.getRosterTemplates("BITCOIN");
+			
+			for(int i = 0; i < prop_contests.length(); i++){
+				JSONObject contest = prop_contests.getJSONObject(i);
+				String title = rtiDate.toString() + " | " + "Bitcoin Contest (test)";
+				contest.put("title", title);
+				contest.put("registration_deadline", deadline);
+	
+	
+				MethodInstance pari_method = new MethodInstance();
+				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(deadline, date.toString(), contest);
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_mutuel_data;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					log(pari_method.output.toString());
+					Server.exception(e);
+				}
+			}
+
+			
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+				} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}	
 	// create hockey contests
 	public static void createBasketballContests() {
 	
