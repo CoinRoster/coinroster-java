@@ -13,6 +13,7 @@ import java.util.TimeZone;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -25,7 +26,7 @@ public class BitcoinBot {
 	private Date referenceRateDate;
 	private BigDecimal realtimeIndex;
 	private Date realtimeIndexDate;
-	private Date nextUpdate;
+	private Long nextRefUpdate;
 	private Connection sql_connection;
 	//private DB db;
 	
@@ -49,44 +50,8 @@ public class BitcoinBot {
 		return referenceRateDate;
 	}
 	
-	public JSONObject getDataJSON() throws JSONException {
-		
-		JSONObject data = new JSONObject();
-		data.accumulate("brr", this.getReferenceRate().toString());
-		data.accumulate("brrDate", this.getReferenceRateDate().toString());
-		data.accumulate("rti", this.getRealtimeIndex().toString());
-		data.accumulate("rtiDate", this.getRealtimeIndexDate().toString());
-		
-		return data;
-	}
-	
-	//Scrape data from cmegroup website. Determine when the next update should be.
-	public void scrape() throws IOException, JSONException {
-		String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All").ignoreContentType(true).execute().body();
-		JSONObject json;
-		
-		json = new JSONObject(jsonString);
-		String brr = String.valueOf(json.getJSONObject("referenceRate").getString("value"));
-		this.referenceRate = parseRate(brr);
-		
-		String brrDate = json.getJSONObject("referenceRate").getString("date");
-		this.referenceRateDate = parseDate(brrDate);
-		
-		String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
-		this.realtimeIndex  = parseRate(rti);
-		
-		String rtiDate = json.getJSONObject("realTimeIndex").getString("date");
-		this.realtimeIndexDate = parseDate(rtiDate);
-		
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(this.referenceRateDate);
-		cal.add(Calendar.DATE, 1);
-		
-		this.nextUpdate = cal.getTime();
-	}
-	
-	public Date getNextUpdate() {
-		return this.nextUpdate;
+	public Long getNextRefUpdate() {
+		return this.nextRefUpdate;
 	}
 	
 	private Date parseDate(String value) {
@@ -109,6 +74,62 @@ public class BitcoinBot {
 		BigDecimal money = new BigDecimal(value);
 		return money;
 	}
+	
+	public JSONObject getDataJSON() throws JSONException {
+		
+		JSONObject data = new JSONObject();
+		data.accumulate("brr", this.getReferenceRate().toString());
+		data.accumulate("brrDate", this.getReferenceRateDate().toString());
+		data.accumulate("rti", this.getRealtimeIndex().toString());
+		data.accumulate("rtiDate", this.getRealtimeIndexDate().toString());
+		
+		return data;
+	}
+	
+	public JSONObject createPariMutuel(Long deadline, String date, JSONObject contest) throws JSONException{
+		
+		JSONArray option_table = new JSONArray(); 
+		
+		JSONObject higher = new JSONObject();
+		higher.put("description", "Higher");
+		higher.put("id", 1);
+		option_table.put(higher);
+		
+		JSONObject lower = new JSONObject();
+		lower.put("description", "Lower");
+		lower.put("id", 2);
+		option_table.put(lower);
+	
+		contest.put("option_table", option_table);
+		
+		return contest;
+	}
+	
+	//Scrape data from cmegroup website. Determine when the next update should be.
+	public void scrape() throws IOException, JSONException {
+		String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All").ignoreContentType(true).execute().body();
+		JSONObject json = new JSONObject(jsonString);
+		
+		String brr = String.valueOf(json.getJSONObject("referenceRate").getString("value"));
+		this.referenceRate = parseRate(brr);
+		
+		String brrDate = json.getJSONObject("referenceRate").getString("date");
+		this.referenceRateDate = parseDate(brrDate);
+		
+		String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
+		this.realtimeIndex  = parseRate(rti);
+		
+		String rtiDate = json.getJSONObject("realTimeIndex").getString("date");
+		this.realtimeIndexDate = parseDate(rtiDate);
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(this.referenceRateDate);
+		cal.add(Calendar.DATE, 1);
+		
+		this.nextRefUpdate = cal.getTime().getTime();
+	}
+	
+
 	
 	public void updateDB() throws SQLException {
 		Timestamp date = new Timestamp(this.referenceRateDate.getTime());
