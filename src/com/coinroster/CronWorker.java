@@ -3,17 +3,22 @@ package com.coinroster;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
+import java.util.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+
 import com.coinroster.ContestMethods;
-import com.coinroster.bots.BitcoinBot; //Importing this until I make contest methods for it.
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
 import com.coinroster.internal.CloseContestRegistration;
@@ -80,7 +85,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 			ContestMethods.checkHockeyContests();
-			UpdateBRR();
+			UpdateBitcoinIndex();
 		}
 		
 		if((hour%6==0) && (minute==30)){
@@ -401,7 +406,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 	// update BRR price
 	
-	private void UpdateBRR()
+	private void UpdateBitcoinIndex()
 		{
 		Server.async_updater.execute(new Runnable() 
 			{
@@ -409,10 +414,24 @@ public class CronWorker extends Utils implements Callable<Integer>
 		    	{
 		    	Connection sql_connection = null;
 				try {
+					
 					sql_connection = Server.sql_connection();
-					BitcoinBot bb = new BitcoinBot(sql_connection);
-					bb.scrape();
-					bb.updateDB();
+					
+					String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All")
+							.ignoreContentType(true).execute().body();
+					JSONObject json = new JSONObject(jsonString);
+					String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
+					String rtiDate = json.getJSONObject("realTimeIndex").getString("date");
+					
+					SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+					Date date = formatter.parse(rtiDate);
+					
+					PreparedStatement stmnt = sql_connection.prepareStatement(
+							"insert ignore into bitcoin_reference(price,  date_updated) VALUES (?, ?)");
+					stmnt.setDouble(1, Double.parseDouble(rti));
+					stmnt.setTimestamp(2, new Timestamp(date.getTime()));
+					stmnt.executeUpdate();
 					}
 				catch (Exception e) 
 					{
