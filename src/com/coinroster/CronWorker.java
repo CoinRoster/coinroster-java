@@ -416,13 +416,23 @@ public class CronWorker extends Utils implements Callable<Integer>
 				try {
 					
 					sql_connection = Server.sql_connection();
+					String rtiDate = "-";
+					JSONObject json = null;
 					
-					String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All")
-							.ignoreContentType(true).execute().body();
-					JSONObject json = new JSONObject(jsonString);
+					while (true) {
+						String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All")
+								.ignoreContentType(true).execute().body();
+						 json = new JSONObject(jsonString);
+						
+						rtiDate = json.getJSONObject("realTimeIndex").getString("date");
+						
+						if (rtiDate != "-") {
+							break;
+						}
+					}
+					
 					String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
-					String rtiDate = json.getJSONObject("realTimeIndex").getString("date");
-					
+
 					SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 					formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 					Date date = formatter.parse(rtiDate);
