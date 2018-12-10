@@ -429,6 +429,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 						if (rtiDate != "-") {
 							break;
 						}
+						Thread.sleep(100);
 					}
 					
 					String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));

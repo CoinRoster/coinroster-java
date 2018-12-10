@@ -90,7 +90,7 @@ public class BitcoinBot {
 				this.realtimeIndexDate = parseDate(rtiDate);
 				break;
 			} else {
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			}
 		}
 		Calendar cal = Calendar.getInstance();
