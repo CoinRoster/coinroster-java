@@ -53,6 +53,52 @@ public class BitcoinBot {
 	public Long getNextRefUpdate() {
 		return this.nextRefUpdate;
 	}
+		
+	public JSONObject getDataJSON() throws JSONException {
+		
+		JSONObject data = new JSONObject();
+		data.accumulate("brr", this.getReferenceRate().toString());
+		data.accumulate("brrDate", this.getReferenceRateDate().toString());
+		data.accumulate("rti", this.getRealtimeIndex().toString());
+		data.accumulate("rtiDate", this.getRealtimeIndexDate().toString());
+		
+		return data;
+	}
+	
+	//Scrape data from cmegroup website. Determine when the next update should be.
+	public void scrape() throws IOException, JSONException, InterruptedException {
+
+		String rtiDate = "-";
+		 
+		while (true) {
+			String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All").ignoreContentType(true).execute().body();
+			
+			JSONObject json = new JSONObject(jsonString);
+			
+			rtiDate = json.getJSONObject("realTimeIndex").getString("date");
+			
+			if (rtiDate != "-") {
+				String brr = String.valueOf(json.getJSONObject("referenceRate").getLong("value"));
+				this.referenceRate = parseRate(brr);
+				
+				String brrDate = json.getJSONObject("referenceRate").getString("date");
+				this.referenceRateDate = parseDate(brrDate);
+				
+				String rti = String.valueOf(json.getJSONObject("realTimeIndex").getLong("value"));
+				this.realtimeIndex  = parseRate(rti);
+				
+				this.realtimeIndexDate = parseDate(rtiDate);
+				break;
+			} else {
+				Thread.sleep(1000);
+			}
+		}
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(this.referenceRateDate);
+		cal.add(Calendar.DATE, 1);
+		
+		this.nextRefUpdate = cal.getTime().getTime();
+	}
 	
 	private Date parseDate(String value) {
 		
@@ -75,17 +121,6 @@ public class BitcoinBot {
 		return money;
 	}
 	
-	public JSONObject getDataJSON() throws JSONException {
-		
-		JSONObject data = new JSONObject();
-		data.accumulate("brr", this.getReferenceRate().toString());
-		data.accumulate("brrDate", this.getReferenceRateDate().toString());
-		data.accumulate("rti", this.getRealtimeIndex().toString());
-		data.accumulate("rtiDate", this.getRealtimeIndexDate().toString());
-		
-		return data;
-	}
-	
 	public JSONObject createPariMutuel(Long deadline, String date, JSONObject contest) throws JSONException{
 		
 		JSONArray option_table = new JSONArray(); 
@@ -103,30 +138,6 @@ public class BitcoinBot {
 		contest.put("option_table", option_table);
 		
 		return contest;
-	}
-	
-	//Scrape data from cmegroup website. Determine when the next update should be.
-	public void scrape() throws IOException, JSONException {
-		String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All").ignoreContentType(true).execute().body();
-		JSONObject json = new JSONObject(jsonString);
-		
-		String brr = String.valueOf(json.getJSONObject("referenceRate").getString("value"));
-		this.referenceRate = parseRate(brr);
-		
-		String brrDate = json.getJSONObject("referenceRate").getString("date");
-		this.referenceRateDate = parseDate(brrDate);
-		
-		String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
-		this.realtimeIndex  = parseRate(rti);
-		
-		String rtiDate = json.getJSONObject("realTimeIndex").getString("date");
-		this.realtimeIndexDate = parseDate(rtiDate);
-		
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(this.referenceRateDate);
-		cal.add(Calendar.DATE, 1);
-		
-		this.nextRefUpdate = cal.getTime().getTime();
 	}
 	
 
