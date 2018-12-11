@@ -172,8 +172,18 @@ public class Server extends Utils
 	
 	public static Connection sql_connection() throws SQLException 
 		{
-		return sql_pool.getConnection();
+		Connection cnx = null;
+		try{
+			cnx = sql_pool.getConnection();
+		}catch(SQLException e){
+			log("Unable to get a SQL connection from the sql pool...");
+			Server.exception(e);
+			//log("performing hard reset on sql_pool");
+			//sql_pool.hardReset();
 		}
+		return cnx;
+		}
+	
 
     public static String sql_dump_string() throws SQLException 
     	{
