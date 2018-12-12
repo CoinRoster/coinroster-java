@@ -35,21 +35,21 @@ public class ContestMethods extends Utils{
 			sql_connection = Server.sql_connection();
 			DB db = new DB(sql_connection);
 			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
-			bit_bot.scrape();
+			bit_bot.setup();
 	
 			Date rtiDate = bit_bot.getRealtimeIndexDate(); //time of price index.
 			
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(rtiDate);
-			cal.add(Calendar.HOUR_OF_DAY, 1);
+			cal.add(Calendar.HOUR_OF_DAY, 2);
 			Date date = cal.getTime();
-			Long deadline = date.getTime(); //deadline = 1 hour from now.
+			Long deadline = date.getTime(); //deadline = 2 hours from last rti update.
 	
 			JSONArray prop_contests = db.getRosterTemplates("BITCOIN");
 			
 			for(int i = 0; i < prop_contests.length(); i++){
 				JSONObject contest = prop_contests.getJSONObject(i);
-				String title = rtiDate.toString() + " | " + "Bitcoin Contest (test)";
+				String title = rtiDate.toString() + " | " + contest.getString("title");
 				contest.put("title", title);
 				contest.put("registration_deadline", deadline);
 	

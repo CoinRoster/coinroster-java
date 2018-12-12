@@ -450,15 +450,15 @@ public class CronWorker extends Utils implements Callable<Integer>
 					} 
 				finally
 					{
-				if (sql_connection != null)
-					{
-					try {sql_connection.close();} 
-					catch (SQLException ignore) {}
-					}
-				}
-	    	}
-		});
-	}		
+					if (sql_connection != null)
+						{
+						try {sql_connection.close();} 
+						catch (SQLException ignore) {}
+						}
+					}	
+		    	}
+			});
+		}		
 //------------------------------------------------------------------------------------
 
 	// purge any password reset keys that have not been used

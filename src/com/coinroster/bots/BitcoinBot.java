@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -16,7 +16,6 @@ import java.text.SimpleDateFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
 
 //import com.coinroster.DB;
 import com.coinroster.Server;
@@ -66,38 +65,41 @@ public class BitcoinBot {
 	}
 	
 	//Scrape data from cmegroup website. Determine when the next update should be.
-	public void scrape() throws IOException, JSONException, InterruptedException {
+	public void setup() {
 
 		String rtiDate = "-";
-		 
-		while (true) {
-			String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All").ignoreContentType(true).execute().body();
-			
-			JSONObject json = new JSONObject(jsonString);
-			
-			rtiDate = json.getJSONObject("realTimeIndex").getString("date");
-			
-			if (rtiDate != "-") {
-				String brr = String.valueOf(json.getJSONObject("referenceRate").getLong("value"));
-				this.referenceRate = parseRate(brr);
+		try {
+			while (true) {
+				String stmt = "select id, price, date from bitcoin_reference order by id DESC limit 1";
 				
-				String brrDate = json.getJSONObject("referenceRate").getString("date");
-				this.referenceRateDate = parseDate(brrDate);
+				PreparedStatement get_data = sql_connection.prepareStatement(stmt);
+				ResultSet data = get_data.executeQuery();
 				
-				String rti = String.valueOf(json.getJSONObject("realTimeIndex").getLong("value"));
-				this.realtimeIndex  = parseRate(rti);
+				rtiDate = data.getString(3);
 				
-				this.realtimeIndexDate = parseDate(rtiDate);
-				break;
-			} else {
-				Thread.sleep(100);
+				if (rtiDate != "-") {				
+					String rti = data.getString(2);
+					this.realtimeIndex  = parseRate(rti);
+					this.realtimeIndexDate = parseDate(rtiDate);
+					break;
+				} else {
+					Thread.sleep(100);
+				}
+			}
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(this.referenceRateDate);
+			cal.add(Calendar.DATE, 1);
+			
+			this.nextRefUpdate = cal.getTime().getTime();
+		}catch (Exception e){
+			Server.exception(e);
+		}finally {
+			if (sql_connection != null){
+				try {sql_connection.close();} 
+				catch (SQLException ignore) {}
 			}
 		}
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(this.referenceRateDate);
-		cal.add(Calendar.DATE, 1);
 		
-		this.nextRefUpdate = cal.getTime().getTime();
 	}
 	
 	private Date parseDate(String value) {
@@ -127,27 +129,22 @@ public class BitcoinBot {
 		
 		JSONObject higher = new JSONObject();
 		higher.put("description", "Higher");
-		higher.put("id", 1);
+		higher.put("id", 3);
 		option_table.put(higher);
+		
+		JSONObject same = new JSONObject();
+		same.put("description", this.realtimeIndex.toString());
+		same.put("id", 2);
+		option_table.put(same);
 		
 		JSONObject lower = new JSONObject();
 		lower.put("description", "Lower");
-		lower.put("id", 2);
+		lower.put("id", 1);
 		option_table.put(lower);
 	
 		contest.put("option_table", option_table);
 		
 		return contest;
-	}
-	
-
-	
-	public void updateDB() throws SQLException {
-		Timestamp date = new Timestamp(this.referenceRateDate.getTime());
-		PreparedStatement stmnt = sql_connection.prepareStatement("insert ignore into bitcoin_reference(price,  date_updated) VALUES (?, ?)");
-		stmnt.setDouble(1, this.getReferenceRate().doubleValue());
-		stmnt.setTimestamp(2, date);
-		stmnt.executeUpdate();
 	}
 	
 }
