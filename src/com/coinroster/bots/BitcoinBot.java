@@ -70,7 +70,7 @@ public class BitcoinBot {
 		String rtiDate = "-";
 		try {
 			while (true) {
-				String stmt = "select id, price, date from bitcoin_reference order by id DESC limit 1";
+				String stmt = "select id, price, date_updated from bitcoin_reference order by id DESC limit 1";
 				
 				PreparedStatement get_data = sql_connection.prepareStatement(stmt);
 				ResultSet data = get_data.executeQuery();
