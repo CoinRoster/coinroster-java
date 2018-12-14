@@ -7,8 +7,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.TimeZone;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -127,6 +129,7 @@ public class BitcoinBot {
 		
 		JSONArray option_table = new JSONArray(); 
 		
+		//Not sure about these table values, but should work for now.
 		JSONObject higher = new JSONObject();
 		higher.put("description", "Higher");
 		higher.put("id", 3);
@@ -144,7 +147,48 @@ public class BitcoinBot {
 	
 		contest.put("option_table", option_table);
 		
+		//Add the current index to the prop data.
+		JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+		
+		prop_data.put("BTC_index", this.realtimeIndex.toString());
+		
+		contest.put("prop_data", prop_data);
+		
 		return contest;
+	}
+	
+	
+	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules, JSONObject prop_data, JSONArray option_table) throws Exception{
+		
+		JSONObject fields = new JSONObject();
+		fields.put("contest_id", contest_id);
+		String prop_type = prop_data.getString("prop_type");
+		int winning_outcome;
+		
+		switch(prop_type){
+		
+			case "HIGHER_LOWER":
+				BigDecimal start_index = new BigDecimal(prop_data.getString("BTC_index"));
+				if (start_index.compareTo(this.realtimeIndex) < 0) { 
+					//higher
+					winning_outcome = 3;
+					fields.put("winning_outcome", winning_outcome);
+					return fields;
+				}
+				else if (start_index.compareTo(this.realtimeIndex) == 0) {
+					//same
+					winning_outcome = 2;
+					fields.put("winning_outcome", winning_outcome);
+					return fields;
+				} else {
+					//lower
+					winning_outcome = 1;
+					fields.put("winning_outcome", winning_outcome);
+					return fields;
+				}
+				
+		}
+		return fields;
 	}
 	
 }
