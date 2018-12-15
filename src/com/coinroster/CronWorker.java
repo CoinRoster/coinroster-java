@@ -119,7 +119,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 	@SuppressWarnings("unused")
 	private void hour() throws Exception
 	{
-		
 		new ExpirePromos();
 //		new CheckPendingWithdrawals();
 		

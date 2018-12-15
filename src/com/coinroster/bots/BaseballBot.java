@@ -1,6 +1,5 @@
 package com.coinroster.bots;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,12 +19,11 @@ import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
+import com.coinroster.internal.scrapeHTML;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
-import org.jsoup.HttpStatusException;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -41,11 +39,11 @@ public class BaseballBot extends Utils {
 	private long earliest_game;
 	public String sport = "BASEBALL";
 	private DB db;
-	private Connection sql_connection = null;
+	private static Connection sql_connection = null;
 	
 	// constructor
 	public BaseballBot(Connection sql_connection) throws IOException, JSONException{
-		this.sql_connection = sql_connection;
+		BaseballBot.sql_connection = sql_connection;
 		db = new DB(sql_connection);
 
 	}
@@ -577,7 +575,7 @@ public class BaseballBot extends Utils {
 	}
 	
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
-		public Map<String, Player> setup() throws IOException, JSONException, SQLException{
+		public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException{
 			Map<String, Player> players = new HashMap<String,Player>();
 			if(this.game_IDs == null){
 				log("No games scheduled");
@@ -586,16 +584,20 @@ public class BaseballBot extends Utils {
 			}
 			for(int i=0; i < this.game_IDs.size(); i++){
 				// for each gameID, get the two teams playing
-				Document page = Jsoup.connect("http://www.espn.com/mlb/game?gameId="+this.game_IDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-					      .referrer("http://www.google.com").timeout(0).get();
+				String url = "http://www.espn.com/mlb/game?gameId="+this.game_IDs.get(i);
+				Document page = scrapeHTML.connect(url);
 				Elements team_divs = page.getElementsByClass("team-info-wrapper");
 				// for each team, go to their stats page and scrape ppg
 				for(Element team : team_divs){
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
 					log(team_abr);
-					Document team_stats_page = Jsoup.connect("http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/atBats").userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						      .referrer("http://www.google.com").timeout(0).get();
+					String team_url = "http://www.espn.com/mlb/team/stats/batting/_/name/" +team_abr + "/cat/atBats";
+					Document team_stats_page = scrapeHTML.connect(team_url);
+					if(team_stats_page == null){
+						log("problem connecting to " + team_url);
+						continue;
+					}
 					Element stats_table = team_stats_page.select("table.tablehead").first();
 					Elements rows = stats_table.getElementsByTag("tr");
 					for (Element row : rows){
@@ -623,12 +625,12 @@ public class BaseballBot extends Utils {
 			return players;
 		}
 		
-		public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException{
+		public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException, InterruptedException{
 			
 			int games_ended = 0;
 			for(int i=0; i < gameIDs.size(); i++){
-				Document page = Jsoup.connect("http://www.espn.com/mlb/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-					      .referrer("http://www.google.com").timeout(0).get();
+				String url = "http://www.espn.com/mlb/boxscore?gameId=" + gameIDs.get(i);
+				Document page = scrapeHTML.connect(url);
 				Elements tables = page.getElementsByAttributeValue("data-type", "batting");
 				for (Element table : tables){
 					if(!table.hasClass("stats-wrap--pre")){
@@ -793,32 +795,10 @@ public class BaseballBot extends Utils {
 			return this.bio;
 		}
 		
-		public int scrape_info() throws IOException, JSONException{
+		public int scrape_info() throws IOException, JSONException, InterruptedException{
 			
-			Document page = null;
-			try{
-				page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID())
-						.userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						.referrer("http://www.google.com").timeout(0).get();
-			}catch(SocketTimeoutException e){
-				log("socket timeout - will try again to connect...");
-				page = null;
-				while(page == null){
-					page = Jsoup.connect("http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID())
-						.userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						.referrer("http://www.google.com").timeout(0).get();
-				}
-				
-			}catch(HttpStatusException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
-			catch(IOException e){
-				Server.exception(e);
-				log("exception thrown on " + this.getName() + " (id: " + this.getESPN_ID() + ")");
-				return 0;
-			}
+			String url = "http://www.espn.com/mlb/player/_/id/" + this.getESPN_ID();
+			Document page = scrapeHTML.connect(url);
 			if(page == null){
 				return 0;
 			}
@@ -859,7 +839,7 @@ public class BaseballBot extends Utils {
 			this.height = height;
 			this.weight = weight;
 			
-			if(this.height.isEmpty()  || this.weight.isEmpty()){
+			if(this.height.isEmpty() || this.weight.isEmpty()){
 				try{
 					player_metadata = bio.getElementsByClass("player-metadata").last().getElementsByTag("li");
 					for(Element li : player_metadata){

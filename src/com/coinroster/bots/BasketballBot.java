@@ -18,10 +18,11 @@ import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 import com.coinroster.internal.JsonReader;
+import com.coinroster.internal.scrapeHTML;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -544,7 +545,7 @@ public class BasketballBot extends Utils {
 	}
 	
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
-		public Map<String, Player> setup() throws IOException, JSONException, SQLException{
+		public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException{
 			Map<String, Player> players = new HashMap<String,Player>();
 			if(this.game_IDs == null){
 				log("No games scheduled");
@@ -553,16 +554,20 @@ public class BasketballBot extends Utils {
 			}
 			for(int i=0; i < this.game_IDs.size(); i++){
 				// for each gameID, get the two teams playing
-				Document page = Jsoup.connect("http://www.espn.com/nba/game?gameId="+this.game_IDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-					      .referrer("http://www.google.com").timeout(0).get();
+				String url = "http://www.espn.com/nba/game?gameId="+this.game_IDs.get(i);
+				Document page = scrapeHTML.connect(url);
 				Elements team_divs = page.getElementsByClass("team-info-wrapper");
 				// for each team, go to their stats page and scrape ppg
 				for(Element team : team_divs){
 					String team_link = team.select("a").attr("href");
 					String team_abr = team_link.split("/")[5];
 					log(team_abr);
-					Document team_stats_page = Jsoup.connect("http://www.espn.com/nba/team/roster/_/name/" + team_abr).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-						      .referrer("http://www.google.com").timeout(0).get();
+					String team_url = "http://www.espn.com/nba/team/roster/_/name/" + team_abr;
+					Document team_stats_page = scrapeHTML.connect(team_url);
+					if(team_stats_page == null){
+						log("problem connecting to " + team_url);
+						continue;
+					}
 					Element stats_table = team_stats_page.getElementsByClass("Table2__tbody").first();
 					Elements rows = stats_table.getElementsByTag("tr");
 					for (Element row : rows){
@@ -621,13 +626,12 @@ public class BasketballBot extends Utils {
 			}
 		}
 		
-		public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException{
+		public boolean scrape(ArrayList<String> gameIDs) throws IOException, SQLException, InterruptedException{
 			
 			int games_ended = 0;
 			for(int i=0; i < gameIDs.size(); i++){
-				Document page = Jsoup.connect("http://www.espn.com/nba/boxscore?gameId="+gameIDs.get(i)).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-					      .referrer("http://www.google.com").timeout(0).get();
-				
+				String url = "http://www.espn.com/nba/boxscore?gameId="+gameIDs.get(i);
+				Document page = scrapeHTML.connect(url);
 				Elements tables = null;
 				Element outer_div = page.getElementById("gamepackage-boxscore-module");
 				try{
@@ -838,13 +842,10 @@ public class BasketballBot extends Utils {
 			return this.bio;
 		}
 		
-		public int scrape_info() throws IOException, JSONException{
-			Document page = null;
-			try{
-				page = Jsoup.connect("http://www.espn.com/nba/player/_/id/"+ this.getESPN_ID()).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
-				      .referrer("http://www.google.com").timeout(0).get();
-			}catch(Exception e){
-				log("couldnt connect to page " + this.getESPN_ID());
+		public int scrape_info() throws IOException, JSONException, InterruptedException{
+			String url = "http://www.espn.com/nba/player/_/id/"+ this.getESPN_ID();
+			Document page = scrapeHTML.connect(url);
+			if(page == null){
 				return 0;
 			}
 			Element bio = page.getElementsByClass("player-bio").first();
