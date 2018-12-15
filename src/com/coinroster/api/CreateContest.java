@@ -115,7 +115,7 @@ public class CreateContest extends Utils
 	        	output.put("error", "Registration deadline must be at least 1 hour from now");
 	            break method;
 	        	}
-            
+            log("test log.");
             if (rake < 0 || rake >= 100)
             	{
                 output.put("error", "Rake cannot be < 0 or > 100");
