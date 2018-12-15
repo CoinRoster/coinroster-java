@@ -51,6 +51,7 @@ public class ContestMethods extends Utils{
 				JSONObject contest = prop_contests.getJSONObject(i);
 				String title = rtiDate.toString() + " | " + contest.getString("title");
 				contest.put("title", title);
+				contest.put("odds_source", "n/a");
 				contest.put("registration_deadline", deadline);
 	
 	

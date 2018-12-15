@@ -3,21 +3,15 @@ package com.coinroster;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
-import java.util.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-
 import com.coinroster.ContestMethods;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.CallCGS;
@@ -85,13 +79,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 			ContestMethods.checkHockeyContests();
+			
 			ContestMethods.createBitcoinContests();
 			UpdateBitcoinIndex();
-			
-		}
-		
-		if (minute == 5 || minute == 35) {
-			ContestMethods.checkBitcoinContests();
 		}
 		
 		if((hour%6==0) && (minute==30)){
@@ -361,6 +351,58 @@ public class CronWorker extends Utils implements Callable<Integer>
 			});
 		}	
 
+	
+//------------------------------------------------------------------------------------
+	
+	private void UpdateBitcoinIndex()
+	{
+	Server.async_updater.execute(new Runnable() 
+		{
+	    public void run() 
+	    	{
+	    	Connection sql_connection = null;
+			try {
+				
+				sql_connection = Server.sql_connection();
+				String rtiDate = "-";
+				JSONObject json = null;
+				
+				while (true) {
+					String url = "https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All";
+					json = JsonReader.readJsonFromUrl(url);
+					 
+					rtiDate = json.getJSONObject("realTimeIndex").getString("date");
+					
+					if (rtiDate != "-") {
+						break;
+					}
+					Thread.sleep(500);
+				}
+				
+				String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
+				
+				PreparedStatement stmnt = sql_connection.prepareStatement(
+						"insert ignore into bitcoin_reference(price,  date_updated) VALUES (?, ?)");
+				stmnt.setDouble(1, Double.parseDouble(rti));
+				stmnt.setString(2, rtiDate);
+				stmnt.executeUpdate();
+				}
+			catch (Exception e) 
+				{
+				Server.exception(e);
+				} 
+			finally
+				{
+				if (sql_connection != null)
+					{
+					try {sql_connection.close();} 
+					catch (SQLException ignore) {}
+					}
+				}	
+	    	}
+		});
+	}		
+	
 //------------------------------------------------------------------------------------
 
 	// update currencies using open exchange rates API
@@ -407,64 +449,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		    }
 		});
 	}	
-
-//------------------------------------------------------------------------------------
-
-	// update BRR price
 	
-	private void UpdateBitcoinIndex()
-		{
-		Server.async_updater.execute(new Runnable() 
-			{
-		    public void run() 
-		    	{
-		    	Connection sql_connection = null;
-				try {
-					
-					sql_connection = Server.sql_connection();
-					String rtiDate = "-";
-					JSONObject json = null;
-					
-					while (true) {
-						String jsonString = Jsoup.connect("https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All")
-								.ignoreContentType(true).execute().body();
-						 json = new JSONObject(jsonString);
-						
-						rtiDate = json.getJSONObject("realTimeIndex").getString("date");
-						
-						if (rtiDate != "-") {
-							break;
-						}
-						Thread.sleep(500);
-					}
-					
-					String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
-
-					SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-					formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-					Date date = formatter.parse(rtiDate);
-					
-					PreparedStatement stmnt = sql_connection.prepareStatement(
-							"insert ignore into bitcoin_reference(price,  date_updated) VALUES (?, ?)");
-					stmnt.setDouble(1, Double.parseDouble(rti));
-					stmnt.setTimestamp(2, new Timestamp(date.getTime()));
-					stmnt.executeUpdate();
-					}
-				catch (Exception e) 
-					{
-					Server.exception(e);
-					} 
-				finally
-					{
-					if (sql_connection != null)
-						{
-						try {sql_connection.close();} 
-						catch (SQLException ignore) {}
-						}
-					}	
-		    	}
-			});
-		}		
 //------------------------------------------------------------------------------------
 
 	// purge any password reset keys that have not been used
@@ -630,3 +615,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 //------------------------------------------------------------------------------------
 
 }
+	
+
+
