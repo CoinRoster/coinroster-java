@@ -122,22 +122,23 @@ public class BitcoinBot {
 	public JSONObject createPariMutuel(Long deadline, String date, JSONObject contest) throws JSONException{
 		
 		JSONArray option_table = new JSONArray(); 
-		
-		//Not sure about these table values, but should work for now.
-		JSONObject higher = new JSONObject();
-		higher.put("description", "Higher");
-		higher.put("id", 3);
-		option_table.put(higher);
+		JSONObject lower = new JSONObject();
+		lower.put("description", "Lower");
+		lower.put("id", 1);
+		option_table.put(lower);
+
 		
 		JSONObject same = new JSONObject();
 		same.put("description", this.realtimeIndex.toString());
 		same.put("id", 2);
 		option_table.put(same);
 		
-		JSONObject lower = new JSONObject();
-		lower.put("description", "Lower");
-		lower.put("id", 1);
-		option_table.put(lower);
+		//Not sure about these table values, but should work for now.
+		JSONObject higher = new JSONObject();
+		higher.put("description", "Higher");
+		higher.put("id", 3);
+		option_table.put(higher);
+
 	
 		contest.put("option_table", option_table);
 		
