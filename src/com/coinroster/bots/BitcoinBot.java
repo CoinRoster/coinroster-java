@@ -75,6 +75,8 @@ public class BitcoinBot {
 				PreparedStatement get_data = sql_connection.prepareStatement(stmt);
 				ResultSet data = get_data.executeQuery();
 				
+				data.next();
+				
 				rtiDate = data.getString(3);
 				
 				if (rtiDate != "-") {				
