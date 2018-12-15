@@ -79,13 +79,15 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 			ContestMethods.checkHockeyContests();
-			
-			ContestMethods.createBitcoinContests();
 			UpdateBitcoinIndex();
 		}
 		
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField(hour);
+		}
+		
+		if((hour%2==0) && (minute==5)){
+			ContestMethods.createBitcoinContests();
 		}
 		
 		//update currencies hourly on live
