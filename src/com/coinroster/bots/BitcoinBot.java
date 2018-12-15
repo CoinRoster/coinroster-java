@@ -1,6 +1,5 @@
 package com.coinroster.bots;
 
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -19,6 +18,7 @@ import org.json.JSONObject;
 //import com.coinroster.DB;
 import com.coinroster.Server;
 
+
 public class BitcoinBot {
 	private BigDecimal referenceRate;
 	private Date referenceRateDate;
@@ -31,6 +31,7 @@ public class BitcoinBot {
 	public BitcoinBot(Connection sql_connection) throws IOException, JSONException{
 		this.sql_connection = sql_connection;
 		//this.db = new DB(sql_connection);
+
 	}
 	
 	public BigDecimal getReferenceRate() {
@@ -59,6 +60,7 @@ public class BitcoinBot {
 		data.accumulate("brrDate", this.getReferenceRateDate().toString());
 		data.accumulate("rti", this.getRealtimeIndex().toString());
 		data.accumulate("rtiDate", this.getRealtimeIndexDate().toString());
+
 		
 		return data;
 	}

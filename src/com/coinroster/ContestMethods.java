@@ -751,9 +751,7 @@ public class ContestMethods extends Utils{
 				// iterate through list of ids and check for contests whose registration deadline expired
 				for(Integer contest_id : voting_contest_ids){
 	
-					log("contest id: " + contest_id);
 					JSONObject contest = db.select_contest(contest_id);
-					log("contest" + contest.toString());
 					if(new Date().getTime() > contest.getLong("registration_deadline")) {
 	
 						// Settle Voting Round

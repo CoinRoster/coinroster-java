@@ -645,7 +645,7 @@ public class CreateContest extends Utils
 				message_body_admin += "<br/>";
 				message_body_admin += "<br/>";
 
-				new NotifyAdmin(Server.sql_connection(), subject_admin, message_body_admin);
+				new NotifyAdmin(sql_connection, subject_admin, message_body_admin);
             }
 
             new BuildLobby(sql_connection);
