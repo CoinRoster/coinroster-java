@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -65,7 +64,7 @@ public class BitcoinBot {
 	}
 	
 	//Scrape data from cmegroup website. Determine when the next update should be.
-	public void setup() {
+	public void setup(){
 
 		String rtiDate = "-";
 		try {
@@ -95,11 +94,6 @@ public class BitcoinBot {
 			this.nextRefUpdate = cal.getTime().getTime();
 		}catch (Exception e){
 			Server.exception(e);
-		}finally {
-			if (sql_connection != null){
-				try {sql_connection.close();} 
-				catch (SQLException ignore) {}
-			}
 		}
 		
 	}
