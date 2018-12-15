@@ -89,7 +89,7 @@ public class BitcoinBot {
 				}
 			}
 			Calendar cal = Calendar.getInstance();
-			cal.setTime(this.referenceRateDate);
+			cal.setTime(this.realtimeIndexDate);
 			cal.add(Calendar.DATE, 1);
 			
 			this.nextRefUpdate = cal.getTime().getTime();
