@@ -52,7 +52,7 @@ public class TransferFunds_Admin extends Utils
 				output.put("error", "Something went wrong. Please try again");
 				break method;
 			}
-			if(sender_username == receiver_username){
+			if(sender_username.equals(receiver_username)){
 				output.put("error", "You cannot transfer to and from the same account");
 				break method;
 			}
