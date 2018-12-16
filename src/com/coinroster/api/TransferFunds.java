@@ -61,9 +61,6 @@ public class TransferFunds extends Utils
 				output.put("error", "The username you entered does not exist");
 				break method;
 			}
-			log(sender.getString("username"));
-			log(receiver_username);
-			
 			if(sender.getString("username").equals(receiver_username)){
 				output.put("error", "You cannot transfer to yourself");
 				break method;
