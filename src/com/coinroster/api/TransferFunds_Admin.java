@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
 import com.coinroster.Server;
+import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
@@ -24,7 +25,9 @@ public class TransferFunds_Admin extends Utils
 		
 		input = method.input,
 		output = method.output;
-				
+		
+		Session session = method.session;		
+		
 		Connection sql_connection = method.sql_connection;
 
 		DB db = new DB(sql_connection);
@@ -34,25 +37,25 @@ public class TransferFunds_Admin extends Utils
 //------------------------------------------------------------------------------------
 		
 			String
-			 
-			sender_username = no_whitespace(input.getString("sender")),
+			sender_id = no_whitespace(input.getString("sender")),
 			btc_rc = input.getString("btc_rc"),
-			receiver_username = no_whitespace(input.getString("receiver")),
+			receiver_id = no_whitespace(input.getString("receiver")),
 			memo = input.getString("memo"),
+			created_by = session.user_id(),
 			from_account = "",
 			to_account = "",
 			from_currency = "",
 			to_currency = "";
 
-			JSONObject sender = db.select_user("username", sender_username);
-			JSONObject receiver = db.select_user("username", receiver_username);
+			JSONObject sender = db.select_user("id", sender_id);
+			JSONObject receiver = db.select_user("id", receiver_id);
 			
 			// initial validation
 			if (sender == null | receiver == null){
 				output.put("error", "Something went wrong. Please try again");
 				break method;
 			}
-			if(sender_username.equals(receiver_username)){
+			if(sender_id.equals(receiver_id)){
 				output.put("error", "You cannot transfer to and from the same account");
 				break method;
 			}
@@ -180,7 +183,7 @@ public class TransferFunds_Admin extends Utils
 				Long transaction_timestamp = System.currentTimeMillis();
 				PreparedStatement new_transaction = sql_connection.prepareStatement("insert into transaction(created, created_by, trans_type, from_account, to_account, amount, from_currency, to_currency, memo) values(?, ?, ?, ?, ?, ?, ?, ?, ?)");				
 				new_transaction.setLong(1, transaction_timestamp);
-				new_transaction.setString(2, from_account);
+				new_transaction.setString(2, created_by);
 				String trans_type = btc_rc + "-USER-TRANSFER";
 				new_transaction.setString(3, trans_type);
 				new_transaction.setString(4, from_account);
