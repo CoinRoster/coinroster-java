@@ -48,17 +48,18 @@ public class TransferFunds_Admin extends Utils
 			JSONObject receiver = db.select_user("username", receiver_username);
 			
 			// initial validation
-			if (sender == null | receiver == null) 
-				{
+			if (sender == null | receiver == null){
 				output.put("error", "Something went wrong. Please try again");
 				break method;
-				}
-			
-			if (memo.length() > 500) 
-				{
+			}
+			if(sender_username == receiver_username){
+				output.put("error", "You cannot transfer to and from the same account");
+				break method;
+			}
+			if (memo.length() > 500){
 				output.put("error", "Memo is too long (max 500 chars)");
 				break method;
-				}
+			}
 	 
 			Double transaction_amount = null;
 			

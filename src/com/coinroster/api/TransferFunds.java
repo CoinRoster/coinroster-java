@@ -26,6 +26,8 @@ public class TransferFunds extends Utils
 		input = method.input,
 		output = method.output;
 		
+		log(input.toString());
+		
 		Session session = method.session;
 		
 		Connection sql_connection = method.sql_connection;
@@ -51,22 +53,24 @@ public class TransferFunds extends Utils
 			JSONObject sender = db.select_user("id", sender_user_id);
 			JSONObject receiver = db.select_user("username", receiver_username);
 			
-			// initial validation
-			if (sender == null) 
-				{
+			if (sender == null){
 				output.put("error", "Something went wrong. Please try again.");
 				break method;
-				}
-			if (receiver == null) 
-				{
+			}
+			if (receiver == null){
 				output.put("error", "The username you entered does not exist");
 				break method;
-				}
-			if (memo.length() > 500) 
-				{
+			}
+			if(sender.getString("username") == receiver_username){
+				output.put("error", "You cannot transfer to yourself");
+				break method;
+			}
+			// initial validation
+			
+			if (memo.length() > 500){
 				output.put("error", "Memo is too long (max 500 chars)");
 				break method;
-				}
+			}
 	 
 			Double transaction_amount = null;
 			
