@@ -3,10 +3,11 @@ package com.coinroster.internal;
 import java.util.concurrent.*;
 
 import com.coinroster.Server;
+import java.sql.Connection;
 
 public class ExpireSettlementWindow {
     
-	public ExpireSettlementWindow(Long settlement_deadline, int contest_id) throws Exception 
+	public ExpireSettlementWindow(Connection sql_connection, Long settlement_deadline, int contest_id) throws Exception 
 		{
 		     
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -33,7 +34,7 @@ public class ExpireSettlementWindow {
 					message_body_admin += "Please settle the contest from the admin panel.";
 					message_body_admin += "<br/>";
 	
-					new NotifyAdmin(Server.sql_connection(), subject_admin, message_body_admin);
+					new NotifyAdmin(sql_connection, subject_admin, message_body_admin);
 				} catch (Exception e) {
 					Server.log("Exception occured while notifying admin: " + e.toString());
 				}
