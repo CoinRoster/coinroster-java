@@ -9,6 +9,10 @@ import java.net.URLDecoder;
 
 import java.util.Hashtable;
 
+/**
+ * Represents a HTTP request object
+ *
+ */
 public class HttpRequest 
 	{
 	private BufferedReader reader;
@@ -29,11 +33,23 @@ public class HttpRequest
 	
 	private int[] version = new int[2];
 
+	/**
+	 * Initializes request object.
+	 * 
+	 * @param socket
+	 * @throws IOException
+	 */
 	protected HttpRequest(Socket socket) throws IOException 
 		{
 		reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		}
 
+	/**
+	 * Serves request and determines status code to respond with.
+	 * 
+	 * @return HTTP status code to respond with
+	 * @throws IOException
+	 */
 	protected int status() throws IOException 
 		{
 		// parse first line of request:
@@ -161,54 +177,104 @@ public class HttpRequest
 		return 200;
 		}
 
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return first line of request
+	 */
 	public String first_line() 
 		{
 		return first_line;
 		}
-
+	
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return request method
+	 */
 	public String method() 
 		{
 		return method;
 		}
 
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return request full URL
+	 */
 	public String full_url() 
 		{
 		return full_url;
 		}
 	
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return request target URL
+	 */
 	public String target_url() 
 		{
 		return url;
 		}
 
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return target object
+	 */
 	public String target_object() 
 		{
 		return url.substring(url.lastIndexOf("/") + 1, url.length());
 		}
 
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return request version
+	 */
 	public String version() 
 		{
 		return version[0] + "." + version[1];
 		}
 	
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return query fields, if any
+	 */
 	public String query_field(String name) 
 		{
 		if (query_fields != null) return query_fields.get(name);
 		else return null;
 		}
-
+	
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return request header
+	 */
 	public String header(String name) 
 		{
 		if (headers != null) return headers.get(name.toLowerCase());
 		else return null;
 		}
 
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return cookies, if any
+	 */
 	public String cookie(String name) 
 		{
 		if (cookies != null) return cookies.get(name.toLowerCase());
 		else return null;
 		}
 
+	/**
+	 * Pretty much exactly what you'd expect.
+	 * 
+	 * @return request payload
+	 */
 	public String payload() 
 		{
 		return payload;

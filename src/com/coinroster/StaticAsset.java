@@ -3,8 +3,19 @@ package com.coinroster;
 import java.io.File;
 import java.net.URLEncoder;
 
+/**
+ * Handles access to static assets (img etc.)
+ *
+ */
 public class StaticAsset extends Utils
 	{
+	/**
+	 * Serves static assets after performing access control.
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	protected StaticAsset(HttpRequest request, HttpResponse response) throws Exception
 		{
 		// we handle authentication first - this is primarily to redirect unauthorized
@@ -80,6 +91,12 @@ public class StaticAsset extends Utils
 			}
 		}
 
+	/**
+	 * Returns filetype of asset.
+	 * 
+	 * @param target_object
+	 * @return filetype of asset
+	 */
 	private String get_mime_type(String target_object)
 		{
 		String file_ext = target_object.substring(target_object.lastIndexOf(".") + 1, target_object.length());

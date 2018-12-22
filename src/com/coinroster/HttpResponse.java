@@ -15,6 +15,10 @@ import org.json.JSONObject;
 
 import java.util.Map.Entry;
 
+/**
+ * Represents a HTTP response object.
+ *
+ */
 public class HttpResponse 
 	{
 	private OutputStream out;
@@ -23,6 +27,12 @@ public class HttpResponse
 
 	Map<String, String> cookie_map = new TreeMap<String, String>();
 
+	/**
+	 * Initializes response object.
+	 * 
+	 * @param socket
+	 * @throws IOException
+	 */
 	public HttpResponse(Socket socket, String version) 
 		{
 		try {
@@ -32,16 +42,32 @@ public class HttpResponse
 		catch (IOException ignore) {} // broken pipe - nothing to be done
 		}
 
+	/**
+	 * Add a key-value pair to cookie map.
+	 * 
+	 * @param name key for cookie
+	 * @param value cookie value
+	 */
 	public void set_cookie(String name, String value)
 		{
 		cookie_map.put(name, value);
 		}
 
+	/**
+	 * Sends a JSONobject.
+	 * 
+	 * @param object
+	 */
 	public void send(JSONObject object)
 		{
 		send(object.toString());
 		}
 
+	/**
+	 * Sends a HTML response.
+	 * 
+	 * @param response_data
+	 */
 	public void send(String response_data)
 		{
 		try {
@@ -50,6 +76,12 @@ public class HttpResponse
 		catch (IOException ignore) {} // broken pipe - nothing to be done
 		}
 
+	/**
+	 * Sends a file along with its filetype.
+	 * 
+	 * @param file
+	 * @param mime_type
+	 */
 	public void send(File file, String mime_type) 
 		{
 		try {
@@ -58,6 +90,14 @@ public class HttpResponse
 		catch (IOException ignore) {} // broken pipe - nothing to be done
 		}
 	
+	/**
+	 * Sends a response to a HTTP request.
+	 * 
+	 * @param response_length
+	 * @param mime_type
+	 * @param stream
+	 * @throws IOException
+	 */
 	private void send(Object response_length, String mime_type, InputStream stream) throws IOException
 		{
 		out.write(new String("HTTP/" + version + " 200 OK\r\n").getBytes());
@@ -91,6 +131,11 @@ public class HttpResponse
 		out.close();
 		}
 	
+	/**
+	 * Send a redirection route in response.
+	 * 
+	 * @param target
+	 */
 	public void redirect(String target) 
 		{
 		try {
@@ -110,6 +155,11 @@ public class HttpResponse
 		catch (IOException ignore) {} // broken pipe - nothing to be done
 		}
 	
+	/**
+	 * Writes out all cookies in cookie map to response.
+	 * 
+	 * @throws IOException
+	 */
 	private void write_cookies() throws IOException
 		{
 		Set<Entry<String, String>> cookies = cookie_map.entrySet();

@@ -7,8 +7,17 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+
+/**
+ * ClassFinder: takes a package path and tries to find a class that matches it
+ * 
+ */
 public class ClassFinder 
 	{
+	/**
+	 * @param package_name String that represents a path to a class file
+	 * @return List of classes that are prepended by the package_name
+	 */
 	public static List<Class<?>> find(String package_name) throws Exception
 		{
 		List<Class<?>> classes = new ArrayList<Class<?>>();

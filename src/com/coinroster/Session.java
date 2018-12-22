@@ -3,6 +3,13 @@ package com.coinroster;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
+/**
+ * Represents a session between a user on their browser and the server.
+ * 
+ * @see com.coinroster.Server
+ *
+ */
 public class Session 
 	{
 	private String 
@@ -12,11 +19,27 @@ public class Session
 	user_id = null,
 	user_level = null;
 
+	/**
+	 * Initializes a Session object with a given session_token.
+	 * 
+	 * @param session_token
+	 */
 	protected Session(String session_token)
 		{
 		this.session_token = session_token;
 		}
 
+	/**
+	 * Creates a new session given user's details.
+	 * 
+	 * @param sql_connection
+	 * @param session
+	 * @param username
+	 * @param user_id
+	 * @param user_level
+	 * @return
+	 * @throws Exception
+	 */
 	public String create_session(Connection sql_connection, Session session, String username, String user_id, int user_level) throws Exception
 		{
 		if (session.active()) Server.kill_session(session.token());
@@ -47,6 +70,12 @@ public class Session
 		return new_session_token;
 		}
 
+	/**
+	 * Updates a user's level and access privileges.
+	 * 
+	 * @param match_user_id
+	 * @param user_level
+	 */
 	public void update_user_level(String match_user_id, int user_level) 
 		{
 		for (String session_token : Server.session_map.keySet()) 
@@ -75,6 +104,11 @@ public class Session
 			}
 		}
 	
+	/**
+	 * Activate a user's session.
+	 * 
+	 * @return
+	 */
 	public boolean active()
 		{
 		if (session_token == null) return false;
@@ -125,21 +159,40 @@ public class Session
 		else return false;
 		}
 	
+	/**
+	 * Returns username.
+	 * @return
+	 */
 	public String username()
 		{
 		return username;
 		}
 	
+	/**
+	 * Returns user_id.
+	 * 
+	 * @return
+	 */
 	public String user_id()
 		{
 		return user_id;
 		}
 
+	/**
+	 * Returns user_level.
+	 * 
+	 * @return
+	 */
 	public String user_level()
 		{
 		return user_level;
 		}
 	
+	/**
+	 * Returns session_token.
+	 * 
+	 * @return
+	 */
 	public String token()
 		{
 		return session_token;

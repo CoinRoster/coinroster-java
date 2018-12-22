@@ -5,15 +5,29 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 
+/**
+ * Server Worker that accepts and serves HTTP requests.
+ *
+ */
 public class ServerWorker extends Utils implements Callable<Integer> 
 	{
 	private Socket socket;
 	
+	/**
+	 * Creates a ServerWorker instance.
+	 * 
+	 * @param socket
+	 */
 	public ServerWorker(Socket socket) 
 		{
 		this.socket = socket;
 		}
 	
+	/**
+	 * Performs the ServerWorker functions and detects unauthorized connections (non-local)
+	 * 
+	 * @throws Exception
+	 */
 	public Integer call() 
 		{
 		try {

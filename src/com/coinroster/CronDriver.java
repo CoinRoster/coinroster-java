@@ -2,6 +2,11 @@ package com.coinroster;
 
 import java.util.Calendar;
 
+/**
+ * Spawns CronThreads
+ * 
+ * @see com.coinroster.CronThread
+ */
 public class CronDriver
 	{
 	private static int
@@ -10,6 +15,12 @@ public class CronDriver
 	last_hour = -1,
 	last_minute = -1;
 	
+	/**
+	 * Spawns new CronThreads as required.
+	 * 
+	 * @see com.coinroster.CronThread
+	 * @throws Exception if there is an error with spawning a new thread
+	 */
 	protected static void start() 
 		{
 		new Thread() 

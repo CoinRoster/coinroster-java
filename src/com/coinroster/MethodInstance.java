@@ -3,6 +3,13 @@ package com.coinroster;
 import java.sql.Connection;
 import org.json.JSONObject;
 
+/**
+ * Represents a method that is passed through API middleware.
+ * 
+ * @see com.coinroster.HttpRequest
+ * @see com.coinroster.HttpResponse
+ * @see com.coinroster.Session 
+ */
 public class MethodInstance 
 	{
 	public HttpRequest request;
