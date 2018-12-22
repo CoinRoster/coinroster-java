@@ -8,8 +8,19 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 
+/**
+ * Source code for the CoinRoster command prompt that is used to communicate with the active server.
+ * 
+ * Supports the following commands: version, restart, halt, test mail, tail log {n}, clear log
+ *
+ */
 public class CommandPrompt extends Utils
 	{
+	/**
+	 * Performs the server operation dictated by the command
+	 * @param command One of: version, restart, halt, test mail, tail log {n}, clear log
+	 * @param socket Represents the socket connection between terminal accessing the server and the server itself, used for reading the input stream
+	 */
 	public CommandPrompt(String command, Socket socket) throws Exception
 		{
 		InputStream in = socket.getInputStream();

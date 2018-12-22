@@ -6,18 +6,35 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * New Cron thread used for a CronWorker
+ * 
+ * This is where task timeouts happen if Cron workers fail to return by the timeout interval.
+ */
 public class CronThread extends Thread
 	{
     private String freq = null;
     private Calendar cal = null;
     private int timeout = 1800; // seconds (30 min)
     
+    /**
+     * Creates a new thread instance.
+     * 
+     * @param freq One of: minute, hour, day
+     * @param cal Calendar instance that represents the current time
+     */
     public CronThread(String freq, Calendar cal) 
     	{
         this.freq = freq;
         this.cal = cal;
     	}
     
+    /**
+     * Spawns new worker with properties specified by thread instance.
+     * 
+     * @throws Exception 
+     * @see com.coinroster.CronWorker
+     */
     public void run() 
     	{
     	FutureTask<Integer> task = null;

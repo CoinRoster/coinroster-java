@@ -19,6 +19,12 @@ import com.coinroster.internal.CloseContestRegistration;
 import com.coinroster.internal.ExpirePromos;
 import com.coinroster.internal.JsonReader;
 
+/**
+ * Main Cron process handler. This is where all timed tasks occur
+ * 
+ * TODO: Move all these to timed tasks so that they fire at an instant and not in a window
+ * 
+ */
 public class CronWorker extends Utils implements Callable<Integer> 
 	{
 	@SuppressWarnings("unused")
@@ -35,12 +41,21 @@ public class CronWorker extends Utils implements Callable<Integer>
 	private String freq;
 	private Calendar cal;
 	
+	/**
+	 * Creates new CronWorker instance.
+	 * 
+     * @param freq One of: minute, hour, day
+     * @param cal Calendar instance that represents the current time
+	 */
 	public CronWorker(String freq, Calendar cal) 
 		{
 		this.freq = freq;
 		this.cal = cal;
 		}
 
+	/**
+	 * Initialize time variables with calendar, then call one of the other methods (eg. day)
+	 */
 	public Integer call() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
 		{
 		year = cal.get(Calendar.YEAR);
@@ -58,6 +73,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * Cron events that trigger on the minute (or a factor of) go here.
+	 * 
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	private void minute() throws Exception
 	{ 
@@ -91,7 +111,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 	}
 
-	
+	/**
+	 * Cron events that trigger on the hour (or a factor of) go here.
+	 * 
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	private void hour() throws Exception
 	{
@@ -114,6 +138,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 			UpdateCurrencies();			
 	}
 	
+	/**
+	 * Cron events that trigger on the day (or a factor of) go here.
+	 * 
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	private void day() throws Exception
 	{
@@ -131,7 +160,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// template for working with SQL connection
+	/**
+	 * Template for working with SQL connection.
+	 * 
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	private void TestPari(int contest_id) {
 		Connection sql_connection = null;
@@ -154,7 +187,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// kick off stale sessions
+	/**
+	 * Kick off stale sessions
+	 */
 	private void SessionExpiry()
 		{
 		try {
@@ -185,7 +220,12 @@ public class CronWorker extends Utils implements Callable<Integer>
 	
 //------------------------------------------------------------------------------------
 
-	// kick off stale sessions
+	/**
+	 * Generates new CGS addresses. Not really sure why this was done from here and not the node server.
+	 * 
+	 * @throws Exception
+	 * @see com.internal.CallCGS
+	 */
 	@SuppressWarnings("unused")
 	private void GenerateAddresses()
 		{
@@ -245,8 +285,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// backfill referrer keys - should only actually do something once
-	
+	/**
+	 * Backfill referrer keys - should only actually do something once
+	 * 
+	 * @throws Exception
+	 */
 	private void BackfillReferrerKeys() 
 		{
 		Connection sql_connection = null;
@@ -289,8 +332,10 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// update BTCUSD price
-	
+	/**
+	 * Updates the internal BTC-USD exchange rate.
+	 * 
+	 */
 	private void UpdateBTCUSD()
 		{
 		Server.async_updater.execute(new Runnable() 
@@ -350,7 +395,10 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 //------------------------------------------------------------------------------------
 
-	// update currencies using open exchange rates API
+	/**
+	 * Update currencies using open exchange rates API.
+	 * 
+	 */
 	private void UpdateCurrencies(){
 		Server.async_updater.execute(new Runnable(){
 		    public void run(){
@@ -397,8 +445,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 	
 //------------------------------------------------------------------------------------
 
-	// purge any password reset keys that have not been used
-	
+	/**
+	 * Purge any password reset keys that have not been used
+	 */
 	private void PurgePasswordResetTable()
 		{
     	Connection sql_connection = null;
@@ -427,8 +476,11 @@ public class CronWorker extends Utils implements Callable<Integer>
 	
 //------------------------------------------------------------------------------------
 
-	// trigger BuildLobby (called daily)
-	
+	/**
+	 * Trigger BuildLobby
+	 * 
+	 * @deprecated BuildLobby is now dynamically built
+	 */
 	private void TriggerBuildLobby()
 		{
     	Connection sql_connection = null;

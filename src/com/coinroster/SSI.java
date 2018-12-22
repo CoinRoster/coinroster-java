@@ -7,8 +7,19 @@ import java.sql.SQLException;
 
 import org.json.JSONObject;
 
+/**
+ * Defines Server-Side Includes (SSI). All the backend resources that are made available to the
+ * frontend are defined here. 
+ *
+ */
 public class SSI extends Utils
 	{
+	/**
+	 * New SSI object. Some of the Includes require a session while others do not.
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	protected SSI(HttpRequest request, HttpResponse response) throws Exception
 		{
 		Connection sql_connection = null;
