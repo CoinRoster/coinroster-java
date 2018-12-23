@@ -8,8 +8,17 @@ import java.sql.SQLException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * API middleware. Method security/access control happens here.
+ */
 public class MethodCall extends Utils
 	{
+	/**
+	 * All access control goes here.
+	 * 
+	 * @param request
+	 * @param response
+	 */
 	protected MethodCall(HttpRequest request, HttpResponse response)
 		{
 		Connection sql_connection = null;

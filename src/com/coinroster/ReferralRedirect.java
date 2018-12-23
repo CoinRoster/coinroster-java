@@ -1,7 +1,15 @@
 package com.coinroster;
-
+/**
+ * Redirect after referral.
+ */
 public class ReferralRedirect extends Utils
 	{
+	/**
+	 * Redirect after referral.
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	protected ReferralRedirect(HttpRequest request, HttpResponse response) throws Exception
 		{
 		String referrer_key = request.target_object();
