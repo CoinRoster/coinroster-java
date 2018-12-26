@@ -14,6 +14,8 @@ public class MethodInstance
 	{
 	public HttpRequest request;
 	public HttpResponse response;
+	
+	// input object that has request attributes and output with response attributes
 	public JSONObject input, output;
 	public Session session;
 	public Connection sql_connection;

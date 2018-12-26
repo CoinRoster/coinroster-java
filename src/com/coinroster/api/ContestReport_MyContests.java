@@ -13,9 +13,22 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UpdateUserContestStatus;
 
+/**
+ * Get all contests for a specific user.
+ * 
+ * @custom.access standard
+ *
+ */
 public class ContestReport_MyContests extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Get all contests for a specific user.
+	 *  
+	 * @param method.input.contest_status
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public ContestReport_MyContests(MethodInstance method) throws Exception 
 		{

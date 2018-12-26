@@ -9,9 +9,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Validate a username for user creation
+ * 
+ * @custom.access guest
+ *
+ */
 public class CheckUsername extends Utils
 	{
 	public static String method_level = "guest";
+	
+	/**
+	 * Validate a username for user creation
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public CheckUsername(MethodInstance method) throws Exception 
 		{

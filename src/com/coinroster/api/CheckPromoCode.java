@@ -9,9 +9,20 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Validate a supplied promo code.
+ *
+ */
 public class CheckPromoCode extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Validate a supplied promo code.
+	 * 
+	 * @param method.input.promo_code
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public CheckPromoCode(MethodInstance method) throws Exception 
 		{

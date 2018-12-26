@@ -12,9 +12,21 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Change the password hash for a user.
+ *
+ */
 public class ChangePasswordKey extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Change the password hash for a user.
+	 * 
+	 * @param method.input.key
+	 * @param method.input.old_key
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public ChangePasswordKey(MethodInstance method) throws Exception 
 		{

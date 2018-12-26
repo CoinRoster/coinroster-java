@@ -14,9 +14,24 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get all contests to populate the lobby.
+ * 
+ * @custom.access guest
+ *
+ */
 public class ContestReport_Lobby extends Utils
 	{
 	public static String method_level = "guest";
+	
+	/**
+	 * Get all contests to populate the lobby.
+	 * 
+	 * @param method.input.category
+	 * @param method.input.sub_category
+	 * @param method.input.contest_status
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public ContestReport_Lobby(MethodInstance method) throws Exception 
 		{

@@ -13,9 +13,24 @@ import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.ExpireSettlementWindow;
 import com.coinroster.internal.UpdateContestStatus;
 
+/**
+ * Approve a user created contest.
+ * 
+ * @custom.access admin
+ * @author Gov
+ *
+ */
 public class ApproveUserContest extends Utils {
 	
 	public static String method_level = "admin";
+	
+	/**
+	 * Approve a user created contest.
+	 * 
+	 * @param method.input.contest_id
+	 * @param method.input.admin_approval
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public ApproveUserContest(MethodInstance method) throws Exception {
 		

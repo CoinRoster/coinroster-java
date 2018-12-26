@@ -32,7 +32,6 @@ public class CronThread extends Thread
     /**
      * Spawns new worker with properties specified by thread instance.
      * 
-     * @throws Exception 
      * @see com.coinroster.CronWorker
      */
     public void run() 

@@ -9,16 +9,25 @@ import com.coinroster.Session;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 
+/**
+ * Get the cash register address.
+ *
+ */
 public class GetCashRegisterBalance {
 
-
 	public static String method_level = "admin";
+	
+	/**
+	 * Get the cash register address.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetCashRegisterBalance(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
-		input = method.input,
 		output = method.output;
 		
 		Session session = method.session;

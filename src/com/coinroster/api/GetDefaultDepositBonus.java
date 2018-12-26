@@ -9,15 +9,27 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get the default deposit bonus amount.
+ * 
+ * @custom.access guest
+ *
+ */
 public class GetDefaultDepositBonus extends Utils
 	{
 	public static String method_level = "guest";
+	
+	/**
+	 * Get the default deposit bonus amount.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetDefaultDepositBonus(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
-		input = method.input,
 		output = method.output;
 		
 		Session session = method.session;

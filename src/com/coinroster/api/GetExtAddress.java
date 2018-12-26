@@ -9,9 +9,23 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get the external address for deposits and withdrawals
+ * 
+ * @deprecated This is handled by CGS
+ *
+ */
 public class GetExtAddress extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Get the external address for deposits and withdrawals
+	 * 
+	 * @deprecated
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetExtAddress(MethodInstance method) throws Exception 
 		{

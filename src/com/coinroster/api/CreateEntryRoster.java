@@ -18,9 +18,26 @@ import com.coinroster.internal.UpdateDraftStatistics;
 import com.coinroster.internal.UpdateUserContestStatus;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Create an entry for a roster contest.
+ * 
+ * @custom.access standard
+ *
+ */
 public class CreateEntryRoster extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Create an entry for a roster contest.
+	 * 
+	 * @param method.input.contest_id ID of contest
+	 * @param method.input.number_of_entries Number of unique entries
+	 * @param method.input.use_rc True if user's RC balance is to be debited
+	 * @param method.input.roster List of mappings between player and amount
+	 * @param method.input.user_id User ID (if not available from session information)
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public CreateEntryRoster(MethodInstance method) throws Exception 
 		{

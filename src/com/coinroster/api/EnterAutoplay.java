@@ -11,9 +11,30 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Enter an autoplay entry with a chosen player selection algorithm.
+ * 
+ * @custom.access standard
+ *
+ */
 public class EnterAutoplay extends Utils {
+	
 	public static String method_level = "standard";
 	
+	/**
+	 * Enter an autoplay entry with a chosen player selection algorithm.
+	 * 
+	 * @param method.input.data Contains the actual input variables
+	 * @param method.input.data.process Which autoplay operation is to be performed
+	 * @param method.input.data.autoplay_id For operations on existing autoplays
+	 * @param method.input.data.start_date Date to start the autoplay contests
+	 * @param method.input.data.end_date Date to stop the autoplay contests
+	 * @param method.input.data.algorithm Which player selection algorithm to use
+	 * @param method.input.data.num_rosters Maximum number of rosters to be placed in autoplay
+	 * @param method.input.data.active Set the autoplay active
+	 * @param method.input.data.contest_id New contest to add to autoplay
+	 * @throws Exception
+	 */
 	public EnterAutoplay(MethodInstance method) throws Exception 
 		{
 		JSONObject 

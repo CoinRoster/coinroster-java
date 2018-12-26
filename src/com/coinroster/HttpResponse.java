@@ -31,7 +31,6 @@ public class HttpResponse
 	 * Initializes response object.
 	 * 
 	 * @param socket
-	 * @throws IOException
 	 */
 	public HttpResponse(Socket socket, String version) 
 		{

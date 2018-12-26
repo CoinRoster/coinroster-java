@@ -13,9 +13,22 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Finalize pending deposits.
+ * 
+ * @deprecated Deposits are made from CGS generated wallet
+ *
+ */
 public class FinalizePendingDeposit extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Finalize pending deposits.
+	 * 
+	 * @deprecated Deposits are made from CGS generated wallet
+	 *
+	 */
 	@SuppressWarnings("unused")
 	public FinalizePendingDeposit(MethodInstance method) throws Exception 
 		{

@@ -15,10 +15,22 @@ import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.GolfBot;
 import com.coinroster.bots.HockeyBot;
 
+/**
+ * Get all available games.
+ * 
+ * @custom.access guest
+ *
+ */
 public class GetAvailableSports extends Utils {
 	
 	public static String method_level = "guest";
 	
+	/**
+	 * Get all available games.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	public GetAvailableSports(MethodInstance method) throws Exception {
 		
 		JSONObject 

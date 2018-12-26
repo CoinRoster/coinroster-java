@@ -14,9 +14,26 @@ import com.coinroster.Utils;
 import com.coinroster.internal.CallCGS;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Register a new user and create their account.
+ * 
+ * @custom.access guest
+ *
+ */
 public class CreateUser extends Utils
 	{
 	public static String method_level = "guest";
+	
+	/**
+	 * Register a new user and create their account.
+	 * 
+	 * @param method.input.username Username on CoinRoster
+	 * @param method.input.password Password (plaintext)
+	 * @param method.input.referral_key Referral key of existing user (if any)
+	 * @param method.input.promo_code Promo code for free play (if any)
+	 * @param method.input.email_address Email Address
+	 * @throws Exception
+	 */
 	public CreateUser(MethodInstance method) throws Exception 
 		{
 		JSONObject 

@@ -12,9 +12,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get affiliate promotion details (can be moved to DB?).
+ * 
+ * @custom.access standard
+ *
+ */
 public class GetAffiliatePromoDetails extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Get affiliate promotion details (can be moved to DB?).
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetAffiliatePromoDetails(MethodInstance method) throws Exception 
 		{

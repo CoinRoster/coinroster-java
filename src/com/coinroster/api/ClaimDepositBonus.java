@@ -13,9 +13,22 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Allow a user to claim deposit bonus
+ * 
+ * @custom.access standard
+ *
+ */
 public class ClaimDepositBonus extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Allow a user to claim deposit bonus
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public ClaimDepositBonus(MethodInstance method) throws Exception 
 		{

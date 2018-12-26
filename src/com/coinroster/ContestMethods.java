@@ -155,7 +155,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createBasketballContests() {
 	
@@ -271,7 +270,6 @@ public class ContestMethods extends Utils {
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
 	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkBasketballContests() {
 		Connection sql_connection = null;
@@ -395,7 +393,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createHockeyContests() {
 	
@@ -510,8 +507,6 @@ public class ContestMethods extends Utils {
 	 * Check to see if contests are in play, settle if necessary.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkHockeyContests() {
 		Connection sql_connection = null;
@@ -635,7 +630,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createGolfContests() {
 	
@@ -788,8 +782,6 @@ public class ContestMethods extends Utils {
 	 * Needs to settle both voting round and betting round if settlement time has elapsed.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkGolfContests() {
 		Connection sql_connection = null;
@@ -1013,8 +1005,6 @@ public class ContestMethods extends Utils {
 	 * Needs to settle both voting round and betting round if settlement time has elapsed.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkCrowdContests() {
 	
@@ -1137,7 +1127,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createBaseballContests() {
 	
@@ -1273,8 +1262,6 @@ public class ContestMethods extends Utils {
 	 * Needs to settle both voting round and betting round if settlement time has elapsed.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkBaseballContests() {
 		Connection sql_connection = null;

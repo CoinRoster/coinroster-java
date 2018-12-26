@@ -11,6 +11,12 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Create a new QuickBT record.
+ * 
+ * @deprecated now just sends amount to bitcoin address with blockcypher API
+ *
+ */
 public class CreateQuickbtRecord extends Utils
 	{
 	public static String method_level = "standard";

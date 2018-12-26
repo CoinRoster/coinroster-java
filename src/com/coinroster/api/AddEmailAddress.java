@@ -11,9 +11,23 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Add another email address for a user.
+ * 
+ * @custom.access standard
+ * 
+ *
+ */
 public class AddEmailAddress extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Add another email address for a user.
+	 * 
+	 * @param method.input.email_address
+	 * @throws Exception
+	 */
 	public AddEmailAddress(MethodInstance method) throws Exception 
 		{
 		JSONObject 

@@ -11,9 +11,23 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Cancel a promo code
+ * 
+ * @custom.access admin
+ *
+ */
 public class CancelPromo extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Cancel a promo code.
+	 * 
+	 * @param method.input.promo_code
+	 * @param method.input.reason
+	 * @throws Exception
+	 */
 	public CancelPromo(MethodInstance method) throws Exception 
 		{
 		JSONObject 

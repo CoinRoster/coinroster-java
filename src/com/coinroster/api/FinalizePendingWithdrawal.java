@@ -15,9 +15,21 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Finalize pending withdrawals from the admin panel.
+ * 
+ * @deprecated withdrawals are made from CGS generated wallet
+ *
+ */
 public class FinalizePendingWithdrawal extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Finalize pending withdrawals from the admin panel (deprecated?).
+	 * 
+	 * @deprecated withdrawals are made from CGS generated wallet
+	 */
 	@SuppressWarnings("unused")
 	public FinalizePendingWithdrawal(MethodInstance method) throws Exception 
 		{

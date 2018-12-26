@@ -8,10 +8,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get the cold storage account's balance.
+ * 
+ * @custom.access admin
+ *
+ */
 public class GetColdStorageBalance extends Utils{
 
-
 	public static String method_level = "admin";
+	
+	/**
+	 * Get the cold storage account's balance.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetColdStorageBalance(MethodInstance method) throws Exception 
 		{

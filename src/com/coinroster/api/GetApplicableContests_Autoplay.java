@@ -11,9 +11,21 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Utils;
 
+/**
+ * Get all contests that are applicable for autoplay.
+ * 
+ * @custom.access standard
+ *
+ */
 public class GetApplicableContests_Autoplay extends Utils {
 	public static String method_level = "standard";
 	
+	/**
+	 * Get all contests that are applicable for autoplay.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	public GetApplicableContests_Autoplay(MethodInstance method) throws Exception 
 		{
 		JSONObject output = method.output;
