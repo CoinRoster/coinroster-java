@@ -102,6 +102,10 @@ public class CronWorker extends Utils implements Callable<Integer>
 			UpdateBitcoinIndex();
 		}
 		
+		if(hour==16){
+		    ContestMethods.createGolfContests();
+		}
+		
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField(hour);
 		}
