@@ -99,6 +99,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
 			ContestMethods.checkHockeyContests();
+			ContestMethods.checkBitcoinContests();
 			UpdateBitcoinIndex();
 		}
 		
