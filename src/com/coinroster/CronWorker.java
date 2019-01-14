@@ -399,7 +399,9 @@ public class CronWorker extends Utils implements Callable<Integer>
 
 	
 //------------------------------------------------------------------------------------
-	
+	/**
+	 * Save the latest BTC price index from CME Group.
+	 */
 	private void UpdateBitcoinIndex()
 	{
 	Server.async_updater.execute(new Runnable() 

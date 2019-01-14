@@ -34,6 +34,11 @@ import com.coinroster.internal.UpdateContestStatus;
 public class ContestMethods extends Utils {
 
 	//------------------------------------------------------------------------------------
+	
+	/**
+	 * Creates a new Bitcoin "higher or lower" Contest. Uses the `CONTEST_TEMPLATES` table from the database 
+	 * as a format reference.
+	 */
 	public static void createBitcoinContests() {
 		
 		Connection sql_connection = null;
@@ -91,7 +96,9 @@ public class ContestMethods extends Utils {
 		}
 	}
 	
-	
+	/**
+	 * Settles any Bitcoin contests that have been posted for 24 hours.
+	 */
 	public static void checkBitcoinContests() {
 		
 		//For now, just settle all bitcoin contests..
