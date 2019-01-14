@@ -48,24 +48,24 @@ public class ContestMethods extends Utils {
 			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
 			bit_bot.setup();
 	
-			Date rtiDate = bit_bot.getRealtimeIndexDate(); //time of price index.
+			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 			
 			Calendar cal = Calendar.getInstance();
-			cal.setTime(rtiDate);
+			cal.setTime(c_date);
 			cal.add(Calendar.HOUR_OF_DAY, 2);
-			Date date = cal.getTime();
-			Long deadline = date.getTime(); //deadline = minutes from last rti update.
+			Date d_date = cal.getTime();
+			Long deadline = d_date.getTime(); //deadline = minutes from last rti update.
 	
 			JSONArray prop_contests = db.getRosterTemplates("BITCOIN");
 			
 			for(int i = 0; i < prop_contests.length(); i++){
 				JSONObject contest = prop_contests.getJSONObject(i);
-				String title = rtiDate.toString() + " | " + contest.getString("title");
+				String title = c_date.toString() + " | " + contest.getString("title");
 				contest.put("title", title);
 				contest.put("odds_source", "n/a");
 				contest.put("registration_deadline", deadline);
 				MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(deadline, date.toString(), contest);
+				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(deadline, contest);
 				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 				pari_method.input = pari_mutuel_data;
 				pari_method.output = pari_output;
@@ -110,18 +110,23 @@ public class ContestMethods extends Utils {
 			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOIN", "PARI-MUTUEL");
 	
 			if(!(pari_contests.length() == 0)){
+				
 				BitcoinBot bitcoin_bot = new BitcoinBot(sql_connection);
 				bitcoin_bot.setup();
 
-				pari_contests = db_connection.get_active_pari_mutuels("BITCOIN", "PARI-MUTUEL");
 				Iterator<?> pari_contest_ids = pari_contests.keys();	
 				while(pari_contest_ids.hasNext()){
 					String c_id = (String) pari_contest_ids.next();
+					log("Checking Bitcoin Contest with id: " + c_id);
 					
 					Long deadline = Long.parseLong(pari_contests.getJSONObject(c_id).getString("deadline"));
-					
+					log("Contest Deadline: " + deadline);
 					//Check if it has been a day since the contest was posted.
-					if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
+					if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 100) {
+						continue;
+					}
+					
+					log("Settling contest " + c_id);
 					
 					JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
 					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
@@ -143,6 +148,7 @@ public class ContestMethods extends Utils {
 					}		
 				}
 			}
+			
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {

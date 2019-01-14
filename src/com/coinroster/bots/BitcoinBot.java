@@ -121,7 +121,7 @@ public class BitcoinBot {
 		return money;
 	}
 	
-	public JSONObject createPariMutuel(Long deadline, String date, JSONObject contest) throws JSONException{
+	public JSONObject createPariMutuel(Long deadline, JSONObject contest) throws JSONException{
 		
 		JSONArray option_table = new JSONArray(); 
 		JSONObject lower = new JSONObject();
