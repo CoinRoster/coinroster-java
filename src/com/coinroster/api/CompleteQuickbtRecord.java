@@ -13,9 +13,22 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Get all complete QuickBT records (could be part of DB?).
+ * 
+ * @custom.access standard
+ *
+ */
 public class CompleteQuickbtRecord extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Get all complete QuickBT records (could be part of DB?).
+	 * 
+	 * @param method.input.passed_id
+	 * @throws Exception
+	 */
 	public CompleteQuickbtRecord(MethodInstance method) throws Exception 
 		{
 		JSONObject 

@@ -14,9 +14,28 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Create a promo code.
+ * 
+ * @custom.access standard
+ *
+ */
 public class CreatePromo extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Create a promo code.
+	 * 
+	 * @param method.input.description Description of promotion
+	 * @param method.input.promo_code Code string
+	 * @param method.input.referrer User ID of referrer
+	 * @param method.input.rollover_multiple Number of rollovers required to unlock bonus
+	 * @param method.input.freeplay_amount Amount available for freeplay
+	 * @param method.input.max_use Maximum number of uses of code
+	 * @param method.input.expires Time of promo expiry
+	 * @throws Exception
+	 */
 	public CreatePromo(MethodInstance method) throws Exception 
 		{
 		JSONObject 

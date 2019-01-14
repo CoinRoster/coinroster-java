@@ -11,9 +11,22 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Change a user's password.
+ * 
+ * @custom.access standard
+ *
+ */
 public class ChangePassword extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Change a user's password.
+	 * 
+	 * @param method.input.old_password 
+	 * @param method.input.new_password
+	 */
 	public ChangePassword(MethodInstance method) throws Exception 
 		{
 		JSONObject 

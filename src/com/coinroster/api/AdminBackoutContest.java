@@ -10,9 +10,23 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.BackoutContest;
 
+/**
+ * Backout contest from admin panel.
+ * 
+ * @custom.access admin
+ * @author Gov
+ *
+ */
 public class AdminBackoutContest extends Utils {
 	
 	public static String method_level = "admin";
+	
+	/**
+	 * Backout contest from admin panel.
+	 * 
+	 * @param method.input.contest_id
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public AdminBackoutContest(MethodInstance method) throws Exception {
 		

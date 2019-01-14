@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
+import com.coinroster.bots.BitcoinBot;
 import com.coinroster.bots.GolfBot;
 import com.coinroster.bots.HockeyBot;
 import com.coinroster.bots.CrowdSettleBot;
@@ -33,7 +34,122 @@ import com.coinroster.internal.UpdateContestStatus;
 public class ContestMethods extends Utils {
 
 	//------------------------------------------------------------------------------------
+	public static void createBitcoinContests() {
+		
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
+			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
+			bit_bot.setup();
 	
+			Date rtiDate = bit_bot.getRealtimeIndexDate(); //time of price index.
+			
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(rtiDate);
+			cal.add(Calendar.HOUR_OF_DAY, 2);
+			Date date = cal.getTime();
+			Long deadline = date.getTime(); //deadline = minutes from last rti update.
+	
+			JSONArray prop_contests = db.getRosterTemplates("BITCOIN");
+			
+			for(int i = 0; i < prop_contests.length(); i++){
+				JSONObject contest = prop_contests.getJSONObject(i);
+				String title = rtiDate.toString() + " | " + contest.getString("title");
+				contest.put("title", title);
+				contest.put("odds_source", "n/a");
+				contest.put("registration_deadline", deadline);
+				MethodInstance pari_method = new MethodInstance();
+				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(deadline, date.toString(), contest);
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_mutuel_data;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					log(pari_method.output.toString());
+					Server.exception(e);
+				}
+			}
+
+			
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+				} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}
+	
+	
+	public static void checkBitcoinContests() {
+		
+		//For now, just settle all bitcoin contests..
+		
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db_connection = new DB(sql_connection);
+			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOIN", "PARI-MUTUEL");
+	
+			if(!(pari_contests.length() == 0)){
+				BitcoinBot bitcoin_bot = new BitcoinBot(sql_connection);
+				bitcoin_bot.setup();
+
+				pari_contests = db_connection.get_active_pari_mutuels("BITCOIN", "PARI-MUTUEL");
+				Iterator<?> pari_contest_ids = pari_contests.keys();	
+				while(pari_contest_ids.hasNext()){
+					String c_id = (String) pari_contest_ids.next();
+					
+					Long deadline = Long.parseLong(pari_contests.getJSONObject(c_id).getString("deadline"));
+					
+					//Check if it has been a day since the contest was posted.
+					if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
+					
+					JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
+					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
+					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
+
+					JSONObject pari_fields = bitcoin_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
+					MethodInstance pari_method = new MethodInstance();
+					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+					pari_method.input = pari_fields;
+					pari_method.output = pari_output;
+					pari_method.session = null;
+					pari_method.sql_connection = sql_connection;
+					try{
+						Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+						c.newInstance(pari_method);
+					}
+					catch(Exception e){
+						Server.exception(e);
+					}		
+				}
+			}
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+				} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+	}
+
 	/**
 	 * Creates a new Basketball prop contest. Uses the `CONTEST_TEMPLATES` table from the database 
 	 * as a format reference.

@@ -15,9 +15,24 @@ import com.coinroster.Utils;
 import com.coinroster.internal.UpdateUserContestStatus;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Create an entry in a pari-mutuel contest.
+ * 
+ * @custom.access standard
+ *
+ */
 public class CreateEntryPariMutuel extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Create an entry in a pari-mutuel contest.
+	 * 
+	 * @param method.input.contest_id The ID of the contest
+	 * @param method.input.use_rc True when user's RC balance is to be used for wagers
+	 * @param method.input.wagers JSONArray of objects that map option id to wager
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public CreateEntryPariMutuel(MethodInstance method) throws Exception 
 		{

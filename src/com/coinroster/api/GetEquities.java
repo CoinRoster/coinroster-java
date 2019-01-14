@@ -8,16 +8,27 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get the balance for all equity accounts.
+ * 
+ * @custom.access admin
+ *
+ */
 public class GetEquities extends Utils{
 
-
 	public static String method_level = "admin";
+	
+	/**
+	 * Get the balance for all equity accounts.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetEquities(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
-		input = method.input,
 		output = method.output;
 		
 		Session session = method.session;

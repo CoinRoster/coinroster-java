@@ -98,11 +98,16 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.checkBasketballContests();
 			ContestMethods.checkGolfContests();
 			ContestMethods.checkBaseballContests();
-			ContestMethods.checkHockeyContests();	
+			ContestMethods.checkHockeyContests();
+			UpdateBitcoinIndex();
 		}
 		
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField(hour);
+		}
+		
+		if((hour%2==0) && (minute==5)){
+			ContestMethods.createBitcoinContests();
 		}
 		
 		//update currencies hourly on live
@@ -392,6 +397,58 @@ public class CronWorker extends Utils implements Callable<Integer>
 			});
 		}	
 
+	
+//------------------------------------------------------------------------------------
+	
+	private void UpdateBitcoinIndex()
+	{
+	Server.async_updater.execute(new Runnable() 
+		{
+	    public void run() 
+	    	{
+	    	Connection sql_connection = null;
+			try {
+				
+				sql_connection = Server.sql_connection();
+				String rtiDate = "-";
+				JSONObject json = null;
+				
+				while (true) {
+					String url = "https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All";
+					json = JsonReader.readJsonFromUrl(url);
+					 
+					rtiDate = json.getJSONObject("realTimeIndex").getString("date");
+					
+					if (rtiDate != "-") {
+						break;
+					}
+					Thread.sleep(500);
+				}
+				
+				String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
+				
+				PreparedStatement stmnt = sql_connection.prepareStatement(
+						"insert ignore into bitcoin_reference(price,  date_updated) VALUES (?, ?)");
+				stmnt.setDouble(1, Double.parseDouble(rti));
+				stmnt.setString(2, rtiDate);
+				stmnt.executeUpdate();
+				}
+			catch (Exception e) 
+				{
+				Server.exception(e);
+				} 
+			finally
+				{
+				if (sql_connection != null)
+					{
+					try {sql_connection.close();} 
+					catch (SQLException ignore) {}
+					}
+				}	
+	    	}
+		});
+	}		
+	
 //------------------------------------------------------------------------------------
 
 	/**
@@ -611,3 +668,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 //------------------------------------------------------------------------------------
 
 }
+	
+
+

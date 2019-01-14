@@ -9,9 +9,22 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get the default referral offer from control from the admin panel.
+ * 
+ * @custom.access admin
+ *
+ */
 public class GetDefaultOffer extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Get the default referral offer from control from the admin panel.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetDefaultOffer(MethodInstance method) throws Exception 
 		{

@@ -10,9 +10,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Cancel QuickBT Deposit
+ * 
+ * @custom.access admin
+ *
+ */
 public class CancelQuickbtDeposit extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Cancel QuickBT deposit.
+	 * 
+	 * @param method.input.quickbt_record_id
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public CancelQuickbtDeposit(MethodInstance method) throws Exception 
 		{

@@ -11,9 +11,24 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Credits an existing progressive.
+ * 
+ * @custom.access standard
+ * @author Gov
+ *
+ */
 public class AddToProgressive extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Adds to an existing progressive.
+	 * 
+	 * @param method.input.code Progressive code
+	 * @param method.input.amount_to_add Amount to add
+	 * @throws Exception
+	 */
 	public AddToProgressive(MethodInstance method) throws Exception 
 		{
 		JSONObject 

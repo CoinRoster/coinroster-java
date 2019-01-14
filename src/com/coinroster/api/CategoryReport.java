@@ -12,9 +12,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Provides a list of all contest categories.
+ * 
+ * @custom.access guest
+ *
+ */
 public class CategoryReport extends Utils
 	{
 	public static String method_level = "guest";
+	
+	/**
+	 * Provides a list of all contest categories.
+	 * 
+	 * @param method.input.request_resource "admin_panel" if issued from admin panel
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public CategoryReport(MethodInstance method) throws Exception 
 		{

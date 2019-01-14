@@ -13,20 +13,32 @@ import org.json.JSONObject;
 import com.coinroster.internal.UserMail;
 import java.text.Normalizer;
 
-
+/**
+ * Anything to do with standardized database queries go here.
+ *
+ */
 public class DB 
 	{
 	Connection sql_connection;
 	
+	/**
+	 * Initialize DB instance with a SQL connection.
+	 * @param sql_connection
+	 */
 	public DB (Connection sql_connection)
 		{
 		this.sql_connection = sql_connection;
 		}
 
 //------------------------------------------------------------------------------------
-	
-	// GET USERNAME FOR ID
 
+	/**
+	 * GET USERNAME FOR ID
+	 * 
+	 * @param id
+	 * @return
+	 * @throws Exception
+	 */
 	public String get_username_for_id(String id) throws Exception
 		{
 		String username = null;
@@ -41,9 +53,14 @@ public class DB
 		}
 
 //------------------------------------------------------------------------------------
-	
-	// GET USERNAME FOR ID
 
+	/**
+	 * GET USERNAME FOR ID
+	 *  
+	 * @param username
+	 * @return
+	 * @throws Exception
+	 */
 	public String get_id_for_username(String username) throws Exception
 		{
 		String id = null;
@@ -59,8 +76,15 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// SELECT USER
 	
+	/**
+	 * SELECT USER
+	 * 
+	 * @param column
+	 * @param value
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_user(String column, String value) throws Exception
 		{
 		JSONObject user = null;
@@ -153,7 +177,13 @@ public class DB
 //------------------------------------------------------------------------------------
 	
 	// SELECT TRANSACTION
-
+	/**
+	 * Select transaction given a tx ID.
+	 * 
+	 * @param transaction_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_transaction(int transaction_id) throws Exception
 		{
 		JSONObject transaction = null;
@@ -203,8 +233,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// GET CATEGORY DESCRIPTION
-
+	/**
+	 * GET CONTEST CATEGORY DESCRIPTION
+	 * 
+	 * @param code
+	 * @return
+	 * @throws Exception
+	 */
 	public String get_category_description(String code) throws Exception
 		{
 		String description = null;
@@ -220,8 +255,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// GET SUB-CATEGORY DESCRIPTION
-
+	/**
+	 * GET CONTEST SUB-CATEGORY DESCRIPTION.
+	 * 
+	 * @param code
+	 * @return
+	 * @throws Exception
+	 */
 	public String get_sub_category_description(String code) throws Exception
 		{
 		String description = null;
@@ -237,8 +277,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// GET CONTEST TITLE
-
+	/**
+	 * GET CONTEST TITLE.
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public String get_contest_title(int contest_id) throws Exception
 		{
 		String contest_title = null;
@@ -254,8 +299,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// GET CONTEST PRIZE POOL
-
+	/**
+	 * GET CONTEST PRIZE POOL.
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public double get_contest_prize_pool(int contest_id) throws Exception
 		{
 		double total_prize_pool = 0;
@@ -271,8 +321,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// GET NUMBER OF USERS IN CONTEST
-
+	/**
+	 * GET NUMBER OF USERS IN CONTEST.
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public int get_contest_current_users(int contest_id) throws Exception
 		{
 		int current_users = 0;
@@ -289,7 +344,14 @@ public class DB
 //------------------------------------------------------------------------------------
 
 	
-	// GET FANTASY POINTS FROM PLAYER TABLE
+	/**
+	 * GET FANTASY POINTS FROM PLAYER TABLE
+	 * 
+	 * @param player_id
+	 * @param sub_category
+	 * @return
+	 * @throws Exception
+	 */
 	public double get_fantasy_points(int player_id, String sub_category) throws Exception
 	{
 		
@@ -308,7 +370,15 @@ public class DB
 //------------------------------------------------------------------------------------
 
 	
-	// CHECK IF CONTESTS ARE IN PLAY
+	/**
+	 * CHECK IF CONTESTS ARE IN PLAY.
+	 * 
+	 * @param category
+	 * @param sub_category
+	 * @param contest_type
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject check_if_in_play(String category, String sub_category, String contest_type) throws Exception
 	{
 
@@ -328,6 +398,15 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
+	/**
+	 * Return which golf rosters are in play.
+	 * 
+	 * @param category
+	 * @param sub_category
+	 * @param contest_type
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject checkGolfRosterInPlay(String category, String sub_category, String contest_type) throws Exception
 	{
 
@@ -375,6 +454,15 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * Return which golf props are in play.
+	 * 
+	 * @param category
+	 * @param sub_category
+	 * @param contest_type
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject checkGolfPropInPlay(String category, String sub_category, String contest_type) throws Exception
 	{
 
@@ -419,7 +507,12 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	//get ids from voting table
+	/**
+	 * Get ids from voting table for in-play contests.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	public ArrayList<Integer> check_if_in_play() throws Exception
 	{
 		ArrayList<Integer> contest_ids = new ArrayList<Integer>();
@@ -435,7 +528,13 @@ public class DB
 	}
 //------------------------------------------------------------------------------------
 
-	// GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
+	/**
+	 * GET PARI-MUTUELS IN PLAY IF AUTO-SETTLE=1
+	 * @param sub_category
+	 * @param contest_type
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject get_active_pari_mutuels(String sub_category, String contest_type) throws Exception
 	{
 		JSONObject contests = new JSONObject();
@@ -458,8 +557,14 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// GET WAGER TOTAL FOR PARI-MUTUEL OPTION
-
+	/**
+	 * GET WAGER TOTAL FOR PARI-MUTUEL OPTION.
+	 * 
+	 * @param contest_id
+	 * @param option_id
+	 * @return
+	 * @throws Exception
+	 */
 	public double get_option_wager_total(int contest_id, int option_id) throws Exception
 		{
 		double option_wager_total = 0;
@@ -476,8 +581,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// SELECT CONTEST
-	
+	/**
+	 * SELECT CONTEST
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_contest(int contest_id) throws Exception
 		{
 		JSONObject contest = null;
@@ -570,8 +680,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// SELECT CONTEST ENTRY 
-
+	/**
+	 * SELECT CONTEST ENTRY.
+	 * 
+	 * @param entry_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_entry(int entry_id) throws Exception
 		{
 		JSONObject entry = null;
@@ -602,8 +717,13 @@ public class DB
 		}
 //------------------------------------------------------------------------------------
 
-	// SELECT CONTEST ENTRIES (WITH/WITHOUT USER ID)
-
+	/**
+	 * SELECT CONTEST ENTRIES (WITHOUT USER ID).
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONArray select_contest_entries(int contest_id) throws Exception
 		{
 		JSONArray entries = new JSONArray();
@@ -635,6 +755,13 @@ public class DB
 		return entries;
 		}
 
+	/**
+	 * SELECT CONTEST ENTRIES (WITH USER ID).
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONArray select_contest_entries(int contest_id, String user_id) throws Exception
 		{
 		JSONArray entries = new JSONArray();
@@ -668,8 +795,14 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// CHECK IF USER HAS ENTERED CONTEST
-
+	/**
+	 * CHECK IF USER HAS ENTERED CONTEST.
+	 * 
+	 * @param contest_id
+	 * @param user_id
+	 * @return
+	 * @throws Exception
+	 */
 	public boolean has_user_entered_contest(int contest_id, String user_id) throws Exception
 		{
 		boolean result = false;
@@ -688,8 +821,12 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// SELECT REFERRAL
-
+	/**
+	 * SELECT REFERRAL
+	 * @param referral_key
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_referral(String referral_key) throws Exception
 		{
 		JSONObject referral = null;
@@ -724,8 +861,12 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// GET REFERRER'S ID FROM KEY
-
+	/**
+	 * GET REFERRER'S ID FROM KEY
+	 * @param referrer_key
+	 * @return
+	 * @throws Exception
+	 */
 	public String get_referrer_id_for_key(String referrer_key) throws Exception
 		{
 		String id = null;
@@ -741,8 +882,12 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// GET UNUSED REFERRER KEY
-
+	/**
+	 * GET UNUSED REFERRER KEY
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	public String get_new_referrer_key() throws Exception
 		{
 		String referrer_key = Server.generate_key("referrer_key").substring(0, 8);
@@ -754,8 +899,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// SELECT PASSWORD RESET RECORD
-
+	/**
+	 * SELECT PASSWORD RESET RECORD.
+	 * 
+	 * @param reset_key
+	 * @return
+	 * @throws Exception
+	 */
 	public String[] select_password_reset(String reset_key) throws Exception
 		{
 		String[] password_reset = null;
@@ -784,8 +934,14 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// SEND EMAIL VERIFICATION
-
+	/**
+	 * SEND EMAIL VERIFICATION.
+	 * 
+	 * @param username
+	 * @param email_address
+	 * @param email_ver_key
+	 * @throws Exception
+	 */
 	public void send_verification_email(String username, String email_address, String email_ver_key) throws Exception
 		{
 		String
@@ -802,8 +958,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// STORE VERIFIED EMAIL ADDRESS
-
+	/**
+	 * STORE VERIFIED EMAIL ADDRESS.
+	 * 
+	 * @param user_id
+	 * @param email_address
+	 * @throws Exception
+	 */
 	public void store_verified_email(String user_id, String email_address) throws Exception
 		{
 		PreparedStatement store_verified_email = sql_connection.prepareStatement("insert ignore into verified_email(user_id, email_address, created) values(?, ?, ?)");				
@@ -815,8 +976,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// CHECK IF EMAIL IS IN USE
-
+	/**
+	 * CHECK IF EMAIL IS IN USE.
+	 * 
+	 * @param email_address
+	 * @return
+	 * @throws Exception
+	 */
 	public boolean email_in_use(String email_address) throws Exception
 		{
 		PreparedStatement check_email_address = sql_connection.prepareStatement("select * from verified_email where email_address = ?");
@@ -830,8 +996,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
-	// UPDATE BTC BALANCE
-	
+	/**
+	 * UPDATE BTC BALANCE.
+	 * 
+	 * @param user_id
+	 * @param new_btc_balance
+	 * @throws Exception
+	 */
 	public void update_btc_balance(String user_id, double new_btc_balance) throws Exception
 		{
 		PreparedStatement update_btc_balance = sql_connection.prepareStatement("update user set btc_balance = ? where id = ?");
@@ -842,8 +1013,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// UPDATE RC BALANCE
-	
+	/**
+	 * UPDATE RC BALANCE.
+	 * 
+	 * @param user_id
+	 * @param new_rc_balance
+	 * @throws Exception
+	 */
 	public void update_rc_balance(String user_id, double new_rc_balance) throws Exception
 		{
 		PreparedStatement update_rc_balance = sql_connection.prepareStatement("update user set rc_balance = ? where id = ?");
@@ -853,8 +1029,13 @@ public class DB
 		}
 //------------------------------------------------------------------------------------
 
-	// CHECK IF CONTEST IS VOTING ROUND
-	
+	/**
+	 * CHECK IF CONTEST IS VOTING ROUND
+	 *  
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public boolean is_voting_contest(int contest_id) throws Exception
 		{
 		PreparedStatement check_voting = sql_connection.prepareStatement("select original_contest_id from voting where id = ?");
@@ -867,8 +1048,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// CHECK IF CONTEST IS PRIVATE
-	
+	/**
+	 * CHECK IF CONTEST IS PRIVATE.
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public boolean is_private_contest(int contest_id) throws Exception {
 		PreparedStatement check_private = sql_connection.prepareStatement("select participants from contest where contest_id = ?");
 		check_private.setInt(1, contest_id);
@@ -882,7 +1068,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// CHECK IF CONTEST IS FIXED-ODDS
+	/**
+	 * CHECK IF CONTEST IS FIXED-ODDS.
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws Exception
+	 */
 	public boolean is_fixed_odds_contest(int contest_id) throws Exception {
 		String prop_str= this.select_contest(contest_id).getString("prop_data");
 		if(!prop_str.isEmpty()){
@@ -894,8 +1086,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// UPDATE PRIVATE CONTEST PARTICIPANTS
-	
+	/**
+	 * UPDATE PRIVATE CONTEST PARTICIPANTS.
+	 * 
+	 * @param contest_id
+	 * @param participants
+	 * @throws Exception
+	 */
 	public void update_private_contest_users(int contest_id, JSONObject participants) throws Exception {
 		PreparedStatement update_users = sql_connection.prepareStatement("update contest set participants = ? where id = ?");
 		update_users.setString(1, participants.toString());
@@ -906,8 +1103,13 @@ public class DB
 		
 //------------------------------------------------------------------------------------
 	
-	// UPDATE CGS BALANCE
-	
+	/**
+	 * UPDATE CGS BALANCE.
+	 * 
+	 * @param user_id
+	 * @param new_btc_balance
+	 * @throws Exception
+	 */
 	public void update_cgs_balance(String user_id, double new_btc_balance) throws Exception
 		{
 		PreparedStatement update_btc_balance = sql_connection.prepareStatement("update user set cgs_last_balance = ? where id = ?");
@@ -917,8 +1119,14 @@ public class DB
 		}
 
 //------------------------------------------------------------------------------------
-	// UPDATE CGS BALANCE
-	
+	 
+	/**
+	 * UPDATE CGS BALANCE.
+	 * 
+	 * @param user_id
+	 * @param new_cgs_address
+	 * @throws Exception
+	 */
 	public void update_cgs_address(String user_id, String new_cgs_address) throws Exception
 		{
 		PreparedStatement update_btc_balance = sql_connection.prepareStatement("update user set cgs_address = ? where id = ?");
@@ -929,8 +1137,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 	
-	// RESERVE AND RETURN CGS ADDRESS (CREATE USER)
-	
+	/**
+	 * RESERVE AND RETURN CGS ADDRESS (CREATE USER).
+	 * 
+	 * @param username
+	 * @return
+	 * @throws Exception
+	 */
 	public String reserve_cgs_address(String username) throws Exception
 		{
 		String cgs_address = null;
@@ -955,8 +1168,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// UPDATE ROSTER SCORE / PAYOUT
-	
+	/**
+	 * UPDATE ROSTER SCORE.
+	 * 
+	 * @param entry_id
+	 * @param score
+	 * @throws Exception
+	 */
 	public void update_roster_score(int entry_id, double score) throws Exception
 		{
 		PreparedStatement update_entry = sql_connection.prepareStatement("update entry set score = ? where id = ?");
@@ -965,6 +1183,13 @@ public class DB
 		update_entry.executeUpdate();
 		}
 	
+	/**
+	 * UPDATE ROSTER PAYOUT.
+	 * 
+	 * @param entry_id
+	 * @param score
+	 * @throws Exception
+	 */
 	public void update_roster_payout(int entry_id, double payout) throws Exception
 		{
 		PreparedStatement update_entry = sql_connection.prepareStatement("update entry set payout = ? where id = ?");
@@ -975,8 +1200,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// SELECT FX RECORD
-	
+	/**
+	 * SELECT FOREIGN EXCHANGE RATE RECORD.
+	 * 
+	 * @param symbol
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_currency(String symbol) throws Exception
 		{
 		JSONObject currency = null;
@@ -1005,8 +1235,13 @@ public class DB
 		return currency;
 		}
 	
-	// SELECT JUST THE LAST PRICE
-	
+	/**
+	 * SELECT JUST THE LAST PRICE.
+	 * 
+	 * @param symbol
+	 * @return
+	 * @throws SQLException
+	 */
 	public double get_last_price(String symbol) throws SQLException
 		{
 		double last_price = 0;
@@ -1020,8 +1255,13 @@ public class DB
 		return last_price;
 		}
 
-	// SELECT JUST THE DESCRIPTION
-	
+	/**
+	 * SELECT JUST THE DESCRIPTION.
+	 * 
+	 * @param symbol
+	 * @return
+	 * @throws SQLException
+	 */
 	public String get_currency_description(String symbol) throws SQLException
 		{
 		String description = null;
@@ -1037,8 +1277,15 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// UPDATE FX RECORD
-	
+	/**
+	 * UPDATE FX RECORD.
+	 * 
+	 * @param symbol
+	 * @param last_price
+	 * @param source
+	 * @param description
+	 * @throws Exception
+	 */
 	public void update_fx(String symbol, double last_price, String source, String description) throws Exception
 		{
 		PreparedStatement update_fx = sql_connection.prepareStatement("replace into fx(symbol, source, last_price, last_updated, description) values(?, ?, ?, ?, ?)");
@@ -1052,8 +1299,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// SELECT PROMO RECORD
-	
+	/**
+	 * SELECT PROMO CODE.
+	 * 
+	 * @param selector
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_promo(Object selector) throws Exception
 		{
 		JSONObject promo = null;
@@ -1115,8 +1367,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// SELECT PROMO REQUEST
-	
+	/**
+	 * SELECT PROMO REQUEST.
+	 * 
+	 * @param request_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_promo_request(int request_id) throws Exception
 		{
 		JSONObject promo_request = null;
@@ -1153,8 +1410,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// CREDIT / DEBIT ROLLOVER
-	
+	/**
+	 * PERFORM CREDIT ROLLOVER.
+	 * 
+	 * @param user
+	 * @param wager_amount
+	 * @throws Exception
+	 */
 	public void credit_user_rollover_progress(JSONObject user, double wager_amount) throws Exception
 		{
 		String user_id = user.getString("user_id");
@@ -1198,6 +1460,13 @@ public class DB
 			}
 		}
 
+	/**
+	 * PERFORM DEBIT ROLLOVER.
+	 * 
+	 * @param user
+	 * @param wager_amount
+	 * @throws Exception
+	 */
 	public void debit_user_rollover_progress(JSONObject user, double amount) throws Exception
 		{
 		String user_id = user.getString("user_id");
@@ -1213,8 +1482,14 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// ACTIVATE DEPOSIT MATCH (IF APPLICABLE)
-	
+	/**
+	 * ACTIVATE DEPOSIT MATCH (IF APPLICABLE).
+	 * 
+	 * @param user
+	 * @param deposit_amount
+	 * @return
+	 * @throws Exception
+	 */
 	public boolean enable_deposit_bonus(JSONObject user, double deposit_amount) throws Exception
 		{
 		double first_deposit = user.getDouble("first_deposit");
@@ -1233,6 +1508,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * SELECT PROGRESSIVE USING SELECTOR.
+	 * 
+	 * @param selector
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject select_progressive(Object selector) throws Exception
 		{
 		JSONObject progressive = null;
@@ -1282,8 +1564,12 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
-	// GET CONTEST PRIZE POOL
-
+	/**
+	 * GET MINER FEE FROM CONTROL.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	public double get_miner_fee() throws Exception
 		{
 		double miner_fee = 0;
@@ -1302,8 +1588,12 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// GET CONTEST PRIZE POOL
-
+	/**
+	 * GET COLD STORAGE BALANCE.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	public double get_cold_storage_balance() throws Exception
 		{
 		double cold_storage_balance = 0;
@@ -1318,6 +1608,12 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
+	/**
+	 * GET WITHDRAWAL FEE FOR USERS.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	public double get_withdrawal_fee() throws Exception
 		{
 		double withdrawal_fee = 0;
@@ -1336,6 +1632,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET ALL DISTINCT GAME-IDs FOR A GIVEN SPORT AS AN ARRAYLIST.
+	 * 
+	 * @param sport
+	 * @return
+	 * @throws SQLException
+	 */
 	public ArrayList<String> getAllGameIDsDB(String sport) throws SQLException{
 		ResultSet result_set = null;
 		ArrayList<String> gameIDs = new ArrayList<String>();
@@ -1355,6 +1658,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET ALL PLAYERIDs FOR A GAME IN A SPORT AS A RESULTSET.
+	 * 
+	 * @param sport
+	 * @param gameID
+	 * @return
+	 */
 	public ResultSet getAllPlayerIDs(String sport, String gameID){
 		ResultSet result_set = null;
 		try {
@@ -1372,6 +1682,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET ALL PLAYERIDs FOR A GAME IN A SPORT AS A JSONARRAY.
+	 * 
+	 * @param sport
+	 * @param gameID
+	 * @return
+	 */
 	public JSONArray get_all_players(String sport, String gameID) throws JSONException, SQLException{
 		ResultSet result_set = null;
 		try {
@@ -1400,6 +1717,16 @@ public class DB
 		
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET THE OPTION-TABLE FOR GIVEN GAME-IDs.
+	 * 
+	 * @param sport
+	 * @param filtered
+	 * @param filter
+	 * @param gameIDs
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet getOptionTable(String sport, boolean filtered, int filter, ArrayList<String> gameIDs) throws SQLException{
 		
 		ResultSet result_set = null;
@@ -1477,6 +1804,14 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
+	/**
+	 * GET PLAYER SCORES FOR GIVEN GAME-IDs.
+	 * 
+	 * @param sport
+	 * @param gameIDs
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet getPlayerScores(String sport, ArrayList<String> gameIDs) throws SQLException{
 		ResultSet result_set = null;
 		try {
@@ -1504,6 +1839,14 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET PLAYER SCORES AND GAME STATUS FOR GIVEN GAME-IDs.
+	 * 
+	 * @param sport
+	 * @param gameID
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet getPlayerScoresAndStatus(String sport, String gameID) throws SQLException{
 		ResultSet result_set = null;
 		try {
@@ -1519,6 +1862,16 @@ public class DB
 	}
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET PLAYER SCORES FOR GIVEN GAME-IDS.
+	 * 
+	 * @param player_id
+	 * @param sport
+	 * @param gameIDs
+	 * @return
+	 * @throws SQLException
+	 * @throws JSONException
+	 */
 	public JSONObject getPlayerScores(String player_id, String sport, ArrayList<String> gameIDs) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
@@ -1551,6 +1904,16 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET SCORE DATA FOR GIVEN GAME-IDs.
+	 * 
+	 * @param player_id
+	 * @param sport
+	 * @param gameID
+	 * @return
+	 * @throws SQLException
+	 * @throws JSONException
+	 */
 	public ResultSet getPlayerScoresData(String player_id, String sport, String gameID) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		try {
@@ -1569,6 +1932,16 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET THE STATUS FOR A GIVEN GOLFER IN PROVIDED GAME-IDs.
+	 * 
+	 * @param player_id
+	 * @param sport
+	 * @param gameID
+	 * @return
+	 * @throws SQLException
+	 * @throws JSONException
+	 */
 	public int getGolferStatus(String player_id, String sport, String gameID) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		int status = 0;
@@ -1590,6 +1963,16 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET THE NAME OF A PLAYER WITH A GIVEN PLAYER ID.
+	 * 
+	 * @param player_id
+	 * @param sport
+	 * @param gameID
+	 * @return
+	 * @throws SQLException
+	 * @throws JSONException
+	 */
 	public String getPlayerName(String player_id, String sport, String gameID) throws SQLException, JSONException{
 		ResultSet result_set = null;
 		String name = null;
@@ -1611,6 +1994,15 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * EDIT PLAYER DATA.
+	 * 
+	 * @param data
+	 * @param id
+	 * @param sport
+	 * @param gameIDs
+	 * @throws SQLException
+	 */
 	public void editData(String data, String id, String sport, ArrayList<String> gameIDs) throws SQLException{
 		try{
 			String stmt = "update player set data = ? where id = ? and sport_type = ? and gameID in (";
@@ -1638,6 +2030,15 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET GOLF ROSTER OPTION TABLE FOR A GAME.
+	 * 
+	 * @param gameID
+	 * @param weight
+	 * @return
+	 * @throws SQLException
+	 * @throws JSONException
+	 */
 	public JSONArray getGolfRosterOptionTable(String gameID, double weight) throws SQLException, JSONException{
 		JSONArray option_table = new JSONArray();
 		PreparedStatement get_players = sql_connection.prepareStatement("select id, name, team_abr, salary from player where sport_type = ? and filter_on = ? and gameID = ?");
@@ -1660,6 +2061,14 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
+	/**
+	 * UPDATE THE STATUS OF A GOLF GAME.
+	 * @param status
+	 * @param id
+	 * @param sport
+	 * @param gameID
+	 * @throws SQLException
+	 */
 	public void setGolfStatus(int status, String id, String sport, String gameID) throws SQLException{
 		PreparedStatement update_points = sql_connection.prepareStatement("update player set filter_on = ? where id = ? and sport_type = ? and gameID = ?");
 		update_points.setInt(1, status);
@@ -1671,6 +2080,17 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * UPDATE THE SCORE OF A GOLFER.
+	 * 
+	 * @param id
+	 * @param sport
+	 * @param data
+	 * @param score
+	 * @param status
+	 * @param gameID
+	 * @throws SQLException
+	 */
 	public void updateGolferScore(String id, String sport, String data, int score, int status, String gameID) throws SQLException{
 		PreparedStatement update = sql_connection.prepareStatement("update player set data = ?, points = ?, filter_on = ? where id = ? and sport_type = ? and gameID = ?");
 		update.setString(1, data);
@@ -1684,6 +2104,12 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET THE BETTING ROUND FOR A VOTING ROUND CONTEST.
+	 * 
+	 * @param contest_id
+	 * @return
+	 */
 	public int get_original_contest(Integer contest_id) {
 		int original_contest_id = 0;
 		try {
@@ -1700,6 +2126,12 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET THE ROSTER CONTEST TEMPLATE FOR A SUB-CATEGORY.
+	 * @param sub_category
+	 * @return
+	 * @throws SQLException
+	 */
 	public JSONArray getRosterTemplates(String sub_category) throws SQLException{
 		
 		Utils.log("reading contests templates for " + sub_category + " contests");
@@ -1760,6 +2192,11 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET THE CURRENT VOTING CONTEST COMMISSION FROM `control`.
+	 * 
+	 * @return
+	 */
 	public double get_voting_contest_commission() {
 		double voting_contest_creator_commission = 0;
 		try {
@@ -1776,6 +2213,12 @@ public class DB
 	}
 	
 //------------------------------------------------------------------------------------
+	
+	/**
+	 * GET PENDING VOTING ROUND CONTESTS.
+	 * 
+	 * @return
+	 */
 	public ArrayList<Integer> get_pending_voting_contests() {
 		ArrayList<Integer> voting_contests = new ArrayList<>();
 		try {
@@ -1792,6 +2235,14 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 	
+	/**
+	 * GET INFORMATION FOR A GIVEN PLAYER.
+	 * 
+	 * @param sport
+	 * @param player_id
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet get_player_info(String sport, String player_id) throws SQLException{
 		ResultSet result_set = null;
 		try {
@@ -1808,6 +2259,19 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * NOTIFY A USER WHEN THEIR ROSTER HAS BEEN ADJUSTED (Should this be here?).
+	 * 
+	 * @param username
+	 * @param email_address
+	 * @param replaced_player
+	 * @param replacement_player
+	 * @param roster_id
+	 * @param contest_name
+	 * @param contest_id
+	 * @param type
+	 * @throws Exception
+	 */
 	public void notify_user_roster_player_replacement(String username, String email_address, String replaced_player, String replacement_player, int roster_id, String contest_name, int contest_id, String type) throws Exception
 	{
 	String
@@ -1824,6 +2288,13 @@ public class DB
 	Server.send_mail(email_address, username, subject, message_body);
 	}
 	
+	/**
+	 * UPDATE AN ENTRY WITH AN ACTIVE PLAYER.
+	 * 
+	 * @param entry_id
+	 * @param entry_data
+	 * @throws SQLException
+	 */
 	public void updateEntryWithActivePlayer(int entry_id, String entry_data) throws SQLException{
 		PreparedStatement update = sql_connection.prepareStatement("update entry set entry_data = ? where id = ?");
 		update.setString(1, entry_data);
@@ -1833,7 +2304,13 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
-	// DELETE PLAYERS FROM PLAYER TABLE
+	/**
+	 * DELETE PLAYERS FROM PLAYER TABLE.
+	 * 
+	 * @param sport
+	 * @param gameID
+	 * @throws SQLException
+	 */
 	public void delete_old_players(String sport, String gameID) throws SQLException{
 		PreparedStatement delete_old_rows = sql_connection.prepareStatement("delete from player where sport_type = ? and gameID = ?");
 		delete_old_rows.setString(1, sport);
@@ -1844,6 +2321,15 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET PLAYER DASHBOARD DATA.
+	 * 
+	 * @param player_id
+	 * @param sport
+	 * @return
+	 * @throws SQLException
+	 * @throws JSONException
+	 */
 	public JSONObject get_player_dashboard_data(String player_id, String sport) throws SQLException, JSONException{
 		JSONObject data = null;
 		ResultSet rs = null;
@@ -1859,6 +2345,12 @@ public class DB
 	
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET LANDING PAGE STRING FROM `control`.
+	 * 
+	 * @return
+	 * @throws SQLException
+	 */
 	public String get_landing_string() throws SQLException{
 		String rtn = "";
 		ResultSet rs = null;
@@ -1872,6 +2364,13 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * UPDATE PROP DATA.
+	 * 
+	 * @param contest_id
+	 * @param prop_data
+	 * @throws SQLException
+	 */
 	public void update_prop_data(int contest_id, JSONObject prop_data) throws SQLException {
 		PreparedStatement update_amount_left = sql_connection.prepareStatement("update contest set prop_data = ? where id = ?");
 		update_amount_left.setString(1, prop_data.toString());
@@ -1881,6 +2380,14 @@ public class DB
 
 //------------------------------------------------------------------------------------
 
+	/**
+	 * GET PROP DATA FOR A CONTEST.
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws SQLException
+	 * @throws JSONException
+	 */
 	public JSONObject get_prop_data(int contest_id) throws SQLException, JSONException {
 		JSONObject prop_data = null;
 		ResultSet rs = null;
@@ -1893,6 +2400,13 @@ public class DB
 		return prop_data;
 	}
 	
+	/**
+	 * GET AUTOPLAY DATA FOR A GIVEN CONTEST.
+	 * 
+	 * @param contest_id
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet get_data_for_autoplay(int contest_id) throws SQLException{
 		ResultSet rs = null;
 		PreparedStatement get = sql_connection.prepareStatement("select option_table, salary_cap, roster_size from contest where id = ?");

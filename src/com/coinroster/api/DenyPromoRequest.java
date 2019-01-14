@@ -11,9 +11,23 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Deny a promo request from the admin panel.
+ * 
+ * @custom.access admin
+ *
+ */
 public class DenyPromoRequest extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Deny a promo request from the admin panel.
+	 * 
+	 * @param method.input.request_id
+	 * @param method.input.reason
+	 * @throws Exception
+	 */
 	public DenyPromoRequest(MethodInstance method) throws Exception 
 		{
 		JSONObject 

@@ -69,6 +69,10 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import javax.mail.util.ByteArrayDataSource;
 
+/**
+ * This is the main server object whose implementation calls all threads/crons that start all CoinRoster processes.
+ *
+ */
 public class Server extends Utils
 	{
 	protected static String 
@@ -160,16 +164,29 @@ public class Server extends Utils
 	
 	private static ComboPooledDataSource sql_pool;
 
+	/**
+	 * Determines whether the server instance is running on dev or live
+	 * @return True if server is coinroster.com
+	 */
 	public static boolean isLive_server() 
 		{
 		return live_server;
 		}
 	
+	/**
+	 * Kills a session specified by supplied token
+	 * @param session_token
+	 */
 	public static void kill_session(String session_token) 
 		{
 		session_map.remove(session_token);
 		}
 	
+	/**
+	 * Gets a connection to the SQL database (if there are any available)
+	 * @return Connection instance
+	 * @throws SQLException when there is an internal error or if there are no connections available
+	 */
 	public static Connection sql_connection() throws SQLException 
 		{
 		Connection cnx = null;
@@ -185,11 +202,22 @@ public class Server extends Utils
 		}
 	
 
+	/**
+	 * Provides the SQL dump string to run in the MySQL database
+	 * @return
+	 * @throws SQLException
+	 */
     public static String sql_dump_string() throws SQLException 
     	{
     	return "mysqldump --force --opt -u" + sql_username + " -p" + sql_password + " ";
     	}
     
+    /**
+     * MAIN SERVER METHOD
+     * 
+     * @param args
+     * @throws Exception
+     */
 	public static void main (String[] args) throws Exception
 		{
 		cache_and_rerun();
@@ -209,8 +237,9 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 
-	// cache and rerun server (if not yet done):
-	
+	/**
+	 * Cache and rerun server (if not yet done).
+	 */
 	static void cache_and_rerun()
 		{
 		try {
@@ -254,8 +283,9 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 
-	// make sure all methods are secured
-	
+	/**
+	 * Make sure all methods are secured
+	 */
 	private static void check_method_security()
 		{
 		try {
@@ -303,8 +333,9 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 
-	// process input args, if applicable:
-	
+	/**
+	 * Process arguments that are provided while starting the server, if applicable
+	 */
 	static void set_system_out()
 		{
 		String jar_name = jar_filename.substring(0, jar_filename.indexOf(".jar"));
@@ -336,8 +367,9 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 
-	// load control variables
-	
+	/**
+	 * Load control variables from the SQL `Control` table
+	 */
 	private static void load_control_variables()
 		{
 		try {
@@ -415,8 +447,9 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 
-	// set up thread and database pools
-	
+	/**
+	 * Set up thread and database pools
+	 */
 	private static void initialize_pools()
 		{
 		worker_pool = Executors.newFixedThreadPool(pool_size);
@@ -444,8 +477,9 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 
-	// load session map
-	
+	/**
+	 * Load session map from disk location
+	 */
 	@SuppressWarnings("unchecked")
 	private static void load_session_map()
 		{
@@ -456,8 +490,12 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 
-	// proxy gateway loop
-	
+	/**
+	 * Begin proxy gateway loop; bind server to port 27038
+	 * 
+	 * @throws BindException if selected port is already bound
+	 * @throws Exception
+	 */
 	static void open_proxy_gateway()
 		{
 		log("open_proxy_gateway method is called");
@@ -500,9 +538,11 @@ public class Server extends Utils
 		
 //------------------------------------------------------------------------------------
 
-	// shutdown procedure
-
-	static void pre_exit() throws Exception // to command_handler
+	/**
+	 * Begin pre-shutdown procedure
+	 * @throws Exception to command handler
+	 */
+	static void pre_exit() throws Exception 
 		{
 		try {
 			log("---");
@@ -528,7 +568,11 @@ public class Server extends Utils
 			exception(e);
 			}
 		}
-	
+	/**
+	 * Begin actual shutdown procedure; start again after interval if restart param is true.
+	 * 
+	 * @param restart True if shutdown and turn on again
+	 */
 	static void exit(boolean restart)
 		{
 		if (restart)
@@ -556,6 +600,11 @@ public class Server extends Utils
 		System.exit(0);
 		}
 	
+	/**
+	 * Writes errors to buffer
+	 * 
+	 * @param e The exception to printw
+	 */
 	public static void exception(Exception e)
 		{
 		StringWriter errors = new StringWriter();
@@ -569,6 +618,12 @@ public class Server extends Utils
 
 	static Random generator = new Random();
 
+	/**
+	 * Returns the SHA256 hash of supplied data.
+	 * 
+	 * @param data
+	 * @return
+	 */
 	static byte[] SHA256(String data) 
 		{
 		byte[] digest = null;
@@ -585,12 +640,24 @@ public class Server extends Utils
 		return digest;
 		}
 	
+	/**
+	 * Generate a SHA1 hash given a 'salt' string.
+	 * @param salt
+	 * @return
+	 */
 	public static String generate_key(String salt) 
 		{
 		String key = SHA1(System.currentTimeMillis() + generator.nextInt(999999999) + salt);
 		return key;
 		}
 
+	/**
+	 * Encrypts a string with a given key.
+	 * @param plain_text
+	 * @param _key
+	 * @return
+	 * @throws Exception
+	 */
 	public static byte[] encrypt(byte[] plain_text, String _key) throws Exception 
 		{
 		SecretKeySpec key = new SecretKeySpec(SHA256(_key), "AES");
@@ -601,6 +668,13 @@ public class Server extends Utils
 		return cipher.doFinal(plain_text);
 		}
 
+	/**
+	 * Decrypts a cipher with a given key.
+	 * @param cipher_text
+	 * @param _key
+	 * @return
+	 * @throws Exception
+	 */
 	public static byte[] decrypt(byte[] cipher_text, String _key) throws Exception
 	  	{
 		SecretKeySpec key = new SecretKeySpec(SHA256(_key), "AES");
@@ -613,8 +687,14 @@ public class Server extends Utils
 
 //------------------------------------------------------------------------------------
 	
-	// send email
-
+	/**
+	 * Send a message to a given user with a subject. Can redirect all mail to a developer if running on dev server (see source).
+	 * 
+	 * @param to_address
+	 * @param to_user
+	 * @param subject
+	 * @param message_body
+	 */
 	public static void send_mail(String to_address, final String to_user, final String subject, String message_body)
 		{
 		final String 
@@ -712,12 +792,24 @@ public class Server extends Utils
 //------------------------------------------------------------------------------------
 	
 	// utilities
-	
+	/**
+	 * Utility function that runs a given jar.
+	 * 
+	 * @param jar_filename
+	 * @throws Exception
+	 */
 	static void run_jar(String jar_filename) throws Exception
 		{
 		Runtime.getRuntime().exec("java -jar " + java_path + jar_filename);
 		}
 
+	/**
+	 * Utility function that saves a given object to a given filename; encrypts if necessary.
+	 * @param object
+	 * @param filename
+	 * @param encrypt True if contents are to be encrypted
+	 * @return
+	 */
 	static boolean save_to_disk(Object object, String filename, boolean encrypt)
 		{
 		try {
@@ -745,6 +837,12 @@ public class Server extends Utils
 		return false;
 		}
 
+	/**
+	 * Loads an object from disk; decrypts if necessary. 
+	 * @param filename
+	 * @param decrypt
+	 * @return
+	 */
 	static Object load_from_disk(String filename, boolean decrypt)
 		{
 		String object_path = java_object_path + filename;

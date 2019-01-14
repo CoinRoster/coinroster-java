@@ -16,9 +16,37 @@ import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.NotifyAdmin;
 import com.mysql.jdbc.Statement;
 
+/**
+ * Creates a new roster or pari-mutuel contest.
+ * 
+ * @custom.access standard
+ *
+ */
 public class CreateContest extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Creates a new roster or pari-mutuel contest.
+	 * 
+	 * @param method.input.category Contest category
+	 * @param method.input.sub_category Contest sub-category
+	 * @param method.input.contest_type Contest type (e.g. roster, pari-mutuel)
+	 * @param method.input.progressive Progressive attached to the contest (if any)
+	 * @param method.input.title Contest title
+	 * @param method.input.description Contest description
+	 * @param method.input.rake Percentage of funds to be raked for profit
+	 * @param method.input.cost_per_entry Cost per user entry
+	 * @param method.input.registration_deadline Deadline to register for contest
+	 * @param method.input.option_table List of mappings between option and amount
+	 * @param method.input.private True if contest is private
+	 * @param method.input.settlement_type Settlement type of contest (e.g. user-settled, crowd-settled)
+	 * @param method.input.settlement_deadline Deadline to settle contest by
+	 * @param method.input.scoring_rules Exclusive to props
+	 * @param method.input.prop_data Any additional data that props require
+	 * @param method.input.game_IDs Any specific game IDs, if provided
+	 * @throws Exception
+	 */
 	public CreateContest(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -115,7 +143,7 @@ public class CreateContest extends Utils
 	        	output.put("error", "Registration deadline must be at least 1 hour from now");
 	            break method;
 	        	}
-            
+            log("test log.");
             if (rake < 0 || rake >= 100)
             	{
                 output.put("error", "Rake cannot be < 0 or > 100");

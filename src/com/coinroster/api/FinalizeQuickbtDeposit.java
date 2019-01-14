@@ -14,9 +14,22 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Confirm a QuickBT deposit has been made.
+ * 
+ * @deprecated QuickBT deposits are deposit to CGS generated wallet
+ * @see com.coinroster.api.CallCGS
+ *
+ */
 public class FinalizeQuickbtDeposit extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Confirm a QuickBT deposit has been made.
+	 * 
+	 * @deprecated
+	 */
 	@SuppressWarnings("unused")
 	public FinalizeQuickbtDeposit(MethodInstance method) throws Exception 
 		{

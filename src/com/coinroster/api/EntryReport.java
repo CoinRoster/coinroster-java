@@ -11,9 +11,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Returns an object that contains information about all entries placed on a particular contest.
+ * 
+ * @custom.access standard
+ *
+ */
 public class EntryReport extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Returns an object that contains information about all entries placed on a particular contest.
+	 * 
+	 * @param method.input.contest_id
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public EntryReport(MethodInstance method) throws Exception 
 		{
@@ -44,7 +57,6 @@ public class EntryReport extends Utils
 			while (result_set.next())
 				{
 				int id = result_set.getInt(1);
-				//int contest_id = result_set.getInt(2);
 				String user_id = result_set.getString(3);
 				Long created = result_set.getLong(4);
 				double amount = result_set.getDouble(5);

@@ -9,9 +9,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Flip newsletter flag.
+ * 
+ * @custom.access standard
+ *
+ */
 public class ChangeNewsletterFlag extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Flip newsletter flag.
+	 * 
+	 * @param method.input.current_flag_state
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public ChangeNewsletterFlag(MethodInstance method) throws Exception 
 		{

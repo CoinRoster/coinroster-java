@@ -10,9 +10,20 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Cancel a pending deposut
+ * @custom.access admin
+ */
 public class CancelPendingDeposit extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Cancel a pending deposit.
+	 * 
+	 * @param method.input.transaction_id
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public CancelPendingDeposit(MethodInstance method) throws Exception 
 		{

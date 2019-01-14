@@ -11,9 +11,22 @@ import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Change a user's email address.
+ * 
+ * @custom.access standard
+ *
+ */
 public class ChangeEmailAddress extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Change a user's email address.
+	 * 
+	 * @param method.input.email_address
+	 * @throws Exception
+	 */
 	public ChangeEmailAddress(MethodInstance method) throws Exception 
 		{
 		JSONObject 

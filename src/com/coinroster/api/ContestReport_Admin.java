@@ -12,9 +12,23 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get all contests to populate the admin panel (shows all past contests).
+ * 
+ * @custom.access admin
+ *
+ */
 public class ContestReport_Admin extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Get all contests to populate the admin panel (shows all past contests).
+	 * 
+	 * @param method.input.category
+	 * @param method.input.sub_category
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public ContestReport_Admin(MethodInstance method) throws Exception 
 		{

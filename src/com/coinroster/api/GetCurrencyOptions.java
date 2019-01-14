@@ -11,15 +11,27 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get all currency exchange options except BTC-USD.
+ * 
+ * @custom.access standard
+ *
+ */
 public class GetCurrencyOptions extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Get all currency exchange options except BTC-USD.
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetCurrencyOptions(MethodInstance method) throws Exception 
 		{
 		JSONObject 
 		
-		input = method.input,
 		output = method.output;
 		
 		Session session = method.session;

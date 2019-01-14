@@ -16,9 +16,26 @@ import com.coinroster.Session;
 import com.coinroster.Utils;
 import com.coinroster.internal.UserMail;
 
+/**
+ * Create a transaction between a user/internal account and the internal liability account from the admin panel.
+ * 
+ * @custom.access admin
+ *
+ */
 public class CreateTransaction extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Create a transaction between a user/internal account and the internal liability account from the admin panel.
+	 * 
+	 * @param method.input.transaction_type Deposit/withdrawal of a currency (RC/BTC)
+	 * @param method.input.user_account Account to transact with
+	 * @param method.input.memo Transaction details
+	 * @param method.input.display_as_adjustment to_currency and from_currency are always the same
+	 * @param method.input.amount Amount of currency to transact
+	 * @throws Exception
+	 */
 	public CreateTransaction(MethodInstance method) throws Exception 
 		{
 		JSONObject 

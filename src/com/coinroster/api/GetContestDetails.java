@@ -13,10 +13,23 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get details for a contest.
+ * 
+ * @custom.access guest
+ *
+ */
 public class GetContestDetails extends Utils
 	{
 	public static String method_level = "guest";
 
+	/**
+	 * Get details for a contest.
+	 * 
+	 * @param method.input.contest_id Contest ID to get details of
+	 * @param method.input.code Access code for contest if it's private
+	 * @throws Exception
+	 */
 	public GetContestDetails(MethodInstance method) throws Exception 
 		{
 		JSONObject 
@@ -42,7 +55,6 @@ public class GetContestDetails extends Utils
 				contest_id = input.getInt("contest_id");
 			}
 			catch(JSONException e){
-				Utils.log("unable to find contest_id in method.input");
 				output.put("error", "No contest ID given");
 				break method;
 			}

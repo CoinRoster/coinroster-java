@@ -11,9 +11,22 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Get user's account details (can be moved to DB?).
+ * 
+ * @custom.access standard
+ *
+ */
 public class GetAccountDetails extends Utils
 	{
 	public static String method_level = "standard";
+	
+	/**
+	 * Get user's account details (can be moved to DB?).
+	 * 
+	 * @param method
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unused")
 	public GetAccountDetails(MethodInstance method) throws Exception 
 		{

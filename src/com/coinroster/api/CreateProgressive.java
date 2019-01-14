@@ -11,9 +11,24 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Session;
 import com.coinroster.Utils;
 
+/**
+ * Create a progressive. 
+ *
+ * @custom.access admin
+ */
 public class CreateProgressive extends Utils
 	{
 	public static String method_level = "admin";
+	
+	/**
+	 * Create a progressive for a contest. Can be created by contest bot in the case of voting contests.
+	 * 
+	 * @param method.input.category Category of contest
+	 * @param method.input.sub_category Sub-category of contest
+	 * @param method.input.code Progressive code
+	 * @param method.input.payout_info Description of progressive payout 
+	 * @throws Exception
+	 */
 	public CreateProgressive(MethodInstance method) throws Exception 
 		{
 		JSONObject 
