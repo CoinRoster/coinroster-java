@@ -122,11 +122,7 @@ public class ContestMethods extends Utils {
 					Long deadline = Long.parseLong(pari_contests.getJSONObject(c_id).getString("deadline"));
 					log("Contest Deadline: " + deadline);
 					//Check if it has been a day since the contest was posted.
-					if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 100) {
-						continue;
-					}
-					
-					log("Settling contest " + c_id);
+					//if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
 					
 					JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
 					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
