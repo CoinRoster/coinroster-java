@@ -119,7 +119,6 @@ public class ContestMethods extends Utils {
 				while(pari_contest_ids.hasNext()){
 					String c_id = (String) pari_contest_ids.next();
 					
-					JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
 					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
 					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
 					
@@ -128,7 +127,7 @@ public class ContestMethods extends Utils {
 					//Check if it has been a day since the contest was posted.
 					if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
 
-					JSONObject pari_fields = bitcoin_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
+					JSONObject pari_fields = bitcoin_bot.settlePariMutuel(Integer.parseInt(c_id), prop_data, option_table);
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 					pari_method.input = pari_fields;

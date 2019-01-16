@@ -156,7 +156,7 @@ public class BitcoinBot {
 	}
 	
 	
-	public JSONObject settlePariMutuel(int contest_id, JSONObject scoring_rules, JSONObject prop_data, JSONArray option_table) throws Exception{
+	public JSONObject settlePariMutuel(int contest_id, JSONObject prop_data, JSONArray option_table) throws Exception{
 		
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
