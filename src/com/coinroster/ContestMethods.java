@@ -57,7 +57,7 @@ public class ContestMethods extends Utils {
 			Date d_date = cal.getTime();
 			Long deadline = d_date.getTime(); //deadline = minutes from last rti update.
 	
-			JSONArray prop_contests = db.getRosterTemplates("BITCOIN");
+			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
 			
 			for(int i = 0; i < prop_contests.length(); i++){
 				JSONObject contest = prop_contests.getJSONObject(i);
