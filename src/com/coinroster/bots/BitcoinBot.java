@@ -150,6 +150,7 @@ public class BitcoinBot {
 		prop_data.put("BTC_index", this.realtimeIndex.toString());
 		
 		contest.put("prop_data", prop_data.toString());
+		prop_data.put("deadline", deadline);
 		
 		return contest;
 	}
