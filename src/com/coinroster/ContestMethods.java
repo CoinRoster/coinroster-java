@@ -108,7 +108,7 @@ public class ContestMethods extends Utils {
 		try {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
-			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOIN", "PARI-MUTUEL");
+			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOINS", "PARI-MUTUEL");
 	
 			if(!(pari_contests.length() == 0)){
 				
