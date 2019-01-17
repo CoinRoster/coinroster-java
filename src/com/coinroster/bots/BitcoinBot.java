@@ -148,9 +148,10 @@ public class BitcoinBot {
 		JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
 		
 		prop_data.put("BTC_index", this.realtimeIndex.toString());
+		prop_data.put("deadline", deadline);
 		
 		contest.put("prop_data", prop_data.toString());
-		prop_data.put("deadline", deadline);
+		
 		
 		return contest;
 	}
