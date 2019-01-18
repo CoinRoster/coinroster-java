@@ -122,7 +122,7 @@ public class ContestMethods extends Utils {
 					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
 					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
 					
-					Long deadline = prop_data.getLong("deadline");
+					//Long deadline = prop_data.getLong("deadline");
 					
 					//Check if it has been a day since the contest was posted.
 					//if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
