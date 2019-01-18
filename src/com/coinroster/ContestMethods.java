@@ -125,9 +125,12 @@ public class ContestMethods extends Utils {
 					Long deadline = prop_data.getLong("deadline");
 					
 					//Check if it has been a day since the contest was posted.
-					if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
+					//if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
 
 					JSONObject pari_fields = bitcoin_bot.settlePariMutuel(Integer.parseInt(c_id), prop_data, option_table);
+					
+					log(pari_fields.toString());
+					
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 					pari_method.input = pari_fields;
