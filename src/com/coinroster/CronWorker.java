@@ -107,7 +107,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 			ContestMethods.updateGolfContestField(hour);
 		}
 		
-		if((hour%2==0) && (minute==5)){
+		if(minute==0){
 			ContestMethods.createBitcoinContests();
 		}
 		

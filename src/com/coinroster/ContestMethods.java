@@ -53,7 +53,7 @@ public class ContestMethods extends Utils {
 			Calendar cal = Calendar.getInstance();
 
 			cal.setTime(c_date);
-			cal.add(Calendar.MINUTE, 65);
+			cal.add(Calendar.MINUTE, 75);
 			Date d_date = cal.getTime();
 			Long deadline = d_date.getTime(); //deadline = minutes from last rti update.
 	
