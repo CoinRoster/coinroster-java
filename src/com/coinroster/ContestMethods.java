@@ -55,8 +55,10 @@ public class ContestMethods extends Utils {
 			cal.setTime(c_date);
 			cal.add(Calendar.MINUTE, 75);
 			Date d_date = cal.getTime();
-			Long deadline = d_date.getTime(); //deadline = minutes from last rti update.
-	
+			Long deadline = d_date.getTime();
+			cal.add(Calendar.HOUR_OF_DAY, 24);
+			 //deadline = minutes from last rti update.
+			Long settlement = d_date.getTime();
 			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
 			
 			for(int i = 0; i < prop_contests.length(); i++){
@@ -65,6 +67,8 @@ public class ContestMethods extends Utils {
 				contest.put("title", title);
 				contest.put("odds_source", "n/a");
 				contest.put("registration_deadline", deadline);
+				contest.put("settlement_deadline", settlement);
+				
 				MethodInstance pari_method = new MethodInstance();
 				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(deadline, contest);
 				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
