@@ -53,10 +53,12 @@ public class ContestMethods extends Utils {
 			Calendar cal = Calendar.getInstance();
 
 			cal.setTime(c_date);
-			cal.add(Calendar.MINUTE, 75);
+			cal.add(Calendar.MINUTE, 74);
+			cal.add(Calendar.SECOND, 30);
 			Date d_date = cal.getTime();
 			Long deadline = d_date.getTime();
 			
+			cal.add(Calendar.SECOND, 30);
 			cal.add(Calendar.HOUR_OF_DAY, 24);
 			d_date = cal.getTime();
 			Long settlement = d_date.getTime();
