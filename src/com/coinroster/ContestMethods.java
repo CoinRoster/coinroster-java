@@ -56,9 +56,11 @@ public class ContestMethods extends Utils {
 			cal.add(Calendar.MINUTE, 75);
 			Date d_date = cal.getTime();
 			Long deadline = d_date.getTime();
+			
 			cal.add(Calendar.HOUR_OF_DAY, 24);
-			 //deadline = minutes from last rti update.
+			d_date = cal.getTime();
 			Long settlement = d_date.getTime();
+			
 			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
 			
 			for(int i = 0; i < prop_contests.length(); i++){
@@ -70,7 +72,7 @@ public class ContestMethods extends Utils {
 				contest.put("settlement_deadline", settlement);
 				
 				MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(deadline, contest);
+				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(settlement, contest);
 				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 				pari_method.input = pari_mutuel_data;
 				pari_method.output = pari_output;
@@ -128,8 +130,8 @@ public class ContestMethods extends Utils {
 					
 					Long deadline = prop_data.getLong("deadline");
 					
-					//Check if it has been a day since the contest was posted.
-					if (System.currentTimeMillis() - deadline < 24 * 60 * 60 * 1000) continue;
+					//Check if it has been a day since the contest was in play
+					if (System.currentTimeMillis() < deadline) continue;
 
 					JSONObject pari_fields = bitcoin_bot.settlePariMutuel(Integer.parseInt(c_id), prop_data, option_table);
 					
