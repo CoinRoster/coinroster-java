@@ -1,12 +1,15 @@
 package com.coinroster.bots;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.TimeZone;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -15,11 +18,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.coinroster.Utils;
+import com.coinroster.DB;
+import com.coinroster.MethodInstance;
 //import com.coinroster.DB;
 import com.coinroster.Server;
 
 
-public class BitcoinBot {
+public class BitcoinBot extends Utils {
 	private BigDecimal referenceRate;
 	private Date referenceRateDate;
 	private BigDecimal realtimeIndex;
@@ -121,7 +127,98 @@ public class BitcoinBot {
 		return money;
 	}
 	
-	public JSONObject createPariMutuel(Long deadline, JSONObject contest) throws JSONException{
+	public void createPariMutuels() throws SQLException, JSONException{
+		
+		DB db = new DB(sql_connection);
+		
+		Date c_date = new Date(System.currentTimeMillis()); //time of price index.
+		
+		Calendar cal = Calendar.getInstance();
+
+		cal.setTime(c_date);
+		cal.add(Calendar.MINUTE, 74); 
+		cal.add(Calendar.SECOND, 30); //Registration time.
+		Date d_date = cal.getTime();
+		Long deadline = d_date.getTime();
+		
+		cal.add(Calendar.SECOND, 30);
+		cal.add(Calendar.HOUR_OF_DAY, 24); //From registration deadline to settlement.
+		d_date = cal.getTime();	
+		Long settlement = d_date.getTime();
+		
+		JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
+		
+		for(int i = 0; i < prop_contests.length(); i++){
+			JSONObject contest = prop_contests.getJSONObject(i);
+			String title = c_date.toString() + " | " + contest.getString("title");
+			contest.put("title", title);
+			contest.put("odds_source", "n/a");
+			contest.put("registration_deadline", deadline);
+			
+			MethodInstance pari_method = new MethodInstance();
+			JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+			String prop_type = prop_data.getString("prop_type");
+			switch(prop_type) {
+			
+				case ("HIGHER_LOWER"):
+					contest = buildHighLowTable(contest);
+				
+				case ("HIGHER_LOWER_FIXED"):
+					contest = buildHighLowFixedTable(contest);
+					prop_data.put("risk", 0.0001);
+			}
+			
+
+			
+			prop_data.put("BTC_index", this.realtimeIndex.toString());
+			prop_data.put("settlement_deadline", settlement);
+			contest.put("prop_data", prop_data.toString());
+			
+			JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+			pari_method.input = contest;
+			pari_method.output = pari_output;
+			pari_method.session = null;
+			pari_method.sql_connection = sql_connection;
+			try{
+				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+				c.newInstance(pari_method);
+			}
+			catch(Exception e){
+				log(pari_method.output.toString());
+				Server.exception(e);
+			}
+		}
+	}
+	
+	private JSONObject buildHighLowFixedTable(JSONObject contest)  throws JSONException{
+		
+		JSONArray option_table = new JSONArray(); 
+		JSONObject lower = new JSONObject();
+		lower.put("odds","1.9");
+		lower.put("description", "Lower");
+		lower.put("id", 1);
+		option_table.put(lower);
+
+		
+		JSONObject same = new JSONObject();
+		same.put("odds","10");
+		same.put("description", this.realtimeIndex.toString());
+		same.put("id", 2);
+		option_table.put(same);
+		
+		//Not sure about these table values, but should work for now.
+		JSONObject higher = new JSONObject();
+		higher.put("odds","1.9");
+		higher.put("description", "Higher");
+		higher.put("id", 3);
+		option_table.put(higher);
+
+		contest.put("option_table", option_table);
+		
+		return contest;
+	}
+	
+	private JSONObject buildHighLowTable(JSONObject contest)  throws JSONException{
 		
 		JSONArray option_table = new JSONArray(); 
 		JSONObject lower = new JSONObject();
@@ -144,20 +241,55 @@ public class BitcoinBot {
 	
 		contest.put("option_table", option_table);
 		
-		//Add the current index to the prop data.
-		JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
-		
-		prop_data.put("BTC_index", this.realtimeIndex.toString());
-		prop_data.put("deadline", deadline);
-		
-		contest.put("prop_data", prop_data.toString());
-		
 		
 		return contest;
 	}
+		
 	
 	
-	public JSONObject settlePariMutuel(int contest_id, JSONObject prop_data, JSONArray option_table) throws Exception{
+	public void settlePariMutuels() throws Exception{
+		DB db_connection = new DB(sql_connection);
+		JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOINS", "PARI-MUTUEL");
+
+		if(!(pari_contests.length() == 0)){
+
+
+			Iterator<?> pari_contest_ids = pari_contests.keys();	
+			while(pari_contest_ids.hasNext()){
+				String c_id = (String) pari_contest_ids.next();
+				
+				JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
+				JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
+				
+				Long settlement_deadline = prop_data.getLong("settlement_deadline");
+				
+				//Check if it has been a day since the contest was in play
+				if (System.currentTimeMillis() < settlement_deadline) continue;
+				
+
+				JSONObject pari_fields = chooseWinnerHigherLower(Integer.parseInt(c_id), prop_data, option_table);
+				
+				log(pari_fields.toString());
+				
+				MethodInstance pari_method = new MethodInstance();
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_fields;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					Server.exception(e);
+				}		
+			}
+		}
+
+	}
+	
+	private JSONObject chooseWinnerHigherLower(int contest_id, JSONObject prop_data, JSONArray option_table) throws JSONException {
 		
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
@@ -183,7 +315,6 @@ public class BitcoinBot {
 
 		return fields;
 	}
-	
 }
 
 
