@@ -44,16 +44,38 @@ public class ContestMethods extends Utils {
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
 			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
 			bit_bot.setup();
 	
-			ArrayList<JSONObject> contest_list = bit_bot.createPariMutuels();
+			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 			
-			for (int i = 0; i < contest_list.size(); i++) {
-				JSONObject contest = contest_list.get(i);
-				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+			Calendar cal = Calendar.getInstance();
+
+			cal.setTime(c_date);
+			cal.add(Calendar.MINUTE, 74); 
+			cal.add(Calendar.SECOND, 30); //Registration time.
+			Date d_date = cal.getTime();
+			Long deadline = d_date.getTime();
+			
+			cal.add(Calendar.SECOND, 30);
+			cal.add(Calendar.HOUR_OF_DAY, 24); //From registration deadline to settlement.
+			d_date = cal.getTime();
+			Long settlement = d_date.getTime();
+			
+			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
+			
+			for(int i = 0; i < prop_contests.length(); i++){
+				JSONObject contest = prop_contests.getJSONObject(i);
+				String title = c_date.toString() + " | " + contest.getString("title");
+				contest.put("title", title);
+				contest.put("odds_source", "n/a");
+				contest.put("registration_deadline", deadline);
+				
 				MethodInstance pari_method = new MethodInstance();
-				pari_method.input = contest;
+				JSONObject pari_mutuel_data = bit_bot.buildHighLowTable(settlement, contest);
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				pari_method.input = pari_mutuel_data;
 				pari_method.output = pari_output;
 				pari_method.session = null;
 				pari_method.sql_connection = sql_connection;
@@ -66,6 +88,8 @@ public class ContestMethods extends Utils {
 					Server.exception(e);
 				}
 			}
+
+			
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {
@@ -78,26 +102,25 @@ public class ContestMethods extends Utils {
 				}
 			}
 		}
-	}
+}
 	
 	/**
 	 * Settles any Bitcoin contests that have been posted for 24 hours.
 	 */
-	public static void checkBitcoinContests() {
+public static void checkBitcoinContests() {
 		
 		//For now, just settle all bitcoin contests..
 		
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
-			
-			BitcoinBot bitcoin_bot = new BitcoinBot(sql_connection);
-			bitcoin_bot.setup();
 			DB db_connection = new DB(sql_connection);
 			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOINS", "PARI-MUTUEL");
-
+	
 			if(!(pari_contests.length() == 0)){
-
+				
+				BitcoinBot bitcoin_bot = new BitcoinBot(sql_connection);
+				bitcoin_bot.setup();
 
 				Iterator<?> pari_contest_ids = pari_contests.keys();	
 				while(pari_contest_ids.hasNext()){
@@ -106,14 +129,14 @@ public class ContestMethods extends Utils {
 					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
 					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
 					
-					Long settlement_deadline = prop_data.getLong("settlement_deadline");
+					Long settlement = prop_data.getLong("deadline");
 					
 					//Check if it has been a day since the contest was in play
-					if (System.currentTimeMillis() < settlement_deadline) continue;
-					
+					if (System.currentTimeMillis() < settlement) continue;
 
 					JSONObject pari_fields = bitcoin_bot.chooseWinnerHigherLower(Integer.parseInt(c_id), prop_data, option_table);
 					
+					log(pari_fields.toString());
 					
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");

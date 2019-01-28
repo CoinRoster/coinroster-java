@@ -124,61 +124,44 @@ public class BitcoinBot extends Utils {
 		return money;
 	}
 	
-	public ArrayList<JSONObject> createPariMutuels() throws SQLException, JSONException{
-		
-		ArrayList<JSONObject> contest_list = new ArrayList<JSONObject>();
-		
-		DB db = new DB(sql_connection);
-		
-		Date c_date = new Date(System.currentTimeMillis()); //time of price index.
-		Calendar cal = Calendar.getInstance();
-
-		cal.setTime(c_date);
-		cal.add(Calendar.MINUTE, 74); 
-		cal.add(Calendar.SECOND, 30); //Registration time.
-		Date d_date = cal.getTime();
-		Long deadline = d_date.getTime();
-		
-		cal.add(Calendar.SECOND, 30);
-		cal.add(Calendar.HOUR_OF_DAY, 24); //From registration deadline to settlement.
-		d_date = cal.getTime();	
-		Long settlement = d_date.getTime();
-		
-		JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
-		
-		for(int i = 0; i < prop_contests.length(); i++){
-			JSONObject contest = prop_contests.getJSONObject(i);
-			String title = c_date.toString() + " | " + contest.getString("title");
-			contest.put("title", title);
-			contest.put("odds_source", "n/a");
-			contest.put("registration_deadline", deadline);
+	
+	public JSONObject buildHighLowTable(Long deadline, JSONObject contest) throws JSONException{
 			
+			JSONArray option_table = new JSONArray(); 
+			JSONObject lower = new JSONObject();
+			lower.put("description", "Lower");
+			lower.put("id", 1);
+			option_table.put(lower);
+	
 			
+			JSONObject same = new JSONObject();
+			same.put("description", this.realtimeIndex.toString());
+			same.put("id", 2);
+			option_table.put(same);
+			
+			//Not sure about these table values, but should work for now.
+			JSONObject higher = new JSONObject();
+			higher.put("description", "Higher");
+			higher.put("id", 3);
+			option_table.put(higher);
+	
+		
+			contest.put("option_table", option_table);
+			
+			//Add the current index to the prop data.
 			JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+			
 			prop_data.put("BTC_index", this.realtimeIndex.toString());
-			prop_data.put("settlement_deadline", settlement);
-			
-			 
-			String prop_type = prop_data.getString("prop_type");
-			JSONArray option_table = null;
-			
-			if (prop_type == "HIGHER_LOWER") {
-				option_table = buildHighLowTable(contest);
-				contest.put("option_table", option_table);
-			}else if (prop_type == "HIGHER_LOWER_FIXED") {
-				option_table = buildHighLowFixedTable(contest);
-				contest.put("option_table", option_table);
-				prop_data.put("risk", 0.0001);
-			}
+			prop_data.put("settlement_deadline", deadline);
 			
 			contest.put("prop_data", prop_data.toString());
-			contest_list.add(contest);
-
-		}
-		return contest_list;
+			
+			
+			return contest;
 	}
 	
-	private JSONArray buildHighLowFixedTable(JSONObject contest)  throws JSONException{
+	
+	public JSONObject buildHighLowFixedTable(Long deadline, JSONObject contest)  throws JSONException{
 		
 		JSONArray option_table = new JSONArray(); 
 		JSONObject lower = new JSONObject();
@@ -201,33 +184,19 @@ public class BitcoinBot extends Utils {
 		higher.put("id", 3);
 		option_table.put(higher);
 
+		contest.put("option_table", option_table);
 		
+		//Add the current index to the prop data.
+		JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
 		
-		return option_table;
+		prop_data.put("risk", 0.0001);
+		prop_data.put("BTC_index", this.realtimeIndex.toString());
+		prop_data.put("settlement_deadline", deadline);
+		
+		contest.put("prop_data", prop_data.toString());
+		return contest;
 	}
 	
-	private JSONArray buildHighLowTable(JSONObject contest)  throws JSONException{
-		
-		JSONArray option_table = new JSONArray(); 
-		JSONObject lower = new JSONObject();
-		lower.put("description", "Lower");
-		lower.put("id", 1);
-		option_table.put(lower);
-
-		
-		JSONObject same = new JSONObject();
-		same.put("description", this.realtimeIndex.toString());
-		same.put("id", 2);
-		option_table.put(same);
-		
-		//Not sure about these table values, but should work for now.
-		JSONObject higher = new JSONObject();
-		higher.put("description", "Higher");
-		higher.put("id", 3);
-		option_table.put(higher);
-		
-		return option_table;
-	}
 	
 	public JSONObject chooseWinnerHigherLower(int contest_id, JSONObject prop_data, JSONArray option_table) throws JSONException {
 		
