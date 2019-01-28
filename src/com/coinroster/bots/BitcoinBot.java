@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -126,12 +127,13 @@ public class BitcoinBot extends Utils {
 		return money;
 	}
 	
-	public void createPariMutuels() throws SQLException, JSONException{
+	public ArrayList<JSONObject> createHigherLowerPariMutuel() throws SQLException, JSONException{
+		
+		ArrayList<JSONObject> contest_list = new ArrayList<JSONObject>();
 		
 		DB db = new DB(sql_connection);
 		
 		Date c_date = new Date(System.currentTimeMillis()); //time of price index.
-		
 		Calendar cal = Calendar.getInstance();
 
 		cal.setTime(c_date);
@@ -154,17 +156,17 @@ public class BitcoinBot extends Utils {
 			contest.put("odds_source", "n/a");
 			contest.put("registration_deadline", deadline);
 			
-			MethodInstance pari_method = new MethodInstance();
+			
 			JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
 			String prop_type = prop_data.getString("prop_type");
 			JSONArray option_table = null;
 			switch(prop_type) {
 			
-				case ("HIGHER_LOWER"):
+				case "HIGHER_LOWER":
 					option_table = buildHighLowTable(contest);
 					contest.put("option_table", option_table);
 				
-				case ("HIGHER_LOWER_FIXED"):
+				case "HIGHER_LOWER_FIXED":
 					option_table  = buildHighLowFixedTable(contest);
 					contest.put("option_table", option_table);
 					prop_data.put("risk", 0.0001);
@@ -175,21 +177,11 @@ public class BitcoinBot extends Utils {
 			prop_data.put("BTC_index", this.realtimeIndex.toString());
 			prop_data.put("settlement_deadline", settlement);
 			contest.put("prop_data", prop_data.toString());
-			
-			JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-			pari_method.input = contest;
-			pari_method.output = pari_output;
-			pari_method.session = null;
-			pari_method.sql_connection = sql_connection;
-			try{
-				Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-				c.newInstance(pari_method);
-			}
-			catch(Exception e){
-				log(pari_method.output.toString());
-				Server.exception(e);
-			}
+			 
+			contest_list.add(contest);
+
 		}
+		return contest_list;
 	}
 	
 	private JSONArray buildHighLowFixedTable(JSONObject contest)  throws JSONException{

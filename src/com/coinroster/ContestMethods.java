@@ -47,9 +47,25 @@ public class ContestMethods extends Utils {
 			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
 			bit_bot.setup();
 	
-			bit_bot.createPariMutuels();
-
+			ArrayList<JSONObject> contest_list = bit_bot.createHigherLowerPariMutuel();
 			
+			for (int i = 0; i < contest_list.size(); i++) {
+				JSONObject contest = contest_list.get(i);
+				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
+				MethodInstance pari_method = new MethodInstance();
+				pari_method.input = contest;
+				pari_method.output = pari_output;
+				pari_method.session = null;
+				pari_method.sql_connection = sql_connection;
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(pari_method);
+				}
+				catch(Exception e){
+					log(pari_method.output.toString());
+					Server.exception(e);
+				}
+			}
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {
