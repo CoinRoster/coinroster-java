@@ -21,7 +21,6 @@ import org.json.JSONObject;
 import com.coinroster.Utils;
 import com.coinroster.DB;
 import com.coinroster.MethodInstance;
-//import com.coinroster.DB;
 import com.coinroster.Server;
 
 
@@ -158,13 +157,16 @@ public class BitcoinBot extends Utils {
 			MethodInstance pari_method = new MethodInstance();
 			JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
 			String prop_type = prop_data.getString("prop_type");
+			JSONArray option_table = null;
 			switch(prop_type) {
 			
 				case ("HIGHER_LOWER"):
-					contest = buildHighLowTable(contest);
+					option_table = buildHighLowTable(contest);
+					contest.put("option_table", option_table);
 				
 				case ("HIGHER_LOWER_FIXED"):
-					contest = buildHighLowFixedTable(contest);
+					option_table  = buildHighLowFixedTable(contest);
+					contest.put("option_table", option_table);
 					prop_data.put("risk", 0.0001);
 			}
 			
@@ -190,7 +192,7 @@ public class BitcoinBot extends Utils {
 		}
 	}
 	
-	private JSONObject buildHighLowFixedTable(JSONObject contest)  throws JSONException{
+	private JSONArray buildHighLowFixedTable(JSONObject contest)  throws JSONException{
 		
 		JSONArray option_table = new JSONArray(); 
 		JSONObject lower = new JSONObject();
@@ -213,12 +215,12 @@ public class BitcoinBot extends Utils {
 		higher.put("id", 3);
 		option_table.put(higher);
 
-		contest.put("option_table", option_table);
 		
-		return contest;
+		
+		return option_table;
 	}
 	
-	private JSONObject buildHighLowTable(JSONObject contest)  throws JSONException{
+	private JSONArray buildHighLowTable(JSONObject contest)  throws JSONException{
 		
 		JSONArray option_table = new JSONArray(); 
 		JSONObject lower = new JSONObject();
@@ -239,10 +241,10 @@ public class BitcoinBot extends Utils {
 		option_table.put(higher);
 
 	
-		contest.put("option_table", option_table);
 		
 		
-		return contest;
+		
+		return option_table;
 	}
 		
 	
