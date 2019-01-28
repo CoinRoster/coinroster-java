@@ -1,7 +1,6 @@
 package com.coinroster.bots;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,7 +9,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.TimeZone;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -21,7 +19,6 @@ import org.json.JSONObject;
 
 import com.coinroster.Utils;
 import com.coinroster.DB;
-import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 
 
