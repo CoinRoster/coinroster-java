@@ -73,7 +73,7 @@ public class ContestMethods extends Utils {
 				contest.put("registration_deadline", deadline);
 				
 				MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_mutuel_data = bit_bot.buildHighLowTable(settlement, contest);
+				JSONObject pari_mutuel_data = bit_bot.buildHighLowFixedTable(settlement, contest);
 				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 				pari_method.input = pari_mutuel_data;
 				pari_method.output = pari_output;
@@ -135,8 +135,6 @@ public static void checkBitcoinContests() {
 					if (System.currentTimeMillis() < settlement) continue;
 
 					JSONObject pari_fields = bitcoin_bot.chooseWinnerHigherLower(Integer.parseInt(c_id), prop_data, option_table);
-					
-					log(pari_fields.toString());
 					
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
