@@ -127,7 +127,7 @@ public class BitcoinBot extends Utils {
 		return money;
 	}
 	
-	public ArrayList<JSONObject> createHigherLowerPariMutuel() throws SQLException, JSONException{
+	public ArrayList<JSONObject> createPariMutuels() throws SQLException, JSONException{
 		
 		ArrayList<JSONObject> contest_list = new ArrayList<JSONObject>();
 		
@@ -238,52 +238,8 @@ public class BitcoinBot extends Utils {
 		
 		return option_table;
 	}
-		
 	
-	
-	public void settlePariMutuels() throws Exception{
-		DB db_connection = new DB(sql_connection);
-		JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOINS", "PARI-MUTUEL");
-
-		if(!(pari_contests.length() == 0)){
-
-
-			Iterator<?> pari_contest_ids = pari_contests.keys();	
-			while(pari_contest_ids.hasNext()){
-				String c_id = (String) pari_contest_ids.next();
-				
-				JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
-				JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
-				
-				Long settlement_deadline = prop_data.getLong("settlement_deadline");
-				
-				//Check if it has been a day since the contest was in play
-				if (System.currentTimeMillis() < settlement_deadline) continue;
-				
-
-				JSONObject pari_fields = chooseWinnerHigherLower(Integer.parseInt(c_id), prop_data, option_table);
-				
-				log(pari_fields.toString());
-				
-				MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-				pari_method.input = pari_fields;
-				pari_method.output = pari_output;
-				pari_method.session = null;
-				pari_method.sql_connection = sql_connection;
-				try{
-					Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-					c.newInstance(pari_method);
-				}
-				catch(Exception e){
-					Server.exception(e);
-				}		
-			}
-		}
-
-	}
-	
-	private JSONObject chooseWinnerHigherLower(int contest_id, JSONObject prop_data, JSONArray option_table) throws JSONException {
+	public JSONObject chooseWinnerHigherLower(int contest_id, JSONObject prop_data, JSONArray option_table) throws JSONException {
 		
 		JSONObject fields = new JSONObject();
 		fields.put("contest_id", contest_id);
