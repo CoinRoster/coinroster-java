@@ -5,8 +5,6 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -18,7 +16,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.Utils;
-import com.coinroster.DB;
 import com.coinroster.Server;
 
 
