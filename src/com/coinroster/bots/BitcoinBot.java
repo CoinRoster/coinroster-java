@@ -155,26 +155,23 @@ public class BitcoinBot extends Utils {
 			
 			
 			JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
-			String prop_type = prop_data.getString("prop_type");
-			JSONArray option_table = null;
-			switch(prop_type) {
-			
-				case "HIGHER_LOWER":
-					option_table = buildHighLowTable(contest);
-					contest.put("option_table", option_table);
-				
-				case "HIGHER_LOWER_FIXED":
-					option_table  = buildHighLowFixedTable(contest);
-					contest.put("option_table", option_table);
-					prop_data.put("risk", 0.0001);
-			}
-			
-
-			
 			prop_data.put("BTC_index", this.realtimeIndex.toString());
 			prop_data.put("settlement_deadline", settlement);
-			contest.put("prop_data", prop_data.toString());
+			
 			 
+			String prop_type = prop_data.getString("prop_type");
+			JSONArray option_table = null;
+			
+			if (prop_type == "HIGHER_LOWER") {
+				option_table = buildHighLowTable(contest);
+				contest.put("option_table", option_table);
+			}else if (prop_type == "HIGHER_LOWER_FIXED") {
+				option_table = buildHighLowFixedTable(contest);
+				contest.put("option_table", option_table);
+				prop_data.put("risk", 0.0001);
+			}
+			
+			contest.put("prop_data", prop_data.toString());
 			contest_list.add(contest);
 
 		}
@@ -228,10 +225,6 @@ public class BitcoinBot extends Utils {
 		higher.put("description", "Higher");
 		higher.put("id", 3);
 		option_table.put(higher);
-
-	
-		
-		
 		
 		return option_table;
 	}
