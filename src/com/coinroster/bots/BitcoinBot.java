@@ -126,20 +126,15 @@ public class BitcoinBot extends Utils {
 			
 			JSONArray option_table = new JSONArray(); 
 			JSONObject lower = new JSONObject();
-			lower.put("description", "Lower");
+			lower.put("description", this.realtimeIndex.toString() + "or Lower");
 			lower.put("id", 1);
 			option_table.put(lower);
 	
 			
-			JSONObject same = new JSONObject();
-			same.put("description", this.realtimeIndex.toString());
-			same.put("id", 2);
-			option_table.put(same);
-			
 			//Not sure about these table values, but should work for now.
 			JSONObject higher = new JSONObject();
-			higher.put("description", "Higher");
-			higher.put("id", 3);
+			higher.put("description",  "Higher than " + this.realtimeIndex.toString());
+			higher.put("id", 2);
 			option_table.put(higher);
 	
 		
