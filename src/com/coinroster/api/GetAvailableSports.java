@@ -155,6 +155,11 @@ public class GetAvailableSports extends Utils {
 		if(r4){
 			output.put("golf_contest", golf_bot.getTourneyName());
 		}
+		
+		//BITCOIN
+		output.put("bitcoin_contest", "Bitcoin | " + today_str);
+		output.put("BITCOIN", true);
+		
 		output.put("BASEBALL", baseball);
 		output.put("BASKETBALL", basketball);
 		output.put("HOCKEY", hockey);

@@ -126,14 +126,14 @@ public class BitcoinBot extends Utils {
 			
 			JSONArray option_table = new JSONArray(); 
 			JSONObject lower = new JSONObject();
-			lower.put("description", this.realtimeIndex.toString() + "or Lower");
+			lower.put("description", "Under " + this.realtimeIndex.toString() + "BTC");
 			lower.put("id", 1);
 			option_table.put(lower);
 	
 			
 			//Not sure about these table values, but should work for now.
 			JSONObject higher = new JSONObject();
-			higher.put("description",  "Higher than " + this.realtimeIndex.toString());
+			higher.put("description",  "Over or equal to " + this.realtimeIndex.toString() + "BTC");
 			higher.put("id", 2);
 			option_table.put(higher);
 	
@@ -157,23 +157,17 @@ public class BitcoinBot extends Utils {
 		
 		JSONArray option_table = new JSONArray(); 
 		JSONObject lower = new JSONObject();
-		lower.put("odds","1.9");
+		lower.put("odds",1.95);
 		lower.put("description", "Lower");
 		lower.put("id", 1);
 		option_table.put(lower);
 
 		
-		JSONObject same = new JSONObject();
-		same.put("odds","10");
-		same.put("description", this.realtimeIndex.toString());
-		same.put("id", 2);
-		option_table.put(same);
-		
 		//Not sure about these table values, but should work for now.
 		JSONObject higher = new JSONObject();
-		higher.put("odds","1.9");
+		higher.put("odds",1.95);
 		higher.put("description", "Higher");
-		higher.put("id", 3);
+		higher.put("id", 2);
 		option_table.put(higher);
 
 		contest.put("option_table", option_table);
@@ -199,13 +193,8 @@ public class BitcoinBot extends Utils {
 		
 
 		BigDecimal start_index = new BigDecimal(prop_data.getString("BTC_index"));
-		if (start_index.compareTo(this.realtimeIndex) < 0) { 
+		if (start_index.compareTo(this.realtimeIndex) <= 0) {
 			//higher
-			winning_outcome = 3;
-			fields.put("winning_outcome", winning_outcome);
-		}
-		else if (start_index.compareTo(this.realtimeIndex) == 0) {
-			//same
 			winning_outcome = 2;
 			fields.put("winning_outcome", winning_outcome);
 		} else {
