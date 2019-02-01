@@ -172,7 +172,7 @@ public class SetupPropBet extends Utils{
 							break method;
 						}
 						break;
-					case "BITCOIN":
+					case "BITCOINS":
 						Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 						
 						Calendar cal = Calendar.getInstance();
