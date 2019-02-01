@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 
 import org.json.JSONArray;
@@ -170,7 +172,25 @@ public class SetupPropBet extends Utils{
 							break method;
 						}
 						break;
+					case "BITCOIN":
+						Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 						
+						Calendar cal = Calendar.getInstance();
+
+						cal.setTime(c_date);
+						cal.add(Calendar.MINUTE, 74); 
+						cal.add(Calendar.SECOND, 30); //Registration time = 74:30 after contest posting.
+						Date d_date = cal.getTime();
+						deadline = d_date.getTime();
+						date_name_title = c_date.toString();
+						
+						cal.add(Calendar.SECOND, 30);
+						cal.add(Calendar.HOUR_OF_DAY, 24);
+						d_date = cal.getTime();
+						Long settlement = d_date.getTime();
+						prop_data.put("settlement_deadline", settlement);
+						
+						break;
 					default:
 						break;
 				}
@@ -406,6 +426,26 @@ public class SetupPropBet extends Utils{
 						prop_data.put("when", "tournament");
 						break;
 					
+					case "OVER_UNDER_BTC":
+						
+						category = "FINANCIAL";
+						sub_category = "BITCOINS";
+						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
+						desc = "Place bets on whether the bitcoin price index will be over or under " + over_under;
+						JSONObject lower = new JSONObject();
+						lower.put("description", "Under " + over_under + "BTC");
+						lower.put("id", 1);
+						option_table.put(lower);
+				
+						
+						//Not sure about these table values, but should work for now.
+						JSONObject higher = new JSONObject();
+						higher.put("description",  "Over or equal to " + over_under + "BTC");
+						higher.put("id", 2);
+						option_table.put(higher);
+						
+						prop_data.put("BTC_index", over_under);
+						break;
 					
 					default:
 						log("Could not find prop bet with type = " + prop_type);

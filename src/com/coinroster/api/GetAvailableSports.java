@@ -12,6 +12,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Utils;
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
+import com.coinroster.bots.BitcoinBot;
 import com.coinroster.bots.GolfBot;
 import com.coinroster.bots.HockeyBot;
 
@@ -157,7 +158,9 @@ public class GetAvailableSports extends Utils {
 		}
 		
 		//BITCOIN
-		output.put("bitcoin_contest", "Bitcoin | " + today_str);
+		BitcoinBot bitcoin_bot = new BitcoinBot(sql_connection);
+		bitcoin_bot.setup();
+		output.put("bitcoin_contest", "Bitcoin | " + today_str + " | current BTC index: " + bitcoin_bot.getRealtimeIndex());
 		output.put("BITCOIN", true);
 		
 		output.put("BASEBALL", baseball);

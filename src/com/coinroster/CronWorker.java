@@ -108,7 +108,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 		
 		if(minute==0){
-			ContestMethods.createBitcoinContests();
+			//ContestMethods.createBitcoinContests();
 		}
 		
 		//update currencies hourly on live
