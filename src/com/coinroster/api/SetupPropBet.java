@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -173,32 +172,18 @@ public class SetupPropBet extends Utils{
 						}
 						break;
 					case "BITCOINS":
-						Date c_date = new Date(System.currentTimeMillis()); //time of price index.
+						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
+						Long settlement_date = prop_data.getLong("settlement_deadline");
 						
-						Calendar cal = Calendar.getInstance();
-
-						cal.setTime(c_date);
-						cal.add(Calendar.MINUTE, 74); 
-						cal.add(Calendar.SECOND, 30); //Registration time = 74:30 after contest posting.
-						Date d_date = cal.getTime();
-						deadline = d_date.getTime();
-						date_name_title = c_date.toString();
-						
-						int resolve_time = Math.round(prop_data.getLong("resolve_time")/ 20) * 20;
-						
-						if (resolve_time >= 75) {
-							cal.add(Calendar.MINUTE, -75);
-							cal.add(Calendar.MINUTE, resolve_time);
-						} else { //Default to 3 hours.
-							cal.add(Calendar.HOUR_OF_DAY, 2);
-							cal.add(Calendar.MINUTE, 45);
+						if (registration_date < System.currentTimeMillis() + 60 * 60 * 1000) {
+							output.put("error", "Registration deadline too early.");
+							break method;
+						} else if (settlement_date < registration_date + 60 * 60 * 1000){
+							output.put("error", "Settlement deadline too close to registration deadline.");
+							break method;
 						}
-						
-						
-						d_date = cal.getTime();
-						Long settlement = d_date.getTime();
-						prop_data.put("settlement_deadline", settlement);
-						
+						date_name_title = new Date(registration_date).toString();
+						deadline = registration_date;
 						break;
 					default:
 						break;
@@ -440,15 +425,17 @@ public class SetupPropBet extends Utils{
 						category = "FINANCIAL";
 						sub_category = "BITCOINS";
 						Date settlement_date = new Date(prop_data.getLong("settlement_deadline"));
+						
 						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
 						desc = "Place bets on whether the bitcoin price index will be over or under " + over_under;
 						desc += " by " + settlement_date.toString();
+						
+						
 						
 						JSONObject lower = new JSONObject();
 						lower.put("description", "Under " + over_under + "BTC");
 						lower.put("id", 1);
 						option_table.put(lower);
-				
 						
 						//Not sure about these table values, but should work for now.
 						JSONObject higher = new JSONObject();
