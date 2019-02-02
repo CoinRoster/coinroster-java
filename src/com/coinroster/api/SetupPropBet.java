@@ -184,8 +184,17 @@ public class SetupPropBet extends Utils{
 						deadline = d_date.getTime();
 						date_name_title = c_date.toString();
 						
-						cal.add(Calendar.SECOND, 30);
-						cal.add(Calendar.HOUR_OF_DAY, 24);
+						int resolve_time = Math.round(prop_data.getLong("resolve_time")/ 20) * 20;
+						
+						if (resolve_time >= 75) {
+							cal.add(Calendar.MINUTE, -75);
+							cal.add(Calendar.MINUTE, resolve_time);
+						} else { //Default to 3 hours.
+							cal.add(Calendar.HOUR_OF_DAY, 2);
+							cal.add(Calendar.MINUTE, 45);
+						}
+						
+						
 						d_date = cal.getTime();
 						Long settlement = d_date.getTime();
 						prop_data.put("settlement_deadline", settlement);
