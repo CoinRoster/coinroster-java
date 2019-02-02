@@ -435,12 +435,14 @@ public class SetupPropBet extends Utils{
 						JSONObject lower = new JSONObject();
 						lower.put("description", "Under " + over_under + "BTC");
 						lower.put("id", 1);
+						lower.put("odds", prop_data.getDouble("under_odds"));
 						option_table.put(lower);
 						
 						//Not sure about these table values, but should work for now.
 						JSONObject higher = new JSONObject();
 						higher.put("description",  "Over or equal to " + over_under + "BTC");
 						higher.put("id", 2);
+						higher.put("odds", prop_data.getDouble("over_odds"));
 						option_table.put(higher);
 						
 						prop_data.put("BTC_index", over_under);
