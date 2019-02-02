@@ -439,8 +439,11 @@ public class SetupPropBet extends Utils{
 						
 						category = "FINANCIAL";
 						sub_category = "BITCOINS";
+						Date settlement_date = new Date(prop_data.getLong("settlement_deadline"));
 						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
 						desc = "Place bets on whether the bitcoin price index will be over or under " + over_under;
+						desc += " by " + settlement_date.toString();
+						
 						JSONObject lower = new JSONObject();
 						lower.put("description", "Under " + over_under + "BTC");
 						lower.put("id", 1);
