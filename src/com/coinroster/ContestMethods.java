@@ -15,7 +15,6 @@ import java.util.Iterator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.coinroster.api.SetupPropBet;
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
 import com.coinroster.bots.BitcoinBot;
@@ -48,8 +47,8 @@ public class ContestMethods extends Utils {
 			
 			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
 			ContestPoster.buildSession();
-			MethodInstance method = ContestPoster.getBitcoinContestMethod();
-			new SetupPropBet(method);
+			ContestPoster.postBitcoinContest();
+			
 			
 		} catch (Exception e) {
 			Server.exception(e);
