@@ -1,7 +1,6 @@
 package com.coinroster;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.sql.Connection;
 import java.util.Calendar;
 import java.util.Date;
@@ -35,7 +34,7 @@ public class FixedOddsContest extends Utils{
 		
 	}
 	
-	public void postBitcoinContest() throws JSONException, IOException {
+	public MethodInstance getBitcoinContestMethod() throws JSONException, IOException {
 		JSONObject input = new JSONObject();
 		JSONObject data = new JSONObject();
 		JSONObject prop_data = new JSONObject();
@@ -76,17 +75,9 @@ public class FixedOddsContest extends Utils{
 		method.session = session;
 		method.input = input;	
 		method.output = output;
-		method.internal_caller = true;
 		method.session = null;
 		method.sql_connection = sql_connection;
-		try{
-			Constructor<?> c = Class.forName("com.coinroster.api." + "SetupPropBet").getConstructor(MethodInstance.class);
-			c.newInstance(method);
-		}
-		catch(Exception e){
-			log(method.output.toString());
-			Server.exception(e);
-		}
+		return method;
 		
 		
 	}
