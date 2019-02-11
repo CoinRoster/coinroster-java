@@ -1,6 +1,7 @@
 package com.coinroster;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.sql.Connection;
 import java.util.Calendar;
 import java.util.Date;
@@ -8,6 +9,7 @@ import java.util.Date;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.coinroster.api.SetupPropBet;
 import com.coinroster.bots.BitcoinBot;
 
 public class FixedOddsContest extends Utils{
@@ -16,6 +18,7 @@ public class FixedOddsContest extends Utils{
 	private String user_id;
 	private int user_level;
 	private Session session;
+	private HttpResponse dummy_response;
 	
 	@SuppressWarnings("unused")
 	private String session_token;
@@ -34,7 +37,7 @@ public class FixedOddsContest extends Utils{
 		
 	}
 	
-	public MethodInstance getBitcoinContestMethod() throws JSONException, IOException {
+	public void postBitcoinContest() throws JSONException, IOException {
 		JSONObject input = new JSONObject();
 		JSONObject data = new JSONObject();
 		JSONObject prop_data = new JSONObject();
@@ -70,14 +73,28 @@ public class FixedOddsContest extends Utils{
 		data.put("prop_data", prop_data);
 		input.put("data", data);
 		
-		MethodInstance method = new MethodInstance();
-		JSONObject output = new JSONObject("{\"status\":\"0\"}");
-		method.session = session;
-		method.input = input;	
-		method.output = output;
-		method.session = null;
-		method.sql_connection = sql_connection;
-		return method;
+		Socket dummy_socket = null;
+		
+		try {
+			dummy_socket = new Socket();
+			dummy_response = new HttpResponse(dummy_socket, "");
+			
+			
+			MethodInstance method = new MethodInstance();
+			JSONObject output = new JSONObject("{\"status\":\"0\"}");
+			method.session = session;
+			method.input = input;	
+			method.output = output;
+			method.session = null;
+			method.sql_connection = sql_connection;
+			method.response = dummy_response;
+			new SetupPropBet(method);
+			
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			dummy_socket.close();
+		}
 		
 		
 	}
