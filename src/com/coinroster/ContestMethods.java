@@ -44,51 +44,10 @@ public class ContestMethods extends Utils {
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
-			DB db = new DB(sql_connection);
-			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
-			bit_bot.setup();
-	
-			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 			
-			Calendar cal = Calendar.getInstance();
-
-			cal.setTime(c_date);
-			cal.add(Calendar.MINUTE, 74); 
-			cal.add(Calendar.SECOND, 30); //Registration time.
-			Date d_date = cal.getTime();
-			Long deadline = d_date.getTime();
-			
-			cal.add(Calendar.SECOND, 30);
-			cal.add(Calendar.HOUR_OF_DAY, 24); //From registration deadline to settlement.
-			d_date = cal.getTime();
-			Long settlement = d_date.getTime();
-			
-			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
-			
-			for(int i = 0; i < prop_contests.length(); i++){
-				JSONObject contest = prop_contests.getJSONObject(i);
-				String title = c_date.toString() + " | " + contest.getString("title");
-				contest.put("title", title);
-				contest.put("odds_source", "n/a");
-				contest.put("registration_deadline", deadline);
-				
-				MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_mutuel_data = bit_bot.buildHighLowFixedTable(settlement, contest);
-				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-				pari_method.input = pari_mutuel_data;
-				pari_method.output = pari_output;
-				pari_method.session = null;
-				pari_method.sql_connection = sql_connection;
-				try{
-					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-					c.newInstance(pari_method);
-				}
-				catch(Exception e){
-					log(pari_method.output.toString());
-					Server.exception(e);
-				}
-			}
-
+			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
+			ContestPoster.buildSession();
+			ContestPoster.postBitcoinContest();
 			
 		} catch (Exception e) {
 			Server.exception(e);
