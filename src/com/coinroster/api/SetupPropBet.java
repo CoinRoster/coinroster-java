@@ -1,6 +1,7 @@
 package com.coinroster.api;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.time.Instant;
@@ -488,9 +489,12 @@ public class SetupPropBet extends Utils{
 					output = prop_method.output;
 					output.put("status", "1");
 				}
-				catch(Exception e){
+				catch(InvocationTargetException e){
 					output = prop_method.output;
+					Throwable cause = e.getCause();
+					log(cause.getMessage());
 					Server.exception(e);
+					
 				}
 				
 				
