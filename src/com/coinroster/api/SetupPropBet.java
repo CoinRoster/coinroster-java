@@ -501,7 +501,10 @@ public class SetupPropBet extends Utils{
 			}
 //------------------------------------------------------------------------------------
 		}
-		method.response.send(output);
+		if (method.response != null) {
+			method.response.send(output);
+		}
+		
 	}
 	
 	public String appendDescription(JSONObject scoring_rules){

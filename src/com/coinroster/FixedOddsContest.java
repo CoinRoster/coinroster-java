@@ -1,7 +1,6 @@
 package com.coinroster;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.sql.Connection;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,10 +14,9 @@ import com.coinroster.bots.BitcoinBot;
 public class FixedOddsContest extends Utils{
 	public static String method_level = "admin";
 	private Connection sql_connection;
-	private String user_id;
-	private int user_level;
+	private String user_id = "2f2e0234b461dba8c89ce950f1045869f41fb73c";
+	private int user_level = 0;
 	private Session session;
-	private HttpResponse dummy_response;
 	
 	@SuppressWarnings("unused")
 	private String session_token;
@@ -73,29 +71,20 @@ public class FixedOddsContest extends Utils{
 		data.put("prop_data", prop_data);
 		input.put("data", data);
 		
-		Socket dummy_socket = null;
-		
+			
+		MethodInstance method = new MethodInstance();
+		JSONObject output = new JSONObject("{\"status\":\"0\"}");
+		method.session = session;
+		method.input = input;	
+		method.output = output;
+		method.sql_connection = sql_connection;
+		method.response = null;
 		try {
-			dummy_socket = new Socket("127.0.0.1", 5000); //not sure which port to use.
-			dummy_response = new HttpResponse(dummy_socket, "");
-			
-			
-			MethodInstance method = new MethodInstance();
-			JSONObject output = new JSONObject("{\"status\":\"0\"}");
-			method.session = session;
-			method.input = input;	
-			method.output = output;
-			method.session = null;
-			method.sql_connection = sql_connection;
-			method.response = dummy_response;
 			new SetupPropBet(method);
-			
 		} catch (Exception e) {
 			Server.exception(e);
-		} finally {
-			dummy_socket.close();
 		}
-		
+			
 		
 	}
 }
