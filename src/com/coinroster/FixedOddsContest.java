@@ -78,7 +78,7 @@ public class FixedOddsContest extends Utils{
 		method.input = input;	
 		method.output = output;
 		method.sql_connection = sql_connection;
-		method.response = null;
+		method.internal_caller = true;
 		try {
 			new SetupPropBet(method);
 		} catch (Exception e) {

@@ -501,7 +501,7 @@ public class SetupPropBet extends Utils{
 			}
 //------------------------------------------------------------------------------------
 		}
-		if (method.response != null) {
+		if (method.internal_caller == false) {
 			method.response.send(output);
 		}
 		
