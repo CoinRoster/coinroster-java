@@ -76,7 +76,7 @@ public class FixedOddsContest extends Utils{
 		Socket dummy_socket = null;
 		
 		try {
-			dummy_socket = new Socket();
+			dummy_socket = new Socket("127.0.0.1", 5000); //not sure which port to use.
 			dummy_response = new HttpResponse(dummy_socket, "");
 			
 			
