@@ -14,7 +14,7 @@ import com.coinroster.bots.BitcoinBot;
 public class FixedOddsContest extends Utils{
 	public static String method_level = "admin";
 	private Connection sql_connection;
-	private String user_id = "2f2e0234b461dba8c89ce950f1045869f41fb73c";
+	private String user_id;
 	private int user_level = 0;
 	private Session session;
 	
@@ -22,11 +22,12 @@ public class FixedOddsContest extends Utils{
 	private String session_token;
 	
 	public FixedOddsContest(Connection connection) {
+		user_id = "2f2e0234b461dba8c89ce950f1045869f41fb73c";
 		this.sql_connection = connection;
 	}
 	
 	public void buildSession() {
-		session = new Session("");
+		session = new Session("", user_id);
 		try {
 			session_token = session.create_session(sql_connection, session, "ContestPoster", user_id, user_level);
 		} catch (Exception e) {
