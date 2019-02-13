@@ -89,7 +89,7 @@ public static void checkBitcoinContests() {
 					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
 					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
 					
-					Long settlement = prop_data.getLong("deadline");
+					Long settlement = prop_data.getLong("settlement_deadline");
 					
 					//Check if it has been a day since the contest was in play
 					if (System.currentTimeMillis() < settlement) continue;
