@@ -65,6 +65,7 @@ public class FixedOddsContest extends Utils{
 		prop_data.put("under_odds", 1.85);
 		prop_data.put("risk", 0.001);
 		prop_data.put("over_under_value", bitcoinBot.getRealtimeIndex());
+		prop_data.put("auto_settle", 1);
 		
 		data.put("sub_category", "BITCOINS");
 		data.put("private", false);
