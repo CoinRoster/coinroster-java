@@ -122,67 +122,6 @@ public class BitcoinBot extends Utils {
 	}
 	
 	
-	public JSONObject buildHighLowTable(Long deadline, JSONObject contest) throws JSONException{
-			
-			JSONArray option_table = new JSONArray(); 
-			JSONObject lower = new JSONObject();
-			lower.put("description", "Under " + this.realtimeIndex.toString() + "BTC");
-			lower.put("id", 1);
-			option_table.put(lower);
-	
-			
-			//Not sure about these table values, but should work for now.
-			JSONObject higher = new JSONObject();
-			higher.put("description",  "Over or equal to " + this.realtimeIndex.toString() + "BTC");
-			higher.put("id", 2);
-			option_table.put(higher);
-	
-		
-			contest.put("option_table", option_table);
-			
-			//Add the current index to the prop data.
-			JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
-			
-			prop_data.put("BTC_index", this.realtimeIndex.toString());
-			prop_data.put("settlement_deadline", deadline);
-			
-			contest.put("prop_data", prop_data.toString());
-			
-			
-			return contest;
-	}
-	
-	
-	public JSONObject buildHighLowFixedTable(Long deadline, JSONObject contest)  throws JSONException{
-		
-		JSONArray option_table = new JSONArray(); 
-		JSONObject lower = new JSONObject();
-		lower.put("odds",1.95);
-		lower.put("description", "Lower");
-		lower.put("id", 1);
-		option_table.put(lower);
-
-		
-		//Not sure about these table values, but should work for now.
-		JSONObject higher = new JSONObject();
-		higher.put("odds",1.95);
-		higher.put("description", "Higher");
-		higher.put("id", 2);
-		option_table.put(higher);
-
-		contest.put("option_table", option_table);
-		
-		//Add the current index to the prop data.
-		JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
-		
-		prop_data.put("risk", 0.0001);
-		prop_data.put("BTC_index", this.realtimeIndex.toString());
-		prop_data.put("settlement_deadline", deadline);
-		
-		contest.put("prop_data", prop_data.toString());
-		return contest;
-	}
-	
 	
 	public JSONObject chooseWinnerHigherLower(int contest_id, JSONObject prop_data, JSONArray option_table) throws JSONException {
 		

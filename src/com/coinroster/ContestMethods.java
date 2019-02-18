@@ -46,7 +46,7 @@ public class ContestMethods extends Utils {
 			sql_connection = Server.sql_connection();
 			
 			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
-			ContestPoster.buildSession();
+			ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
 			ContestPoster.postBitcoinContest();
 			
 			
