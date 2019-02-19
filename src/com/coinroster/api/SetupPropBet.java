@@ -175,6 +175,7 @@ public class SetupPropBet extends Utils{
 					case "BITCOINS":
 						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
 						Long settlement_date = prop_data.getLong("settlement_deadline");
+						Date current_date = new Date(System.currentTimeMillis());
 						
 						if (registration_date < System.currentTimeMillis() + 60 * 60 * 1000) {
 							output.put("error", "Registration deadline too early.");
@@ -183,7 +184,7 @@ public class SetupPropBet extends Utils{
 							output.put("error", "Settlement deadline too close to registration deadline.");
 							break method;
 						}
-						date_name_title = new Date(registration_date).toString();
+						date_name_title = "Bitcoin Price Over/Under | " + current_date.toString();
 						deadline = registration_date;
 						break;
 					default:
@@ -426,12 +427,15 @@ public class SetupPropBet extends Utils{
 						category = "FINANCIAL";
 						sub_category = "BITCOINS";
 						Date settlement_date = new Date(prop_data.getLong("settlement_deadline"));
+
 						
 						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
-						desc = "Place bets on whether the bitcoin price index will be over or under " + over_under;
-						desc += " by " + settlement_date.toString();
-						
-						
+						desc = "What will the price of bitcoin be on " + settlement_date.toString() + "? </br>";
+						desc += "This is a fixed odds contest </br>";
+						desc += "Based on ";
+						desc += "<a href=\"https://www.cmegroup.com/trading/cryptocurrency-indices/cf-bitcoin-reference-rate.html\">";
+						desc += "CME CF Bitcoin Real Time Index</a></br>";
+						desc += "Full Contest <a href=\"http://blog.coinroster.com/faq/\">Rules</a>";
 						
 						JSONObject lower = new JSONObject();
 						lower.put("description", "Under " + over_under + "BTC");
