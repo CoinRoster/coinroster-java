@@ -44,11 +44,30 @@ public class ContestMethods extends Utils {
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
+			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
+			
+			Calendar cal = Calendar.getInstance();
+
+			cal.setTime(c_date);
+			cal.add(Calendar.MINUTE, 65);
+			Date d_date = cal.getTime();
+			Long registration_deadline = d_date.getTime();
+			
+			cal.add(Calendar.MINUTE, -65);
+			cal.add(Calendar.WEEK_OF_YEAR, 1);
+			d_date = cal.getTime();
+			Long settlement_deadline = d_date.getTime();
 			
 			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
 			ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
-			ContestPoster.postBitcoinContest();
+			ContestPoster.postBitcoinContest(registration_deadline, settlement_deadline);
 			
+			cal.add(Calendar.WEEK_OF_YEAR, -1);
+			cal.add(Calendar.MONTH, 1);
+			d_date = cal.getTime();
+			settlement_deadline = d_date.getTime();
+			
+			ContestPoster.postBitcoinContest(registration_deadline, settlement_deadline);
 			
 		} catch (Exception e) {
 			Server.exception(e);

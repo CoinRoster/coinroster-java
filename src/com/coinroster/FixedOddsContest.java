@@ -2,8 +2,6 @@ package com.coinroster;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.util.Calendar;
-import java.util.Date;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,25 +31,12 @@ public class FixedOddsContest extends Utils{
 		
 	}
 	
-	public void postBitcoinContest() throws JSONException, IOException {
+	public void postBitcoinContest(Long registration_deadline, Long settlement_deadline) throws JSONException, IOException {
 		JSONObject input = new JSONObject();
 		JSONObject data = new JSONObject();
 		JSONObject prop_data = new JSONObject();
 		
-		Date c_date = new Date(System.currentTimeMillis()); //time of price index.
-		
-		Calendar cal = Calendar.getInstance();
 
-		cal.setTime(c_date);
-		cal.add(Calendar.MINUTE, 74); 
-		cal.add(Calendar.SECOND, 30); //Registration time.
-		Date d_date = cal.getTime();
-		Long registration_deadline = d_date.getTime();
-		
-		cal.add(Calendar.SECOND, 30);
-		cal.add(Calendar.HOUR_OF_DAY, 24); //From registration deadline to settlement.
-		d_date = cal.getTime();
-		Long settlement_deadline = d_date.getTime();
 		
 		BitcoinBot bitcoinBot = new BitcoinBot(sql_connection);
 		bitcoinBot.setup();
