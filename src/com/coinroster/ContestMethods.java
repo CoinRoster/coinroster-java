@@ -49,11 +49,11 @@ public class ContestMethods extends Utils {
 			Calendar cal = Calendar.getInstance();
 
 			cal.setTime(c_date);
-			cal.add(Calendar.MINUTE, 65);
+			cal.add(Calendar.MINUTE, 10);
 			Date d_date = cal.getTime();
 			Long registration_deadline = d_date.getTime();
 			
-			cal.add(Calendar.MINUTE, -65);
+			cal.add(Calendar.MINUTE, -10);
 			cal.add(Calendar.WEEK_OF_YEAR, 1);
 			d_date = cal.getTime();
 			Long settlement_deadline = d_date.getTime();

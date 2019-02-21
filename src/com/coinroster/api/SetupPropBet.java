@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -175,16 +176,9 @@ public class SetupPropBet extends Utils{
 					case "BITCOINS":
 						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
 						Long settlement_date = prop_data.getLong("settlement_deadline");
-						Date current_date = new Date(System.currentTimeMillis());
 						
-						if (registration_date < System.currentTimeMillis() + 60 * 60 * 1000) {
-							output.put("error", "Registration deadline too early.");
-							break method;
-						} else if (settlement_date < registration_date + 60 * 60 * 1000){
-							output.put("error", "Settlement deadline too close to registration deadline.");
-							break method;
-						}
-						date_name_title = "Bitcoin Price Over/Under | " + current_date.toString();
+						SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy");
+						date_name_title = "Bitcoin Price Over/Under | " + df.format(settlement_date);
 						deadline = registration_date;
 						break;
 					default:
@@ -438,14 +432,14 @@ public class SetupPropBet extends Utils{
 						desc += "Full Contest <a href=\"http://blog.coinroster.com/faq/\">Rules</a>";
 						
 						JSONObject lower = new JSONObject();
-						lower.put("description", "Under " + over_under + "BTC");
+						lower.put("description", "Under " + over_under + " BTC");
 						lower.put("id", 1);
 						lower.put("odds", prop_data.getDouble("under_odds"));
 						option_table.put(lower);
 						
 						//Not sure about these table values, but should work for now.
 						JSONObject higher = new JSONObject();
-						higher.put("description",  "Over or equal to " + over_under + "BTC");
+						higher.put("description",  "Over or equal to " + over_under + " BTC");
 						higher.put("id", 2);
 						higher.put("odds", prop_data.getDouble("over_odds"));
 						option_table.put(higher);

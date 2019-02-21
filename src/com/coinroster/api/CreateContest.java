@@ -131,14 +131,14 @@ public class CreateContest extends Utils
             	}
 
             if(settlement_deadline != null){
-	            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000)
+	            if (settlement_deadline - registration_deadline < 1 * 60 * 60 * 1000 && category != "FINANCIAL" )
 	            	{
 	            	output.put("error", "Settlement deadline must be at least 1 hour from resgistration deadline");
 	                break method;
 	            	}
             }
             
-            if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000)
+            if (registration_deadline - System.currentTimeMillis() < 1 * 60 * 60 * 1000 && category != "FINANCIAL")
 	        	{
 	        	output.put("error", "Registration deadline must be at least 1 hour from now");
 	            break method;
