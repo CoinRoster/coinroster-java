@@ -88,6 +88,7 @@ public class SetupPropBet extends Utils{
 				}
 				
 				Long deadline = null;
+				Long settlement_deadline = null;
 				switch(sport){
 					
 					case "BASEBALL":
@@ -180,6 +181,7 @@ public class SetupPropBet extends Utils{
 						SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy");
 						date_name_title = "Bitcoin Price Over/Under | " + df.format(settlement_date);
 						deadline = registration_date;
+						settlement_deadline = settlement_date;
 						break;
 					default:
 						break;
@@ -421,7 +423,7 @@ public class SetupPropBet extends Utils{
 						category = "FINANCIAL";
 						sub_category = "BITCOINS";
 						Date settlement_date = new Date(prop_data.getLong("settlement_deadline"));
-
+						
 						
 						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
 						desc = "What will the price of bitcoin be on " + settlement_date.toString() + "? </br>";
@@ -472,6 +474,10 @@ public class SetupPropBet extends Utils{
 				prop.put("prop_data", prop_data.toString());
 				prop.put("private", priv);
 				prop.put("gameIDs", gameIDs);
+				
+				if (settlement_deadline != null) {
+					prop.put("settlement_deadline", settlement_deadline);
+				}
 				
 				MethodInstance prop_method = new MethodInstance();
 				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");
