@@ -58,16 +58,20 @@ public class ContestMethods extends Utils {
 			d_date = cal.getTime();
 			Long settlement_deadline = d_date.getTime();
 			
+			String title = "Bitcoin Price in a Week";
+			
 			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
 			ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
-			ContestPoster.postBitcoinContest(registration_deadline, settlement_deadline);
+			ContestPoster.postBitcoinContest(title, registration_deadline, settlement_deadline);
 			
 			cal.add(Calendar.WEEK_OF_YEAR, -1);
 			cal.add(Calendar.MONTH, 1);
 			d_date = cal.getTime();
 			settlement_deadline = d_date.getTime();
 			
-			ContestPoster.postBitcoinContest(registration_deadline, settlement_deadline);
+			title = "Bitcoin Price in a Month";
+			
+			ContestPoster.postBitcoinContest(title, registration_deadline, settlement_deadline);
 			
 		} catch (Exception e) {
 			Server.exception(e);

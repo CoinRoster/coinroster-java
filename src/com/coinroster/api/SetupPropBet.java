@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -178,8 +177,7 @@ public class SetupPropBet extends Utils{
 						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
 						Long settlement_date = prop_data.getLong("settlement_deadline");
 						
-						SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy");
-						date_name_title = "Bitcoin Price Over/Under | " + df.format(settlement_date);
+						date_name_title = prop_data.getString("title");
 						deadline = registration_date;
 						settlement_deadline = settlement_date;
 						break;
@@ -433,18 +431,18 @@ public class SetupPropBet extends Utils{
 						desc += "CME CF Bitcoin Real Time Index</a></br>";
 						desc += "Full Contest <a href=\"http://blog.coinroster.com/faq/\">Rules</a>";
 						
-						JSONObject lower = new JSONObject();
-						lower.put("description", "Under " + over_under + " BTC");
-						lower.put("id", 1);
-						lower.put("odds", prop_data.getDouble("under_odds"));
-						option_table.put(lower);
-						
-						//Not sure about these table values, but should work for now.
 						JSONObject higher = new JSONObject();
-						higher.put("description",  "Over or equal to " + over_under + " BTC");
-						higher.put("id", 2);
+						higher.put("description", "Over or equal to " + over_under + " BTC");
+						higher.put("id", 1);
 						higher.put("odds", prop_data.getDouble("over_odds"));
 						option_table.put(higher);
+						
+						//Not sure about these table values, but should work for now.
+						JSONObject lower = new JSONObject();
+						lower.put("description",  "Under " + over_under + " BTC");
+						lower.put("id", 2);
+						lower.put("odds", prop_data.getDouble("under_odds"));
+						option_table.put(lower);
 						
 						prop_data.put("BTC_index", over_under);
 						break;

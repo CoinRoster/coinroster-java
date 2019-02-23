@@ -134,11 +134,11 @@ public class BitcoinBot extends Utils {
 		BigDecimal start_index = new BigDecimal(prop_data.getString("BTC_index"));
 		if (start_index.compareTo(this.realtimeIndex) <= 0) {
 			//higher
-			winning_outcome = 2;
+			winning_outcome = 1;
 			fields.put("winning_outcome", winning_outcome);
 		} else {
 			//lower
-			winning_outcome = 1;
+			winning_outcome = 2;
 			fields.put("winning_outcome", winning_outcome);
 		}
 

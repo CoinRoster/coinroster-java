@@ -31,7 +31,7 @@ public class FixedOddsContest extends Utils{
 		
 	}
 	
-	public void postBitcoinContest(Long registration_deadline, Long settlement_deadline) throws JSONException, IOException {
+	public void postBitcoinContest(String title, Long registration_deadline, Long settlement_deadline) throws JSONException, IOException {
 		JSONObject input = new JSONObject();
 		JSONObject data = new JSONObject();
 		JSONObject prop_data = new JSONObject();
@@ -49,6 +49,7 @@ public class FixedOddsContest extends Utils{
 		prop_data.put("risk", 0.001);
 		prop_data.put("over_under_value", bitcoinBot.getRealtimeIndex());
 		prop_data.put("auto_settle", 1);
+		prop_data.put("title", title);
 		
 		data.put("sub_category", "BITCOINS");
 		data.put("private", false);
