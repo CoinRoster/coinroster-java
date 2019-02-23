@@ -176,8 +176,8 @@ public class SetupPropBet extends Utils{
 					case "BITCOINS":
 						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
 						Long settlement_date = prop_data.getLong("settlement_deadline");
-						
-						date_name_title = prop_data.getString("title");
+
+						contest_title = prop_data.getString("title");
 						deadline = registration_date;
 						settlement_deadline = settlement_date;
 						break;
@@ -475,6 +475,9 @@ public class SetupPropBet extends Utils{
 				
 				if (settlement_deadline != null) {
 					prop.put("settlement_deadline", settlement_deadline);
+				}
+				if (sub_category == "BITCOINS") {
+					prop.put("title", contest_title);
 				}
 				
 				MethodInstance prop_method = new MethodInstance();
