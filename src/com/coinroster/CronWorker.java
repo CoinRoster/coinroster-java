@@ -103,7 +103,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 		
 		if((minute%10)==0) {
-			UpdateBitcoinIndex();
+			UpdateCryptoIndexCME();
 			ContestMethods.createBitcoinContests();
 			ContestMethods.checkBitcoinContests();
 		}
@@ -404,7 +404,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 	/**
 	 * Save the latest BTC price index from CME Group.
 	 */
-	private void UpdateBitcoinIndex()
+	private void UpdateCryptoIndexCME()
 	{
 	Server.async_updater.execute(new Runnable() 
 		{
@@ -414,27 +414,30 @@ public class CronWorker extends Utils implements Callable<Integer>
 			try {
 				
 				sql_connection = Server.sql_connection();
-				String rtiDate = "-";
+				String btc_date = "-";
+				String eth_date = "-";
 				JSONObject json = null;
 				
 				while (true) {
 					String url = "https://www.cmegroup.com/CmeWS/mvc/Bitcoin/All";
 					json = JsonReader.readJsonFromUrl(url);
 					 
-					rtiDate = json.getJSONObject("realTimeIndex").getString("date");
+					btc_date = json.getJSONObject("realTimeIndex").getString("date");
+					eth_date = json.getJSONObject("ethRealTimeIndex").getString("date");
 					
-					if (rtiDate != "-") {
+					if (btc_date != "-" && eth_date != "-") {
 						break;
 					}
 					Thread.sleep(500);
 				}
 				
-				String rti = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
+				String btc = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
+				//String eth = String.valueOf(json.getJSONObject("ethRealTimeIndex").getDouble("value"));
 				
 				PreparedStatement stmnt = sql_connection.prepareStatement(
 						"insert ignore into bitcoin_reference(price,  date_updated) VALUES (?, ?)");
-				stmnt.setDouble(1, Double.parseDouble(rti));
-				stmnt.setString(2, rtiDate);
+				stmnt.setDouble(1, Double.parseDouble(btc));
+				stmnt.setString(2, btc_date);
 				stmnt.executeUpdate();
 				}
 			catch (Exception e) 
