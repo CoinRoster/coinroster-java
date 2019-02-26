@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -176,8 +177,13 @@ public class SetupPropBet extends Utils{
 					case "BITCOINS":
 						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
 						Long settlement_date = prop_data.getLong("settlement_deadline");
-
-						contest_title = prop_data.getString("title");
+						SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy");
+						Date sd = new Date(settlement_date);
+						try{
+							contest_title = prop_data.getString("title");
+						} catch (Exception e){
+							contest_title = "Bitcoin Price " + df.format(sd);
+						}
 						deadline = registration_date;
 						settlement_deadline = settlement_date;
 						break;
@@ -476,7 +482,7 @@ public class SetupPropBet extends Utils{
 				if (settlement_deadline != null) {
 					prop.put("settlement_deadline", settlement_deadline);
 				}
-				if (sub_category == "BITCOINS") {
+				if (contest_title != null) {
 					prop.put("title", contest_title);
 				}
 				
