@@ -61,7 +61,12 @@ public class ContestMethods extends Utils {
 			String title = "Bitcoin Price in a Week";
 			
 			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
-			ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
+			if (Server.dev_server) {
+				ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
+			} else {
+				ContestPoster.buildSession("");
+			}
+			
 			ContestPoster.postBitcoinContest(title, registration_deadline, settlement_deadline);
 			
 			cal.add(Calendar.WEEK_OF_YEAR, -1);
