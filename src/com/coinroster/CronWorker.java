@@ -87,6 +87,12 @@ public class CronWorker extends Utils implements Callable<Integer>
 			UpdateBTCUSD();
 		}
 		
+		if((minute%10)==0) {
+			ContestMethods.createBitcoinContests();
+			ContestMethods.checkBitcoinContests();
+			UpdateCryptoIndexCME();
+		}
+		
 		if((minute%5)==0){
 		    ContestMethods.checkCrowdContests();
 		    new CloseContestRegistration();
@@ -102,11 +108,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 			
 		}
 		
-		if((minute%10)==0) {
-			UpdateCryptoIndexCME();
-			ContestMethods.createBitcoinContests();
-			ContestMethods.checkBitcoinContests();
-		}
 		
 		if((hour%6==0) && (minute==30)){
 			ContestMethods.updateGolfContestField(hour);
@@ -428,7 +429,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 					if (btc_date != "-" && eth_date != "-") {
 						break;
 					}
-					Thread.sleep(500);
+					Thread.sleep(100);
 				}
 				
 				String btc = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
