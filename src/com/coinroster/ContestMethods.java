@@ -51,7 +51,7 @@ public class ContestMethods extends Utils {
 			if (Server.dev_server) {
 				ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
 			} else {
-				ContestPoster.buildSession(""); //Need live server user-
+				ContestPoster.buildSession("7933171906e38ddface7325ebadafb90456a27e6"); //Need live server user-
 			}
 			
 			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
