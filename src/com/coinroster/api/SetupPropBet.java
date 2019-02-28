@@ -1,11 +1,14 @@
 package com.coinroster.api;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 
 import org.json.JSONArray;
@@ -85,6 +88,7 @@ public class SetupPropBet extends Utils{
 				}
 				
 				Long deadline = null;
+				Long settlement_deadline = null;
 				switch(sport){
 					
 					case "BASEBALL":
@@ -170,7 +174,19 @@ public class SetupPropBet extends Utils{
 							break method;
 						}
 						break;
-						
+					case "BITCOINS":
+						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
+						Long settlement_date = prop_data.getLong("settlement_deadline");
+						SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy");
+						Date sd = new Date(settlement_date);
+						try{
+							contest_title = prop_data.getString("title");
+						} catch (Exception e){
+							contest_title = "Bitcoin Over/Under " + String.valueOf(prop_data.getDouble("over_under_value")) + " on " + df.format(sd);
+						}
+						deadline = registration_date;
+						settlement_deadline = settlement_date;
+						break;
 					default:
 						break;
 				}
@@ -406,6 +422,36 @@ public class SetupPropBet extends Utils{
 						prop_data.put("when", "tournament");
 						break;
 					
+					case "OVER_UNDER_BTC":
+						
+						category = "FINANCIAL";
+						sub_category = "BITCOINS";
+						Date settlement_date = new Date(prop_data.getLong("settlement_deadline"));
+						
+						
+						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
+						desc = "What will the price of bitcoin be on " + settlement_date.toString() + "? </br>";
+						desc += "This is a fixed odds contest </br>";
+						desc += "Based on ";
+						desc += "<a href=\"https://www.cmegroup.com/trading/cryptocurrency-indices/cf-bitcoin-reference-rate.html\">";
+						desc += "CME CF Bitcoin Real Time Index</a></br>";
+						desc += "Full Contest <a href=\"http://blog.coinroster.com/faq/\">Rules</a>";
+						
+						JSONObject higher = new JSONObject();
+						higher.put("description", "Over or equal to " + over_under + " BTC");
+						higher.put("id", 1);
+						higher.put("odds", prop_data.getDouble("over_odds"));
+						option_table.put(higher);
+						
+						//Not sure about these table values, but should work for now.
+						JSONObject lower = new JSONObject();
+						lower.put("description",  "Under " + over_under + " BTC");
+						lower.put("id", 2);
+						lower.put("odds", prop_data.getDouble("under_odds"));
+						option_table.put(lower);
+						
+						prop_data.put("BTC_index", over_under);
+						break;
 					
 					default:
 						log("Could not find prop bet with type = " + prop_type);
@@ -433,6 +479,13 @@ public class SetupPropBet extends Utils{
 				prop.put("private", priv);
 				prop.put("gameIDs", gameIDs);
 				
+				if (settlement_deadline != null) {
+					prop.put("settlement_deadline", settlement_deadline);
+				}
+				if (contest_title != null) {
+					prop.put("title", contest_title);
+				}
+				
 				MethodInstance prop_method = new MethodInstance();
 				JSONObject prop_output = new JSONObject("{\"status\":\"0\"}");
 				prop_method.input = prop;
@@ -447,9 +500,12 @@ public class SetupPropBet extends Utils{
 					output = prop_method.output;
 					output.put("status", "1");
 				}
-				catch(Exception e){
+				catch(InvocationTargetException e){
 					output = prop_method.output;
+					Throwable cause = e.getCause();
+					log(cause.getMessage());
 					Server.exception(e);
+					
 				}
 				
 				
@@ -460,7 +516,10 @@ public class SetupPropBet extends Utils{
 			}
 //------------------------------------------------------------------------------------
 		}
-		method.response.send(output);
+		if (method.internal_caller == false) {
+			method.response.send(output);
+		}
+		
 	}
 	
 	public String appendDescription(JSONObject scoring_rules){
@@ -493,5 +552,4 @@ public class SetupPropBet extends Utils{
 		}
 		return null;
 	}
-	
 }

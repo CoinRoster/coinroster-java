@@ -2414,7 +2414,5 @@ public class DB
 		rs = get.executeQuery();
 		return rs;
 	}
-	
-	
 }
 

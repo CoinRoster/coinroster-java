@@ -34,6 +34,16 @@ import com.coinroster.internal.UpdateContestStatus;
 public class ContestMethods extends Utils {
 
 	//------------------------------------------------------------------------------------
+
+
+	/**
+	 * Creates a new Basketball prop contest. Uses the `CONTEST_TEMPLATES` table from the database 
+	 * as a format reference.
+	 * 
+	 * @see com.coinroster.api.CreateContest
+	 * @throws Exception Can throw an error if new class instance cannot spawn
+	 * 
+	 */
 	public static void createBitcoinContests() {
 		
 		Connection sql_connection = null;
@@ -42,41 +52,40 @@ public class ContestMethods extends Utils {
 			DB db = new DB(sql_connection);
 			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
 			bit_bot.setup();
-	
-			Date rtiDate = bit_bot.getRealtimeIndexDate(); //time of price index.
+			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
+			if (Server.dev_server) {
+				ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
+			} else {
+				ContestPoster.buildSession("7933171906e38ddface7325ebadafb90456a27e6"); //Need live server user-
+			}
 			
+			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 			Calendar cal = Calendar.getInstance();
-			cal.setTime(rtiDate);
-			cal.add(Calendar.HOUR_OF_DAY, 2);
-			Date date = cal.getTime();
-			Long deadline = date.getTime(); //deadline = minutes from last rti update.
-	
-			JSONArray prop_contests = db.getRosterTemplates("BITCOIN");
+
+			cal.setTime(c_date);
+			cal.add(Calendar.MINUTE, 10);
+			Date d_date = cal.getTime();
+			Long registration_deadline = d_date.getTime();
+			cal.add(Calendar.MINUTE, -10);
 			
+			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
 			for(int i = 0; i < prop_contests.length(); i++){
 				JSONObject contest = prop_contests.getJSONObject(i);
-				String title = rtiDate.toString() + " | " + contest.getString("title");
-				contest.put("title", title);
-				contest.put("odds_source", "n/a");
-				contest.put("registration_deadline", deadline);
-				MethodInstance pari_method = new MethodInstance();
-				JSONObject pari_mutuel_data = bit_bot.createPariMutuel(deadline, date.toString(), contest);
-				JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-				pari_method.input = pari_mutuel_data;
-				pari_method.output = pari_output;
-				pari_method.session = null;
-				pari_method.sql_connection = sql_connection;
-				try{
-					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
-					c.newInstance(pari_method);
-				}
-				catch(Exception e){
-					log(pari_method.output.toString());
-					Server.exception(e);
-				}
+				JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+				
+				int duration = prop_data.getInt("duration");
+				cal.add(Calendar.DAY_OF_YEAR, duration);
+				d_date = cal.getTime();
+				Long settlement_deadline = d_date.getTime();
+				cal.add(Calendar.DAY_OF_YEAR, -duration);
+				
+				prop_data.put("prop_type", "OVER_UNDER_BTC");
+				prop_data.put("registration_deadline", registration_deadline);
+				prop_data.put("over_under_value", bit_bot.getRealtimeIndex());
+				prop_data.put("settlement_deadline", settlement_deadline);
+				ContestPoster.postBitcoinContest(prop_data);
 			}
 
-			
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {
@@ -89,10 +98,12 @@ public class ContestMethods extends Utils {
 				}
 			}
 		}
-	}
+}
 	
-	
-	public static void checkBitcoinContests() {
+	/**
+	 * Settles any Bitcoin contests that have been posted for 24 hours.
+	 */
+public static void checkBitcoinContests() {
 		
 		//For now, just settle all bitcoin contests..
 		
@@ -100,27 +111,27 @@ public class ContestMethods extends Utils {
 		try {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
-			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOIN", "PARI-MUTUEL");
+			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOINS", "PARI-MUTUEL");
 	
 			if(!(pari_contests.length() == 0)){
+				
 				BitcoinBot bitcoin_bot = new BitcoinBot(sql_connection);
 				bitcoin_bot.setup();
 
-				pari_contests = db_connection.get_active_pari_mutuels("BITCOIN", "PARI-MUTUEL");
 				Iterator<?> pari_contest_ids = pari_contests.keys();	
 				while(pari_contest_ids.hasNext()){
 					String c_id = (String) pari_contest_ids.next();
 					
-					Long deadline = Long.parseLong(pari_contests.getJSONObject(c_id).getString("deadline"));
-					
-					//Check if it has been a day since the contest was posted.
-					if (System.currentTimeMillis() - deadline < 22 * 60 * 60 * 1000) continue;
-					
-					JSONObject scoring_rules = new JSONObject(pari_contests.getJSONObject(c_id).getString("scoring_rules"));
 					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
 					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
+					
+					Long settlement = prop_data.getLong("settlement_deadline");
+					
+					//Check if it has been a day since the contest was in play
+					if (System.currentTimeMillis() < settlement) continue;
 
-					JSONObject pari_fields = bitcoin_bot.settlePariMutuel(Integer.parseInt(c_id), scoring_rules, prop_data, option_table);
+					JSONObject pari_fields = bitcoin_bot.chooseWinnerHigherLower(Integer.parseInt(c_id), prop_data, option_table);
+					
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
 					pari_method.input = pari_fields;
@@ -136,6 +147,7 @@ public class ContestMethods extends Utils {
 					}		
 				}
 			}
+			
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {
@@ -155,7 +167,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createBasketballContests() {
 	
@@ -395,7 +406,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createHockeyContests() {
 	
@@ -510,8 +520,6 @@ public class ContestMethods extends Utils {
 	 * Check to see if contests are in play, settle if necessary.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkHockeyContests() {
 		Connection sql_connection = null;
@@ -635,7 +643,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createGolfContests() {
 	
@@ -788,8 +795,6 @@ public class ContestMethods extends Utils {
 	 * Needs to settle both voting round and betting round if settlement time has elapsed.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkGolfContests() {
 		Connection sql_connection = null;
@@ -1016,8 +1021,6 @@ public class ContestMethods extends Utils {
 	 * Needs to settle both voting round and betting round if settlement time has elapsed.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkCrowdContests() {
 	
@@ -1140,7 +1143,6 @@ public class ContestMethods extends Utils {
 	 * as a format reference.
 	 * 
 	 * @see com.coinroster.api.CreateContest
-	 * @throws Exception Can throw an error if new class instance cannot spawn
 	 */
 	public static void createBaseballContests() {
 	
@@ -1276,8 +1278,6 @@ public class ContestMethods extends Utils {
 	 * Needs to settle both voting round and betting round if settlement time has elapsed.
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
-	 * @throws Exception Can throw an error if new class instance cannot spawn
-	 * @throws SQLException
 	 */
 	public static void checkBaseballContests() {
 		Connection sql_connection = null;

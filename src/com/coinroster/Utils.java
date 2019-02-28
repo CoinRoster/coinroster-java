@@ -115,7 +115,7 @@ public class Utils
 	
 	/**
 	 * Prints out debugging statements to server logs.
-	 * Logs are stored at <root_dir>/coinroster.txt
+	 * Logs are stored at (root_dir)/coinroster.txt
 	 * @param msg
 	 */
 	public static void log(Object msg)
