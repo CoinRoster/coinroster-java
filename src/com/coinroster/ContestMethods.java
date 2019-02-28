@@ -44,40 +44,43 @@ public class ContestMethods extends Utils {
 		Connection sql_connection = null;
 		try {
 			sql_connection = Server.sql_connection();
-			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
+			DB db = new DB(sql_connection);
+			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
+			bit_bot.setup();
+			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
+			if (Server.dev_server) {
+				ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
+			} else {
+				ContestPoster.buildSession(""); //Need live server user-
+			}
 			
+			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 			Calendar cal = Calendar.getInstance();
 
 			cal.setTime(c_date);
 			cal.add(Calendar.MINUTE, 10);
 			Date d_date = cal.getTime();
 			Long registration_deadline = d_date.getTime();
-			
 			cal.add(Calendar.MINUTE, -10);
-			cal.add(Calendar.WEEK_OF_YEAR, 1);
-			d_date = cal.getTime();
-			Long settlement_deadline = d_date.getTime();
 			
-			String title = "Bitcoin Price in a Week";
-			
-			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
-			if (Server.dev_server) {
-				ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
-			} else {
-				ContestPoster.buildSession("");
+			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
+			for(int i = 0; i < prop_contests.length(); i++){
+				JSONObject contest = prop_contests.getJSONObject(i);
+				JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+				
+				int duration = prop_data.getInt("duration");
+				cal.add(Calendar.DAY_OF_YEAR, duration);
+				d_date = cal.getTime();
+				Long settlement_deadline = d_date.getTime();
+				cal.add(Calendar.DAY_OF_YEAR, -duration);
+				
+				prop_data.put("prop_type", "OVER_UNDER_BTC");
+				prop_data.put("registration_deadline", registration_deadline);
+				prop_data.put("over_under_value", bit_bot.getRealtimeIndex());
+				prop_data.put("settlement_deadline", settlement_deadline);
+				ContestPoster.postBitcoinContest(prop_data);
 			}
-			
-			ContestPoster.postBitcoinContest(title, registration_deadline, settlement_deadline);
-			
-			cal.add(Calendar.WEEK_OF_YEAR, -1);
-			cal.add(Calendar.MONTH, 1);
-			d_date = cal.getTime();
-			settlement_deadline = d_date.getTime();
-			
-			title = "Bitcoin Price in a Month";
-			
-			ContestPoster.postBitcoinContest(title, registration_deadline, settlement_deadline);
-			
+
 		} catch (Exception e) {
 			Server.exception(e);
 		} finally {

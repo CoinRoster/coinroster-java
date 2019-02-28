@@ -182,7 +182,7 @@ public class SetupPropBet extends Utils{
 						try{
 							contest_title = prop_data.getString("title");
 						} catch (Exception e){
-							contest_title = "Bitcoin Price " + df.format(sd);
+							contest_title = "Bitcoin Over/Under " + String.valueOf(prop_data.getDouble("over_under_value")) + " on " + df.format(sd);
 						}
 						deadline = registration_date;
 						settlement_deadline = settlement_date;
@@ -552,5 +552,4 @@ public class SetupPropBet extends Utils{
 		}
 		return null;
 	}
-	
 }

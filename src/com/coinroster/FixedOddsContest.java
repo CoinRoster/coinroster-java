@@ -2,12 +2,12 @@ package com.coinroster;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.coinroster.api.SetupPropBet;
-import com.coinroster.bots.BitcoinBot;
 
 public class FixedOddsContest extends Utils{
 	public static String method_level = "admin";
@@ -31,32 +31,15 @@ public class FixedOddsContest extends Utils{
 		
 	}
 	
-	public void postBitcoinContest(String title, Long registration_deadline, Long settlement_deadline) throws JSONException, IOException {
+	public void postBitcoinContest(JSONObject prop_data) throws JSONException, IOException, SQLException {
 		JSONObject input = new JSONObject();
 		JSONObject data = new JSONObject();
-		JSONObject prop_data = new JSONObject();
-		
 
-		
-		BitcoinBot bitcoinBot = new BitcoinBot(sql_connection);
-		bitcoinBot.setup();
-		
-		prop_data.put("prop_type", "OVER_UNDER_BTC");
-		prop_data.put("registration_deadline", registration_deadline);
-		prop_data.put("settlement_deadline", settlement_deadline);
-		prop_data.put("over_odds", 1.85);
-		prop_data.put("under_odds", 1.85);
-		prop_data.put("risk", 0.001);
-		prop_data.put("over_under_value", bitcoinBot.getRealtimeIndex());
-		prop_data.put("auto_settle", 1);
-		prop_data.put("title", title);
-		
 		data.put("sub_category", "BITCOINS");
 		data.put("private", false);
 		data.put("prop_data", prop_data);
 		input.put("data", data);
-		
-			
+
 		MethodInstance method = new MethodInstance();
 		JSONObject output = new JSONObject("{\"status\":\"0\"}");
 		method.session = session;
@@ -69,7 +52,5 @@ public class FixedOddsContest extends Utils{
 		} catch (Exception e) {
 			Server.exception(e);
 		}
-			
-		
 	}
 }
