@@ -433,13 +433,20 @@ public class CronWorker extends Utils implements Callable<Integer>
 				}
 				
 				String btc = String.valueOf(json.getJSONObject("realTimeIndex").getDouble("value"));
-				//String eth = String.valueOf(json.getJSONObject("ethRealTimeIndex").getDouble("value"));
+				String eth = String.valueOf(json.getJSONObject("ethRealTimeIndex").getDouble("value"));
 				
-				PreparedStatement stmnt = sql_connection.prepareStatement(
+				PreparedStatement update_btc = sql_connection.prepareStatement(
 						"insert ignore into bitcoin_reference(price,  date_updated) VALUES (?, ?)");
-				stmnt.setDouble(1, Double.parseDouble(btc));
-				stmnt.setString(2, btc_date);
-				stmnt.executeUpdate();
+				PreparedStatement update_eth = sql_connection.prepareStatement(
+						"insert ignore into ethereum_reference(price,  date_updated) VALUES (?, ?)");
+				
+				update_btc.setDouble(1, Double.parseDouble(btc));
+				update_btc.setString(2, btc_date);
+				update_btc.executeUpdate();
+				update_eth.setDouble(1, Double.parseDouble(eth));
+				update_eth.setString(2, eth_date);
+				update_eth.executeUpdate();
+				sql_connection.commit();
 				}
 			catch (Exception e) 
 				{
