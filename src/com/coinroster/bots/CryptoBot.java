@@ -140,8 +140,30 @@ public class CryptoBot extends Utils {
 		int winning_outcome;
 		
 
-		BigDecimal start_index = new BigDecimal(prop_data.getString("BTC_index"));
+		BigDecimal start_index = new BigDecimal(prop_data.getString("over_under_value"));
 		if (start_index.compareTo(this.btc_index) <= 0) {
+			//higher
+			winning_outcome = 1;
+			fields.put("winning_outcome", winning_outcome);
+		} else {
+			//lower
+			winning_outcome = 2;
+			fields.put("winning_outcome", winning_outcome);
+		}
+
+		return fields;
+	}
+	
+public JSONObject chooseEthereumUnderOverWinner(int contest_id, JSONObject prop_data, JSONArray option_table) throws JSONException {
+		
+		JSONObject fields = new JSONObject();
+		fields.put("contest_id", contest_id);
+		//String prop_type = prop_data.getString("prop_type");
+		int winning_outcome;
+		
+
+		BigDecimal start_index = new BigDecimal(prop_data.getString("over_under_value"));
+		if (start_index.compareTo(this.eth_index) <= 0) {
 			//higher
 			winning_outcome = 1;
 			fields.put("winning_outcome", winning_outcome);

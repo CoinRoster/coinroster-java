@@ -88,8 +88,8 @@ public class CronWorker extends Utils implements Callable<Integer>
 		}
 		
 		if((minute%10)==0) {
-			ContestMethods.createBitcoinContests();
-			ContestMethods.checkBitcoinContests();
+			ContestMethods.createCryptoContests();
+			ContestMethods.checkCryptoContests();
 			UpdateCryptoIndexCME();
 		}
 		

@@ -174,7 +174,7 @@ public class SetupPropBet extends Utils{
 							break method;
 						}
 						break;
-					case "BITCOINS":
+					case "BITCOINS": case "ETHEREUM":
 						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
 						Long settlement_date = prop_data.getLong("settlement_deadline");
 						SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy");
@@ -182,7 +182,12 @@ public class SetupPropBet extends Utils{
 						try{
 							contest_title = prop_data.getString("title");
 						} catch (Exception e){
-							contest_title = "Bitcoin Over/Under " + String.valueOf(prop_data.getDouble("over_under_value")) + " on " + df.format(sd);
+							if (sport == "BITCOINS") {
+								contest_title = "Bitcoin Over/Under " + String.valueOf(prop_data.getDouble("over_under_value")) + " on " + df.format(sd);
+							} else if (sport == "ETHEREUM") {
+								contest_title = "Ethereum Over/Under " + String.valueOf(prop_data.getDouble("over_under_value")) + " on " + df.format(sd);
+							}
+							
 						}
 						deadline = registration_date;
 						settlement_deadline = settlement_date;
@@ -422,35 +427,58 @@ public class SetupPropBet extends Utils{
 						prop_data.put("when", "tournament");
 						break;
 					
-					case "OVER_UNDER_BTC":
-						
+					case "OVER_UNDER_CRYPTO":
 						category = "FINANCIAL";
-						sub_category = "BITCOINS";
 						Date settlement_date = new Date(prop_data.getLong("settlement_deadline"));
-						
-						
 						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
-						desc = "What will the price of bitcoin be on " + settlement_date.toString() + "? </br>";
-						desc += "This is a fixed odds contest </br>";
-						desc += "Based on ";
-						desc += "<a href=\"https://www.cmegroup.com/trading/cryptocurrency-indices/cf-bitcoin-reference-rate.html\">";
-						desc += "CME CF Bitcoin Real Time Index</a></br>";
-						desc += "Full Contest <a href=\"http://blog.coinroster.com/faq/\">Rules</a>";
 						
-						JSONObject higher = new JSONObject();
-						higher.put("description", "Over or equal to " + over_under + " BTC");
-						higher.put("id", 1);
-						higher.put("odds", prop_data.getDouble("over_odds"));
-						option_table.put(higher);
+						if (sub_category == "BITCOINS") {
+							
+							desc = "What will the price of bitcoin be on " + settlement_date.toString() + "? </br>";
+							desc += "This is a fixed odds contest </br>";
+							desc += "Based on ";
+							desc += "<a href=\"https://www.cmegroup.com/trading/cryptocurrency-indices/cf-bitcoin-reference-rate.html\">";
+							desc += "CME CF Bitcoin Real Time Index</a></br>";
+							desc += "Full Contest <a href=\"http://blog.coinroster.com/faq/\">Rules</a>";
+							
+							JSONObject higher = new JSONObject();
+							higher.put("description", "Over or equal to " + over_under + " BTC");
+							higher.put("id", 1);
+							higher.put("odds", prop_data.getDouble("over_odds"));
+							option_table.put(higher);
+							
+							//Not sure about these table values, but should work for now.
+							JSONObject lower = new JSONObject();
+							lower.put("description",  "Under " + over_under + " BTC");
+							lower.put("id", 2);
+							lower.put("odds", prop_data.getDouble("under_odds"));
+							option_table.put(lower);
+							
+						} 
+						else if (sub_category == "ETHEREUM") {
+							
+							desc = "What will the price of ethereum be on " + settlement_date.toString() + "? </br>";
+							desc += "This is a fixed odds contest </br>";
+							desc += "Based on ";
+							desc += "<a href=\"https://www.cmegroup.com/trading/cryptocurrency-indices/cf-ethereum-reference-rate.html\">";
+							desc += "CME CF Ethereum Real Time Index</a></br>";
+							desc += "Full Contest <a href=\"http://blog.coinroster.com/faq/\">Rules</a>";
+							
+							JSONObject higher = new JSONObject();
+							higher.put("description", "Over or equal to " + over_under + " ETH");
+							higher.put("id", 1);
+							higher.put("odds", prop_data.getDouble("over_odds"));
+							option_table.put(higher);
+							
+							//Not sure about these table values, but should work for now.
+							JSONObject lower = new JSONObject();
+							lower.put("description",  "Under " + over_under + " ETH");
+							lower.put("id", 2);
+							lower.put("odds", prop_data.getDouble("under_odds"));
+							option_table.put(lower);
+						}
 						
-						//Not sure about these table values, but should work for now.
-						JSONObject lower = new JSONObject();
-						lower.put("description",  "Under " + over_under + " BTC");
-						lower.put("id", 2);
-						lower.put("odds", prop_data.getDouble("under_odds"));
-						option_table.put(lower);
 						
-						prop_data.put("BTC_index", over_under);
 						break;
 					
 					default:
