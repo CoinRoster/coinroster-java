@@ -31,12 +31,34 @@ public class FixedOddsContest extends Utils{
 		
 	}
 	
-	public void postCryptoContest(JSONObject prop_data) throws JSONException, IOException, SQLException {
+	public void postBitcoinContest(JSONObject prop_data) throws JSONException, IOException, SQLException {
 		JSONObject input = new JSONObject();
 		JSONObject data = new JSONObject();
 
-		String sub_category = prop_data.getString("sub_category");
-		data.put("sub_category", sub_category);
+		data.put("sub_category", "BITCOINS");
+		data.put("private", false);
+		data.put("prop_data", prop_data);
+		input.put("data", data);
+
+		MethodInstance method = new MethodInstance();
+		JSONObject output = new JSONObject("{\"status\":\"0\"}");
+		method.session = session;
+		method.input = input;	
+		method.output = output;
+		method.sql_connection = sql_connection;
+		method.internal_caller = true;
+		try {
+			new SetupPropBet(method);
+		} catch (Exception e) {
+			Server.exception(e);
+		}
+	}
+	
+	public void postEthereumContest(JSONObject prop_data) throws JSONException, IOException, SQLException {
+		JSONObject input = new JSONObject();
+		JSONObject data = new JSONObject();
+
+		data.put("sub_category", "ETHEREUM");
 		data.put("private", false);
 		data.put("prop_data", prop_data);
 		input.put("data", data);

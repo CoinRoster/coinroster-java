@@ -82,7 +82,7 @@ public class ContestMethods extends Utils {
 				prop_data.put("registration_deadline", registration_deadline);
 				prop_data.put("over_under_value", crypto_bot.getEthereumIndex());
 				prop_data.put("settlement_deadline", settlement_deadline);
-				ContestPoster.postCryptoContest(prop_data);
+				ContestPoster.postEthereumContest(prop_data);
 			}
 			
 		} catch (Exception e) {
@@ -147,7 +147,7 @@ public class ContestMethods extends Utils {
 				prop_data.put("registration_deadline", registration_deadline);
 				prop_data.put("over_under_value", crypto_bot.getBitcoinIndex());
 				prop_data.put("settlement_deadline", settlement_deadline);
-				ContestPoster.postCryptoContest(prop_data);
+				ContestPoster.postBitcoinContest(prop_data);
 			}
 
 		} catch (Exception e) {
