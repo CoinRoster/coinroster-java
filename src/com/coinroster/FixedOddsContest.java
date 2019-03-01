@@ -31,11 +31,12 @@ public class FixedOddsContest extends Utils{
 		
 	}
 	
-	public void postBitcoinContest(JSONObject prop_data) throws JSONException, IOException, SQLException {
+	public void postCryptoContest(JSONObject prop_data) throws JSONException, IOException, SQLException {
 		JSONObject input = new JSONObject();
 		JSONObject data = new JSONObject();
 
-		data.put("sub_category", "BITCOINS");
+		String sub_category = prop_data.getString("sub_category");
+		data.put("sub_category", sub_category);
 		data.put("private", false);
 		data.put("prop_data", prop_data);
 		input.put("data", data);

@@ -17,7 +17,7 @@ import org.json.JSONObject;
 
 import com.coinroster.bots.BaseballBot;
 import com.coinroster.bots.BasketballBot;
-import com.coinroster.bots.BitcoinBot;
+import com.coinroster.bots.CryptoBot;
 import com.coinroster.bots.GolfBot;
 import com.coinroster.bots.HockeyBot;
 import com.coinroster.bots.CrowdSettleBot;
@@ -33,8 +33,71 @@ import com.coinroster.internal.UpdateContestStatus;
  */
 public class ContestMethods extends Utils {
 
-	//------------------------------------------------------------------------------------
-	
+	/**
+	 * Creates a new Ethereum "higher or lower" Contest. Uses the `CONTEST_TEMPLATES` table from the database 
+	 * as a format reference.
+	 */
+	public static void createEthereumContests() {
+		
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db = new DB(sql_connection);
+			CryptoBot crypto_bot = new CryptoBot(sql_connection);
+			crypto_bot.loadEthereumData();
+			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
+			if (Server.dev_server) {
+				ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
+			} else {
+				ContestPoster.buildSession("7933171906e38ddface7325ebadafb90456a27e6"); //Need live server user-
+			}
+			
+			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(c_date);
+			Date d_date = null;
+			JSONObject contest = null;
+			JSONObject prop_data = null;
+			int duration = 7;
+			int registration = 10;
+			
+			JSONArray prop_contests = db.getRosterTemplates("ETHEREUM");
+			for(int i = 0; i < prop_contests.length(); i++){
+				contest = prop_contests.getJSONObject(i);
+				prop_data = new JSONObject(contest.getString("prop_data"));
+				duration = prop_data.getInt("duration");
+				registration = prop_data.getInt("registration");
+				
+				cal.add(Calendar.MINUTE, registration);
+				d_date = cal.getTime();
+				Long registration_deadline = d_date.getTime();
+				cal.add(Calendar.MINUTE, -registration);
+				
+				cal.add(Calendar.DAY_OF_YEAR, duration);
+				d_date = cal.getTime();
+				Long settlement_deadline = d_date.getTime();
+				cal.add(Calendar.DAY_OF_YEAR, -duration);
+				
+				prop_data.put("prop_type", "OVER_UNDER_ETH");
+				prop_data.put("registration_deadline", registration_deadline);
+				prop_data.put("over_under_value", crypto_bot.getEthereumIndex());
+				prop_data.put("settlement_deadline", settlement_deadline);
+				ContestPoster.postCryptoContest(prop_data);
+			}
+			
+		} catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+				} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		} 
+	}
 	/**
 	 * Creates a new Bitcoin "higher or lower" Contest. Uses the `CONTEST_TEMPLATES` table from the database 
 	 * as a format reference.
@@ -45,8 +108,8 @@ public class ContestMethods extends Utils {
 		try {
 			sql_connection = Server.sql_connection();
 			DB db = new DB(sql_connection);
-			BitcoinBot bit_bot = new BitcoinBot(sql_connection);
-			bit_bot.setup();
+			CryptoBot crypto_bot = new CryptoBot(sql_connection);
+			crypto_bot.loadBitcoinData();
 			FixedOddsContest ContestPoster = new FixedOddsContest(sql_connection);
 			if (Server.dev_server) {
 				ContestPoster.buildSession("2f2e0234b461dba8c89ce950f1045869f41fb73c");
@@ -56,29 +119,35 @@ public class ContestMethods extends Utils {
 			
 			Date c_date = new Date(System.currentTimeMillis()); //time of price index.
 			Calendar cal = Calendar.getInstance();
-
 			cal.setTime(c_date);
-			cal.add(Calendar.MINUTE, 10);
-			Date d_date = cal.getTime();
-			Long registration_deadline = d_date.getTime();
-			cal.add(Calendar.MINUTE, -10);
+			Date d_date = null;
+			JSONObject contest = null;
+			JSONObject prop_data = null;
+			int duration = 7;
+			int registration = 10;
 			
 			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
 			for(int i = 0; i < prop_contests.length(); i++){
-				JSONObject contest = prop_contests.getJSONObject(i);
-				JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+				contest = prop_contests.getJSONObject(i);
+				prop_data = new JSONObject(contest.getString("prop_data"));
+				duration = prop_data.getInt("duration");
+				registration = prop_data.getInt("registration");
 				
-				int duration = prop_data.getInt("duration");
+				cal.add(Calendar.MINUTE, registration);
+				d_date = cal.getTime();
+				Long registration_deadline = d_date.getTime();
+				cal.add(Calendar.MINUTE, -registration);
+				
 				cal.add(Calendar.DAY_OF_YEAR, duration);
 				d_date = cal.getTime();
 				Long settlement_deadline = d_date.getTime();
 				cal.add(Calendar.DAY_OF_YEAR, -duration);
-				
+					
 				prop_data.put("prop_type", "OVER_UNDER_BTC");
 				prop_data.put("registration_deadline", registration_deadline);
-				prop_data.put("over_under_value", bit_bot.getRealtimeIndex());
+				prop_data.put("over_under_value", crypto_bot.getBitcoinIndex());
 				prop_data.put("settlement_deadline", settlement_deadline);
-				ContestPoster.postBitcoinContest(prop_data);
+				ContestPoster.postCryptoContest(prop_data);
 			}
 
 		} catch (Exception e) {
@@ -98,7 +167,7 @@ public class ContestMethods extends Utils {
 	/**
 	 * Settles any Bitcoin contests that have been posted for 24 hours.
 	 */
-public static void checkBitcoinContests() {
+	public static void checkBitcoinContests() {
 		
 		//For now, just settle all bitcoin contests..
 		
@@ -110,8 +179,8 @@ public static void checkBitcoinContests() {
 	
 			if(!(pari_contests.length() == 0)){
 				
-				BitcoinBot bitcoin_bot = new BitcoinBot(sql_connection);
-				bitcoin_bot.setup();
+				CryptoBot bitcoin_bot = new CryptoBot(sql_connection);
+				bitcoin_bot.loadBitcoinData();
 
 				Iterator<?> pari_contest_ids = pari_contests.keys();	
 				while(pari_contest_ids.hasNext()){
@@ -125,7 +194,7 @@ public static void checkBitcoinContests() {
 					//Check if it has been a day since the contest was in play
 					if (System.currentTimeMillis() < settlement) continue;
 
-					JSONObject pari_fields = bitcoin_bot.chooseWinnerHigherLower(Integer.parseInt(c_id), prop_data, option_table);
+					JSONObject pari_fields = bitcoin_bot.chooseBitcoinUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
 					
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
