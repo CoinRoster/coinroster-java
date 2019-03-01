@@ -176,11 +176,11 @@ public class ContestMethods extends Utils {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
 			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOINS", "PARI-MUTUEL");
+			CryptoBot crypto_bot = new CryptoBot(sql_connection);
 	
 			if(!(pari_contests.length() == 0)){
 				
-				CryptoBot bitcoin_bot = new CryptoBot(sql_connection);
-				bitcoin_bot.loadBitcoinData();
+				crypto_bot.loadBitcoinData();
 
 				Iterator<?> pari_contest_ids = pari_contests.keys();	
 				while(pari_contest_ids.hasNext()){
@@ -194,7 +194,7 @@ public class ContestMethods extends Utils {
 					//Check if it has been a day since the contest was in play
 					if (System.currentTimeMillis() < settlement) continue;
 
-					JSONObject pari_fields = bitcoin_bot.chooseBitcoinUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
+					JSONObject pari_fields = crypto_bot.chooseBitcoinUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
 					
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
@@ -211,6 +211,7 @@ public class ContestMethods extends Utils {
 					}		
 				}
 			}
+			
 			
 		} catch (Exception e) {
 			Server.exception(e);

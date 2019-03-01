@@ -446,7 +446,6 @@ public class CronWorker extends Utils implements Callable<Integer>
 				update_eth.setDouble(1, Double.parseDouble(eth));
 				update_eth.setString(2, eth_date);
 				update_eth.executeUpdate();
-				sql_connection.commit();
 				}
 			catch (Exception e) 
 				{
