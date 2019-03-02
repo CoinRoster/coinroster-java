@@ -62,7 +62,7 @@ public class ContestMethods extends Utils {
 			int duration = 7;
 			int registration = 10;
 			
-			JSONArray prop_contests = db.getRosterTemplates("BITCOINS");
+			JSONArray prop_contests = db.getRosterTemplates("CRYPTO");
 			for(int i = 0; i < prop_contests.length(); i++){
 				contest = prop_contests.getJSONObject(i);
 				prop_data = new JSONObject(contest.getString("prop_data"));
@@ -79,37 +79,18 @@ public class ContestMethods extends Utils {
 				Long settlement_deadline = d_date.getTime();
 				cal.add(Calendar.DAY_OF_YEAR, -duration);
 					
-				prop_data.put("prop_type", "OVER_UNDER_CRYPTO");
-				prop_data.put("registration_deadline", registration_deadline);
-				prop_data.put("over_under_value", crypto_bot.getBitcoinIndex());
-				prop_data.put("settlement_deadline", settlement_deadline);
-				prop_data.put("auto_settle", 1);
-				ContestPoster.postBitcoinContest(prop_data);
-			}
-			
-			prop_contests = db.getRosterTemplates("ETHEREUM");
-			for(int i = 0; i < prop_contests.length(); i++){
-				contest = prop_contests.getJSONObject(i);
-				prop_data = new JSONObject(contest.getString("prop_data"));
-				duration = prop_data.getInt("duration");
-				registration = prop_data.getInt("registration");
-				
-				cal.add(Calendar.MINUTE, registration);
-				d_date = cal.getTime();
-				Long registration_deadline = d_date.getTime();
-				cal.add(Calendar.MINUTE, -registration);
-				
-				cal.add(Calendar.DAY_OF_YEAR, duration);
-				d_date = cal.getTime();
-				Long settlement_deadline = d_date.getTime();
-				cal.add(Calendar.DAY_OF_YEAR, -duration);
+				String currency = prop_data.getString("currency");
+				if (currency.equals("ETH")) {
+					prop_data.put("over_under_value", crypto_bot.getEthereumIndex());
+				}else if (currency.equals("BTC")) {
+					prop_data.put("over_under_value", crypto_bot.getBitcoinIndex());
+				}
 				
 				prop_data.put("prop_type", "OVER_UNDER_CRYPTO");
 				prop_data.put("registration_deadline", registration_deadline);
-				prop_data.put("over_under_value", crypto_bot.getEthereumIndex());
 				prop_data.put("settlement_deadline", settlement_deadline);
 				prop_data.put("auto_settle", 1);
-				ContestPoster.postEthereumContest(prop_data);
+				ContestPoster.postCryptoContest(prop_data);
 			}
 
 		} catch (Exception e) {
@@ -137,7 +118,7 @@ public class ContestMethods extends Utils {
 		try {
 			sql_connection = Server.sql_connection();
 			DB db_connection = new DB(sql_connection);
-			JSONObject pari_contests = db_connection.get_active_pari_mutuels("BITCOINS", "PARI-MUTUEL");
+			JSONObject pari_contests = db_connection.get_active_pari_mutuels("CRYPTO", "PARI-MUTUEL");
 			CryptoBot crypto_bot = new CryptoBot(sql_connection);
 			crypto_bot.loadAllData();
 	
@@ -151,44 +132,18 @@ public class ContestMethods extends Utils {
 					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
 					
 					Long settlement = prop_data.getLong("settlement_deadline");
+					String currency = prop_data.getString("currency");
+					
 					
 					//Check if it has been a day since the contest was in play
 					if (System.currentTimeMillis() < settlement) continue;
-
-					JSONObject pari_fields = crypto_bot.chooseBitcoinUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
 					
-					MethodInstance pari_method = new MethodInstance();
-					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");
-					pari_method.input = pari_fields;
-					pari_method.output = pari_output;
-					pari_method.session = null;
-					pari_method.sql_connection = sql_connection;
-					try{
-						Constructor<?> c = Class.forName("com.coinroster.api." + "SettleContest").getConstructor(MethodInstance.class);
-						c.newInstance(pari_method);
+					JSONObject pari_fields = null;
+					if (currency.equals("BTC")) {
+						crypto_bot.chooseBitcoinUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
+					} else if (currency.equals("ETH")) {
+						crypto_bot.chooseEthereumUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
 					}
-					catch(Exception e){
-						Server.exception(e);
-					}		
-				}
-			}
-			
-			pari_contests = db_connection.get_active_pari_mutuels("ETHEREUM", "PARI-MUTUEL");
-			if(!(pari_contests.length() == 0)){
-
-				Iterator<?> pari_contest_ids = pari_contests.keys();	
-				while(pari_contest_ids.hasNext()){
-					String c_id = (String) pari_contest_ids.next();
-					
-					JSONObject prop_data = new JSONObject(pari_contests.getJSONObject(c_id).getString("prop_data"));
-					JSONArray option_table = new JSONArray(pari_contests.getJSONObject(c_id).getString("option_table"));
-					
-					Long settlement = prop_data.getLong("settlement_deadline");
-					
-					//Check if it has been a day since the contest was in play
-					if (System.currentTimeMillis() < settlement) continue;
-
-					JSONObject pari_fields = crypto_bot.chooseEthereumUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
 					
 					MethodInstance pari_method = new MethodInstance();
 					JSONObject pari_output = new JSONObject("{\"status\":\"0\"}");

@@ -30,6 +30,10 @@ public class CommandPrompt extends Utils
 		BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
 //------------------------------------------------------------------------------------
+		if (command == null) {
+			out.close();
+			return;	
+		}
 		
 		int tail_log_lines = 40;
 		

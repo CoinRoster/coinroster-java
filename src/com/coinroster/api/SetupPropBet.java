@@ -174,21 +174,23 @@ public class SetupPropBet extends Utils{
 							break method;
 						}
 						break;
-					case "BITCOINS": case "ETHEREUM":
+					case "CRYPTO":
 						Long registration_date = prop_data.getLong("registration_deadline"); //time of price index.
 						Long settlement_date = prop_data.getLong("settlement_deadline");
 						SimpleDateFormat df = new SimpleDateFormat("MMM dd yyyy");
 						Date sd = new Date(settlement_date);
+						String crypto_currency = prop_data.getString("currency");
+						
 						try{
 							contest_title = prop_data.getString("title");
 						} catch (Exception e){
-							if (sport == "BITCOINS") {
+							if (crypto_currency.equals("BTC")) {
 								contest_title = "Bitcoin Over/Under " + String.valueOf(prop_data.getDouble("over_under_value")) + " on " + df.format(sd);
-							} else if (sport == "ETHEREUM") {
+							} else if (crypto_currency.equals("ETH")) {
 								contest_title = "Ethereum Over/Under " + String.valueOf(prop_data.getDouble("over_under_value")) + " on " + df.format(sd);
 							}
-							
 						}
+						
 						deadline = registration_date;
 						settlement_deadline = settlement_date;
 						break;
@@ -431,8 +433,9 @@ public class SetupPropBet extends Utils{
 						category = "FINANCIAL";
 						Date settlement_date = new Date(prop_data.getLong("settlement_deadline"));
 						String over_under = String.valueOf(prop_data.getDouble("over_under_value"));
+						String currency = prop_data.getString("currency");
 						
-						if (sub_category == "BITCOINS") {
+						if (currency.equals("BTC")) {
 							
 							desc = "What will the price of bitcoin be on " + settlement_date.toString() + "? </br>";
 							desc += "This is a fixed odds contest </br>";
@@ -455,7 +458,7 @@ public class SetupPropBet extends Utils{
 							option_table.put(lower);
 							
 						} 
-						else if (sub_category == "ETHEREUM") {
+						else if (currency.equals("ETH")) {
 							
 							desc = "What will the price of ethereum be on " + settlement_date.toString() + "? </br>";
 							desc += "This is a fixed odds contest </br>";
