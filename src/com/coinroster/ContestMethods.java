@@ -134,15 +134,13 @@ public class ContestMethods extends Utils {
 					Long settlement = prop_data.getLong("settlement_deadline");
 					String currency = prop_data.getString("currency");
 					
-					
-					//Check if it has been a day since the contest was in play
 					if (System.currentTimeMillis() < settlement) continue;
 					
 					JSONObject pari_fields = null;
 					if (currency.equals("BTC")) {
-						crypto_bot.chooseBitcoinUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
+						pari_fields = crypto_bot.chooseBitcoinUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
 					} else if (currency.equals("ETH")) {
-						crypto_bot.chooseEthereumUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
+						pari_fields = crypto_bot.chooseEthereumUnderOverWinner(Integer.parseInt(c_id), prop_data, option_table);
 					}
 					
 					MethodInstance pari_method = new MethodInstance();
