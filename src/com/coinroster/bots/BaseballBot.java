@@ -288,7 +288,7 @@ public class BaseballBot extends Utils {
 					}
 				}
 				if(top_players.size() >= 2){
-					winning_outcome = 1;
+					winning_outcome = 0;
 					fields.put("winning_outcome", winning_outcome);
 					return fields;
 				}

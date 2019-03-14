@@ -1465,8 +1465,8 @@ public class GolfBot extends Utils {
 
 					if(top_players.size() >= 2){
 						//tie is correct answer;
-						winning_outcome = 1;
-						log("winning outcome=1 because of tie");
+						winning_outcome = 0;
+						log("winning outcome=0 because of tie");
 						return winning_outcome;
 					}
 					else{
@@ -1517,8 +1517,8 @@ public class GolfBot extends Utils {
 					log("top players: " + top_players.toString());
 					if(top_players.size() >= 2){
 						//tie is correct answer;
-						winning_outcome = 1;
-						log("winning outcome=1 because of tie");
+						winning_outcome = 0;
+						log("winning outcome=0 because of tie");
 						return winning_outcome;
 					}
 					else{
