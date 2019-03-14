@@ -149,7 +149,7 @@ public class SettleContest extends Utils
 
 							winning_outcome = input.getInt("winning_outcome");
 							
-							// if MATCH_PLAY prop winning outcome = TIE (1), backout contest
+							// if MATCH_PLAY prop winning outcome = TIE (0), backout contest
 							if(contest.has("prop_data")){
 								String prop_type = "";
 								try{
@@ -158,7 +158,7 @@ public class SettleContest extends Utils
 								}catch(Exception e){
 									prop_type = "";
 								}
-								if(prop_type.equals("MATCH_PLAY") && winning_outcome == 1){
+								if(prop_type.equals("MATCH_PLAY") && winning_outcome == 0){
 									log("Backing out MATCH PLAY prop (contest id = " + contest_id + ") because winning outcome = TIE");
 									new BackoutContest(sql_connection, contest_id, "TIE");
 									break lock;

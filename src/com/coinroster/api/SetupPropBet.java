@@ -215,7 +215,7 @@ public class SetupPropBet extends Utils{
 //						if(is_fixed_odds) tie.put("odds", prop_data.getDouble("tie_odds"));
 //						option_table.put(tie);
 				
-						int index = 2;
+						int index = 1;
 						JSONArray players = prop_data.getJSONArray("players");
 						for(int i=0; i < players.length(); i++){
 							JSONObject player = players.getJSONObject(i);
