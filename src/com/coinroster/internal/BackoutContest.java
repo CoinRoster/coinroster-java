@@ -14,7 +14,7 @@ import com.coinroster.Utils;
 
 public class BackoutContest extends Utils {
 	
-	public BackoutContest(Connection sql_connection, int contest_id) {
+	public BackoutContest(Connection sql_connection, int contest_id, String reason) {
 		
 		Server.log("Contest #" + contest_id + " is being backed out");
 		
@@ -134,12 +134,15 @@ public class BackoutContest extends Utils {
 			message_body += "You were participating in the contest: <b>" + contest.getString("title")  + "</b>";
 			message_body += "<br/>";
 			message_body += "<br/>";
-			message_body += "The contest has been cancelled and your entry fees have been credited back to your account.";
+			if(reason.equals("TIE"))
+				message_body += "The contest has resulted in a push due to a tie. Your entry fees have been credited back to your account.";
+			else
+				message_body += "The contest has been cancelled and your entry fees have been credited back to your account.";
 			
 			for (String user_id : users) new UserMail(db.select_user("id", user_id), subject, message_body);
 			
 			// finally, if it's a voting contest, backout the betting round
-			if(db.is_voting_contest(contest_id)) new BackoutContest(sql_connection, db.get_original_contest(contest_id));
+			if(db.is_voting_contest(contest_id)) new BackoutContest(sql_connection, db.get_original_contest(contest_id), null);
 			
 		} catch (Exception e) {
 			e.printStackTrace(System.out);

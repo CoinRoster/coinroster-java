@@ -19,6 +19,7 @@ import com.coinroster.MethodInstance;
 import com.coinroster.Server;
 import com.coinroster.Session;
 import com.coinroster.Utils;
+import com.coinroster.internal.BackoutContest;
 import com.coinroster.internal.Backup;
 import com.coinroster.internal.BuildLobby;
 import com.coinroster.internal.UpdateContestStatus;
@@ -147,6 +148,22 @@ public class SettleContest extends Utils
 							boolean valid_option = false;
 
 							winning_outcome = input.getInt("winning_outcome");
+							
+							// if MATCH_PLAY prop winning outcome = TIE (1), backout contest
+							if(contest.has("prop_data")){
+								String prop_type = "";
+								try{
+									prop_type = contest.getJSONObject("prop_data").getString("prop_type");
+									log("settling " + prop_type + " contest...");
+								}catch(Exception e){
+									prop_type = "";
+								}
+								if(prop_type.equals("MATCH_PLAY") && winning_outcome == 1){
+									log("Backing out MATCH PLAY prop (contest id = " + contest_id + ") because winning outcome = TIE");
+									new BackoutContest(sql_connection, contest_id, "TIE");
+									break lock;
+								}	
+							}
 							
 							for (int i = 0; i < option_table.length(); i++)
 								{

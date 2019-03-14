@@ -1049,8 +1049,8 @@ public static void checkBitcoinContests() {
 	
 						// no bets on voting round; back
 						if(input.getInt("winning_outcome") == 0 || input.has("multiple_winning_outcomes")) {
-							new BackoutContest(sql_connection, contest_id);
-							new BackoutContest(sql_connection, db.get_original_contest(contest_id));
+							new BackoutContest(sql_connection, contest_id, null);
+							new BackoutContest(sql_connection, db.get_original_contest(contest_id), null);
 	
 							return;
 						}

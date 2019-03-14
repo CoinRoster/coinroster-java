@@ -202,12 +202,12 @@ public class SetupPropBet extends Utils{
 						contest_title = "Match Play";
 						ArrayList<String> games = new ArrayList<String>();
 						
-						JSONObject tie = new JSONObject();
-						tie.put("id", 1);
-						tie.put("description", "Tie");
-						if(is_fixed_odds) tie.put("odds", prop_data.getDouble("tie_odds"));
-						option_table.put(tie);
-						
+//						JSONObject tie = new JSONObject();
+//						tie.put("id", 1);
+//						tie.put("description", "Tie");
+//						if(is_fixed_odds) tie.put("odds", prop_data.getDouble("tie_odds"));
+//						option_table.put(tie);
+				
 						int index = 2;
 						JSONArray players = prop_data.getJSONArray("players");
 						for(int i=0; i < players.length(); i++){

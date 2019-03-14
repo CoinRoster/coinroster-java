@@ -1569,7 +1569,7 @@ public class GolfBot extends Utils {
 						// push
 						else{
 							log("Over/under contest " + contest_id + " pushed: backout initiated");
-							new BackoutContest(sql_connection, Integer.parseInt(contest_id));
+							new BackoutContest(sql_connection, Integer.parseInt(contest_id), null);
 							break;
 						}
 					}
@@ -1592,12 +1592,12 @@ public class GolfBot extends Utils {
 							//push
 							else{
 								log("Over/under contest " + contest_id + " pushed: backout initiated");
-								new BackoutContest(sql_connection, Integer.parseInt(contest_id));
+								new BackoutContest(sql_connection, Integer.parseInt(contest_id), null);
 								break;
 							}
 						}else{
 							log("player " + player_id + " status: " + status + " - backing out");
-							new BackoutContest(sql_connection, Integer.parseInt(contest_id));
+							new BackoutContest(sql_connection, Integer.parseInt(contest_id), null);
 							break;
 						}
 					}
