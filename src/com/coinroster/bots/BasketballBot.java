@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
 import com.coinroster.DB;
 import com.coinroster.Server;
 import com.coinroster.Utils;
@@ -71,7 +72,7 @@ public class BasketballBot extends Utils {
 			today = LocalDate.now().minusDays(1).format(formatter);
 			log("subtracting one day because its past 12am --> date grabbing: " + today);
 		}
-		
+				
 		SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
 		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
@@ -545,7 +546,7 @@ public class BasketballBot extends Utils {
 	}
 	
 	// setup() method creates contest by creating a hashmap of <ESPN_ID, Player> entries
-		public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException{
+		public Map<String, Player> setup() throws IOException, JSONException, SQLException, InterruptedException, ParseException{
 			Map<String, Player> players = new HashMap<String,Player>();
 			if(this.game_IDs == null){
 				log("No games scheduled");
@@ -842,95 +843,92 @@ public class BasketballBot extends Utils {
 			return this.bio;
 		}
 		
-		public int scrape_info() throws IOException, JSONException, InterruptedException{
+		public int scrape_info() throws IOException, JSONException, InterruptedException, ParseException{
 			String url = "http://www.espn.com/nba/player/_/id/"+ this.getESPN_ID();
 			Document page = scrapeHTML.connect(url);
 			if(page == null){
 				return 0;
 			}
-			Element bio = page.getElementsByClass("player-bio").first();
-			// parse bio-bio div to get pos, weight, height, birthString
-			Element general_info = bio.getElementsByClass("general-info").first();
-			String[] info = general_info.text().split(" ");
-			String pos = info[1];
-			this.pos = pos;
-			String height = info[2] + " " + info[3].replace(",", "");
-			String weight = info[4] + " " + info[5];
-			this.height = height;
-			this.weight = weight;
-			String team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
+			// get json in the page source script
+			String json_text = page.html().split("__espnfitt__")[1].split("</script>")[0];
+			json_text = json_text.substring(10, json_text.length() - 1);
+			json_text = "{\"app\":".concat(json_text);
+			JSONObject json = new JSONObject(json_text);
+			JSONObject player_data = json.getJSONObject("page").getJSONObject("content").getJSONObject("player")
+					.getJSONObject("plyrHdr").getJSONObject("ath");
+			
+			String team = player_data.getString("tmLnk").split("/")[7].toUpperCase();
 			if(!this.team_abr.equals(team)){
 				log("not saving " + this.getName() + " to DB - not correct team");
 				return 0;
 			}
 			
-			Elements player_metadata = bio.getElementsByClass("player-metadata");
-			Element item = player_metadata.first();
-			Elements lis = item.children();
-			String born_string = lis.first().text().replace("Born", "");
-			this.birthString = born_string;
+			this.pos = player_data.getString("posAbv");
+			this.height = player_data.getString("htwt").split(",")[0];
+			this.weight = player_data.getString("htwt").split(",")[1];
 			
-			String[] stats = {"STAT_TYPE","GP","MPG","FGM-FGA","FG%","3PM-3PA","3P%","FTM-FTA","FT%","RPG","APG","BLKPG","STLPG","PFPG","TOPG","PPG"};
-			Elements tables = page.getElementsByClass("tablehead");
-			Element stats_table;
-			try{
-				stats_table = tables.get(1);
+			String hmtn = "";
+			if(player_data.has("hmtn")){
+				hmtn = hmtn.concat(" in ").concat(player_data.getString("hmtn"));
 			}
-			catch (Exception e){
-				log("No available data for " + this.getName() + " - " + this.getESPN_ID() + " so he will not be available in contests");
+			
+			this.birthString = player_data.getString("dob").concat(hmtn);
+			
+			String[] stats_headers = {"STAT_TYPE","GP","MPG","FG%","3P%","FT%","RPG","APG","BLKPG","STLPG","PFPG","TOPG","PPG"};
+			
+			JSONArray stats = null;
+			try{
+				stats = json.getJSONObject("page").getJSONObject("content").getJSONObject("player").
+							getJSONObject("stats").getJSONObject("splts").getJSONArray("stats");
+			}catch(JSONException e){
+				log("No stats for player with ID " + this.getESPN_ID());
 				return 0;
 			}
-			Elements stats_rows = stats_table.getElementsByTag("tr");
-			try{
-				for(Element row : stats_rows){
-					if(row.className().contains("oddrow") || row.className().contains("evenrow")){
-						JSONObject stat = new JSONObject();
-						Elements cols = row.getElementsByTag("td");
-						int index = 0;
-						for(Element data : cols){
-							stat.put(stats[index], data.text());
-							index = index + 1;
-						}
-						
-						if(stat.get("STAT_TYPE").equals("Career")){
-							this.career_stats = stat;
-						}
-						else{
-							this.year_stats = stat;
-						}
-					}
-				}
+			
+			
+			JSONArray season = stats.getJSONArray(0);
+			JSONObject season_stat = new JSONObject();
+			for(int i = 0; i < season.length(); i++){
+				season_stat.put(stats_headers[i], season.getString(i));
 			}
-			catch (java.lang.ArrayIndexOutOfBoundsException e){
+			this.year_stats = season_stat;
+			
+			JSONArray career = stats.getJSONArray(1);
+			JSONObject career_stat = new JSONObject();
+			for(int i = 0; i < career.length(); i++){
+				career_stat.put(stats_headers[i], career.getString(i));
 			}
-		
-			String[] game_log_stats = {"DATE","OPP","SCORE","MIN","FGM-FGA","FG%","3PM-3PA","3P%","FTM-FTA","FT%","REB","AST","BLK","STL","PF","TO","PTS"};
-			Element game_log_table;
-			try{
-				game_log_table = tables.get(2);
-			}
-			catch(java.lang.IndexOutOfBoundsException e){
-				//player does not have a year and career stats table, so his game logs is second table on page, not third
-				game_log_table = tables.get(1);
-			}
-			Elements rows = game_log_table.getElementsByTag("tr");
+			this.career_stats = career_stat;
+			
+			String[] game_log_stats = {"DATE","OPP","SCORE","MIN","FG%","3P%","FT%","REB","AST","BLK","STL","PF","TO","PTS"};
+			JSONArray gamelog_stats = json.getJSONObject("page").getJSONObject("content").getJSONObject("player").
+					getJSONObject("gmlg").getJSONArray("stats").getJSONObject(0).getJSONArray("rows");
+			JSONArray gamelog_info = json.getJSONObject("page").getJSONObject("content").getJSONObject("player").
+					getJSONObject("gmlg").getJSONArray("stats").getJSONObject(0).getJSONArray("fixedRows");
+			
 			JSONArray game_logs = new JSONArray();
-			for(Element row : rows){
-				if(row.className().contains("oddrow") || row.className().contains("evenrow")){
-					if(row.children().size() < 2){
-						// skip the extra row in the game log - usually exists when player has been traded.
-						continue;
-					}
-					JSONObject game = new JSONObject();
-					Elements cols = row.getElementsByTag("td");
-					int index = 0;
-					for(Element data : cols){
-						game.put(game_log_stats[index], data.text());
-						index = index + 1;
-					}
-					game_logs.put(game);
-				}	
+			for(int i = 0; i < gamelog_stats.length(); i++){
+				JSONObject game = new JSONObject();
+				JSONArray gm_stats = gamelog_stats.getJSONArray(i);
+				JSONObject gm_info = gamelog_info.getJSONObject(i);
+				
+				String date = gm_info.getJSONObject("evnt").getString("date").replace(":00.000+0000", "");
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+				Date d = format.parse(date);
+				SimpleDateFormat endFormat = new SimpleDateFormat("E MMM dd");
+				String newDate = endFormat.format(d);
+				
+				String opp = gm_info.getJSONObject("opp").getString("atVs") + " " + gm_info.getJSONObject("opp").getString("abbr");
+				String score = gm_info.getJSONObject("res").getString("abbr") + " " + gm_info.getJSONObject("res").getString("score");
+				game.put(game_log_stats[0], newDate);
+				game.put(game_log_stats[1], opp);
+				game.put(game_log_stats[2], score);
+				for(int q = 3; q <= 13; q++){
+					game.put(game_log_stats[q], gm_stats.getString(q - 3));
+				}
+				game_logs.put(game);
 			}
+			
 			this.last_five_games = game_logs;
 			return 1;
 		}
