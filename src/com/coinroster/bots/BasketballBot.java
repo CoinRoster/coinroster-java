@@ -664,7 +664,7 @@ public class BasketballBot extends Utils {
 									JSONObject data = new JSONObject();
 									try {
 										String fgm, fga;
-										if(fg_string.equals("--")){
+										if(fg_string.equals("--") || fg_string.equals("-----")){
 											fgm = "0";
 											fga = "0";
 										}else{
@@ -675,7 +675,7 @@ public class BasketballBot extends Utils {
 										data.put("fga", Integer.parseInt(fga));
 										
 										String threepm = "0";
-										if(!threefg_string.equals("--"))
+										if(!threefg_string.equals("--") && !threefg_string.equals("-----"))
 											threepm = threefg_string.split("-")[0];
 										data.put("3pm", Integer.parseInt(threepm));
 										
