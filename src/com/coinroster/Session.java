@@ -29,14 +29,11 @@ public class Session
 		this.session_token = session_token;
 		}
 
-	
 	public Session(String session_token, String user_id)
 	{
 		this.session_token = session_token;
 		this.user_id = user_id;
 	}
-	
-	
 	/**
 	 * Creates a new session given user's details.
 	 * 

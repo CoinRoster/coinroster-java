@@ -16,7 +16,6 @@ import com.coinroster.Utils;
  * 
  * @custom.access standard
  * 
- *
  */
 public class AddEmailAddress extends Utils
 	{

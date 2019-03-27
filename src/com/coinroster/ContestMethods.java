@@ -36,6 +36,10 @@ public class ContestMethods extends Utils {
 	/**
 	 * Creates new Bitcoin and Ethereum "higher or lower" contests. Uses the `CONTEST_TEMPLATES` table from the database 
 	 * as a format reference.
+	 * 
+	 * @see com.coinroster.api.CreateContest
+	 * @throws Exception Can throw an error if new class instance cannot spawn
+	 * 
 	 */
 	public static void createCryptoContests() {
 		
@@ -293,6 +297,7 @@ public class ContestMethods extends Utils {
 	 * 
 	 * @see com.coinroster.api.SettleContest Spawns instance of SettleContest if a contest has concluded
 	 * @throws Exception Can throw an error if new class instance cannot spawn
+	 * @throws SQLException
 	 */
 	public static void checkBasketballContests() {
 		Connection sql_connection = null;
@@ -831,18 +836,21 @@ public class ContestMethods extends Utils {
 	
 				Iterator<?> roster_contest_ids = roster_contests.keys();
 				while(roster_contest_ids.hasNext()){
+					
 					String c_id = (String) roster_contest_ids.next();
-	
+					String when = roster_contests.getJSONObject(c_id).getString("when");
+					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
+					
 					// if its Thurs morning, replace INACTIVE players
 					if(today == 5 && hour < 9)
 						golfBot.checkForInactives(Integer.parseInt(c_id), 0);
 	
 					// if its Sat or Sun morning or Mon (delayed), replace CUT players
-					else if((today == 7 && hour <= 8 && hour >= 7) || (today == 1 && hour <= 8 && hour >= 7) || (today == 2 && hour <= 8 && hour >= 7))
-						golfBot.checkForInactives(Integer.parseInt(c_id), 3);
-	
-					String when = roster_contests.getJSONObject(c_id).getString("when");
-					JSONObject scoring_rules = roster_contests.getJSONObject(c_id).getJSONObject("scoring_rules");
+					else if((today == 7 && hour <= 8 && hour >= 7) || (today == 1 && hour <= 8 && hour >= 7) || (today == 2 && hour <= 8 && hour >= 7)){
+						if(when.equals("3")){
+							golfBot.checkForInactives(Integer.parseInt(c_id), 3);
+						}
+					}
 	
 					JSONArray player_scores = golfBot.updateScores(scoring_rules, when);
 					JSONObject fields = new JSONObject();
