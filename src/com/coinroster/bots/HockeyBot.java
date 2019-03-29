@@ -109,9 +109,14 @@ public class HockeyBot extends Utils {
 				Date game_date = formatter1.parse(game.getString("date").replaceAll("Z$", "+0000"));
 				Long game_milli = game_date.getTime();
 				JSONArray links = game.getJSONArray("links");
-				// get the fourth link (boxscore link)
-				String href = links.getJSONObject(3).getString("href");
-				String gameID = href.split("=")[1].replace("&sourceLang", "");
+
+				String href = links.getJSONObject(0).getString("href");
+				String gameID = null;
+				if(href.contains("=")){
+					gameID = href.split("=")[1].replace("&sourceLang", "");
+				}else{
+					gameID = href.split("/")[7].replace("&sourceLang", "");
+				}
 				
 				JSONObject game_obj = new JSONObject();
 				game_obj.put("name", name);
