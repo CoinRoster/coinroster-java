@@ -598,10 +598,10 @@ public class BaseballBot extends Utils {
 						log("problem connecting to " + team_url);
 						continue;
 					}
-					Element stats_table = team_stats_page.select("table.tablehead").first();
+					Element stats_table = team_stats_page.getElementsByClass("Table2__tbody").first();
 					Elements rows = stats_table.getElementsByTag("tr");
 					for (Element row : rows){
-						if(row.className().contains("oddrow") || row.className().contains("evenrow")){
+						if(row.className().contains("Table2__tr")){
 							Elements cols = row.getElementsByTag("td");
 							String name = cols.get(0).select("a").text();
 							try{
