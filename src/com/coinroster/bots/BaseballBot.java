@@ -805,9 +805,9 @@ public class BaseballBot extends Utils {
 			
 			Element bio = page.getElementsByClass("player-bio").first();
 			
-			// parse bio-bio div to get pos, weight, height, birthString
-			Element general_info = bio.getElementsByClass("general-info").first();
 			try{
+				// parse bio-bio div to get pos, weight, height, birthString
+				Element general_info = bio.getElementsByClass("general-info").first();
 				String pos = general_info.getElementsByTag("li").first().text().split(" ")[1];
 				this.pos = pos;
 				String team = general_info.getElementsByTag("li").last().getElementsByTag("a").first().attr("href").split("/")[7].toUpperCase();
@@ -888,7 +888,7 @@ public class BaseballBot extends Utils {
 			}
 			catch (java.lang.ArrayIndexOutOfBoundsException e){
 			}
-		
+					
 			String[] game_log_stats = {"DATE","OPP","SCORE","AB","R","H","2B","3B","HR","RBI","BB","K","SB","AVG"};
 			Element game_log_table;
 			try{
@@ -928,8 +928,7 @@ public class BaseballBot extends Utils {
 				this.set_salary(price);
 				this.set_filter(at_bats);
 			}catch(Exception e){
-				log(this.getName() + " " + this.getESPN_ID());
-				Server.exception(e);
+				log("ERROR: " + this.getName() + " " + this.getESPN_ID());
 				return 0;
 			}
 
