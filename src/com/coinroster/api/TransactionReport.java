@@ -47,7 +47,14 @@ public class TransactionReport extends Utils
 			
 			if (is_admin) 
 				{
-				select_transaction = sql_connection.prepareStatement("select * from transaction where created > ? and created < ?");
+				
+				boolean ignore_riskescrow = input.getBoolean("include_riskescrow");
+				if(ignore_riskescrow){
+					select_transaction = sql_connection.prepareStatement("select * from transaction where created > ? and created < ? and trans_type != 'FIXED-ODDS-RISK-ESCROW'");
+				}else{
+					select_transaction = sql_connection.prepareStatement("select * from transaction where created > ? and created < ?");
+				}
+				
 				select_transaction.setLong(1, start_date_ms);
 				select_transaction.setLong(2, end_date_ms);
 				}
