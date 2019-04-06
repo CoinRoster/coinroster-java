@@ -903,23 +903,22 @@ public class BasketballBot extends Utils {
 			String[] game_log_stats = {"DATE","OPP","SCORE","MIN","FG%","3P%","FT%","REB","AST","BLK","STL","PF","TO","PTS"};
 			JSONArray gamelog_stats = json.getJSONObject("page").getJSONObject("content").getJSONObject("player").
 					getJSONObject("gmlg").getJSONArray("stats").getJSONObject(0).getJSONArray("rows");
-			JSONArray gamelog_info = json.getJSONObject("page").getJSONObject("content").getJSONObject("player").
-					getJSONObject("gmlg").getJSONArray("stats").getJSONObject(0).getJSONArray("fixedRows");
+
 			
 			JSONArray game_logs = new JSONArray();
 			for(int i = 0; i < gamelog_stats.length(); i++){
 				JSONObject game = new JSONObject();
-				JSONArray gm_stats = gamelog_stats.getJSONArray(i);
-				JSONObject gm_info = gamelog_info.getJSONObject(i);
-				
-				String date = gm_info.getJSONObject("evnt").getString("date").replace(":00.000+0000", "");
+				JSONObject gm = gamelog_stats.getJSONObject(i);
+				JSONArray gm_stats = gm.getJSONArray("stats");
+						
+				String date = gm.getString("dt").replace(":00.000+0000", "");
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
 				Date d = format.parse(date);
 				SimpleDateFormat endFormat = new SimpleDateFormat("E MMM dd");
 				String newDate = endFormat.format(d);
 				
-				String opp = gm_info.getJSONObject("opp").getString("atVs") + " " + gm_info.getJSONObject("opp").getString("abbr");
-				String score = gm_info.getJSONObject("res").getString("abbr") + " " + gm_info.getJSONObject("res").getString("score");
+				String opp = gm.getJSONObject("opp").getString("atVs") + " " + gm.getJSONObject("opp").getString("abbr");
+				String score = gm.getJSONObject("res").getString("abbr") + " " + gm.getJSONObject("res").getString("score");
 				game.put(game_log_stats[0], newDate);
 				game.put(game_log_stats[1], opp);
 				game.put(game_log_stats[2], score);
