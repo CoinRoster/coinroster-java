@@ -2138,7 +2138,7 @@ public class DB
 		JSONArray templates = new JSONArray();
 		ResultSet result_set = null;
 		try {
-			PreparedStatement get_contests = sql_connection.prepareStatement("select * from contest_template where sub_category = ? and active = 1");
+			PreparedStatement get_contests = sql_connection.prepareStatement("select * from contest_template where sub_category = ? and active = 1 and auto_post = 0");
 			get_contests.setString(1, sub_category);
 			result_set = get_contests.executeQuery();	
 		}
@@ -2413,6 +2413,29 @@ public class DB
 		get.setInt(1, contest_id);
 		rs = get.executeQuery();
 		return rs;
+	}
+	
+	public JSONArray get_auto_post_contests() throws Exception{
+		Utils.log("reading contest_template table for auto-post futures to create");
+		JSONArray contests = new JSONArray();
+		PreparedStatement get_contests = sql_connection.prepareStatement("select category, sub_category, contest_type, title, description, settlement_type, "
+																			+ "rake, cost_per_entry, prop_data from contest_template where active = 1 and auto_post = 1");
+																			   
+		ResultSet rs = get_contests.executeQuery();
+		while (rs.next()){
+			JSONObject contest = new JSONObject();
+			contest.put("category", rs.getString(1));
+			contest.put("sub_category", rs.getString(2));
+			contest.put("contest_type", rs.getString(3));
+			contest.put("title", rs.getString(4));
+			contest.put("description", rs.getString(5));
+			contest.put("settlement_type", rs.getString(6));
+			contest.put("rake", rs.getFloat(7));
+			contest.put("cost_per_entry", rs.getDouble(8));
+			contest.put("prop_data", rs.getObject(9));
+			contests.put(contest);
+		}
+		return contests;
 	}
 }
 

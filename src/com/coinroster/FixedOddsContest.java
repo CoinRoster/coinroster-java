@@ -24,7 +24,7 @@ public class FixedOddsContest extends Utils{
 	public void buildSession(String user_id) {
 		session = new Session("", user_id);
 		try {
-			session_token = session.create_session(sql_connection, session, "ContestPoster", user_id, 0);
+			session_token = session.create_session(sql_connection, session, "ContestPoster", user_id, 1);
 		} catch (Exception e) {
 			Server.exception(e);
 		}

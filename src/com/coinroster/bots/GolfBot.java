@@ -1569,7 +1569,7 @@ public class GolfBot extends Utils {
 						// push
 						else{
 							log("Over/under contest " + contest_id + " pushed: backout initiated");
-							new BackoutContest(sql_connection, Integer.parseInt(contest_id), null);
+							new BackoutContest(sql_connection, Integer.parseInt(contest_id), "");
 							break;
 						}
 					}

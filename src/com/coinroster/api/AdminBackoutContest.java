@@ -45,7 +45,7 @@ public class AdminBackoutContest extends Utils {
 			
 			int contest_id = input.getInt("contest_id");
 //------------------------------------------------------------------------------------
-			new BackoutContest(sql_connection, contest_id, null);
+			new BackoutContest(sql_connection, contest_id, "");
 			
 			output.put("status", "1");
 //------------------------------------------------------------------------------------

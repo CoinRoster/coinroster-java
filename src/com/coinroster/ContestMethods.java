@@ -1049,8 +1049,8 @@ public static void checkBitcoinContests() {
 	
 						// no bets on voting round; back
 						if(input.getInt("winning_outcome") == 0 || input.has("multiple_winning_outcomes")) {
-							new BackoutContest(sql_connection, contest_id, null);
-							new BackoutContest(sql_connection, db.get_original_contest(contest_id), null);
+							new BackoutContest(sql_connection, contest_id, "");
+							new BackoutContest(sql_connection, db.get_original_contest(contest_id), "");
 	
 							return;
 						}
@@ -1412,4 +1412,103 @@ public static void checkBitcoinContests() {
 		int today = c.get(Calendar.DAY_OF_WEEK);
 		return today;
 	}
+	
+	
+	public static void autoPostFutures(){
+		Connection sql_connection = null;
+		try {
+			sql_connection = Server.sql_connection();
+			DB db_connection = new DB(sql_connection);
+			
+			
+			JSONArray contests = db_connection.get_auto_post_contests();
+			JSONObject empty = new JSONObject();
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.HOUR, 24);
+			long deadline = cal.getTimeInMillis();
+			
+			for(int i = 0; i < contests.length(); i++){
+				
+				JSONObject contest = contests.getJSONObject(i);
+				JSONObject prop_data = new JSONObject(contest.getString("prop_data"));
+				
+				if(prop_data.has("risk")){
+					String risk = Utils.format_btc(prop_data.getDouble("risk"));
+					prop_data.remove("risk");
+					prop_data.put("risk", risk);
+				}
+				
+				contest.put("progressive", "");
+				contest.put("registration_deadline", deadline);
+				
+				// build option table
+				JSONArray option_table = new JSONArray();
+				int index = 1;
+				JSONArray options = prop_data.getJSONArray("options");
+				for(int n=0; n < options.length(); n++){
+					JSONObject option = options.getJSONObject(n);
+					JSONObject p = new JSONObject();
+					String name = option.getString("name");
+					p.put("description", name);
+					p.put("id", index);
+					if (option.has("odds")) 
+						p.put("odds", option.getDouble("odds"));
+					option_table.put(p);
+					index += 1;
+				}
+				
+				contest.put("option_table", option_table);
+				contest.put("auto_settle", 0);
+				contest.put("scoring_rules", empty.toString());
+				contest.put("prop_data", prop_data.toString());
+				contest.put("private", false);
+				
+				// build up session
+				String user_id;
+				if(Server.dev_server) 
+					user_id = "2f2e0234b461dba8c89ce950f1045869f41fb73c";
+				else 
+					user_id = "7933171906e38ddface7325ebadafb90456a27e6";
+				Session session = new Session(null, user_id);
+				try {
+					session.create_session(sql_connection, session, "ContestPoster", user_id, 1);
+				} catch (Exception e) {
+					Server.exception(e);
+				}
+				
+				MethodInstance method = new MethodInstance();
+				JSONObject output = new JSONObject("{\"status\":\"0\"}");
+				method.session = session;
+				method.input = contest;	
+				method.output = output;
+				method.sql_connection = sql_connection;
+				method.internal_caller = true;
+				
+				try{
+					Constructor<?> c = Class.forName("com.coinroster.api." + "CreateContest").getConstructor(MethodInstance.class);
+					c.newInstance(method);
+					output = method.output;
+					output.put("status", "1");
+				}
+				catch(Exception e){
+					Server.exception(e);
+					output.put("status", "0");
+				}
+			
+			}
+		}catch (Exception e) {
+			Server.exception(e);
+		} finally {
+			if (sql_connection != null) {
+				try {
+					sql_connection.close();
+				} 
+				catch (SQLException ignore) {
+					// ignore
+				}
+			}
+		}
+		
+	}
+	
 }

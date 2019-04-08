@@ -142,7 +142,7 @@ public class BackoutContest extends Utils {
 			for (String user_id : users) new UserMail(db.select_user("id", user_id), subject, message_body);
 			
 			// finally, if it's a voting contest, backout the betting round
-			if(db.is_voting_contest(contest_id)) new BackoutContest(sql_connection, db.get_original_contest(contest_id), null);
+			if(db.is_voting_contest(contest_id)) new BackoutContest(sql_connection, db.get_original_contest(contest_id), "");
 			
 		} catch (Exception e) {
 			e.printStackTrace(System.out);

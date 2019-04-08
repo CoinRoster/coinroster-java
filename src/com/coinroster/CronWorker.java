@@ -135,6 +135,7 @@ public class CronWorker extends Utils implements Callable<Integer>
 		
 		if(hour == 5){
 			ContestMethods.createHockeyContests();
+			ContestMethods.autoPostFutures();
 		}
 		if(hour==6){
 			ContestMethods.createBaseballContests();
