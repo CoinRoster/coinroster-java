@@ -74,7 +74,7 @@ public class BasketballBot extends Utils {
 		}
 				
 		SimpleDateFormat formatter1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
-		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + "20190408" + "&tz=America%2FNew_York");
+		JSONObject json = JsonReader.readJsonFromUrl("http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?lang=en&region=us&calendartype=blacklist&limit=100&dates=" + today + "&tz=America%2FNew_York");
 		JSONArray events = json.getJSONArray("events");
 		if(events.length() == 0){
 			this.game_IDs = null;
