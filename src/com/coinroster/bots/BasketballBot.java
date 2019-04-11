@@ -868,11 +868,11 @@ public class BasketballBot extends Utils {
 			this.weight = player_data.getString("htwt").split(",")[1];
 			
 			String hmtn = "";
-			if(player_data.has("hmtn")){
+			if(player_data.has("hmtn") && player_data.has("dob")){
 				hmtn = hmtn.concat(" in ").concat(player_data.getString("hmtn"));
-			}
-			
-			this.birthString = player_data.getString("dob").concat(hmtn);
+				this.birthString = player_data.getString("dob").concat(hmtn);
+			}else
+				this.birthString = "";
 			
 			String[] stats_headers = {"STAT_TYPE","GP","MPG","FG%","3P%","FT%","RPG","APG","BLKPG","STLPG","PFPG","TOPG","PPG"};
 			
