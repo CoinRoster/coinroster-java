@@ -271,8 +271,8 @@ public class GolfBot extends Utils {
 		String url = "https://statdata.pgatour.com/r/current/schedule-v2.json";
 		JSONObject schedule = JsonReader.readJsonFromUrl(url);
 		// sometimes pgatour.com decides to change their API and we'll get an exception here
-		// if so, change getJSONObject(x) from 1 --> 0 or 0 --> 1
-		JSONArray tournaments = schedule.getJSONArray("years").getJSONObject(0).getJSONArray("tours").getJSONObject(0).getJSONArray("trns");
+		// if so, change getJSONObject(x) from 1 --> 0 or 0 --> 1		
+		JSONArray tournaments = schedule.getJSONArray("years").getJSONObject(1).getJSONArray("tours").getJSONObject(0).getJSONArray("trns");
 
 		for(int index=0; index < tournaments.length(); index++){
 			JSONObject tournament = tournaments.getJSONObject(index);
@@ -505,7 +505,7 @@ public class GolfBot extends Utils {
 		tournament_statuses.put("4", false);
 		tournament_statuses.put("tournament", false);
 		
-		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/" + this.year + "/leaderboard-v2.json";
+		String url = "https://statdata.pgatour.com/r/" + tourneyID + "/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		if(leaderboard == null){
 			log("couldn't connect to pgatour API");
@@ -1224,7 +1224,7 @@ public class GolfBot extends Utils {
 		JSONObject prop_data = contest.getJSONObject("prop_data");
 		JSONArray option_table = contest.getJSONArray("option_table");
 		
-		String url = "https://statdata.pgatour.com/r/" + this.getTourneyID() + "/" + this.year + "/leaderboard-v2.json";
+		String url = "https://statdata.pgatour.com/r/" + this.getTourneyID() + "/leaderboard-v2.json";
 		JSONObject leaderboard = JsonReader.readJsonFromUrl(url);
 		
 		int winning_outcome = 0;
